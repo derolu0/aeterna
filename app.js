@@ -1333,9 +1333,9 @@ function debounce(func, wait) {
 
 function getStatusText(stato) {
     const statusMap = {
-        'funzionante': 'Funzionante',
-        'non-funzionante': 'Non Funzionante',
-        'manutenzione': 'In Manutenzione'
+        'funzionante': 'Contemporaneo',    // Era Funzionante
+        'non-funzionante': 'Classico',     // Era Non Funzionante
+        'manutenzione': 'Moderno'          // Era In Manutenzione
     };
     return statusMap[stato] || 'Stato sconosciuto';
 }
@@ -1809,7 +1809,7 @@ function renderGridItems(container, items, type) {
     if (!items || items.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-${type === 'fontana' ? 'monument' : 'faucet'}"></i></div>
+                <div class="empty-state-icon"><i class="fas fa-${type === 'fontana' ? 'user-graduate' : 'lightbulb'}"></i></div>
                 <div class="empty-state-text">Nessun elemento trovato</div>
                 <div class="empty-state-subtext">Prova a cambiare i filtri di ricerca</div>
             </div>
@@ -1869,7 +1869,7 @@ function renderGridItems(container, items, type) {
                     <span class="item-status status-${item.stato}">${getStatusLabel(item.stato)}</span>
                     
                     <span class="image-indicator ${hasCustomImage ? 'image-custom' : 'image-default'}">
-                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-image"></i>'}
+                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-user"></i>'}
                     </span>
                 </div>
             </div>
@@ -1936,7 +1936,7 @@ function renderCompactItems(container, items, type) {
                 <div class="compact-item-header">
                     <div class="compact-item-name">${getLocalizedText(item, 'nome')} ${badgeHTML}</div>
                     <span class="image-indicator ${hasCustomImage ? 'image-custom' : 'image-default'}">
-                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-image"></i>'}
+                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-user"></i>'}
                     </span>
                 </div>
                 <div class="compact-item-address">${item.indirizzo}</div>
@@ -2045,7 +2045,7 @@ function showDetail(id, type) {
         <div class="detail-info">
             <h2 class="detail-name">${getLocalizedText(item, 'nome')}</h2>
             <div class="info-row">
-                <span class="info-label"><i class="fas fa-map-marker-alt"></i></span>
+                <span class="info-label"><i class="fas fa-map-marker-alt"></i> Luogo/Opera:</span>
                 <span class="info-value">${item.indirizzo}</span>
             </div>
             <div class="info-row">
@@ -2219,26 +2219,28 @@ function initMappa() {
         }
     }
 
-    requestUserLocation();
+    // --- FUNZIONE CREATEMARKER AGGIUNTA ---
+    function createMarker(item, type) {
+        // Determina l'etichetta in base al tipo
+        const labelLuogo = type === 'fontana' ? 'Luogo di nascita:' : 'Opera:';
+        const labelEpoca = 'Epoca:';
+    
+        const marker = L.marker([item.latitudine, item.longitudine], {
+            icon: getIconForType(type)
+        });
+    
+        marker.bindPopup(`
+            <div class="leaflet-popup-content">
+                <div class="popup-title">${item.nome}</div>
+                <p><strong>${labelLuogo}</strong> ${item.indirizzo}</p>
+                <p><strong>${labelEpoca}</strong> ${getStatusText(item.stato)}</p>
+                <button class="popup-btn" onclick="showDetail('${item.id}', '${type}')">Leggi Scheda</button>
+                <button class="popup-btn" onclick="navigateTo(${item.latitudine}, ${item.longitudine})" style="margin-top: 5px; background: var(--primary-green);">Vedi Luogo</button>
+            </div>
+        `);
+        return marker;
+    }
 }
-
-function createMarker(item, type) {
-    const icon = getIconForType(type);
-    const marker = L.marker([item.latitudine, item.longitudine], { icon });
-
-    marker.bindPopup(`
-        <div class="leaflet-popup-content">
-            <div class="popup-title">${item.nome}</div>
-            <p>${item.indirizzo}</p>
-            <p>Stato: ${getStatusText(item.stato)}</p>
-            <button class="popup-btn" onclick="showDetail('${item.id}', '${type}')">Dettagli</button>
-            <button class="popup-btn" onclick="navigateTo(${item.latitudine}, ${item.longitudine})" style="margin-top: 5px; background: var(--primary-green);">Naviga</button>
-        </div>
-    `);
-
-    return marker;
-}
-
 function isValidCoordinate(lat, lng) {
     return !isNaN(lat) && !isNaN(lng) &&
            lat >= -90 && lat <= 90 &&

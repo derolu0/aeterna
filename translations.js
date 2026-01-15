@@ -1,115 +1,68 @@
-// ==========================================
-// FILE TRADUZIONI (translations.js)
-// ==========================================
-
 window.translations = {
     'it': {
-        'home_title': 'Fontane & Beverini',
-        'home_subtitle': "L'acqua pubblica a portata di app.<br>Fontane e beverini della città di Napoli,<br>sempre nel palmo della tua mano.",
-        'tab_home': 'Home',
-        'tab_fountains': 'Fontane',
-        'tab_drinkers': 'Beverini',
-        'tab_map': 'Mappa',
-        'tab_news': 'News',
-
-        'screen_fountains': 'Fontane',
-        'screen_drinkers': 'Beverini',
-        'screen_map': 'Mappa',
-        'screen_news': 'News',
+        'home_title': 'AETERNA',
+        'home_subtitle': "Lexicon in Motu.<br>Esplora Filosofi, Concetti e il Glossario filosofico<br>sempre nel palmo della tua mano.",
         
-        'subtitle_fountains': 'Scopri le fontane della città',
-        'subtitle_drinkers': 'Trova i beverini pubblici',
-        'subtitle_news': 'Ultime notizie sulle fontane',
+        // Menu Navigazione
+        'tab_home': 'Home',
+        'tab_fountains': 'Filosofi', // Ex Fontane
+        'tab_drinkers': 'Concetti',  // Ex Beverini
+        'tab_map': 'Mappa',
+        'tab_news': 'Glossario',     // Ex News
 
-        'search_placeholder': '🔍 Cerca...',
-        'map_search_placeholder': '🔍 Cerca indirizzo, luogo...',
+        // Titoli Schermate
+        'screen_fountains': 'Filosofi',
+        'screen_drinkers': 'Concetti',
+        'screen_map': 'Geografia del Pensiero',
+        'screen_news': 'Glossario',
+        
+        // Sottotitoli
+        'subtitle_fountains': 'L\'elenco dei 99 autori',
+        'subtitle_drinkers': 'Le parole chiave analizzate',
+        'subtitle_news': 'Definizioni tecniche (Arché, Dasein...)',
+
+        // Ricerca e Legenda
+        'search_placeholder': '🔍 Cerca autore o concetto...',
+        'map_search_placeholder': '🔍 Cerca luogo di nascita...',
         'legend_title': 'Legenda',
-        'legend_item_fountain': 'Fontana',
-        'legend_item_drinker': 'Beverini',
+        'legend_item_fountain': 'Filosofo',
+        'legend_item_drinker': 'Concetto',
         'legend_item_position': 'La tua posizione',
 
+        // Filtri (Stati)
         'filter_all': 'Tutti',
-        'filter_working': 'Funzionanti',
-        'filter_broken': 'Non Funzionanti',
-        'filter_maintenance': 'In Manutenzione',
+        'filter_working': 'Contemporaneo', // Ex Funzionante
+        'filter_broken': 'Classico',       // Ex Non Funzionante
+        'filter_maintenance': 'Moderno',   // Ex Manutenzione
 
-        'report_btn': 'Invia Segnalazione',
-        'info_btn': 'Info & Crediti',
-        'admin_btn': 'Area Riservata',
-        'navigate_btn': 'Naviga Verso',
-        'details_btn': 'Dettagli',
-        'switch_lang_label': 'Switch to English',
-        
-        'status_working': 'Funzionante',
-        'status_broken': 'Non Funzionante',
-        'status_maintenance': 'In Manutenzione',
+        // Etichette Variabili
+        'status_working': 'Contemporaneo',
+        'status_broken': 'Classico',
+        'status_maintenance': 'Moderno',
 
-        'label_year': 'Anno',
-        'label_history': 'Storia',
+        // Pulsanti e Label
+        'report_btn': 'Suggerisci Modifica',
+        'info_btn': 'Info & Progetto',
+        'admin_btn': 'Area Curatori',
+        'navigate_btn': 'Vedi Luogo',
+        'details_btn': 'Leggi Scheda',
         
-        // --- SEZIONE QR CODE & MODALI ---
-        'btn_qr': 'Condividi App',
-        'qr_title': 'Fai scaricare l\'App',
-        'qr_subtitle': 'Inquadra il codice con la fotocamera per installare ABC Napoli.',
+        // Campi Dettaglio (Mappatura)
+        'label_address': 'Luogo / Opera', // Ex Indirizzo
+        'label_year': 'Periodo',          // Ex Anno
+        'label_history': 'Pensiero',      // Ex Storico
+        
+        // Altro
+        'btn_qr': 'Condividi Aeterna',
+        'qr_title': 'Scarica Aeterna',
+        'qr_subtitle': 'Inquadra per accedere al Lexicon.',
         'btn_close': 'Chiudi',
-        // --- SMART INSTALL BANNER ---
-        'install_title': 'Installa ABC Napoli',
-        'install_subtitle': 'Per mappe offline e notifiche',
+        'install_title': 'Installa Aeterna',
+        'install_subtitle': 'Accesso rapido al sapere',
         'install_btn': 'Installa' 
     },
-   
+    // Puoi replicare la logica per 'en' se serve
     'en': {
-        'home_title': 'Fountains & Taps',
-        'home_subtitle': "Public water at your fingertips.<br>Discover Naples' monuments and drinking spots,<br>right from your phone.",
-        'tab_home': 'Home',
-        'tab_fountains': 'Fountains',
-        'tab_drinkers': 'Taps',
-        'tab_map': 'Map',
-        'tab_news': 'News',
-
-        'screen_fountains': 'Fountains',
-        'screen_drinkers': 'Taps',
-        'screen_map': 'Map',
-        'screen_news': 'News',
-
-        'subtitle_fountains': 'Discover the city fountains',
-        'subtitle_drinkers': 'Find public water taps',
-        'subtitle_news': 'Latest news about fountains',
-
-        'search_placeholder': '🔍 Search...',
-        'map_search_placeholder': '🔍 Search address, place...',
-        'legend_title': 'Legend',
-        'legend_item_fountain': 'Fountain',
-        'legend_item_drinker': 'Tap',
-        'legend_item_position': 'Your position',
-
-        'filter_all': 'All',
-        'filter_working': 'Working',
-        'filter_broken': 'Not Working',
-        'filter_maintenance': 'Maintenance',
-
-        'report_btn': 'Send Report',
-        'info_btn': 'Info & Credits',
-        'admin_btn': 'Restricted Area',
-        'navigate_btn': 'Navigate To',
-        'details_btn': 'Details',
-        'switch_lang_label': 'Passa a Italiano',
-
-        'status_working': 'Working',
-        'status_broken': 'Not Working',
-        'status_maintenance': 'Maintenance',
-
-        'label_year': 'Year',
-        'label_history': 'History',
-        
-        // --- QR CODE & MODALS SECTION ---
-        'btn_qr': 'Share App',
-        'qr_title': 'Get the App',
-        'qr_subtitle': 'Scan this code with your camera to install ABC Napoli.',
-        'btn_close': 'Close',
-        // --- SMART INSTALL BANNER ---
-        'install_title': 'Install ABC Napoli',
-        'install_subtitle': 'For offline maps and notifications',
-        'install_btn': 'Install'
+        // ... (versione inglese se necessaria)
     }
 };

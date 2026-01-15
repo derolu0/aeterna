@@ -22,7 +22,7 @@ async function reverseGeocode(lat, lng) {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18`,
         {
             headers: {
-                'User-Agent': 'FontaneBeveriniNapoliWorker/1.0'
+                'User-Agent': 'AeternaWorker/1.0'
             }
         }
     );

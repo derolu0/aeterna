@@ -434,20 +434,31 @@ body {
     line-height: 1.2;
 }
 
+/* Bottone FILOSOFI (Ex Fontane) -> BLU */
 .home-btn.fontane-btn {
-    border-left: 4px solid var(--primary-blue);
+    border-left: 4px solid #1e3a8a !important; 
+}
+.home-btn.fontane-btn .btn-icon {
+    color: #1e3a8a !important;
+    border: 2px solid rgba(30, 58, 138, 0.5) !important;
 }
 
+/* Bottone CONCETTI (Ex Beverini) -> SMERALDO (Per staccare dal viola del 'Moderno') */
 .home-btn.beverini-btn {
-    border-left: 4px solid var(--primary-green);
+    border-left: 4px solid #059669 !important;
+}
+.home-btn.beverini-btn .btn-icon {
+    color: #059669 !important;
+    border: 2px solid rgba(5, 150, 105, 0.5) !important;
 }
 
-.home-btn.mappa-btn {
-    border-left: 4px solid var(--primary-purple);
-}
-
+/* Bottone GLOSSARIO (Ex News) -> ARANCIONE BRUCIATO */
 .home-btn.news-btn {
-    border-left: 4px solid var(--primary-orange);
+    border-left: 4px solid #ea580c !important;
+}
+.home-btn.news-btn .btn-icon {
+    color: #ea580c !important;
+    border: 2px solid rgba(234, 88, 12, 0.5) !important;
 }
 
 @media (max-width: 380px) {
@@ -567,22 +578,23 @@ body {
     background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
 }
 
-#fontane-screen .app-header,
+/* --- 3. AGGIORNAMENTO HEADER (BARRE IN ALTO) --- */
+
+/* Header Filosofi e Dettaglio Filosofo -> Gradiente Blu */
+#fontane-screen .app-header, 
 #fontana-detail-screen .app-header {
-    background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
+    background: linear-gradient(135deg, #1e3a8a, #3b82f6) !important;
 }
 
-#beverini-screen .app-header,
+/* Header Concetti e Dettaglio Concetto -> Gradiente Smeraldo */
+#beverini-screen .app-header, 
 #beverino-detail-screen .app-header {
-    background: linear-gradient(135deg, var(--primary-green), #047857);
+    background: linear-gradient(135deg, #059669, #10b981) !important;
 }
 
-#mappa-screen .app-header {
-    background: linear-gradient(135deg, var(--primary-purple), #7c3aed);
-}
-
+/* Header Glossario -> Gradiente Arancione */
 #news-screen .app-header {
-    background: linear-gradient(135deg, var(--primary-orange), #d97706);
+    background: linear-gradient(135deg, #ea580c, #f97316) !important;
 }
 
 .back-btn {
@@ -679,17 +691,25 @@ body {
     color: white;
 }
 
-.tab-btn.active[data-target="home-screen"],
-.tab-btn.active[data-target="fontane-screen"] {
-    background: var(--primary-blue);
-}
+/* --- 4. AGGIORNAMENTO TAB BAR (MENU IN BASSO) --- */
 
-.tab-btn.active[data-target="beverini-screen"] {
-    background: var(--primary-green);
-}
+/* Icona e Sfondo Filosofi (Blu) */
+.tab-btn.active[data-target="fontane-screen"] { background-color: #1e3a8a !important; }
+.tab-btn[data-target="fontane-screen"] .tab-icon { color: #1e3a8a; }
 
-.tab-btn.active[data-target="mappa-screen"] {
-    background: var(--primary-purple);
+/* Icona e Sfondo Concetti (Smeraldo) */
+.tab-btn.active[data-target="beverini-screen"] { background-color: #059669 !important; }
+.tab-btn[data-target="beverini-screen"] .tab-icon { color: #059669; }
+
+/* Icona e Sfondo Glossario (Arancione) */
+.tab-btn.active[data-target="news-screen"] { background-color: #ea580c !important; }
+.tab-btn[data-target="news-screen"] .tab-icon { color: #ea580c; }
+
+/* --- 5. DETTAGLI VISIVI --- */
+
+/* Opacità icone di fallback */
+.empty-state-icon i, .image-fallback i {
+    opacity: 0.5;
 }
 
 .tab-btn.active[data-target="news-screen"] {
@@ -824,19 +844,30 @@ body {
     font-weight: 600;
 }
 
-.status-funzionante {
-    background: #d1fae5;
-    color: #065f46;
+/* --- NUOVI COLORI STATI AETERNA --- */
+
+/* STATO: CONTEMPORANEO (Ex Funzionante) -> BLU */
+.status-funzionante, 
+.filter-btn.funzionante {
+    background: #dbeafe !important;
+    color: #1e3a8a !important;
+    border: 1px solid #93c5fd !important;
 }
 
-.status-non-funzionante {
-    background: #fee2e2;
-    color: #991b1b;
+/* STATO: CLASSICO (Ex Non Funzionante) -> ORO/GIALLO */
+.status-non-funzionante, 
+.filter-btn.non-funzionante {
+    background: #fef9c3 !important;
+    color: #854d0e !important;
+    border: 1px solid #fde047 !important;
 }
 
-.status-manutenzione {
-    background: #fef3c7;
-    color: #92400e;
+/* STATO: MODERNO (Ex Manutenzione) -> VIOLA */
+.status-manutenzione, 
+.filter-btn.manutenzione {
+    background: #f3e8ff !important;
+    color: #6b21a8 !important;
+    border: 1px solid #d8b4fe !important;
 }
 
 .image-indicator {

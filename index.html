@@ -281,7 +281,7 @@
                 <form id="fontana-form" onsubmit="saveFontana(event)">
                     <input type="hidden" id="fontana-id">
                     <div class="form-group">
-                        <label for="fontana-nome">Nome</label>
+                        <label for="fontana-nome">Nome Filosofo:</label>
                         <input type="text" id="fontana-nome" required>
                     </div>
                     <div class="form-group">
@@ -292,7 +292,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-indirizzo">Indirizzo:</label>
+                        <label for="fontana-indirizzo">Luogo di Nascita / Opera:</label>
                         <div style="display: flex; gap: 10px; margin-bottom: 8px;">
                             <input type="text" id="fontana-indirizzo" required style="flex: 1;">
                             <button type="button" class="location-btn secondary" onclick="getCurrentLocationWithAddress('fontana')"
@@ -302,11 +302,11 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-stato">Stato:</label>
+                        <label for="fontana-stato">Epoca (Stato):</label>
                         <select id="fontana-stato" required>
-                            <option value="funzionante">Funzionante</option>
-                            <option value="non-funzionante">Non Funzionante</option>
-                            <option value="manutenzione">In Manutenzione</option>
+                            <option value="funzionante">Contemporaneo (1900-oggi) [Blu]</option>
+                            <option value="non-funzionante">Classico (Antico) [Oro]</option>
+                            <option value="manutenzione">Moderno (1500-1800) [Viola]</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -412,7 +412,7 @@
                 <form id="beverino-form" onsubmit="saveBeverino(event)">
                     <input type="hidden" id="beverino-id">
                     <div class="form-group">
-                        <label for="beverino-nome">Nome:</label>
+                        <label for="beverino-nome">Nome Concetto:</label>
                         <input type="text" id="beverino-nome" required>
                     </div>
                     <div class="form-group">
@@ -423,7 +423,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="beverino-indirizzo">Indirizzo:</label>
+                        <label for="beverino-indirizzo">Titolo Opera:</label>
                         <div style="display: flex; gap: 10px; margin-bottom: 8px;">
                             <input type="text" id="beverino-indirizzo" required style="flex: 1;">
                             <button type="button" class="location-btn secondary" onclick="getCurrentLocationWithAddress('beverino')"
@@ -433,12 +433,12 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="beverino-stato">Stato:</label>
+                        <label for="beverino-stato">Epoca (Stato):</label>
                         <select id="beverino-stato" required>
-                            <option value="funzionante">Funzionante</option>
-                            <option value="non-funzionante">Non Funzionante</option>
-                            <option value="manutenzione">In Manutenzione</option>
-                        </select>
+                            <option value="funzionante">Contemporaneo (1900-oggi) [Blu]</option>
+                            <option value="non-funzionante">Classico (Antico) [Oro]</option>
+                            <option value="manutenzione">Moderno (1500-1800) [Viola]</option>
+                         </select>
                     </div>
                     
                     <div class="form-group">
@@ -525,50 +525,59 @@
                     </div>
                 </div>
 
-                <h3>Aggiungi/Modifica News</h3>
+                <h3 class="admin-section-title">Gestione Glossario</h3>
                 <form id="news-form" onsubmit="saveNews(event)">
                     <input type="hidden" id="news-id">
+
                     <div class="form-group">
-                        <label for="news-titolo">Titolo:</label>
-                        <input type="text" id="news-titolo" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="news-titolo-en" style="color: #3b82f6; font-style: italic;">Titolo (Inglese)</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="text" id="news-titolo-en" placeholder="Title in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('news-titolo', 'news-titolo-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
+                        <label for="news-titolo">Termine (es. Arché):</label>
+                        <input type="text" id="news-titolo" required placeholder="Inserisci il termine filosofico">
                     </div>
 
                     <div class="form-group">
-                        <label for="news-contenuto">Contenuto:</label>
-                        <textarea id="news-contenuto" rows="4" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="news-contenuto-en" style="color: #3b82f6; font-style: italic;">Contenuto (Inglese)</label>
-                        <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="news-contenuto-en" rows="5" placeholder="Content in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('news-contenuto', 'news-contenuto-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
-                    </div>
+                         <label for="news-titolo-en" style="color: var(--primary-blue); font-style: italic;">Termine (Inglese)</label>
+                         <div style="display: flex; gap: 5px;">
+                             <input type="text" id="news-titolo-en" placeholder="Translation..." style="flex: 1;">
+                             <button type="button" class="admin-btn secondary" onclick="autoTranslate('news-titolo', 'news-titolo-en')" title="Traduci con AI">✨</button>
+                         </div>
+                     </div>
 
-                    <div class="form-group">
-                        <label for="news-data">Data:</label>
-                        <input type="date" id="news-data" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="news-categoria">Categoria:</label>
-                        <input type="text" id="news-categoria" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="news-fonte">Fonte:</label>
-                        <input type="text" id="news-fonte" required>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="admin-btn primary">Salva</button>
-                        <button type="button" class="admin-btn secondary" onclick="resetNewsForm()">Annulla</button>
-                    </div>
-                </form>
+                     <div class="form-group">
+                        <label for="news-contenuto">Definizione:</label>
+                        <textarea id="news-contenuto" rows="4" required placeholder="Scrivi la definizione tecnica..."></textarea>
+                     </div>
+
+                     <div class="form-group">
+                         <label for="news-contenuto-en" style="color: var(--primary-blue); font-style: italic;">Definizione (Inglese)</label>
+                         <div style="display: flex; gap: 5px; align-items: flex-start;">
+                             <textarea id="news-contenuto-en" rows="4" placeholder="English definition..." style="flex: 1;"></textarea>
+                             <button type="button" class="admin-btn secondary" onclick="autoTranslate('news-contenuto', 'news-contenuto-en')" style="padding: 10px;" title="Traduci con AI">✨</button>
+                         </div>
+                     </div>
+
+                     <div class="form-group">
+                         <div style="display: flex; gap: 15px;">
+                         <div style="flex: 1;">
+                             <label for="news-data">Data:</label>
+                             <input type="date" id="news-data" required>
+                         </div>
+                         <div style="flex: 1;">
+                             <label for="news-categoria">Categoria:</label>
+                             <input type="text" id="news-categoria" placeholder="es. Metafisica">
+                         </div>
+                     </div>
+                 </div>
+
+                 <div class="form-group">
+                     <label for="news-fonte">Riferimento / Autore:</label>
+                     <input type="text" id="news-fonte" required placeholder="es. Aristotele, Libro V">
+                 </div>
+
+                 <div class="form-actions">
+                     <button type="submit" class="admin-btn primary">Salva Definizione</button>
+                     <button type="button" class="admin-btn secondary" onclick="resetNewsForm()">Annulla</button>
+                 </div>
+             </form>
 
                 <div class="admin-table-actions" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
                     <button id="btn-delete-sel-news" class="delete-selected-btn" onclick="deleteSelectedItems('news')" disabled>
@@ -876,22 +885,25 @@
             <div class="home-buttons">
                 <div class="button-row">
                     <button class="home-btn fontane-btn" onclick="showScreen('fontane-screen')">
-                        <span class="btn-icon"><i class="fas fa-monument"></i></span>
-                        <span class="btn-text" id="nav-fontane">Fontane</span>
+                        <span class="btn-icon"><i class="fas fa-user-graduate"></i></span>
+                        <span class="btn-text" id="nav-fontane">Filosofi</span>
                     </button>
+                    
                     <button class="home-btn beverini-btn" onclick="showScreen('beverini-screen')">
-                        <span class="btn-icon"><i class="fas fa-faucet"></i></span>
-                        <span class="btn-text" id="nav-beverini">Beverini</span>
+                        <span class="btn-icon"><i class="fas fa-lightbulb"></i></span>
+                        <span class="btn-text" id="nav-beverini">Concetti</span>
                     </button>
                 </div>
+                
                 <div class="button-row">
                     <button class="home-btn mappa-btn" onclick="showScreen('mappa-screen')">
                         <span class="btn-icon"><i class="fas fa-map-marked-alt"></i></span>
                         <span class="btn-text" id="nav-map">Mappa</span>
                     </button>
+                    
                     <button class="home-btn news-btn" onclick="showScreen('news-screen')">
-                        <span class="btn-icon"><i class="fas fa-newspaper"></i></span>
-                        <span class="btn-text" id="nav-news">News</span>
+                        <span class="btn-icon"><i class="fas fa-book"></i></span>
+                        <span class="btn-text" id="nav-news">Glossario</span>
                     </button>
                 </div>
             </div>
@@ -912,22 +924,19 @@
     
             <div class="content-area">
                 <div class="filter-buttons">
-                    <button class="filter-btn all active trans-filter-all" onclick="setFilter('fontane', 'all')">
+                    <button class="filter-btn all active trans-filter-all" onclick="setFilter('beverini', 'all')">
                         <i class="fas fa-layer-group"></i> Tutti
                     </button>
-            
-                    <button class="filter-btn funzionante trans-filter-working" onclick="setFilter('fontane', 'funzionante')">
-                        <i class="fas fa-check-circle"></i> Funzionanti
+                    <button class="filter-btn funzionante trans-filter-working" onclick="setFilter('beverini', 'funzionante')">
+                        <i class="fas fa-clock"></i> Contemporaneo
                     </button>
-            
-                    <button class="filter-btn non-funzionante trans-filter-broken" onclick="setFilter('fontane', 'non-funzionante')">
-                        <i class="fas fa-times-circle"></i> Non Funzionanti
+                    <button class="filter-btn non-funzionante trans-filter-broken" onclick="setFilter('beverini', 'non-funzionante')">
+                        <i class="fas fa-landmark"></i> Classico
                     </button>
-            
-                    <button class="filter-btn manutenzione trans-filter-maintenance" onclick="setFilter('fontane', 'manutenzione')">
-                        <i class="fas fa-tools"></i> In Manutenzione
+                    <button class="filter-btn manutenzione trans-filter-maintenance" onclick="setFilter('beverini', 'manutenzione')">
+                        <i class="fas fa-scroll"></i> Moderno
                     </button>
-                </div>
+               </div>
         
                <div class="items-grid" id="fontane-list">
                     <div class="loading">
