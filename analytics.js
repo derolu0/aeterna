@@ -1,4 +1,4 @@
-// Analytics Manager
+// Analytics Manager - Versione Filosofica
 class AnalyticsManager {
     constructor() {
         this.isInitialized = false;
@@ -98,7 +98,8 @@ class AnalyticsManager {
                     timestamp: Date.now(),
                     session_id: this.session.id,
                     user_id: this.user.id,
-                    device: this.user.device
+                    device: this.user.device,
+                    project: 'Aeterna Lexicon in Motu'
                 });
                 
                 return window.firebaseAnalytics;
@@ -109,6 +110,8 @@ class AnalyticsManager {
         
         return null;
     }
+    
+    // ============ EVENTI FILOSOFICI ============
     
     trackEvent(category, action, label = null, value = null, customParams = {}) {
         if (!this.config.trackingEnabled) return;
@@ -122,6 +125,7 @@ class AnalyticsManager {
             value,
             session_id: this.session.id,
             user_id: this.user.id,
+            project: 'Aeterna Lexicon',
             ...customParams
         };
         
@@ -152,6 +156,7 @@ class AnalyticsManager {
             session_id: this.session.id,
             user_id: this.user.id,
             page_views: ++this.session.pageViews,
+            project: 'Aeterna Lexicon',
             ...customParams
         };
         
@@ -164,6 +169,123 @@ class AnalyticsManager {
         this.logActivity(`Pagina vista: ${pageName}`, pageView);
         
         return pageView;
+    }
+    
+    trackFilosofoView(filosofoName, periodo, customParams = {}) {
+        const event = {
+            type: 'FILOSOFO_VIEW',
+            timestamp: Date.now(),
+            filosofo_name: filosofoName,
+            periodo: periodo,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            ...customParams
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        this.logActivity(`Filosofo visto: ${filosofoName} (${periodo})`, event);
+        
+        return event;
+    }
+    
+    trackOperaView(operaName, autore, anno, customParams = {}) {
+        const event = {
+            type: 'OPERA_VIEW',
+            timestamp: Date.now(),
+            opera_name: operaName,
+            autore: autore,
+            anno: anno,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            ...customParams
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        this.logActivity(`Opera vista: ${operaName} (${autore})`, event);
+        
+        return event;
+    }
+    
+    trackConcettoView(concettoName, periodo, customParams = {}) {
+        const event = {
+            type: 'CONCETTO_VIEW',
+            timestamp: Date.now(),
+            concetto_name: concettoName,
+            periodo: periodo,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            ...customParams
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        this.logActivity(`Concetto visto: ${concettoName} (${periodo})`, event);
+        
+        return event;
+    }
+    
+    trackMapInteraction(action, target, coordinates = null, customParams = {}) {
+        const event = {
+            type: 'MAP_INTERACTION',
+            timestamp: Date.now(),
+            action: action,
+            target: target,
+            coordinates: coordinates,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            ...customParams
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        this.logActivity(`Mappa: ${action} - ${target}`, event);
+        
+        return event;
+    }
+    
+    trackConceptMapInteraction(nodeType, nodeName, customParams = {}) {
+        const event = {
+            type: 'CONCEPT_MAP_INTERACTION',
+            timestamp: Date.now(),
+            node_type: nodeType,
+            node_name: nodeName,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            ...customParams
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        this.logActivity(`Mappa concettuale: ${nodeType} - ${nodeName}`, event);
+        
+        return event;
+    }
+    
+    trackSearch(query, category, resultsCount = 0, customParams = {}) {
+        const event = {
+            type: 'SEARCH',
+            timestamp: Date.now(),
+            query: query,
+            category: category,
+            results_count: resultsCount,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            ...customParams
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        this.logActivity(`Ricerca: ${query} (${category}) - ${resultsCount} risultati`, event);
+        
+        return event;
     }
     
     trackError(error, context, severity = 'medium', customParams = {}) {
@@ -180,6 +302,7 @@ class AnalyticsManager {
             severity,
             session_id: this.session.id,
             user_id: this.user.id,
+            project: 'Aeterna Lexicon',
             ...customParams
         };
         
@@ -235,7 +358,8 @@ class AnalyticsManager {
                         page_location: window.location.href,
                         page_path: window.location.pathname,
                         session_id: eventData.session_id,
-                        user_id: eventData.user_id
+                        user_id: eventData.user_id,
+                        project: eventData.project || 'Aeterna Lexicon'
                     });
                     break;
                     
@@ -250,6 +374,67 @@ class AnalyticsManager {
                     });
                     break;
                     
+                case 'FILOSOFO_VIEW':
+                    logEvent(window.firebaseAnalytics, 'filosofo_viewed', {
+                        filosofo_name: eventData.filosofo_name,
+                        filosofo_periodo: eventData.periodo,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id,
+                        project: 'Aeterna Lexicon'
+                    });
+                    break;
+                    
+                case 'OPERA_VIEW':
+                    logEvent(window.firebaseAnalytics, 'opera_viewed', {
+                        opera_name: eventData.opera_name,
+                        opera_autore: eventData.autore,
+                        opera_anno: eventData.anno,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id,
+                        project: 'Aeterna Lexicon'
+                    });
+                    break;
+                    
+                case 'CONCETTO_VIEW':
+                    logEvent(window.firebaseAnalytics, 'concetto_viewed', {
+                        concetto_name: eventData.concetto_name,
+                        concetto_periodo: eventData.periodo,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id,
+                        project: 'Aeterna Lexicon'
+                    });
+                    break;
+                    
+                case 'MAP_INTERACTION':
+                    logEvent(window.firebaseAnalytics, 'map_interaction', {
+                        map_action: eventData.action,
+                        map_target: eventData.target,
+                        map_lat: eventData.coordinates?.lat,
+                        map_lng: eventData.coordinates?.lng,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id
+                    });
+                    break;
+                    
+                case 'CONCEPT_MAP_INTERACTION':
+                    logEvent(window.firebaseAnalytics, 'concept_map_interaction', {
+                        node_type: eventData.node_type,
+                        node_name: eventData.node_name,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id
+                    });
+                    break;
+                    
+                case 'SEARCH':
+                    logEvent(window.firebaseAnalytics, 'search_performed', {
+                        search_query: eventData.query?.substring(0, 100) || '',
+                        search_category: eventData.category,
+                        search_results: eventData.results_count,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id
+                    });
+                    break;
+                    
                 case 'ERROR':
                     logEvent(window.firebaseAnalytics, 'error_occurred', {
                         error_name: eventData.error?.name || 'Unknown',
@@ -257,7 +442,8 @@ class AnalyticsManager {
                         error_context: eventData.context,
                         error_severity: eventData.severity,
                         session_id: eventData.session_id,
-                        user_id: eventData.user_id
+                        user_id: eventData.user_id,
+                        project: 'Aeterna Lexicon'
                     });
                     break;
                     
@@ -276,7 +462,8 @@ class AnalyticsManager {
                         user_id: eventData.user_id,
                         device_platform: eventData.device?.platform,
                         device_online: eventData.device?.online,
-                        app_version: '2.0.0'
+                        app_version: '2.0.0',
+                        project: 'Aeterna Lexicon'
                     });
                     break;
                     
@@ -285,7 +472,8 @@ class AnalyticsManager {
                         session_id: eventData.session_id,
                         user_id: eventData.user_id,
                         device_type: eventData.device?.userAgent?.includes('Mobile') ? 'mobile' : 'desktop',
-                        pwa_mode: window.matchMedia('(display-mode: standalone)').matches
+                        pwa_mode: window.matchMedia('(display-mode: standalone)').matches,
+                        project: eventData.project || 'Aeterna Lexicon'
                     });
                     break;
             }
@@ -301,7 +489,8 @@ class AnalyticsManager {
             session_id: this.session.id,
             user_id: this.user.id,
             device: this.user.device,
-            app_version: '2.0.0'
+            app_version: '2.0.0',
+            project: 'Aeterna Lexicon'
         };
         
         this.queue.push(sessionEvent);
@@ -319,7 +508,8 @@ class AnalyticsManager {
             user_id: this.user.id,
             duration: sessionDuration,
             page_views: this.session.pageViews,
-            events: this.session.events
+            events: this.session.events,
+            project: 'Aeterna Lexicon'
         };
         
         this.queue.push(sessionEvent);
@@ -377,7 +567,8 @@ class AnalyticsManager {
                 session_id: this.session.id,
                 user_id: this.user.id,
                 device: this.user.device,
-                source: 'analytics_js'
+                source: 'analytics_js',
+                project: 'Aeterna Lexicon'
             };
             
             const analyticsRef = collection(window.db, 'analytics');
@@ -529,7 +720,8 @@ class AnalyticsManager {
                 timestamp: new Date().toISOString(),
                 description: description,
                 data: data,
-                session_id: this.session.id
+                session_id: this.session.id,
+                project: 'Aeterna Lexicon'
             };
             
             const activities = JSON.parse(localStorage.getItem('analytics_activities') || '[]');
@@ -566,6 +758,15 @@ class AnalyticsManager {
         // Page views oggi
         const pageViews = todayEvents.filter(event => event.type === 'PAGE_VIEW').length;
         
+        // Filosofi visti oggi
+        const filosofiViews = todayEvents.filter(event => event.type === 'FILOSOFO_VIEW').length;
+        
+        // Opere viste oggi
+        const opereViews = todayEvents.filter(event => event.type === 'OPERA_VIEW').length;
+        
+        // Concetti visti oggi
+        const concettiViews = todayEvents.filter(event => event.type === 'CONCETTO_VIEW').length;
+        
         // Performance media
         const avgPageLoad = this.metrics.pageLoadTimes.length > 0 ? 
             this.metrics.pageLoadTimes.reduce((a, b) => a + b, 0) / this.metrics.pageLoadTimes.length : 0;
@@ -589,6 +790,18 @@ class AnalyticsManager {
                 total: allEvents.filter(e => e.type === 'PAGE_VIEW').length,
                 session: this.session.pageViews
             },
+            filosofiViews: {
+                today: filosofiViews,
+                total: allEvents.filter(e => e.type === 'FILOSOFO_VIEW').length
+            },
+            opereViews: {
+                today: opereViews,
+                total: allEvents.filter(e => e.type === 'OPERA_VIEW').length
+            },
+            concettiViews: {
+                today: concettiViews,
+                total: allEvents.filter(e => e.type === 'CONCETTO_VIEW').length
+            },
             errors: {
                 today: todayErrors.length,
                 total: allErrors.length,
@@ -611,7 +824,8 @@ class AnalyticsManager {
             user: {
                 id: this.user.id,
                 device: this.user.device
-            }
+            },
+            project: 'Aeterna Lexicon in Motu'
         };
     }
     
@@ -625,13 +839,14 @@ class AnalyticsManager {
             config: this.config,
             timestamp: new Date().toISOString(),
             user_id: this.user.id,
-            session_id: this.session.id
+            session_id: this.session.id,
+            project: 'Aeterna Lexicon in Motu'
         };
         
         const dataStr = JSON.stringify(allData, null, 2);
         const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
         
-        const exportFileDefaultName = `analytics_export_${new Date().toISOString().split('T')[0]}.json`;
+        const exportFileDefaultName = `analytics_aeterna_lexicon_${new Date().toISOString().split('T')[0]}.json`;
         
         const linkElement = document.createElement('a');
         linkElement.setAttribute('href', dataUri);
@@ -772,13 +987,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             platform: navigator.platform,
             screen_size: `${window.screen.width}x${window.screen.height}`,
             viewport_size: `${window.innerWidth}x${window.innerHeight}`,
-            service_worker: 'serviceWorker' in navigator
+            service_worker: 'serviceWorker' in navigator,
+            project: 'Aeterna Lexicon in Motu'
         });
         
         // Traccia prima pagina
         window.Analytics.trackPageView('app_start', {
             load_time: window.performance?.timing ? 
-                window.performance.timing.loadEventEnd - window.performance.timing.navigationStart : 0
+                window.performance.timing.loadEventEnd - window.performance.timing.navigationStart : 0,
+            project: 'Aeterna Lexicon'
         });
         
         console.log('[Analytics] Inizializzazione completata');
@@ -798,14 +1015,18 @@ if (originalShowScreen) {
             window.Analytics.trackEvent('navigation', 'screen_change', `${currentScreen}_to_${screenId}`, null, {
                 from_screen: currentScreen,
                 to_screen: screenId,
-                history_length: window.screenHistory?.length || 0
+                history_length: window.screenHistory?.length || 0,
+                project: 'Aeterna Lexicon'
             });
             
             window.Analytics.trackPageView(`screen_${screenId}`, {
                 screen_name: screenId,
-                screen_type: screenId.includes('detail') ? 'detail' : 
-                          screenId.includes('list') ? 'list' : 
-                          screenId === 'home-screen' ? 'home' : 'other'
+                screen_type: screenId.includes('filosofo') ? 'filosofo_detail' : 
+                          screenId.includes('opera') ? 'opera_detail' : 
+                          screenId.includes('concetto') ? 'concetto_detail' : 
+                          screenId === 'home-screen' ? 'home' : 
+                          screenId === 'mappa-concettuale-screen' ? 'concept_map' : 'list',
+                project: 'Aeterna Lexicon'
             });
         }
         
@@ -819,47 +1040,75 @@ document.addEventListener('DOMContentLoaded', () => {
         // Traccia click su pulsanti home
         document.querySelectorAll('.home-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                const btnType = this.className.includes('fontane') ? 'fontane' :
-                              this.className.includes('beverini') ? 'beverini' :
+                const btnType = this.className.includes('filosofi') ? 'filosofi' :
+                              this.className.includes('opere') ? 'opere' :
                               this.className.includes('mappa') ? 'mappa' :
-                              this.className.includes('news') ? 'news' : 'other';
+                              this.className.includes('concetti') ? 'concetti' :
+                              this.className.includes('network') ? 'concept_map' : 'other';
                 
                 if (window.Analytics) {
                     window.Analytics.trackEvent('home', 'button_click', btnType, null, {
-                        button_text: this.querySelector('.btn-text')?.textContent || 'N/A'
+                        button_text: this.querySelector('.btn-text')?.textContent || 'N/A',
+                        project: 'Aeterna Lexicon'
                     });
                 }
             });
         });
         
-        // Traccia click su elementi lista
+        // Traccia click su elementi lista filosofi
         document.addEventListener('click', function(e) {
             const gridItem = e.target.closest('.grid-item');
             const compactItem = e.target.closest('.compact-item');
-            const newsCard = e.target.closest('.news-card');
+            const concettoCard = e.target.closest('.concetto-card');
             
             if (gridItem && window.Analytics) {
                 const name = gridItem.querySelector('.item-name')?.textContent;
-                window.Analytics.trackEvent('list', 'item_click', 'grid_item', null, {
+                const periodo = gridItem.querySelector('.item-status')?.textContent;
+                window.Analytics.trackEvent('list', 'item_click', 'filosofo_item', null, {
                     item_name: name || 'N/A',
-                    item_type: 'fontana'
+                    item_type: 'filosofo',
+                    periodo: periodo || 'N/A',
+                    project: 'Aeterna Lexicon'
                 });
             }
             
             if (compactItem && window.Analytics) {
                 const name = compactItem.querySelector('.compact-item-name')?.textContent;
-                window.Analytics.trackEvent('list', 'item_click', 'compact_item', null, {
+                const autore = compactItem.querySelector('.compact-item-author')?.textContent;
+                window.Analytics.trackEvent('list', 'item_click', 'opera_item', null, {
                     item_name: name || 'N/A',
-                    item_type: 'beverino'
+                    item_type: 'opera',
+                    autore: autore || 'N/A',
+                    project: 'Aeterna Lexicon'
                 });
             }
             
-            if (newsCard && window.Analytics) {
-                const title = newsCard.querySelector('.news-title')?.textContent;
-                window.Analytics.trackEvent('news', 'card_click', null, null, {
-                    news_title: title || 'N/A'
+            if (concettoCard && window.Analytics) {
+                const title = concettoCard.querySelector('.concetto-title')?.textContent;
+                window.Analytics.trackEvent('list', 'item_click', 'concetto_item', null, {
+                    item_name: title || 'N/A',
+                    item_type: 'concetto',
+                    project: 'Aeterna Lexicon'
                 });
             }
+        });
+        
+        // Traccia ricerche
+        const searchInputs = document.querySelectorAll('.search-input, #map-search-input, #search-concetto');
+        searchInputs.forEach(input => {
+            let searchTimeout;
+            input.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (this.value.length > 2 && window.Analytics) {
+                        const category = this.id.includes('map') ? 'map' : 
+                                       this.id.includes('concetto') ? 'concept' : 'general';
+                        window.Analytics.trackSearch(this.value, category, 0, {
+                            project: 'Aeterna Lexicon'
+                        });
+                    }
+                }, 1000);
+            });
         });
     }, 2000);
 });

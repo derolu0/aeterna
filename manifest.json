@@ -1,13 +1,13 @@
 {
-  "name": "AETERNA",
-  "short_name": "AETERNA",
-  "description": "Lexicon in Motu. Esplora Filosofi, Concetti e il Glossario filosofico sempre nel palmo della tua mano.",
+  "name": "Aeterna Lexicon in Motu",
+  "short_name": "Lexicon Motu",
+  "description": "Dataset per l'analisi delle trasformazioni del linguaggio filosofico. Confronto tra pensiero classico e contemporaneo.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "background_color": "#f8fafc",
-  "theme_color": "#1e3a8a", 
+  "theme_color": "#3b82f6",
   "orientation": "portrait",
   "icons": [
     {
@@ -44,7 +44,7 @@
       "src": "./images/icona-avvio-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "./images/icona-avvio-384.png",
@@ -56,18 +56,52 @@
       "src": "./images/icona-avvio-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "books", "productivity"],
+  "screenshots": [
+    {
+      "src": "./images/screenshot-1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Dataset Filosofico - Panoramica"
+    },
+    {
+      "src": "./images/screenshot-2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Mappa Geografica dei Filosofi"
+    },
+    {
+      "src": "./images/screenshot-3.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "Mappa Concettuale delle Idee"
     }
   ],
   "shortcuts": [
     {
       "name": "Filosofi",
       "short_name": "Filosofi",
-      "description": "Esplora gli autori",
-      "url": "./index.html?screen=fontane",
+      "description": "Visualizza tutti i filosofi",
+      "url": "./index.html?screen=filosofi",
       "icons": [
         {
-          "src": "./images/shortcut-fontane.png",
+          "src": "./images/shortcut-filosofi.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Opere",
+      "short_name": "Opere",
+      "description": "Visualizza tutte le opere filosofiche",
+      "url": "./index.html?screen=opere",
+      "icons": [
+        {
+          "src": "./images/shortcut-opere.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -76,20 +110,20 @@
     {
       "name": "Concetti",
       "short_name": "Concetti",
-      "description": "Esplora le parole chiave",
-      "url": "./index.html?screen=beverini",
+      "description": "Analizza i concetti filosofici",
+      "url": "./index.html?screen=concetti",
       "icons": [
         {
-          "src": "./images/shortcut-beverini.png",
+          "src": "./images/shortcut-concetti.png",
           "sizes": "96x96",
           "type": "image/png"
         }
       ]
     },
     {
-      "name": "Geografia",
-      "short_name": "Mappa",
-      "description": "Geografia del Pensiero",
+      "name": "Mappa Geografica",
+      "short_name": "Mappa Geo",
+      "description": "Esplora filosofi sulla mappa",
       "url": "./index.html?screen=mappa",
       "icons": [
         {
@@ -100,9 +134,22 @@
       ]
     },
     {
-      "name": "Area Curatori",
+      "name": "Mappa Concettuale",
+      "short_name": "Mappa Conc",
+      "description": "Visualizza relazioni tra idee",
+      "url": "./index.html?screen=mappa-concettuale",
+      "icons": [
+        {
+          "src": "./images/shortcut-rete.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Pannello Admin",
       "short_name": "Admin",
-      "description": "Gestisci i contenuti",
+      "description": "Gestisci il dataset filosofico",
       "url": "./index.html?admin=true",
       "icons": [
         {
@@ -114,5 +161,63 @@
     }
   ],
   "prefer_related_applications": false,
-  "related_applications": []
+  "related_applications": [],
+  "protocol_handlers": [
+    {
+      "protocol": "web+lexicon",
+      "url": "./index.html?concept=%s"
+    },
+    {
+      "protocol": "web+filosofo",
+      "url": "./index.html?filosofo=%s"
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "name",
+      "text": "description",
+      "url": "link"
+    },
+    "enctype": "application/x-www-form-urlencoded"
+  },
+  "capture_links": "new-client",
+  "launch_handler": {
+    "client_mode": "focus-existing",
+    "route_to": "existing-client"
+  },
+  "edge_side_panel": {
+    "preferred_width": 360
+  },
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "accept": {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "application/vnd.ms-excel": [".xls"],
+        "text/csv": [".csv"],
+        "application/json": [".json"]
+      },
+      "launch_type": "single-client"
+    }
+  ],
+  "permissions": [
+    "clipboard-write"
+  ],
+  "id": "/index.html",
+  "lang": "it",
+  "dir": "ltr",
+  "scope_extensions": [
+    {
+      "origin": "https://aeterna-lexicon.web.app"
+    },
+    {
+      "origin": "https://aeterna-lexicon.firebaseapp.com"
+    }
+  ],
+  "handle_links": "preferred",
+  "shortcuts_lastupdate": "2026-01-01",
+  "version": "2.0.0",
+  "author": "Salvatore De Rosa - Project Work Filosofico"
 }

@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ABC Napoli F&B</title>
+    <title>Aeterna Lexicon in Motu</title>
     
-    <meta name="application-name" content="ABC Napoli F&B">
-    <meta name="description" content="Gestione intelligente delle risorse idriche cittadine">
+    <meta name="application-name" content="Aeterna Lexicon in Motu">
+    <meta name="description" content="Dataset per l'analisi delle trasformazioni del linguaggio filosofico">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="ABC Napoli F&B">
+    <meta name="apple-mobile-web-app-title" content="Aeterna Lexicon">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <meta name="theme-color" content="#3b82f6">
@@ -53,8 +53,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.js"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -62,7 +64,7 @@
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getAnalytics, setAnalyticsCollectionEnabled } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
         
-        // NUOVA CONFIGURAZIONE (Aeterna Lexicon in Motu)
+        // CONFIGURAZIONE FIREBASE ESISTENTE (Aeterna Lexicon in Motu)
         const firebaseConfig = {
             apiKey: "AIzaSyBo-Fz2fb8KHlvuZmb23psKDT6QvrJowB8",
             authDomain: "aeterna-lexicon-in-motu.firebaseapp.com",
@@ -132,7 +134,7 @@
     </div>
     <div id="splash-screen">
         <div class="splash-container">
-            <img src="./images/icona-avvio-splash.png" alt="ABC Napoli F&B" class="splash-image">
+            <img src="./images/icona-avvio-splash.png" alt="Aeterna Lexicon" class="splash-image">
             <div class="splash-progress">
                 <div class="splash-progress-bar"></div>
             </div>
@@ -195,56 +197,56 @@
             
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" data-tab="dashboard-admin">Dashboard</button>
-                <button class="admin-tab-btn" data-tab="fontane-admin">Fontane</button>
-                <button class="admin-tab-btn" data-tab="beverini-admin">Beverini</button>
-                <button class="admin-tab-btn" data-tab="news-admin">News</button>
+                <button class="admin-tab-btn" data-tab="filosofi-admin">Filosofi</button>
+                <button class="admin-tab-btn" data-tab="opere-admin">Opere</button>
+                <button class="admin-tab-btn" data-tab="concetti-admin">Concetti</button>
                 <button class="admin-tab-btn" data-tab="analytics-admin">Analytics</button>
                 <button class="admin-tab-btn" data-tab="config-admin">Configurazione</button>
             </div>
 
             <div class="admin-tab-content active" id="dashboard-admin">
                 <div class="dashboard-stats">
-                    <div class="stat-card fontane">
-                        <div class="stat-title">Fontane Totali</div>
-                        <div class="stat-value" id="total-fontane">0</div>
+                    <div class="stat-card filosofi">
+                        <div class="stat-title">Filosofi Totali</div>
+                        <div class="stat-value" id="total-filosofi">0</div>
                         <div class="stat-details">
                             <div class="stat-detail">
-                                <div class="detail-value status-funzionante" id="fontane-funzionanti">0</div>
-                                <div class="detail-label">Funzionanti</div>
+                                <div class="detail-value status-funzionante" id="filosofi-classici">0</div>
+                                <div class="detail-label">Classici</div>
                             </div>
                             <div class="stat-detail">
-                                <div class="detail-value status-non-funzionante" id="fontane-non-funzionanti">0</div>
-                                <div class="detail-label">Non Funzionanti</div>
+                                <div class="detail-value status-non-funzionante" id="filosofi-contemporanei">0</div>
+                                <div class="detail-label">Contemporanei</div>
                             </div>
                             <div class="stat-detail">
-                                <div class="detail-value status-manutenzione" id="fontane-manutenzione">0</div>
-                                <div class="detail-label">In Manutenzione</div>
+                                <div class="detail-value status-manutenzione" id="filosofi-altri">0</div>
+                                <div class="detail-label">Altri Periodi</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="stat-card beverini">
-                        <div class="stat-title">Beverini Totali</div>
-                        <div class="stat-value" id="total-beverini">0</div>
+                    <div class="stat-card opere">
+                        <div class="stat-title">Opere Totali</div>
+                        <div class="stat-value" id="total-opere">0</div>
                         <div class="stat-details">
                             <div class="stat-detail">
-                                <div class="detail-value status-funzionante" id="beverini-funzionanti">0</div>
-                                <div class="detail-label">Funzionanti</div>
+                                <div class="detail-value status-funzionante" id="opere-classiche">0</div>
+                                <div class="detail-label">Classiche</div>
                             </div>
                             <div class="stat-detail">
-                                <div class="detail-value status-non-funzionante" id="beverini-non-funzionanti">0</div>
-                                <div class="detail-label">Non Funzionanti</div>
+                                <div class="detail-value status-non-funzionante" id="opere-contemporanee">0</div>
+                                <div class="detail-label">Contemporanee</div>
                             </div>
                             <div class="stat-detail">
-                                <div class="detail-value status-manutenzione" id="beverini-manutenzione">0</div>
-                                <div class="detail-label">In Manutenzione</div>
+                                <div class="detail-value status-manutenzione" id="opere-altre">0</div>
+                                <div class="detail-label">Altre</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="stat-card news">
-                        <div class="stat-title">News Totali</div>
-                        <div class="stat-value" id="total-news">0</div>
+                    <div class="stat-card concetti">
+                        <div class="stat-title">Concetti Totali</div>
+                        <div class="stat-value" id="total-concetti">0</div>
                     </div>
                 </div>
 
@@ -260,346 +262,347 @@
                 </div>
             </div>
 
-            <div class="admin-tab-content" id="fontane-admin">
+            <div class="admin-tab-content" id="filosofi-admin">
                 <div class="import-export-section">
-                    <h4>Import/Export Fontane</h4>
+                    <h4>Import/Export Filosofi</h4>
                     <div class="import-options">
-                        <input type="file" id="import-fontane-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('fontane', this.files)">
-                        <button class="admin-btn secondary" onclick="document.getElementById('import-fontane-file').click()">
-                            <i class="fas fa-file-import"></i> Importa Fontane
+                        <input type="file" id="import-filosofi-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('filosofi', this.files)">
+                        <button class="admin-btn secondary" onclick="document.getElementById('import-filosofi-file').click()">
+                            <i class="fas fa-file-import"></i> Importa Filosofi
                         </button>
-                        <button class="admin-btn secondary" onclick="exportDataToExcel('fontane')">
-                            <i class="fas fa-file-export"></i> Esporta Fontane
+                        <button class="admin-btn secondary" onclick="exportDataToExcel('filosofi')">
+                            <i class="fas fa-file-export"></i> Esporta Filosofi
                         </button>
-                        <button class="admin-btn secondary" onclick="downloadTemplate('fontane')">
-                            <i class="fas fa-download"></i> Template Fontane
+                        <button class="admin-btn secondary" onclick="downloadTemplate('filosofi')">
+                            <i class="fas fa-download"></i> Template Filosofi
                         </button>
                     </div>
                 </div>
 
-                <h3>Aggiungi/Modifica Fontana</h3>
-                <form id="fontana-form" onsubmit="saveFontana(event)">
-                    <input type="hidden" id="fontana-id">
+                <h3>Aggiungi/Modifica Filosofo</h3>
+                <form id="filosofo-form" onsubmit="saveFilosofo(event)">
+                    <input type="hidden" id="filosofo-id">
                     <div class="form-group">
-                        <label for="fontana-nome">Nome Filosofo:</label>
-                        <input type="text" id="fontana-nome" required>
+                        <label for="filosofo-nome">Nome Completo</label>
+                        <input type="text" id="filosofo-nome" required>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-nome-en" style="color: #3b82f6; font-style: italic;">Nome (Inglese)</label>
+                        <label for="filosofo-nome-en" style="color: #3b82f6; font-style: italic;">Nome (Inglese)</label>
                         <div style="display: flex; gap: 5px;">
-                            <input type="text" id="fontana-nome-en" placeholder="Name in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('fontana-nome', 'fontana-nome-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
+                            <input type="text" id="filosofo-nome-en" placeholder="Name in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
+                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('filosofo-nome', 'filosofo-nome-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-indirizzo">Luogo di Nascita / Opera:</label>
-                        <div style="display: flex; gap: 10px; margin-bottom: 8px;">
-                            <input type="text" id="fontana-indirizzo" required style="flex: 1;">
-                            <button type="button" class="location-btn secondary" onclick="getCurrentLocationWithAddress('fontana')"
-                                    title="Usa la posizione corrente per coordinate e indirizzo">
-                                <i class="fas fa-location-arrow"></i> Rileva Automatico
-                            </button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="fontana-stato">Epoca (Stato):</label>
-                        <select id="fontana-stato" required>
-                            <option value="funzionante">Contemporaneo (1900-oggi) [Blu]</option>
-                            <option value="non-funzionante">Classico (Antico) [Oro]</option>
-                            <option value="manutenzione">Moderno (1500-1800) [Viola]</option>
+                        <label for="filosofo-periodo">Periodo:</label>
+                        <select id="filosofo-periodo" required>
+                            <option value="classico">Classico/Antico</option>
+                            <option value="medioevale">Medioevale</option>
+                            <option value="rinascimentale">Rinascimentale</option>
+                            <option value="moderno">Moderno</option>
+                            <option value="contemporaneo">Contemporaneo</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-anno">Anno:</label>
-                        <input type="text" id="fontana-anno">
+                        <label for="filosofo-scuola">Scuola/Corrente:</label>
+                        <input type="text" id="filosofo-scuola" required>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-descrizione">Descrizione</label>
-                        <textarea id="fontana-descrizione" rows="3"></textarea>
+                        <label for="filosofo-anni">Anni (Nascita-Morte):</label>
+                        <input type="text" id="filosofo-anni" placeholder="es: 1844-1900">
                     </div>
                     <div class="form-group">
-                        <label for="fontana-descrizione-en" style="color: #3b82f6; font-style: italic;">Descrizione (Inglese)</label>
+                        <label for="filosofo-biografia">Biografia</label>
+                        <textarea id="filosofo-biografia" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="filosofo-biografia-en" style="color: #3b82f6; font-style: italic;">Biografia (Inglese)</label>
                         <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="fontana-descrizione-en" rows="3" placeholder="Description in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('fontana-descrizione', 'fontana-descrizione-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
+                            <textarea id="filosofo-biografia-en" rows="3" placeholder="Biography in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
+                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('filosofo-biografia', 'filosofo-biografia-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-storico">Storico:</label>
-                        <textarea id="fontana-storico" rows="3"></textarea>
+                        <label for="filosofo-concetti">Concetti Principali:</label>
+                        <textarea id="filosofo-concetti" rows="3" placeholder="Separati da virgola"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-storico-en" style="color: #3b82f6; font-style: italic;">Storico (Inglese)</label>
-                        <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="fontana-storico-en" rows="3" placeholder="History in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('fontana-storico', 'fontana-storico-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
+                        <label for="filosofo-luogo-nascita">Luogo di Nascita:</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--light-text);">Città</label>
+                                <input type="text" id="filosofo-citta-nascita" placeholder="es: Königsberg">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--light-text);">Paese</label>
+                                <input type="text" id="filosofo-paese-nascita" placeholder="es: Germania">
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-latitudine">Coordinate:</label>
+                        <label for="filosofo-coordinate">Coordinate Geografiche:</label>
                         <div style="margin-bottom: 8px;">
                             <div class="location-buttons">
-                                <button type="button" class="location-btn primary" onclick="getCurrentLocationCoordinatesOnly('fontana')">
-                                    <i class="fas fa-location-arrow"></i> Solo Coordinate
+                                <button type="button" class="location-btn primary" onclick="cercaCoordinateFilosofo()">
+                                    <i class="fas fa-search-location"></i> Cerca Coordinate
                                 </button>
                             </div>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                             <div>
                                 <label style="font-size: 0.8rem; color: var(--light-text);">Latitudine</label>
-                                <input type="text" id="fontana-latitudine" required placeholder="40.8518">
+                                <input type="text" id="filosofo-latitudine" placeholder="54.7167">
                             </div>
                             <div>
                                 <label style="font-size: 0.8rem; color: var(--light-text);">Longitudine</label>
-                                <input type="text" id="fontana-longitudine" required placeholder="14.2681">
+                                <input type="text" id="filosofo-longitudine" placeholder="20.5">
                             </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="fontana-immagine">URL Immagine:</label>
-                        <input type="text" id="fontana-immagine">
+                        <label for="filosofo-immagine">URL Ritratto/Immagine:</label>
+                        <input type="text" id="filosofo-immagine" placeholder="https://...">
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="admin-btn primary">Salva</button>
-                        <button type="button" class="admin-btn secondary" onclick="resetFontanaForm()">Annulla</button>
+                        <button type="button" class="admin-btn secondary" onclick="resetFilosofoForm()">Annulla</button>
                     </div>
                 </form>
 
                 <div class="admin-table-actions" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
-                    <button id="btn-delete-sel-fontane" class="delete-selected-btn" onclick="deleteSelectedItems('fontane')" disabled>
+                    <button id="btn-delete-sel-filosofi" class="delete-selected-btn" onclick="deleteSelectedItems('filosofi')" disabled>
                         <i class="fas fa-trash"></i> Elimina Selezionati (0)
                     </button>
                 </div>
 
                 <div class="admin-table-container">
-                    <table class="admin-table" id="fontane-table">
+                    <table class="admin-table" id="filosofi-table">
                         <thead>
                             <tr>
                                 <th style="width: 40px; text-align: center;">
-                                    <input type="checkbox" onchange="toggleSelectAll('fontane', this)">
+                                    <input type="checkbox" onchange="toggleSelectAll('filosofi', this)">
                                 </th>
                                 <th>ID</th>
                                 <th>Nome</th>
-                                <th>Indirizzo</th>
-                                <th>Stato</th>
+                                <th>Periodo</th>
+                                <th>Scuola</th>
+                                <th>Anni</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
-                        <tbody id="fontane-table-body">
+                        <tbody id="filosofi-table-body">
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="admin-tab-content" id="beverini-admin">
+            <div class="admin-tab-content" id="opere-admin">
                 <div class="import-export-section">
-                    <h4>Import/Export Beverini</h4>
+                    <h4>Import/Export Opere</h4>
                     <div class="import-options">
-                        <input type="file" id="import-beverini-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('beverini', this.files)">
-                        <button class="admin-btn secondary" onclick="document.getElementById('import-beverini-file').click()">
-                            <i class="fas fa-file-import"></i> Importa Beverini
+                        <input type="file" id="import-opere-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('opere', this.files)">
+                        <button class="admin-btn secondary" onclick="document.getElementById('import-opere-file').click()">
+                            <i class="fas fa-file-import"></i> Importa Opere
                         </button>
-                        <button class="admin-btn secondary" onclick="exportDataToExcel('beverini')">
-                            <i class="fas fa-file-export"></i> Esporta Beverini
+                        <button class="admin-btn secondary" onclick="exportDataToExcel('opere')">
+                            <i class="fas fa-file-export"></i> Esporta Opere
                         </button>
-                        <button class="admin-btn secondary" onclick="downloadTemplate('beverini')">
-                            <i class="fas fa-download"></i> Template Beverini
+                        <button class="admin-btn secondary" onclick="downloadTemplate('opere')">
+                            <i class="fas fa-download"></i> Template Opere
                         </button>
                     </div>
                 </div>
 
-                <h3>Aggiungi/Modifica Beverino</h3>
-                <form id="beverino-form" onsubmit="saveBeverino(event)">
-                    <input type="hidden" id="beverino-id">
+                <h3>Aggiungi/Modifica Opera</h3>
+                <form id="opera-form" onsubmit="saveOpera(event)">
+                    <input type="hidden" id="opera-id">
                     <div class="form-group">
-                        <label for="beverino-nome">Nome Concetto:</label>
-                        <input type="text" id="beverino-nome" required>
+                        <label for="opera-titolo">Titolo:</label>
+                        <input type="text" id="opera-titolo" required>
                     </div>
                     <div class="form-group">
-                        <label for="beverino-nome-en" style="color: #3b82f6; font-style: italic;">Nome (Inglese)</label>
+                        <label for="opera-titolo-en" style="color: #3b82f6; font-style: italic;">Titolo (Inglese)</label>
                         <div style="display: flex; gap: 5px;">
-                            <input type="text" id="beverino-nome-en" placeholder="Name in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('beverino-nome', 'beverino-nome-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
+                            <input type="text" id="opera-titolo-en" placeholder="Title in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
+                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('opera-titolo', 'opera-titolo-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="beverino-indirizzo">Titolo Opera:</label>
-                        <div style="display: flex; gap: 10px; margin-bottom: 8px;">
-                            <input type="text" id="beverino-indirizzo" required style="flex: 1;">
-                            <button type="button" class="location-btn secondary" onclick="getCurrentLocationWithAddress('beverino')"
-                                    title="Usa la posizione corrente per coordinate e indirizzo">
-                                <i class="fas fa-location-arrow"></i> Rileva Automatico
-                            </button>
-                        </div>
+                        <label for="opera-autore">Autore:</label>
+                        <select id="opera-autore" required>
+                            <option value="">Seleziona un filosofo...</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="beverino-stato">Epoca (Stato):</label>
-                        <select id="beverino-stato" required>
-                            <option value="funzionante">Contemporaneo (1900-oggi) [Blu]</option>
-                            <option value="non-funzionante">Classico (Antico) [Oro]</option>
-                            <option value="manutenzione">Moderno (1500-1800) [Viola]</option>
-                         </select>
+                        <label for="opera-anno">Anno Pubblicazione:</label>
+                        <input type="text" id="opera-anno" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="opera-periodo">Periodo Storico:</label>
+                        <select id="opera-periodo" required>
+                            <option value="classico">Classico/Antico</option>
+                            <option value="medioevale">Medioevale</option>
+                            <option value="rinascimentale">Rinascimentale</option>
+                            <option value="moderno">Moderno</option>
+                            <option value="contemporaneo">Contemporaneo</option>
+                        </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="beverino-descrizione">Descrizione:</label>
-                        <textarea id="beverino-descrizione" rows="3"></textarea>
+                        <label for="opera-sintesi">Sintesi/Abstract:</label>
+                        <textarea id="opera-sintesi" rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="beverino-descrizione-en" style="color: #3b82f6; font-style: italic;">Descrizione (Inglese)</label>
+                        <label for="opera-sintesi-en" style="color: #3b82f6; font-style: italic;">Sintesi (Inglese)</label>
                         <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="beverino-descrizione-en" rows="3" placeholder="Description in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('beverino-descrizione', 'beverino-descrizione-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
+                            <textarea id="opera-sintesi-en" rows="3" placeholder="Summary in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
+                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('opera-sintesi', 'opera-sintesi-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="beverino-latitudine">Coordinate:</label>
-                        <div style="margin-bottom: 8px;">
-                            <div class="location-buttons">
-                                <button type="button" class="location-btn primary" onclick="getCurrentLocationCoordinatesOnly('beverino')">
-                                    <i class="fas fa-location-arrow"></i> Solo Coordinate
-                                </button>
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <label style="font-size: 0.8rem; color: var(--light-text);">Latitudine</label>
-                                <input type="text" id="beverino-latitudine" required placeholder="40.8518">
-                            </div>
-                            <div>
-                                <label style="font-size: 0.8rem; color: var(--light-text);">Longitudine</label>
-                                <input type="text" id="beverino-longitudine" required placeholder="14.2681">
-                            </div>
-                        </div>
+                        <label for="opera-concetti">Concetti Trattati:</label>
+                        <textarea id="opera-concetti" rows="3" placeholder="Separati da virgola"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="beverino-immagine">URL Immagine:</label>
-                        <input type="text" id="beverino-immagine">
+                        <label for="opera-lingua">Lingua Originale:</label>
+                        <input type="text" id="opera-lingua" value="Italiano">
+                    </div>
+                    <div class="form-group">
+                        <label for="opera-pdf">URL PDF/Testo Completo:</label>
+                        <input type="text" id="opera-pdf" placeholder="https://...">
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="admin-btn primary">Salva</button>
-                        <button type="button" class="admin-btn secondary" onclick="resetBeverinoForm()">Annulla</button>
+                        <button type="button" class="admin-btn secondary" onclick="resetOperaForm()">Annulla</button>
                     </div>
                 </form>
 
                 <div class="admin-table-actions" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
-                    <button id="btn-delete-sel-beverini" class="delete-selected-btn" onclick="deleteSelectedItems('beverini')" disabled>
+                    <button id="btn-delete-sel-opere" class="delete-selected-btn" onclick="deleteSelectedItems('opere')" disabled>
                         <i class="fas fa-trash"></i> Elimina Selezionati (0)
                     </button>
                 </div>
 
                 <div class="admin-table-container">
-                    <table class="admin-table" id="beverini-table">
+                    <table class="admin-table" id="opere-table">
                         <thead>
                             <tr>
                                 <th style="width: 40px; text-align: center;">
-                                    <input type="checkbox" onchange="toggleSelectAll('beverini', this)">
+                                    <input type="checkbox" onchange="toggleSelectAll('opere', this)">
                                 </th>
                                 <th>ID</th>
-                                <th>Nome</th>
-                                <th>Indirizzo</th>
-                                <th>Stato</th>
+                                <th>Titolo</th>
+                                <th>Autore</th>
+                                <th>Anno</th>
+                                <th>Periodo</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
-                        <tbody id="beverini-table-body">
+                        <tbody id="opere-table-body">
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="admin-tab-content" id="news-admin">
+            <div class="admin-tab-content" id="concetti-admin">
                 <div class="import-export-section">
-                    <h4>Import/Export News</h4>
+                    <h4>Import/Export Concetti</h4>
                     <div class="import-options">
-                        <input type="file" id="import-news-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('news', this.files)">
-                        <button class="admin-btn secondary" onclick="document.getElementById('import-news-file').click()">
-                            <i class="fas fa-file-import"></i> Importa News
+                        <input type="file" id="import-concetti-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('concetti', this.files)">
+                        <button class="admin-btn secondary" onclick="document.getElementById('import-concetti-file').click()">
+                            <i class="fas fa-file-import"></i> Importa Concetti
                         </button>
-                        <button class="admin-btn secondary" onclick="exportDataToExcel('news')">
-                            <i class="fas fa-file-export"></i> Esporta News
+                        <button class="admin-btn secondary" onclick="exportDataToExcel('concetti')">
+                            <i class="fas fa-file-export"></i> Esporta Concetti
                         </button>
-                        <button class="admin-btn secondary" onclick="downloadTemplate('news')">
-                            <i class="fas fa-download"></i> Template News
+                        <button class="admin-btn secondary" onclick="downloadTemplate('concetti')">
+                            <i class="fas fa-download"></i> Template Concetti
                         </button>
                     </div>
                 </div>
 
-                <h3 class="admin-section-title">Gestione Glossario</h3>
-                <form id="news-form" onsubmit="saveNews(event)">
-                    <input type="hidden" id="news-id">
-
+                <h3>Aggiungi/Modifica Concetto</h3>
+                <form id="concetto-form" onsubmit="saveConcetto(event)">
+                    <input type="hidden" id="concetto-id">
                     <div class="form-group">
-                        <label for="news-titolo">Termine (es. Arché):</label>
-                        <input type="text" id="news-titolo" required placeholder="Inserisci il termine filosofico">
+                        <label for="concetto-parola">Parola Chiave:</label>
+                        <input type="text" id="concetto-parola" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="concetto-parola-en" style="color: #3b82f6; font-style: italic;">Parola (Inglese)</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="concetto-parola-en" placeholder="Keyword in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
+                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('concetto-parola', 'concetto-parola-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
+                        </div>
                     </div>
 
                     <div class="form-group">
-                         <label for="news-titolo-en" style="color: var(--primary-blue); font-style: italic;">Termine (Inglese)</label>
-                         <div style="display: flex; gap: 5px;">
-                             <input type="text" id="news-titolo-en" placeholder="Translation..." style="flex: 1;">
-                             <button type="button" class="admin-btn secondary" onclick="autoTranslate('news-titolo', 'news-titolo-en')" title="Traduci con AI">✨</button>
-                         </div>
-                     </div>
+                        <label for="concetto-definizione">Definizione:</label>
+                        <textarea id="concetto-definizione" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="concetto-definizione-en" style="color: #3b82f6; font-style: italic;">Definizione (Inglese)</label>
+                        <div style="display: flex; gap: 5px; align-items: flex-start;">
+                            <textarea id="concetto-definizione-en" rows="5" placeholder="Definition in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
+                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('concetto-definizione', 'concetto-definizione-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
+                        </div>
+                    </div>
 
-                     <div class="form-group">
-                        <label for="news-contenuto">Definizione:</label>
-                        <textarea id="news-contenuto" rows="4" required placeholder="Scrivi la definizione tecnica..."></textarea>
-                     </div>
-
-                     <div class="form-group">
-                         <label for="news-contenuto-en" style="color: var(--primary-blue); font-style: italic;">Definizione (Inglese)</label>
-                         <div style="display: flex; gap: 5px; align-items: flex-start;">
-                             <textarea id="news-contenuto-en" rows="4" placeholder="English definition..." style="flex: 1;"></textarea>
-                             <button type="button" class="admin-btn secondary" onclick="autoTranslate('news-contenuto', 'news-contenuto-en')" style="padding: 10px;" title="Traduci con AI">✨</button>
-                         </div>
-                     </div>
-
-                     <div class="form-group">
-                         <div style="display: flex; gap: 15px;">
-                         <div style="flex: 1;">
-                             <label for="news-data">Data:</label>
-                             <input type="date" id="news-data" required>
-                         </div>
-                         <div style="flex: 1;">
-                             <label for="news-categoria">Categoria:</label>
-                             <input type="text" id="news-categoria" placeholder="es. Metafisica">
-                         </div>
-                     </div>
-                 </div>
-
-                 <div class="form-group">
-                     <label for="news-fonte">Riferimento / Autore:</label>
-                     <input type="text" id="news-fonte" required placeholder="es. Aristotele, Libro V">
-                 </div>
-
-                 <div class="form-actions">
-                     <button type="submit" class="admin-btn primary">Salva Definizione</button>
-                     <button type="button" class="admin-btn secondary" onclick="resetNewsForm()">Annulla</button>
-                 </div>
-             </form>
+                    <div class="form-group">
+                        <label for="concetto-esempio">Citazione/Estratto (Esempio):</label>
+                        <textarea id="concetto-esempio" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="concetto-autore">Autore Riferimento:</label>
+                        <select id="concetto-autore">
+                            <option value="">Seleziona un filosofo...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="concetto-opera">Opera di Riferimento:</label>
+                        <select id="concetto-opera">
+                            <option value="">Seleziona un'opera...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="concetto-periodo">Periodo Storico:</label>
+                        <select id="concetto-periodo" required>
+                            <option value="classico">Classico</option>
+                            <option value="contemporaneo">Contemporaneo</option>
+                            <option value="entrambi">Entrambi</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="concetto-evoluzione">Evoluzione Storica:</label>
+                        <textarea id="concetto-evoluzione" rows="3" placeholder="Come il concetto è cambiato nel tempo..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="admin-btn primary">Salva</button>
+                        <button type="button" class="admin-btn secondary" onclick="resetConcettoForm()">Annulla</button>
+                    </div>
+                </form>
 
                 <div class="admin-table-actions" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
-                    <button id="btn-delete-sel-news" class="delete-selected-btn" onclick="deleteSelectedItems('news')" disabled>
+                    <button id="btn-delete-sel-concetti" class="delete-selected-btn" onclick="deleteSelectedItems('concetti')" disabled>
                         <i class="fas fa-trash"></i> Elimina Selezionati (0)
                     </button>
                 </div>
 
                 <div class="admin-table-container">
-                    <table class="admin-table" id="news-table">
+                    <table class="admin-table" id="concetti-table">
                         <thead>
                             <tr>
                                 <th style="width: 40px; text-align: center;">
-                                    <input type="checkbox" onchange="toggleSelectAll('news', this)">
+                                    <input type="checkbox" onchange="toggleSelectAll('concetti', this)">
                                 </th>
                                 <th>ID</th>
-                                <th>Titolo</th>
-                                <th>Data</th>
-                                <th>Categoria</th>
+                                <th>Parola Chiave</th>
+                                <th>Definizione Breve</th>
+                                <th>Periodo</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
-                        <tbody id="news-table-body">
+                        <tbody id="concetti-table-body">
                         </tbody>
                     </table>
                 </div>
@@ -872,153 +875,198 @@
                 <div class="comune-logo"></div>
             </div>
             
-            <p class="home-welcome-animated">NAPOLI</p>
+            <p class="home-welcome-animated">AETERNA LEXICON</p>
     
-            <h1 class="home-title" id="home-title">Fontane & Beverini</h1>
+            <h1 class="home-title" id="home-title">in Motu</h1>
     
             <p class="home-subtitle" id="home-subtitle">
-                L'acqua pubblica a portata di app.
-                Fontane e beverini della città di Napoli, sempre nel palmo della tua mano.
+                Dataset per l'analisi delle trasformazioni<br>
+                del linguaggio filosofico tra classico e contemporaneo
             </p>   
             
     
             <div class="home-buttons">
                 <div class="button-row">
-                    <button class="home-btn fontane-btn" onclick="showScreen('fontane-screen')">
+                    <button class="home-btn filosofi-btn" onclick="showScreen('filosofi-screen')">
                         <span class="btn-icon"><i class="fas fa-user-graduate"></i></span>
-                        <span class="btn-text" id="nav-fontane">Filosofi</span>
+                        <span class="btn-text" id="nav-filosofi">Filosofi</span>
                     </button>
-                    
-                    <button class="home-btn beverini-btn" onclick="showScreen('beverini-screen')">
-                        <span class="btn-icon"><i class="fas fa-lightbulb"></i></span>
-                        <span class="btn-text" id="nav-beverini">Concetti</span>
+                    <button class="home-btn opere-btn" onclick="showScreen('opere-screen')">
+                        <span class="btn-icon"><i class="fas fa-book"></i></span>
+                        <span class="btn-text" id="nav-opere">Opere</span>
                     </button>
                 </div>
-                
                 <div class="button-row">
                     <button class="home-btn mappa-btn" onclick="showScreen('mappa-screen')">
                         <span class="btn-icon"><i class="fas fa-map-marked-alt"></i></span>
-                        <span class="btn-text" id="nav-map">Mappa</span>
+                        <span class="btn-text" id="nav-map">Mappa Geografica</span>
                     </button>
-                    
-                    <button class="home-btn news-btn" onclick="showScreen('news-screen')">
-                        <span class="btn-icon"><i class="fas fa-book"></i></span>
-                        <span class="btn-text" id="nav-news">Glossario</span>
+                    <button class="home-btn concetti-btn" onclick="showScreen('concetti-screen')">
+                        <span class="btn-icon"><i class="fas fa-brain"></i></span>
+                        <span class="btn-text" id="nav-concetti">Concetti</span>
+                    </button>
+                </div>
+                <!-- NUOVA RIGA PER MAPPA CONCETTUALE -->
+                <div class="button-row">
+                    <button class="home-btn network-btn" onclick="showScreen('mappa-concettuale-screen')">
+                        <span class="btn-icon"><i class="fas fa-project-diagram"></i></span>
+                        <span class="btn-text">Mappa Concettuale</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div class="screen list-screen" id="fontane-screen">
+        <!-- ============ SCHERMATA FILOSOFI ============ -->
+        <div class="screen list-screen" id="filosofi-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
         
-                <h1 class="screen-title" id="fountains-title">Fontane</h1>
+                <h1 class="screen-title" id="filosofi-title">Filosofi</h1>
         
-                <p class="screen-subtitle" id="fountains-subtitle">Scopri le fontane della città</p>
+                <p class="screen-subtitle" id="filosofi-subtitle">Esplora i filosofi della storia</p>
             </header>
     
             <div class="search-container">
-                <input type="text" id="search-input" class="search-input" placeholder="🔍 Cerca fontane..." onkeyup="debouncedFilter('fontane', this.value)">
+                <input type="text" id="search-input" class="search-input" placeholder="🔍 Cerca filosofi..." onkeyup="debouncedFilter('filosofi', this.value)">
             </div>
     
             <div class="content-area">
                 <div class="filter-buttons">
-                    <button class="filter-btn all active trans-filter-all" onclick="setFilter('beverini', 'all')">
+                    <button class="filter-btn all active" onclick="setFilter('filosofi', 'all')">
                         <i class="fas fa-layer-group"></i> Tutti
                     </button>
-                    <button class="filter-btn funzionante trans-filter-working" onclick="setFilter('beverini', 'funzionante')">
-                        <i class="fas fa-clock"></i> Contemporaneo
+            
+                    <button class="filter-btn funzionante" onclick="setFilter('filosofi', 'classico')">
+                        <i class="fas fa-columns"></i> Classici
                     </button>
-                    <button class="filter-btn non-funzionante trans-filter-broken" onclick="setFilter('beverini', 'non-funzionante')">
-                        <i class="fas fa-landmark"></i> Classico
+            
+                    <button class="filter-btn non-funzionante" onclick="setFilter('filosofi', 'contemporaneo')">
+                        <i class="fas fa-bolt"></i> Contemporanei
                     </button>
-                    <button class="filter-btn manutenzione trans-filter-maintenance" onclick="setFilter('beverini', 'manutenzione')">
-                        <i class="fas fa-scroll"></i> Moderno
+            
+                    <button class="filter-btn manutenzione" onclick="setFilter('filosofi', 'altro')">
+                        <i class="fas fa-history"></i> Altri Periodi
                     </button>
-               </div>
+                </div>
         
-               <div class="items-grid" id="fontane-list">
+               <div class="items-grid" id="filosofi-list">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                    <p>Caricamento fontane in corso...</p>
+                    <p>Caricamento filosofi in corso...</p>
                 </div>
-            </div> </div> </div> <div class="screen list-screen" id="beverini-screen">
-        <header class="app-header">
-            <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+            </div> </div> </div>
+
+        <!-- ============ SCHERMATA OPERE ============ -->
+        <div class="screen list-screen" id="opere-screen">
+            <header class="app-header">
+                <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
     
-            <h1 class="screen-title" id="drinkers-title">Beverini</h1>
+                <h1 class="screen-title" id="opere-title">Opere</h1>
     
-            <p class="screen-subtitle" id="drinkers-subtitle">Trova i beverini pubblici</p>
-        </header>
+                <p class="screen-subtitle" id="opere-subtitle">Scopri le opere filosofiche</p>
+            </header>
     
             <div class="search-container">
-                <input type="text" class="search-input" placeholder="🔍 Cerca beverini..." onkeyup="debouncedFilter('beverini', this.value)">
+                <input type="text" class="search-input" placeholder="🔍 Cerca opere..." onkeyup="debouncedFilter('opere', this.value)">
             </div>
     
             <div class="content-area">
                 <div class="filter-buttons">
-                    <button class="filter-btn all active trans-filter-all" onclick="setFilter('beverini', 'all')">
-                        <i class="fas fa-layer-group"></i> Tutti
+                    <button class="filter-btn all active" onclick="setFilter('opere', 'all')">
+                        <i class="fas fa-layer-group"></i> Tutte
                     </button>
             
-                    <button class="filter-btn funzionante trans-filter-working" onclick="setFilter('beverini', 'funzionante')">
-                        <i class="fas fa-check-circle"></i> Funzionanti
+                    <button class="filter-btn funzionante" onclick="setFilter('opere', 'classico')">
+                        <i class="fas fa-columns"></i> Classiche
                     </button>
             
-                    <button class="filter-btn non-funzionante trans-filter-broken" onclick="setFilter('beverini', 'non-funzionante')">
-                        <i class="fas fa-times-circle"></i> Non Funzionanti
+                    <button class="filter-btn non-funzionante" onclick="setFilter('opere', 'contemporaneo')">
+                        <i class="fas fa-bolt"></i> Contemporanee
                     </button>
             
-                    <button class="filter-btn manutenzione trans-filter-maintenance" onclick="setFilter('beverini', 'manutenzione')">
-                        <i class="fas fa-tools"></i> In Manutenzione
+                    <button class="filter-btn manutenzione" onclick="setFilter('opere', 'altro')">
+                        <i class="fas fa-history"></i> Altri Periodi
                     </button>
                 </div>
         
-                <div class="items-grid" id="beverini-list">
+                <div class="compact-items-list" id="opere-list">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                        <p>Caricamento beverini in corso...</p>
+                        <p>Caricamento opere in corso...</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="screen detail-screen" id="fontana-detail-screen">
+        <!-- ============ SCHERMATA CONCETTI ============ -->
+        <div class="screen list-screen" id="concetti-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                <h1 class="screen-title" id="fontana-detail-title">Fontana</h1>
+                
+                <h1 class="screen-title" id="concetti-title">Concetti</h1>
+                
+                <p class="screen-subtitle" id="concetti-subtitle">Analizza le parole chiave della filosofia</p>
             </header>
-            <div class="detail-content" id="fontana-detail-content">
+            
+            <div class="content-area">
+                <div class="concetti-container" id="concetti-list">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Caricamento concetti in corso...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ DETTAGLIO FILOSOFO ============ -->
+        <div class="screen detail-screen" id="filosofo-detail-screen">
+            <header class="app-header">
+                <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+                <h1 class="screen-title" id="filosofo-detail-title">Filosofo</h1>
+            </header>
+            <div class="detail-content" id="filosofo-detail-content">
                 <div class="loading">
                     <div class="loading-spinner"></div>
                 </div>
             </div>
-            
         </div>
 
-        <div class="screen detail-screen" id="beverino-detail-screen">
+        <!-- ============ DETTAGLIO OPERA ============ -->
+        <div class="screen detail-screen" id="opera-detail-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                <h1 class="screen-title" id="beverino-detail-title">Beverino</h1>
+                <h1 class="screen-title" id="opera-detail-title">Opera</h1>
             </header>
-            <div class="detail-content" id="beverino-detail-content">
+            <div class="detail-content" id="opera-detail-content">
                 <div class="loading">
                     <div class="loading-spinner"></div>
                 </div>
             </div>
-            
         </div>
 
+        <!-- ============ DETTAGLIO CONCETTO ============ -->
+        <div class="screen detail-screen" id="concetto-detail-screen">
+            <header class="app-header">
+                <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+                <h1 class="screen-title" id="concetto-detail-title">Concetto</h1>
+            </header>
+            <div class="detail-content" id="concetto-detail-content">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ MAPPA GEOGRAFICA (ESISTENTE MODIFICATA) ============ -->
         <div class="screen" id="mappa-screen">
             <header class="app-header" style="position: absolute; top: 0; left: 0; right: 0; z-index: 1000; padding: 15px 20px;">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                <h1 class="screen-title" id="map-title" style="font-size: 1.4rem;" data-i18n="screen_map">Mappa</h1>
+                <h1 class="screen-title" id="map-title" style="font-size: 1.4rem;">Mappa Geografica</h1>
             </header>
     
             <div class="map-search-container">
                 <div class="map-search-box">
-                    <input type="text" id="map-search-input" placeholder="🔍 Cerca indirizzo, luogo, punto interesse..."
+                    <input type="text" id="map-search-input" placeholder="🔍 Cerca filosofo o luogo di nascita..."
                            onkeypress="handleMapSearch(event)">
                     <button class="map-search-btn" onclick="performMapSearch()">
                         <i class="fas fa-search"></i>
@@ -1033,43 +1081,86 @@
                 <div class="legend-title" id="legend-title">Legenda</div>
         
                 <div class="legend-item">
-                    <div class="legend-icon icon-fontana"></div>
-                    <span id="legend-fontana">Fontana</span>
-             </div>
+                    <div class="legend-icon icon-filosofo-classico"></div>
+                    <span id="legend-filosofo-classico">Filosofo Classico</span>
+                </div>
         
-             <div class="legend-item">
-                 <div class="legend-icon icon-beverino"></div>
-                 <span id="legend-beverino">Beverini</span>
-             </div>
+                <div class="legend-item">
+                    <div class="legend-icon icon-filosofo-contemporaneo"></div>
+                    <span id="legend-filosofo-contemporaneo">Filosofo Contemporaneo</span>
+                </div>
         
-             <div class="legend-item">
-                 <div class="legend-icon icon-position"></div>
-                 <span id="legend-pos">La tua posizione</span>
-             </div>
-         </div>
+                <div class="legend-item">
+                    <div class="legend-icon icon-position"></div>
+                    <span id="legend-pos">La tua posizione</span>
+                </div>
+            </div>
     
-         <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; z-index: 1000;">
-             © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors
-         </div>
-     </div>
-     <div class="screen list-screen" id="news-screen">
+            <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; z-index: 1000;">
+                © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors
+            </div>
+        </div>
+
+        <!-- ============ NUOVA SCHERMATA: MAPPA CONCETTUALE ============ -->
+        <div class="screen" id="mappa-concettuale-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                
-                <h1 class="screen-title" id="news-title">News</h1>
-                
-                <p class="screen-subtitle" id="news-subtitle">Ultime notizie sulle fontane</p>
+                <h1 class="screen-title">Mappa Concettuale</h1>
+                <p class="screen-subtitle">Visualizza le connessioni tra filosofi e concetti</p>
             </header>
-            
+
             <div class="content-area">
-                <div class="news-container" id="news-list">
+                <!-- Controlli della mappa concettuale -->
+                <div class="concetto-controls">
+                    <div class="filter-buttons">
+                        <button class="filter-btn all active" onclick="filterConcetti('tutti')">
+                            <i class="fas fa-layer-group"></i> Tutti i Concetti
+                        </button>
+                        <button class="filter-btn funzionante" onclick="filterConcetti('classico')">
+                            <i class="fas fa-columns"></i> Periodo Classico
+                        </button>
+                        <button class="filter-btn non-funzionante" onclick="filterConcetti('contemporaneo')">
+                            <i class="fas fa-bolt"></i> Periodo Contemporaneo
+                        </button>
+                    </div>
+                    
+                    <div class="search-concetto">
+                        <input type="text" id="search-concetto" 
+                               placeholder="🔍 Cerca concetto (es: Verità, Potere...)"
+                               onkeyup="searchConcetti(this.value)">
+                    </div>
+                </div>
+
+                <!-- Container per la mappa concettuale -->
+                <div id="concetto-network-container" style="width: 100%; height: 600px; border-radius: 15px; overflow: hidden;">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                        <p>Caricamento news in corso...</p>
+                        <p>Caricamento mappa concettuale...</p>
+                    </div>
+                </div>
+
+                <!-- Legenda mappa concettuale -->
+                <div class="concetto-legend">
+                    <div class="legend-item">
+                        <div class="legend-circle filosofo"></div>
+                        <span>Filosofo</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-circle concetto"></div>
+                        <span>Concetto</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line classico"></div>
+                        <span>Relazione Classica</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-line contemporaneo"></div>
+                        <span>Relazione Contemporanea</span>
                     </div>
                 </div>
             </div>
         </div>
+
         <div id="segnalazioni-screen" class="screen">
             <div class="app-header" style="background: linear-gradient(135deg, #ef4444, #b91c1c);">
                 <button class="back-btn" onclick="showScreen('home-screen')">
@@ -1110,10 +1201,10 @@
             
             <div class="tab-bar">
                 <button class="tab-btn" onclick="showScreen('home-screen')"><span class="tab-icon"><i class="fas fa-home"></i></span><span>Home</span></button>
-                <button class="tab-btn" onclick="showScreen('fontane-screen')"><span class="tab-icon"><i class="fas fa-monument"></i></span><span>Fontane</span></button>
-                <button class="tab-btn" onclick="showScreen('beverini-screen')"><span class="tab-icon"><i class="fas fa-faucet"></i></span><span>Beverini</span></button>
+                <button class="tab-btn" onclick="showScreen('filosofi-screen')"><span class="tab-icon"><i class="fas fa-user-graduate"></i></span><span>Filosofi</span></button>
+                <button class="tab-btn" onclick="showScreen('opere-screen')"><span class="tab-icon"><i class="fas fa-book"></i></span><span>Opere</span></button>
                 <button class="tab-btn" onclick="showScreen('mappa-screen')"><span class="tab-icon"><i class="fas fa-map-marked-alt"></i></span><span>Mappa</span></button>
-                <button class="tab-btn" onclick="showScreen('news-screen')"><span class="tab-icon"><i class="fas fa-newspaper"></i></span><span>News</span></button>
+                <button class="tab-btn" onclick="showScreen('concetti-screen')"><span class="tab-icon"><i class="fas fa-brain"></i></span><span>Concetti</span></button>
             </div>
         </div>
 
@@ -1128,54 +1219,52 @@
             <div class="content-area" style="text-align: center; padding: 30px 20px;">
                 
                 <div style="margin-bottom: 30px;">
-                    <img src="./images/logo-app.png" alt="ABC Napoli" style="width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 10px;">
-                    <h2 style="font-size: 1.3rem; color: var(--dark-text); margin-bottom: 5px;">ABC Napoli F&B</h2>
-                    <p style="color: var(--light-text); font-size: 0.9rem;">v. 1.0.0</p>
+                    <img src="./images/logo-app.png" alt="Aeterna Lexicon" style="width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 10px;">
+                    <h2 style="font-size: 1.3rem; color: var(--dark-text); margin-bottom: 5px;">Aeterna Lexicon in Motu</h2>
+                    <p style="color: var(--light-text); font-size: 0.9rem;">v. 2.0.0</p>
                 </div>
 
                 <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;">
 
                 <div class="credit-section" style="margin-bottom: 25px;">
-                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">SOFTWARE DEVELOPMENT & DESIGN</h4>
-                    <p style="font-size: 0.8rem; color: #6b7280; font-style: italic; margin-bottom: 5px;">(Sviluppo tecnico, programmazione e design etico)</p>
+                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">PROJECT WORK</h4>
+                    <p style="font-size: 0.8rem; color: #6b7280; font-style: italic; margin-bottom: 5px;">Realizzazione di un dataset per l'interpretazione dei testi filosofici</p>
                     <p style="font-weight: 700; font-size: 1rem; color: #1f2937;">Salvatore De Rosa</p>
-                    <p style="font-size: 0.9rem; color: #4b5563;">Full Stack Developer & Ethical Design Lead</p>
+                    <p style="font-size: 0.9rem; color: #4b5563;">Dataset Filosofico & Software Development</p>
                 </div>
 
                 <div class="credit-section" style="margin-bottom: 25px;">
-                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">DATA MANAGEMENT & OPERATIONS</h4>
-                    <p style="font-size: 0.8rem; color: #6b7280; font-style: italic; margin-bottom: 5px;">(Gestione operativa della verifica dati sul territorio)</p>
+                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">DATA ANALYSIS & RESEARCH</h4>
+                    <p style="font-size: 0.8rem; color: #6b7280; font-style: italic; margin-bottom: 5px;">Analisi comparativa Classico vs Contemporaneo</p>
                     <p style="font-weight: 700; font-size: 1rem; color: #1f2937;">Luigi Di Nunzio</p>
-                    <p style="font-size: 0.9rem; color: #4b5563;">Data Analyst Strategy</p>
-                    <p style="font-size: 0.8rem; color: #6b7280;">(B.A. International Relations)</p>
+                    <p style="font-size: 0.9rem; color: #4b5563;">Data Analyst & Research Coordinator</p>
                 </div>
 
                 <div class="credit-section" style="margin-bottom: 30px;">
-                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">INSTITUTIONAL SUPERVISION</h4>
-                    <p style="font-size: 0.8rem; color: #6b7280; font-style: italic; margin-bottom: 5px;">(Coordinamento dell'iniziativa e supervisione)</p>
+                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">ACADEMIC SUPERVISION</h4>
+                    <p style="font-size: 0.8rem; color: #6b7280; font-style: italic; margin-bottom: 5px;">Supervisione accademica del project work</p>
                     <p style="font-weight: 700; font-size: 1rem; color: #1f2937;">Dott. Attilio De Pasquale</p>
-                    <p style="font-size: 0.9rem; color: #4b5563;">Head of Ufficio Supporto Tecnico</p>
-                    <p style="font-size: 0.85rem; color: #4b5563;">(Project Supervisor)</p>
+                    <p style="font-size: 0.9rem; color: #4b5563;">Supervisor Accademico</p>
                 </div>
 
                 <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;">
 
                 <div style="font-size: 0.75rem; color: #9ca3af; line-height: 1.5;">
-                    <p style="margin-bottom: 10px;">Applicativo software realizzato <strong>a titolo gratuito</strong> su iniziativa del <strong>gruppo di lavoro</strong> e <strong>concesso in licenza d'uso</strong> all'Azienda Speciale ABC Napoli per esclusive finalità di pubblico servizio.</p>
-                    <p style="font-weight: 600; color: #ef4444; margin-bottom: 15px;">Vietato l'uso commerciale.</p>
+                    <p style="margin-bottom: 10px;">Applicativo sviluppato per il <strong>Project Work Universitario</strong> sulla trasformazione del linguaggio filosofico.</p>
+                    <p style="font-weight: 600; color: #3b82f6; margin-bottom: 15px;">Dataset filosofico comparativo Classico/Contemporaneo.</p>
                     
                     <div style="background: #f3f4f6; padding: 12px; border-radius: 10px; margin-bottom: 15px;">
                         <p style="font-weight: 600; margin-bottom: 8px; color: #4b5563;">Technologies & Services:</p>
-                        <p>Leaflet Maps, OpenStreetMap Data</p>
-                        <p>Google Firebase, Google Fonts</p>
+                        <p>Leaflet Maps, OpenStreetMap Data, vis.js Networks</p>
+                        <p>Google Firebase, Google Analytics, Google Fonts</p>
                         <p>Dev & Version Control: <strong>GitHub</strong></p>
-                        <p>Image Hosting: <strong>ImgBB</strong></p>
+                        <p>Data Hosting: <strong>Firebase Firestore</strong></p>
                     </div>
                     
                     <p style="margin-top: 15px; line-height: 1.4;">
                         Software © 2026 <strong>Salvatore De Rosa</strong>.<br>
-                        &copy; 2026 <strong>Gruppo di Lavoro</strong>.<br>
-                        <span style="font-size: 0.85em; opacity: 0.8; font-weight: 400;">Concesso in licenza d'uso.</span>
+                        Dataset © 2026 <strong>Project Work Aeterna Lexicon</strong>.<br>
+                        <span style="font-size: 0.85em; opacity: 0.8; font-weight: 400;">Per uso accademico e di ricerca.</span>
                     </p>
                 </div>
 
@@ -1189,21 +1278,21 @@
                 <span class="tab-icon"><i class="fas fa-home"></i></span>
                 <span data-i18n="tab_home">Home</span>
             </button>
-            <button class="tab-btn" data-target="fontane-screen" onclick="showScreen('fontane-screen')">
-                <span class="tab-icon"><i class="fas fa-monument"></i></span>
-                <span data-i18n="tab_fountains">Fontane</span>
+            <button class="tab-btn" data-target="filosofi-screen" onclick="showScreen('filosofi-screen')">
+                <span class="tab-icon"><i class="fas fa-user-graduate"></i></span>
+                <span>Filosofi</span>
             </button>
-            <button class="tab-btn" data-target="beverini-screen" onclick="showScreen('beverini-screen')">
-                <span class="tab-icon"><i class="fas fa-faucet"></i></span>
-                <span data-i18n="tab_drinkers">Beverini</span>
+            <button class="tab-btn" data-target="opere-screen" onclick="showScreen('opere-screen')">
+                <span class="tab-icon"><i class="fas fa-book"></i></span>
+                <span>Opere</span>
             </button>
             <button class="tab-btn" data-target="mappa-screen" onclick="showScreen('mappa-screen')">
                 <span class="tab-icon"><i class="fas fa-map-marked-alt"></i></span>
-                <span data-i18n="tab_map">Mappa</span>
+                <span>Mappa</span>
             </button>
-            <button class="tab-btn" data-target="news-screen" onclick="showScreen('news-screen')">
-                <span class="tab-icon"><i class="fas fa-newspaper"></i></span>
-                <span data-i18n="tab_news">News</span>
+            <button class="tab-btn" data-target="concetti-screen" onclick="showScreen('concetti-screen')">
+                <span class="tab-icon"><i class="fas fa-brain"></i></span>
+                <span>Concetti</span>
             </button>
         </div>
 
@@ -1221,8 +1310,8 @@
                     <span id="lang-label">Switch to English</span>
                 </button>
 
-                <button class="modal-btn primary" onclick="openReportScreen()" style="background: #ef4444;">
-                    <i class="fas fa-bullhorn"></i> <span data-i18n="report_btn">Invia Segnalazione</span>
+                <button class="modal-btn primary" onclick="showScreen('mappa-concettuale-screen')" style="background: #8b5cf6;">
+                    <i class="fas fa-project-diagram"></i> <span>Mappa Concettuale</span>
                 </button>
                 
                 <button class="modal-btn primary" onclick="openCreditsScreen()" style="background: #3b82f6;">
@@ -1398,6 +1487,21 @@
             }
         }
         
+        // FUNZIONI PER MAPPA CONCETTUALE
+        function filterConcetti(periodo) {
+            console.log(`Filtra concetti per periodo: ${periodo}`);
+            // Implementa logica di filtraggio
+            showToast(`Filtro attivo: ${periodo}`, 'info');
+        }
+        
+        function searchConcetti(query) {
+            console.log(`Cerca concetto: ${query}`);
+            // Implementa ricerca
+            if (query.length > 2) {
+                showToast(`Ricerca: ${query}`, 'info');
+            }
+        }
+        
         document.querySelectorAll('.admin-tab-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const tabId = this.getAttribute('data-tab');
@@ -1475,8 +1579,8 @@
 
     <div id="smart-install-banner" class="install-banner" style="display: none;">
         <div class="install-text">
-            <span class="install-title" data-i18n="install_title">Installa ABC Napoli</span>
-            <span class="install-subtitle" data-i18n="install_subtitle">Per mappe offline e notifiche</span>
+            <span class="install-title" data-i18n="install_title">Installa Aeterna Lexicon</span>
+            <span class="install-subtitle" data-i18n="install_subtitle">Per dataset offline e analisi</span>
         </div>
         <button id="smart-install-btn" class="install-action-btn" data-i18n="install_btn">
             Installa

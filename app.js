@@ -1,11 +1,19 @@
 // ==========================================
-// SISTEMA MULTILINGUA - AGGIUNTA INIZIALE
+// AETERNA LEXICON IN MOTU - FILOSOFIA DATASET
+// Sostituisce app.js originale mantenendo accessi Firebase esistenti
 // ==========================================
 
 let activityChartInstance = null;
 let currentLanguage = localStorage.getItem('app_language') || 'it';
 let currentDetailId = null;
 let currentDetailType = null;
+
+// Firebase Collections (MODIFICATE per Filosofia)
+const COLLECTIONS = {
+    FILOSOFI: 'filosofi',      // ex-FONTANE
+    OPERE: 'opere',           // ex-BEVERINI
+    CONCETTI: 'concetti'      // ex-NEWS
+};
 
 // Funzione principale cambio lingua
 function toggleLanguage() {
@@ -18,9 +26,9 @@ function toggleLanguage() {
     updateLangButton();
     
     // 3. Ricarica liste
-    if (typeof loadFontane === 'function') loadFontane();
-    if (typeof loadBeverini === 'function') loadBeverini();
-    if (typeof loadNews === 'function') loadNews();
+    if (typeof loadFilosofi === 'function') loadFilosofi();
+    if (typeof loadOpere === 'function') loadOpere();
+    if (typeof loadConcetti === 'function') loadConcetti();
     
     // 4. Se c'è una scheda aperta, ricaricala tradotta!
     const activeScreen = document.querySelector('.screen.active');
@@ -42,42 +50,41 @@ function applyTranslations() {
     const t = window.translations[currentLanguage];
     if (!t) return;
 
-    // 1. Traduzione generica per elementi con data-i18n (es. Menu laterale)
+    // 1. Traduzione generica per elementi con data-i18n
     document.querySelectorAll('[data-i18n]').forEach(element => {
         const key = element.getAttribute('data-i18n');
         if (t[key]) element.textContent = t[key];
     });
 
-    // 2. HOME & MENU (Usa gli ID che hai messo nell'HTML)
+    // 2. HOME & MENU (Aggiornati per Filosofia)
     setText('home-title', t.home_title);
-
-    // MODIFICA QUESTA RIGA: sostituisci setText con innerHTML
+    
     const subtitleEl = document.getElementById('home-subtitle');
     if (subtitleEl) {
         subtitleEl.innerHTML = t.home_subtitle; 
     }
 
-    setText('nav-fontane', t.tab_fountains);
-    setText('nav-beverini', t.tab_drinkers);
+    setText('nav-filosofi', t.tab_filosophers);
+    setText('nav-opere', t.tab_works);
     setText('nav-map', t.tab_map);
-    setText('nav-news', t.tab_news);
-    setText('nav-btn-text', t.navigate_btn); // Bottone Naviga Verso
+    setText('nav-concetti', t.tab_concepts);
+    setText('nav-btn-text', t.navigate_btn);
 
-    // 3. TITOLI SCHERMATE (Fontane, Beverini, News)
-    setText('fountains-title', t.screen_fountains);
-    setText('fountains-subtitle', t.subtitle_fountains);
+    // 3. TITOLI SCHERMATE (Filosofi, Opere, Concetti)
+    setText('filosofi-title', t.screen_philosophers);
+    setText('filosofi-subtitle', t.subtitle_philosophers);
     
-    setText('drinkers-title', t.screen_drinkers);
-    setText('drinkers-subtitle', t.subtitle_drinkers);
+    setText('opere-title', t.screen_works);
+    setText('opere-subtitle', t.subtitle_works);
 
-    setText('news-title', t.screen_news);
-    setText('news-subtitle', t.subtitle_news);
+    setText('concetti-title', t.screen_concepts);
+    setText('concetti-subtitle', t.subtitle_concepts);
 
-    // 4. MAPPA & LEGENDA
+    // 4. MAPPA & LEGENDA (Aggiornata per Filosofi)
     setText('map-title', t.screen_map);
     setText('legend-title', t.legend_title);
-    setText('legend-fontana', t.legend_item_fountain);
-    setText('legend-beverino', t.legend_item_drinker);
+    setText('legend-filosofo', t.legend_item_philosopher);
+    setText('legend-opera', t.legend_item_work);
     setText('legend-pos', t.legend_item_position);
     
     // 5. PLACEHOLDER (Barre di ricerca)
@@ -87,24 +94,25 @@ function applyTranslations() {
     const listSearch = document.getElementById('search-input');
     if (listSearch) listSearch.placeholder = t.search_placeholder;
     
-    // Cerca anche la barra dei beverini (se ha una classe specifica o id diverso)
     document.querySelectorAll('.search-input').forEach(el => {
         el.placeholder = t.search_placeholder;
     });
 
-    // 6. FILTRI (Usa le classi speciali che abbiamo aggiunto)
+    // 6. FILTRI (Aggiornati per Filosofia)
     document.querySelectorAll('.trans-filter-all').forEach(el => {
-        // Mantiene l'icona se presente, cambia solo il testo
         updateFilterText(el, t.filter_all);
     });
-    document.querySelectorAll('.trans-filter-working').forEach(el => {
-        updateFilterText(el, t.filter_working);
+    document.querySelectorAll('.trans-filter-classic').forEach(el => {
+        updateFilterText(el, t.filter_classic);
     });
-    document.querySelectorAll('.trans-filter-broken').forEach(el => {
-        updateFilterText(el, t.filter_broken);
+    document.querySelectorAll('.trans-filter-contemporary').forEach(el => {
+        updateFilterText(el, t.filter_contemporary);
     });
-    document.querySelectorAll('.trans-filter-maintenance').forEach(el => {
-        updateFilterText(el, t.filter_maintenance);
+    document.querySelectorAll('.trans-filter-ontology').forEach(el => {
+        updateFilterText(el, t.filter_ontology);
+    });
+    document.querySelectorAll('.trans-filter-ethics').forEach(el => {
+        updateFilterText(el, t.filter_ethics);
     });
 
     // 7. Aggiorna bottone lingua nel menu
@@ -113,27 +121,22 @@ function applyTranslations() {
 
 // --- FUNZIONI DI SUPPORTO ---
 
-// Funzione sicura per impostare testo tramite ID
 function setText(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
 }
 
-// Funzione per aggiornare i filtri mantenendo l'icona <i>
 function updateFilterText(btn, newText) {
     const icon = btn.querySelector('i');
     if (icon) {
-        // Se c'è l'icona, riscriviamo: icona + spazio + testo
         btn.innerHTML = '';
         btn.appendChild(icon);
         btn.appendChild(document.createTextNode(' ' + newText));
     } else {
-        // Solo testo
         btn.textContent = newText;
     }
 }
 
-// Aggiorna icona e testo del pulsante nel menu
 function updateLangButton() {
     const flag = document.getElementById('lang-flag');
     const label = document.getElementById('lang-label');
@@ -148,7 +151,6 @@ function updateLangButton() {
     }
 }
 
-// Helper per recuperare testo dinamico (se manca inglese, usa italiano)
 function getLocalizedText(item, field) {
     if (currentLanguage === 'en') {
         return item[field + '_en'] || item[field] || '';
@@ -161,16 +163,15 @@ document.addEventListener('DOMContentLoaded', () => {
     applyTranslations();
     updateLangButton();
 });
+
 // ==========================================
 // SISTEMA CONTROLLO REMOTO (MANUTENZIONE & PRIVACY)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // Avvia il "radar" che ascolta i comandi da Firebase
     initRemoteControl();
 });
 
 function initRemoteControl() {
-    // Aspetta che Firebase sia pronto
     if (!window.db || !window.onSnapshot) {
         setTimeout(initRemoteControl, 500);
         return;
@@ -178,7 +179,6 @@ function initRemoteControl() {
 
     const configRef = window.doc(window.db, "config", "general_settings");
     
-    // ASCOLTO IN TEMPO REALE
     window.onSnapshot(configRef, (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
@@ -187,11 +187,9 @@ function initRemoteControl() {
             // 1. GESTIONE MANUTENZIONE
             const isMaintenance = data.maintenanceMode === true;
             
-            // Aggiorna interruttore admin
             const maintBtn = document.getElementById('global-maintenance-toggle');
             if (maintBtn) maintBtn.checked = isMaintenance;
 
-            // Se manutenzione attiva E non sono admin -> BLOCCA
             const maintenanceScreen = document.getElementById('maintenance-mode');
             if (maintenanceScreen) {
                 if (isMaintenance && !isAdmin) {
@@ -206,7 +204,6 @@ function initRemoteControl() {
             // 2. GESTIONE PRIVACY (KILL SWITCH)
             const isTrackingAllowed = data.analyticsEnabled !== false; 
             
-            // Aggiorna interruttore admin
             const privacyBtn = document.getElementById('global-privacy-toggle');
             const privacyText = document.getElementById('privacy-status-text');
             if (privacyBtn) privacyBtn.checked = isTrackingAllowed;
@@ -233,7 +230,6 @@ function initRemoteControl() {
 
 // --- FUNZIONI PER I PULSANTI ADMIN ---
 
-// Toggle Manutenzione
 async function toggleGlobalMaintenance(checkbox) {
     if (currentUserRole !== 'admin') { checkbox.checked = !checkbox.checked; return; }
     
@@ -246,7 +242,6 @@ async function toggleGlobalMaintenance(checkbox) {
     }
 }
 
-// Toggle Privacy (Analytics)
 async function toggleGlobalAnalytics(checkbox) {
     if (currentUserRole !== 'admin') { checkbox.checked = !checkbox.checked; return; }
     
@@ -263,7 +258,6 @@ async function toggleGlobalAnalytics(checkbox) {
     }
 }
 
-// Helper per salvare su Firebase
 async function updateConfig(key, value) {
     try {
         const configRef = window.doc(window.db, "config", "general_settings");
@@ -276,28 +270,25 @@ async function updateConfig(key, value) {
         showToast("Errore di connessione", "error");
     }
 }
+
 // ============================================
 // SERVICE WORKER FUNCTIONS - VERSIONE CORRETTA
 // ============================================
 
-// Registrazione Service Worker - VERSIONE MIGLIORATA
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
-        // Usa percorso corretto
         const swUrl = './sw.js';
         
         return navigator.serviceWorker.register(swUrl)
             .then(function(registration) {
                 console.log('✅ Service Worker registrato con successo:', registration.scope);
                 
-                // Controlla se è la prima registrazione
                 if (!navigator.serviceWorker.controller) {
                     console.log('🔄 Service Worker installato per la prima volta');
                 } else {
                     console.log('📱 Service Worker già attivo');
                 }
                 
-                // Controlla aggiornamenti
                 registration.addEventListener('updatefound', function() {
                     const newWorker = registration.installing;
                     console.log('🔄 Nuova versione Service Worker trovata');
@@ -307,10 +298,8 @@ function registerServiceWorker() {
                         
                         if (newWorker.state === 'installed') {
                             if (navigator.serviceWorker.controller) {
-                                // Nuovo content disponibile
                                 showToast('Nuova versione disponibile! Ricarica la pagina.', 'info', 10000);
                                 
-                                // Aggiungi pulsante per forzare aggiornamento
                                 setTimeout(() => {
                                     if (confirm('È disponibile un aggiornamento. Vuoi ricaricare l\'applicazione?')) {
                                         window.location.reload();
@@ -323,7 +312,6 @@ function registerServiceWorker() {
                     });
                 });
                 
-                // Verifica periodicamente aggiornamenti (ogni ora)
                 setInterval(() => {
                     registration.update();
                 }, 60 * 60 * 1000);
@@ -333,7 +321,6 @@ function registerServiceWorker() {
             .catch(function(error) {
                 console.error('❌ Errore durante la registrazione del Service Worker:', error);
                 
-                // Fallback: mostra messaggio utente friendly
                 if (error.message.includes('404')) {
                     console.warn('⚠️ Service Worker non trovato. Modalità offline non disponibile.');
                 }
@@ -346,7 +333,6 @@ function registerServiceWorker() {
     }
 }
 
-// Controlla stato Service Worker
 function checkServiceWorkerStatus() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration()
@@ -361,7 +347,6 @@ function checkServiceWorkerStatus() {
     }
 }
 
-// Forza aggiornamento Service Worker
 function forceServiceWorkerUpdate() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration()
@@ -374,7 +359,6 @@ function forceServiceWorkerUpdate() {
     }
 }
 
-// Pulisci cache Service Worker (per sviluppo)
 function clearServiceWorkerCache() {
     if ('serviceWorker' in navigator) {
         caches.keys().then(function(cacheNames) {
@@ -385,7 +369,6 @@ function clearServiceWorkerCache() {
             showToast('Cache Service Worker pulita', 'info');
         });
         
-        // Deregistra Service Worker
         navigator.serviceWorker.getRegistrations()
             .then(function(registrations) {
                 registrations.forEach(function(registration) {
@@ -396,7 +379,6 @@ function clearServiceWorkerCache() {
     }
 }
 
-// Verifica supporto API
 function checkServiceWorkerSupport() {
     const supports = {
         serviceWorker: 'serviceWorker' in navigator,
@@ -410,13 +392,6 @@ function checkServiceWorkerSupport() {
     console.log('Supporto API:', supports);
     return supports;
 }
-
-// Firebase Collections
-const COLLECTIONS = {
-    FONTANE: 'fontane',
-    BEVERINI: 'beverini',
-    NEWS: 'news'
-};
 
 // ============================================
 // GESTIONE ERRORI COMPLETA
@@ -453,7 +428,6 @@ class ValidationError extends AppError {
     }
 }
 
-// Error handler globale
 window.addEventListener('error', function(event) {
     console.error('Errore globale:', event.error);
     logErrorToAnalytics(event.error, 'GLOBAL_ERROR', {
@@ -471,14 +445,11 @@ window.addEventListener('unhandledrejection', function(event) {
     });
 });
 
-// Funzioni di gestione errori
 async function handleError(context, error, userMessage = null) {
     console.error(`[${context}]`, error);
     
-    // Log per analytics
     logErrorToAnalytics(error, context);
     
-    // Gestione specifica per tipo di errore
     if (error instanceof FirebaseError) {
         await handleFirebaseError(context, error);
     } else if (error instanceof NetworkError) {
@@ -489,12 +460,10 @@ async function handleError(context, error, userMessage = null) {
         await handleGenericError(context, error);
     }
     
-    // Mostra messaggio all'utente (ora disattivato in showToast)
     if (userMessage) {
         showToast(userMessage, 'error', 5000);
     }
     
-    // Log attività
     logActivity(`Errore in ${context}: ${error.message}`);
 }
 
@@ -566,44 +535,57 @@ async function handleGenericError(context, error) {
     showToast(userMessage, 'error');
 }
 
-// Funzioni di validazione
-function validateFontanaData(data) {
+// Funzioni di validazione per Filosofia
+function validateFilosofoData(data) {
     const errors = [];
     
     if (!data.nome || data.nome.trim().length < 2) {
-        errors.push(new ValidationError('Nome fontana richiesto (min 2 caratteri)', 'fontana-nome', data.nome));
+        errors.push(new ValidationError('Nome filosofo richiesto (min 2 caratteri)', 'filosofo-nome', data.nome));
     }
     
-    if (!data.indirizzo || data.indirizzo.trim().length < 5) {
-        errors.push(new ValidationError('Indirizzo richiesto', 'fontana-indirizzo', data.indirizzo));
+    if (!data.scuola || data.scuola.trim().length < 3) {
+        errors.push(new ValidationError('Scuola di pensiero richiesta', 'filosofo-scuola', data.scuola));
     }
     
-    if (!isValidCoordinate(data.latitudine, data.longitudine)) {
-        errors.push(new ValidationError('Coordinate non valide', 'fontana-latitudine', data.latitudine));
-    }
-    
-    if (!['funzionante', 'non-funzionante', 'manutenzione'].includes(data.stato)) {
-        errors.push(new ValidationError('Stato non valido', 'fontana-stato', data.stato));
+    if (!data.periodo || !['classico', 'contemporaneo', 'medioevale', 'moderno'].includes(data.periodo)) {
+        errors.push(new ValidationError('Periodo non valido', 'filosofo-periodo', data.periodo));
     }
     
     return errors;
 }
 
-function validateBeverinoData(data) {
+function validateOperaData(data) {
     const errors = [];
     
-    if (!data.nome || data.nome.trim().length < 2) {
-        errors.push(new ValidationError('Nome beverino richiesto', 'beverino-nome', data.nome));
+    if (!data.titolo || data.titolo.trim().length < 2) {
+        errors.push(new ValidationError('Titolo opera richiesto', 'opera-titolo', data.titolo));
     }
     
-    if (!isValidCoordinate(data.latitudine, data.longitudine)) {
-        errors.push(new ValidationError('Coordinate non valide', 'beverino-latitudine', data.latitudine));
+    if (!data.autore_id || data.autore_id.trim().length === 0) {
+        errors.push(new ValidationError('Autore richiesto', 'opera-autore', data.autore_id));
+    }
+    
+    if (!data.anno || isNaN(parseInt(data.anno))) {
+        errors.push(new ValidationError('Anno non valido', 'opera-anno', data.anno));
     }
     
     return errors;
 }
 
-// Wrapper per funzioni Firebase
+function validateConcettoData(data) {
+    const errors = [];
+    
+    if (!data.parola || data.parola.trim().length < 2) {
+        errors.push(new ValidationError('Parola chiave richiesta', 'concetto-parola', data.parola));
+    }
+    
+    if (!data.definizione || data.definizione.trim().length < 10) {
+        errors.push(new ValidationError('Definizione troppo breve (min 10 caratteri)', 'concetto-definizione', data.definizione));
+    }
+    
+    return errors;
+}
+
 async function safeFirebaseOperation(operation, context, ...args) {
     try {
         return await operation(...args);
@@ -620,11 +602,9 @@ async function safeFirebaseOperation(operation, context, ...args) {
 // PERFORMANCE OPTIMIZATIONS
 // ============================================
 
-// Cache per immagini
 const imageCache = new Map();
 const MAX_IMAGE_CACHE_SIZE = 50;
 
-// Lazy loading per immagini
 function setupLazyLoading() {
     if (typeof IntersectionObserver === 'undefined') return;
     
@@ -650,7 +630,6 @@ function setupLazyLoading() {
     });
 }
 
-// Caricamento immagini con cache
 function loadImageWithCache(imgElement, src) {
     if (imageCache.has(src)) {
         imgElement.src = imageCache.get(src);
@@ -674,7 +653,6 @@ function loadImageWithCache(imgElement, src) {
     img.src = src;
 }
 
-// Debounce migliorato
 function advancedDebounce(func, wait, immediate = false) {
     let timeout, result;
     const debounced = function(...args) {
@@ -709,7 +687,6 @@ let syncState = {
     retryCount: 0
 };
 
-// Inizializza offline sync
 function initializeOfflineSync() {
     if (!navigator.onLine) {
         enableOfflineMode();
@@ -722,31 +699,26 @@ function initializeOfflineSync() {
     loadSyncState();
 }
 
-// Abilita modalità offline
 function enableOfflineMode() {
     document.getElementById('offline-indicator').style.display = 'block';
     showToast('Modalità offline attiva. Le modifiche saranno sincronizzate dopo.', 'info', 5000);
 }
 
-// Disabilita modalità offline
 function disableOfflineMode() {
     document.getElementById('offline-indicator').style.display = 'none';
     triggerAutoSync();
 }
 
-// Gestisci evento online
 function handleOnline() {
     disableOfflineMode();
     showToast('Connessione ripristinata. Sincronizzazione in corso...', 'success');
     checkForPendingSync();
 }
 
-// Gestisci evento offline
 function handleOffline() {
     enableOfflineMode();
 }
 
-// Aggiungi operazione a coda sync
 async function addToSyncQueue(operation, collection, data, docId = null) {
     const syncItem = {
         operation,
@@ -781,7 +753,6 @@ async function addToSyncQueue(operation, collection, data, docId = null) {
     }
 }
 
-// Salva in coda sync locale
 async function saveToLocalSyncQueue(item) {
     const queue = await getLocalSyncQueue();
     queue.push(item);
@@ -795,20 +766,17 @@ async function saveToLocalSyncQueue(item) {
     saveSyncState();
 }
 
-// Ottieni coda sync locale
 async function getLocalSyncQueue() {
     const queue = localStorage.getItem('localSyncQueue');
     return queue ? JSON.parse(queue) : [];
 }
 
-// Salva sync item in localStorage
 function saveSyncItemToLocalStorage(item) {
     const pendingItems = JSON.parse(localStorage.getItem('pendingSyncItems') || '[]');
     pendingItems.push(item);
     localStorage.setItem('pendingSyncItems', JSON.stringify(pendingItems));
 }
 
-// Trigger sync automatica
 async function triggerAutoSync() {
     if (syncState.isSyncing) return;
     
@@ -863,7 +831,6 @@ async function triggerAutoSync() {
     }
 }
 
-// Sincronizza singolo elemento
 async function syncSingleItem(item) {
     const { doc, setDoc, deleteDoc } = await import(
         "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
@@ -887,14 +854,12 @@ async function syncSingleItem(item) {
     }
 }
 
-// Rimuovi dalla coda locale
 function removeFromLocalSyncQueue(itemId) {
     const queue = JSON.parse(localStorage.getItem('localSyncQueue') || '[]');
     const newQueue = queue.filter(item => item.id !== itemId);
     localStorage.setItem('localSyncQueue', JSON.stringify(newQueue));
 }
 
-// Programma retry
 function scheduleRetry() {
     const backoffDelay = Math.min(300000, Math.pow(2, syncState.retryCount) * 5000);
     
@@ -905,7 +870,6 @@ function scheduleRetry() {
     }, backoffDelay);
 }
 
-// Mostra risultati sync
 function showSyncResults(successCount, failCount) {
     if (successCount > 0 || failCount > 0) {
         const message = `Sincronizzazione: ${successCount} successi, ${failCount} falliti`;
@@ -918,7 +882,6 @@ function showSyncResults(successCount, failCount) {
     }
 }
 
-// Controlla stato sync
 async function checkSyncStatus() {
     if (!navigator.onLine) return;
     
@@ -929,7 +892,6 @@ async function checkSyncStatus() {
     }
 }
 
-// Verifica dati pendenti
 async function checkForPendingSync() {
     const localQueue = await getLocalSyncQueue();
     const pendingStorage = JSON.parse(localStorage.getItem('pendingSyncItems') || '[]');
@@ -946,17 +908,14 @@ async function checkForPendingSync() {
     }
 }
 
-// Aggiorna UI sync
 function updateSyncUI() {
     return;
 }
 
-// Salva stato sync
 function saveSyncState() {
     localStorage.setItem('syncState', JSON.stringify(syncState));
 }
 
-// Carica stato sync
 function loadSyncState() {
     const savedState = localStorage.getItem('syncState');
     if (savedState) {
@@ -965,7 +924,6 @@ function loadSyncState() {
     }
 }
 
-// Funzione per salvataggio dati offline
 function saveOfflineData(context, data) {
     try {
         const offlineData = JSON.parse(localStorage.getItem('offlineData') || '[]');
@@ -1013,7 +971,6 @@ function logErrorToAnalytics(error, context, additionalData = {}) {
     
     localStorage.setItem('analytics_errors', JSON.stringify(analyticsLog));
     
-    // Firebase Analytics se disponibile
     if (window.firebaseAnalytics) {
         window.firebaseAnalytics.logEvent('error_occurred', {
             error_context: context,
@@ -1044,15 +1001,16 @@ function logPerformanceMetric(name, duration) {
 // ============================================
 
 let appData = {
-    fontane: [],
-    beverini: [],
-    news: []
+    filosofi: [],    // ex-fontane
+    opere: [],       // ex-beverini
+    concetti: []     // ex-news
 };
 let currentLatLng = null;
 let screenHistory = ['home-screen'];
 let currentFilter = {
-    fontane: 'all',
-    beverini: 'all'
+    filosofi: 'all',
+    opere: 'all',
+    concetti: 'all'
 };
 let activityLog = [];
 let searchResults = [];
@@ -1061,7 +1019,6 @@ let map = null;
 let clusterGroup = null;
 let markers = new Map();
 
-// Variabili per la gestione del doppio tocco/uscita
 let backPressTimer = null;
 const EXIT_TOAST_TIMEOUT = 2000; 
 
@@ -1074,42 +1031,30 @@ let adminAuthTimeout = null;
 // ============================================
 let currentUserRole = 'editor'; // 'admin' (completo) o 'editor' (limitato)
 
-// (QUI SOTTO NON C'È PIÙ NESSUNA LISTA DI EMAIL - CORRETTO)
-
 // ============================================
-// NUOVA FUNZIONE CENTRALE PER RESET SCROLL (AGGIORNATA)
+// NUOVA FUNZIONE CENTRALE PER RESET SCROLL
 // ============================================
 function resetScroll() {
-    // 1. Resetta lo scroll della finestra principale
     window.scrollTo({
         top: 0,
         left: 0,
         behavior: 'instant'
     });
 
-    // 2. Resetta lo scroll delle aree di lista (Fontane/Beverini/News list)
     document.querySelectorAll('.content-area').forEach(area => {
         area.scrollTop = 0;
     });
 
-    // 3. Resetta lo scroll delle schede dettaglio (dove c'è l'immagine)
     document.querySelectorAll('.detail-content').forEach(detail => {
         detail.scrollTop = 0;
     });
 }
-// Rimosso: window.addEventListener('load', resetScroll);
-
 
 // ============================================
-// FUNZIONI ORIGINALI (MODIFICATE CON NUOVE FEATURES)
-// ============================================
-
-// Firebase Firestore functions
-// ============================================
-// SISTEMA DI NOTIFICHE E EVIDENZIAZIONE
+// SISTEMA DI NOTIFICHE E EVIDENZIAZIONE (AGGIORNATO)
 // ============================================
 function checkAndNotifyUpdates(newData, type) {
-    const storedData = localStorage.getItem('fontaneBeveriniData');
+    const storedData = localStorage.getItem('filosofiOpereData');
     if (!storedData) return; 
     
     const parsedData = JSON.parse(storedData);
@@ -1117,13 +1062,12 @@ function checkAndNotifyUpdates(newData, type) {
     
     if (oldList.length === 0) return; 
 
-    // Recupera o inizializza la lista delle evidenziazioni
-    let highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "fixed": []}');
+    let highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
 
     let newItemsCount = 0;
-    let fixedItemsCount = 0;
+    let updatedItemsCount = 0;
     let lastNewName = "";
-    let lastFixedName = "";
+    let lastUpdatedName = "";
 
     newData.forEach(newItem => {
         const existsOld = oldList.find(oldItem => oldItem.id === newItem.id);
@@ -1136,35 +1080,32 @@ function checkAndNotifyUpdates(newData, type) {
                 highlights.new.push(newItem.id);
             }
         } else {
-            // È RIPARATO? (Solo fontane/beverini)
-            if (type !== 'news') {
-                const wasBroken = ['non-funzionante', 'manutenzione'].includes(existsOld.stato);
-                const isWorking = newItem.stato === 'funzionante';
-                
-                if (wasBroken && isWorking) {
-                    fixedItemsCount++;
-                    lastFixedName = newItem.nome;
-                    if (!highlights.fixed.includes(newItem.id)) {
-                        highlights.fixed.push(newItem.id);
-                    }
+            // È AGGIORNATO? Controlla se modificato recentemente
+            const oldMod = existsOld.last_modified || '1970-01-01';
+            const newMod = newItem.last_modified || new Date().toISOString();
+            
+            if (new Date(newMod) > new Date(oldMod)) {
+                updatedItemsCount++;
+                lastUpdatedName = newItem.nome || newItem.titolo;
+                if (!highlights.updated.includes(newItem.id)) {
+                    highlights.updated.push(newItem.id);
                 }
             }
         }
     });
 
-    // Salva le evidenziazioni
     localStorage.setItem('app_highlights', JSON.stringify(highlights));
 
     // NOTIFICHE RAGGRUPPATE
     if (newItemsCount > 0) {
-        let title = type === 'news' ? '📰 Nuova Notizia' : '✨ Nuovo arrivo';
+        let title = type === 'concetti' ? '🧠 Nuovo Concetto' : type === 'opere' ? '📚 Nuova Opera' : '🎓 Nuovo Filosofo';
         let body = newItemsCount === 1 ? `È stato aggiunto: ${lastNewName}` : `Ci sono ${newItemsCount} nuovi elementi!`;
         sendSystemNotification(title, body);
     }
 
-    if (fixedItemsCount > 0) {
-        let title = '✅ Riparazione Completata';
-        let body = fixedItemsCount === 1 ? `${lastFixedName} è tornata in funzione!` : `${fixedItemsCount} punti acqua riparati!`;
+    if (updatedItemsCount > 0) {
+        let title = '📝 Aggiornamenti';
+        let body = updatedItemsCount === 1 ? `${lastUpdatedName} è stato aggiornato` : `${updatedItemsCount} elementi aggiornati!`;
         setTimeout(() => sendSystemNotification(title, body), 1000);
     }
 }
@@ -1184,19 +1125,22 @@ function sendSystemNotification(title, body) {
             new Notification(title, { body: body, icon: './images/icona-avvio-192.png' });
         }
     } else {
-        // Fallback Toast se notifiche negate
         showToast(`${title}: ${body}`, 'success', 5000);
     }
 }
+
+// ============================================
+// FUNZIONI FIREBASE - AGGOIRNATE PER FILOSOFIA
+// ============================================
 
 async function loadFirebaseData(type) {
     try {
         const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
         
         const collectionMap = {
-            'fontane': 'fontane',
-            'beverini': 'beverini',
-            'news': 'news'
+            'filosofi': 'filosofi',
+            'opere': 'opere',
+            'concetti': 'concetti'
         };
         
         const collectionName = collectionMap[type];
@@ -1206,40 +1150,61 @@ async function loadFirebaseData(type) {
         const data = [];
         snapshot.forEach(doc => {
             const docData = doc.data();
-            data.push({ 
+            let itemData = { 
                 id: doc.id, 
-                // Dati Comuni
-                nome: docData.nome || '',
-                nome_en: docData.nome_en || '', // NUOVO: Carica nome inglese
-                indirizzo: docData.indirizzo || '',
-                stato: docData.stato || 'funzionante',
-                latitudine: docData.latitudine || 0,
-                longitudine: docData.longitudine || 0,
-                immagine: docData.immagine || '',
-                
-                // Dati Fontane
-                anno: docData.anno || '',
-                descrizione: docData.descrizione || '',
-                descrizione_en: docData.descrizione_en || '', // NUOVO: Carica descrizione inglese
-                storico: docData.storico || '',
-                storico_en: docData.storico_en || '', // NUOVO: Carica storico inglese
-                
-                // Dati News
-                titolo: docData.titolo || '',
-                titolo_en: docData.titolo_en || '', // NUOVO
-                contenuto: docData.contenuto || '',
-                contenuto_en: docData.contenuto_en || '', // NUOVO
-                data: docData.data || new Date().toISOString().split('T')[0],
-                categoria: docData.categoria || '',
-                fonte: docData.fonte || '',
-                
                 last_modified: docData.last_modified || new Date().toISOString()
-            });
+            };
+            
+            if (type === 'filosofi') {
+                itemData = {
+                    ...itemData,
+                    nome: docData.nome || '',
+                    nome_en: docData.nome_en || '',
+                    scuola: docData.scuola || '',
+                    periodo: docData.periodo || 'classico',
+                    anni_vita: docData.anni_vita || '',
+                    luogo_nascita: docData.luogo_nascita || '',
+                    biografia: docData.biografia || '',
+                    biografia_en: docData.biografia_en || '',
+                    ritratto: docData.ritratto || '',
+                    opere_principali: docData.opere_principali || [],
+                    concetti_principali: docData.concetti_principali || [],
+                    coordinate: docData.coordinate || null
+                };
+            } else if (type === 'opere') {
+                itemData = {
+                    ...itemData,
+                    titolo: docData.titolo || '',
+                    titolo_en: docData.titolo_en || '',
+                    autore_id: docData.autore_id || '',
+                    autore_nome: docData.autore_nome || '',
+                    anno: docData.anno || '',
+                    periodo: docData.periodo || '',
+                    lingua: docData.lingua || '',
+                    sintesi: docData.sintesi || '',
+                    sintesi_en: docData.sintesi_en || '',
+                    pdf_url: docData.pdf_url || '',
+                    concetti: docData.concetti || []
+                };
+            } else if (type === 'concetti') {
+                itemData = {
+                    ...itemData,
+                    parola: docData.parola || '',
+                    parola_en: docData.parola_en || '',
+                    definizione: docData.definizione || '',
+                    definizione_en: docData.definizione_en || '',
+                    esempio_citazione: docData.esempio_citazione || '',
+                    autore_riferimento: docData.autore_riferimento || '',
+                    opera_riferimento: docData.opera_riferimento || '',
+                    periodo_storico: docData.periodo_storico || '',
+                    evoluzione: docData.evoluzione || ''
+                };
+            }
+            
+            data.push(itemData);
         });
         
-        // >>> CONTROLLO NOTIFICHE <<<
         checkAndNotifyUpdates(data, type);
-        // >>> FINE CONTROLLO <<<
 
         appData[type] = data;
         saveLocalData();
@@ -1295,8 +1260,8 @@ async function deleteFirebaseData(type, id) {
 // Local Storage functions
 function saveLocalData() {
     try {
-        localStorage.setItem('fontaneBeveriniData', JSON.stringify(appData));
-        localStorage.setItem('fontaneBeveriniLastSync', new Date().toISOString());
+        localStorage.setItem('filosofiOpereData', JSON.stringify(appData));
+        localStorage.setItem('filosofiOpereLastSync', new Date().toISOString());
     } catch (error) {
         console.error('Errore nel salvataggio locale:', error);
     }
@@ -1304,7 +1269,7 @@ function saveLocalData() {
 
 function loadLocalData(type = null) {
     try {
-        const savedData = localStorage.getItem('fontaneBeveriniData');
+        const savedData = localStorage.getItem('filosofiOpereData');
         if (savedData) {
             const parsedData = JSON.parse(savedData);
             if (type) {
@@ -1331,13 +1296,14 @@ function debounce(func, wait) {
     };
 }
 
-function getStatusText(stato) {
-    const statusMap = {
-        'funzionante': 'Contemporaneo',    // Era Funzionante
-        'non-funzionante': 'Classico',     // Era Non Funzionante
-        'manutenzione': 'Moderno'          // Era In Manutenzione
+function getPeriodoText(periodo) {
+    const periodoMap = {
+        'classico': 'Periodo Classico',
+        'contemporaneo': 'Periodo Contemporaneo',
+        'medioevale': 'Medioevo',
+        'moderno': 'Età Moderna'
     };
-    return statusMap[stato] || 'Stato sconosciuto';
+    return periodoMap[periodo] || periodo;
 }
 
 function formatDate(dateString) {
@@ -1384,17 +1350,21 @@ function updateActivityLog() {
 }
 
 function updateDashboardStats() {
-    document.getElementById('total-fontane').textContent = appData.fontane.length;
-    document.getElementById('fontane-funzionanti').textContent = appData.fontane.filter(f => f.stato === 'funzionante').length;
-    document.getElementById('fontane-non-funzionanti').textContent = appData.fontane.filter(f => f.stato === 'non-funzionante').length;
-    document.getElementById('fontane-manutenzione').textContent = appData.fontane.filter(f => f.stato === 'manutenzione').length;
+    // Filosofi per periodo
+    document.getElementById('total-filosofi').textContent = appData.filosofi.length;
+    document.getElementById('filosofi-classici').textContent = appData.filosofi.filter(f => f.periodo === 'classico').length;
+    document.getElementById('filosofi-contemporanei').textContent = appData.filosofi.filter(f => f.periodo === 'contemporaneo').length;
+    document.getElementById('filosofi-medioevali').textContent = appData.filosofi.filter(f => f.periodo === 'medioevale').length;
     
-    document.getElementById('total-beverini').textContent = appData.beverini.length;
-    document.getElementById('beverini-funzionanti').textContent = appData.beverini.filter(b => b.stato === 'funzionante').length;
-    document.getElementById('beverini-non-funzionanti').textContent = appData.beverini.filter(b => b.stato === 'non-funzionante').length;
-    document.getElementById('beverini-manutenzione').textContent = appData.beverini.filter(b => b.stato === 'manutenzione').length;
+    // Opere per periodo
+    document.getElementById('total-opere').textContent = appData.opere.length;
+    document.getElementById('opere-classiche').textContent = appData.opere.filter(o => o.periodo === 'classico').length;
+    document.getElementById('opere-contemporanee').textContent = appData.opere.filter(o => o.periodo === 'contemporaneo').length;
     
-    document.getElementById('total-news').textContent = appData.news.length;
+    // Concetti
+    document.getElementById('total-concetti').textContent = appData.concetti.length;
+    document.getElementById('concetti-ontologia').textContent = appData.concetti.filter(c => c.categoria === 'ontologia').length;
+    document.getElementById('concetti-etica').textContent = appData.concetti.filter(c => c.categoria === 'etica').length;
 }
 
 // Admin Authentication
@@ -1418,33 +1388,29 @@ function closeAdminAuth() {
 }
 
 // ========================================================
-// NUOVA FUNZIONE DI LOGIN SICURA (SENZA SUPER_ADMINS)
+// NUOVA FUNZIONE DI LOGIN SICURA
 // ========================================================
 async function checkAdminAuth() {
     const emailInput = document.getElementById('admin-email');
     const passInput = document.getElementById('admin-password');
     const errorElement = document.getElementById('auth-error');
 
-    // 1. Pulizia rigorosa dell'email (rimuove spazi invisibili prima e dopo)
     const email = emailInput.value.trim();
     const password = passInput.value;
 
     try {
-        // Login Firebase standard
         await window.firebaseSignIn(window.auth, email, password);
         
         isAdminAuthenticated = true;
         localStorage.setItem('abc_admin_logged', 'true');
         
-        // Sblocca interfaccia manutenzione se presente
         const maintScreen = document.getElementById('maintenance-mode');
         if (maintScreen) maintScreen.style.display = 'none';
         document.body.style.overflow = 'auto';
         
-        // Forza l'inizializzazione dei controlli remoti
         if (typeof initRemoteControl === 'function') initRemoteControl();
 
-        // 2. CONTROLLO RUOLI (Versione Robusta)
+        // 2. CONTROLLO RUOLI
         let isSuperAdmin = false;
         try {
             const docRef = window.doc(window.db, "impostazioni", "ruoli");
@@ -1452,11 +1418,9 @@ async function checkAdminAuth() {
             
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                // Normalizza la lista dal DB: tutto minuscolo e senza spazi
                 const dbAdmins = (data.super_admins || []).map(e => e.trim().toLowerCase());
                 const myEmail = email.toLowerCase();
                 
-                // DEBUG: Scrive nella console cosa sta succedendo (così capiamo se funziona)
                 console.log("LOGIN DEBUG - Email inserita:", myEmail);
                 console.log("LOGIN DEBUG - Lista DB:", dbAdmins);
 
@@ -1479,7 +1443,6 @@ async function checkAdminAuth() {
         
         closeAdminAuth();
         
-        // Apre il pannello admin in modo sicuro
         if (typeof showAdminPanel === 'function') {
             showAdminPanel();
         } else {
@@ -1497,7 +1460,7 @@ async function checkAdminAuth() {
 function showAdminPanel() {
     document.getElementById('admin-panel').style.display = 'flex';
     
-    // NUOVO: Nascondi sezioni sensibili se non è admin
+    // Nascondi sezioni sensibili se non è admin
     const restrictedSections = document.querySelectorAll('.import-export-section, .backup-section, .analytics-actions-section');
     
     restrictedSections.forEach(section => {
@@ -1508,12 +1471,11 @@ function showAdminPanel() {
         }
     });
 
-    loadAdminFontane();
-    loadAdminBeverini();
-    loadAdminNews();
+    loadAdminFilosofi();
+    loadAdminOpere();
+    loadAdminConcetti();
     updateDashboardStats();
     
-    // ✅ CARICA ANALYTICS DASHBOARD
     loadAnalyticsDashboard();
     updatePerformanceMetrics();
     
@@ -1530,12 +1492,10 @@ function closeAdminPanel() {
 
 function logoutAdmin() {
     isAdminAuthenticated = false;
-    currentUserRole = null; // Reset ruolo
+    currentUserRole = null;
     
-    // --- NUOVO: Rimuove il "pass" per la manutenzione ---
     localStorage.removeItem('abc_admin_logged');
-    // ----------------------------------------------------
-
+    
     if (adminAuthTimeout) {
         clearTimeout(adminAuthTimeout);
         adminAuthTimeout = null;
@@ -1544,8 +1504,6 @@ function logoutAdmin() {
     showToast('Logout amministratore effettuato', 'success');
     logActivity('Logout amministratore');
 
-    // --- NUOVO: Ricarica la pagina per riapplicare eventuali blocchi ---
-    // Diamo 1 secondo per leggere il toast di conferma
     setTimeout(() => window.location.reload(), 1000);
 }
 
@@ -1572,7 +1530,6 @@ function showScreen(screenId) {
             screenHistory = screenHistory.slice(-10);
         }
         
-        // ✅ CORREZIONE FONDAMENTALE: Forza lo scroll all'inizio della pagina per tutte le schermate
         resetScroll();
         
         initializeScreenContent(screenId);
@@ -1580,10 +1537,8 @@ function showScreen(screenId) {
     
     updateTabBar(screenId);
     
-    // CORREZIONE: Nascondi sempre il pulsante di navigazione quando si cambia schermata
     document.getElementById('fixed-navigate-btn').classList.add('hidden');
     
-    // Pulisci il backPressTimer se navighiamo in avanti dalla Home
     if (backPressTimer) {
         clearTimeout(backPressTimer);
         backPressTimer = null;
@@ -1593,7 +1548,6 @@ function showScreen(screenId) {
 }
 
 function goBack() {
-    // CORREZIONE: Nascondi subito il pulsante di navigazione all'inizio di goBack
     document.getElementById('fixed-navigate-btn').classList.add('hidden');
     
     if (screenHistory.length > 1) {
@@ -1611,7 +1565,6 @@ function goBack() {
                 targetScreen.classList.add('active');
             }, 10);
             
-            // ✅ CORREZIONE: Forza lo scroll anche quando si torna indietro
             resetScroll();
             
             initializeScreenContent(previousScreen);
@@ -1630,58 +1583,62 @@ function updateTabBar(activeScreen) {
 
 function initializeScreenContent(screenId) {
     switch(screenId) {
-        case 'fontane-screen':
-            loadFontane();
+        case 'filosofi-screen':
+            loadFilosofi();
             break;
-        case 'beverini-screen':
-            loadBeverini();
+        case 'opere-screen':
+            loadOpere();
             break;
         case 'mappa-screen':
             initMappa();
             break;
-        case 'news-screen':
-            loadNews();
+        case 'concetti-screen':
+            loadConcetti();
+            break;
+        case 'mappa-concettuale-screen':
+            loadConcettoNetwork();
             break;
     }
 }
+
 // Data Loading Functions
-async function loadFontane() {
-    const fontaneList = document.getElementById('fontane-list');
-    if (!fontaneList) return;
+async function loadFilosofi() {
+    const filosofiList = document.getElementById('filosofi-list');
+    if (!filosofiList) return;
     
-    showSkeletonLoader(fontaneList);
+    showSkeletonLoader(filosofiList);
     
     try {
-        await loadFirebaseData('fontane');
-        renderGridItems(fontaneList, getFilteredItems('fontane'), 'fontana');
+        await loadFirebaseData('filosofi');
+        renderGridItems(filosofiList, getFilteredItems('filosofi'), 'filosofo');
     } catch (error) {
-        showToast('Errore nel caricamento fontane', 'error');
+        showToast('Errore nel caricamento filosofi', 'error');
     }
 }
 
-async function loadBeverini() {
-    const beveriniList = document.getElementById('beverini-list');
-    if (!beveriniList) return;
+async function loadOpere() {
+    const opereList = document.getElementById('opere-list');
+    if (!opereList) return;
     
-    showSkeletonLoaderCompact(beveriniList);
+    showSkeletonLoaderCompact(opereList);
     
     try {
-        await loadFirebaseData('beverini');
-        renderCompactItems(beveriniList, getFilteredItems('beverini'), 'beverino');
+        await loadFirebaseData('opere');
+        renderCompactItems(opereList, getFilteredItems('opere'), 'opera');
     } catch (error) {
-        showToast('Errore nel caricamento beverini', 'error');
+        showToast('Errore nel caricamento opere', 'error');
     }
 }
 
-async function loadNews() {
-    const newsList = document.getElementById('news-list');
-    if (!newsList) return;
+async function loadConcetti() {
+    const concettiList = document.getElementById('concetti-list');
+    if (!concettiList) return;
     
     try {
-        await loadFirebaseData('news');
-        renderNewsItems(newsList, appData.news);
+        await loadFirebaseData('concetti');
+        renderConcettiItems(concettiList, appData.concetti);
     } catch (error) {
-        showToast('Errore nel caricamento news', 'error');
+        showToast('Errore nel caricamento concetti', 'error');
     }
 }
 
@@ -1693,21 +1650,31 @@ function getFilteredItems(type) {
         return items || [];
     }
 
-    return items.filter(item => item.stato === filter);
+    if (type === 'filosofi') {
+        return items.filter(item => item.periodo === filter);
+    } else if (type === 'opere') {
+        return items.filter(item => item.periodo === filter);
+    } else if (type === 'concetti') {
+        return items.filter(item => item.categoria === filter);
+    }
+    
+    return items;
 }
 
-function setFilter(type, stato) {
-    currentFilter[type] = stato;
+function setFilter(type, filterValue) {
+    currentFilter[type] = filterValue;
 
     document.querySelectorAll(`#${type}-screen .filter-btn`).forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector(`#${type}-screen .filter-btn.${stato}`).classList.add('active');
+    document.querySelector(`#${type}-screen .filter-btn.${filterValue}`).classList.add('active');
 
-    if (type === 'fontane') {
-        renderGridItems(document.getElementById('fontane-list'), getFilteredItems('fontane'), 'fontana');
-    } else if (type === 'beverini') {
-        renderCompactItems(document.getElementById('beverini-list'), getFilteredItems('beverini'), 'beverino');
+    if (type === 'filosofi') {
+        renderGridItems(document.getElementById('filosofi-list'), getFilteredItems('filosofi'), 'filosofo');
+    } else if (type === 'opere') {
+        renderCompactItems(document.getElementById('opere-list'), getFilteredItems('opere'), 'opera');
+    } else if (type === 'concetti') {
+        renderConcettiItems(document.getElementById('concetti-list'), getFilteredItems('concetti'));
     }
 }
 
@@ -1716,26 +1683,31 @@ const debouncedFilter = debounce(function(type, query) {
     if (!container) return;
     
     let items;
-    if (type === 'beverini') {
+    if (type === 'opere') {
         items = container.getElementsByClassName('compact-item');
-    } else {
+    } else if (type === 'filosofi') {
         items = container.getElementsByClassName('grid-item');
+    } else {
+        items = container.getElementsByClassName('concetto-card');
     }
 
     let visibleCount = 0;
     for (let i = 0; i < items.length; i++) {
-        let name, address;
-
-        if (type === 'beverini') {
+        let name, additional;
+        
+        if (type === 'opere') {
             name = items[i].getElementsByClassName('compact-item-name')[0].textContent;
-            address = items[i].getElementsByClassName('compact-item-address')[0].textContent;
-        } else {
+            additional = items[i].getElementsByClassName('compact-item-autore')[0].textContent;
+        } else if (type === 'filosofi') {
             name = items[i].getElementsByClassName('item-name')[0].textContent;
-            address = items[i].getElementsByClassName('item-address')[0].textContent;
+            additional = items[i].getElementsByClassName('item-scuola')[0].textContent;
+        } else {
+            name = items[i].getElementsByClassName('concetto-parola')[0].textContent;
+            additional = items[i].getElementsByClassName('concetto-definizione')[0].textContent;
         }
 
         const isVisible = name.toLowerCase().includes(query.toLowerCase()) ||
-                         address.toLowerCase().includes(query.toLowerCase());
+                         additional.toLowerCase().includes(query.toLowerCase());
         items[i].style.display = isVisible ? 'flex' : 'none';
         if (isVisible) visibleCount++;
     }
@@ -1804,12 +1776,17 @@ function showSkeletonLoaderCompact(container, count = 6) {
         container.appendChild(skeletonItem);
     }
 }
+
+// CONTINUA NELLA PARTE 2...
+// ============================================
+// FUNZIONI DI RENDERING PER FILOSOFIA
+// ============================================
+
 function renderGridItems(container, items, type) {
-    // 1. GESTIONE STATO VUOTO (Tuo codice originale mantenuto)
     if (!items || items.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-${type === 'fontana' ? 'user-graduate' : 'lightbulb'}"></i></div>
+                <div class="empty-state-icon"><i class="fas fa-${type === 'filosofo' ? 'user-graduate' : 'book'}"></i></div>
                 <div class="empty-state-text">Nessun elemento trovato</div>
                 <div class="empty-state-subtext">Prova a cambiare i filtri di ricerca</div>
             </div>
@@ -1817,20 +1794,7 @@ function renderGridItems(container, items, type) {
         return;
     }
     
-    // 2. RECUPERA HIGHLIGHTS (Badge Nuovo/Riparato)
-    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "fixed": []}');
-
-    // 3. HELPER PER TRADURRE LO STATO (Funzionante -> Working)
-    const getStatusLabel = (stato) => {
-        const statusKey = {
-            'funzionante': 'status_working',
-            'non-funzionante': 'status_broken',
-            'manutenzione': 'status_maintenance'
-        }[stato] || 'status_working';
-        
-        // Se esiste la traduzione usa quella, altrimenti usa lo stato originale
-        return (translations && translations[currentLanguage]) ? translations[currentLanguage][statusKey] : stato;
-    };
+    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
 
     container.innerHTML = '';
     
@@ -1838,42 +1802,52 @@ function renderGridItems(container, items, type) {
         const gridItem = document.createElement('div');
         gridItem.className = 'grid-item';
         
-        // GESTORE CLICK (Mantiene la tua logica di navigazione)
         gridItem.onclick = () => {
-            // Nota: passo item.id come nel tuo codice originale
-            showDetail(item.id, type);                      
+            showDetail(item.id, type);
         };
         
-        // LOGICA BADGE (Mantenuta)
         let badgeHTML = '';
         if (highlights.new.includes(item.id)) badgeHTML = '<span class="badge-new">NUOVO</span>';
-        else if (highlights.fixed.includes(item.id)) badgeHTML = '<span class="badge-fixed">RIPARATO</span>';
+        else if (highlights.updated.includes(item.id)) badgeHTML = '<span class="badge-updated">AGGIORNATO</span>';
 
-        // LOGICA IMMAGINE CUSTOM (Mantenuta)
-        const hasCustomImage = item.immagine && item.immagine.trim() !== '';
+        const hasCustomImage = item.ritratto && item.ritratto.trim() !== '';
+        const defaultImage = type === 'filosofo' ? './images/default-filosofo.jpg' : './images/default-opera.jpg';
         
-        // RENDER HTML (Aggiornato con getLocalizedText e getStatusLabel)
-        gridItem.innerHTML = `
-            <div class="item-image-container">
-                <img src="${item.immagine || './images/sfondo-home.jpg'}" 
-                     alt="${getLocalizedText(item, 'nome')}" 
-                     class="item-image" 
-                     onerror="this.style.display='none'; this.parentElement.classList.add('fallback-active'); this.parentElement.innerHTML += '<div class=\\'image-fallback\\'><i class=\\'fas fa-image\\'></i></div>';">
-            </div>
-            <div class="item-content">
-                <div class="item-name">${getLocalizedText(item, 'nome')} ${badgeHTML}</div>
-                
-                <div class="item-address">${item.indirizzo}</div>
-                
-                <div class="item-footer">
-                    <span class="item-status status-${item.stato}">${getStatusLabel(item.stato)}</span>
-                    
-                    <span class="image-indicator ${hasCustomImage ? 'image-custom' : 'image-default'}">
-                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-user"></i>'}
-                    </span>
+        // Traduzione periodo
+        const getPeriodoLabel = (periodo) => {
+            const periodoKey = {
+                'classico': 'period_classic',
+                'contemporaneo': 'period_contemporary',
+                'medioevale': 'period_medieval',
+                'moderno': 'period_modern'
+            }[periodo] || periodo;
+            
+            return (translations && translations[currentLanguage]) ? 
+                translations[currentLanguage][periodoKey] : periodo;
+        };
+
+        // Per filosofi
+        if (type === 'filosofo') {
+            gridItem.innerHTML = `
+                <div class="item-image-container">
+                    <img src="${item.ritratto || defaultImage}" 
+                         alt="${getLocalizedText(item, 'nome')}" 
+                         class="item-image" 
+                         onerror="this.style.display='none'; this.parentElement.classList.add('fallback-active'); this.parentElement.innerHTML += '<div class=\\'image-fallback\\'><i class=\\'fas fa-user-graduate\\'></i></div>';">
                 </div>
-            </div>
-        `;
+                <div class="item-content">
+                    <div class="item-name">${getLocalizedText(item, 'nome')} ${badgeHTML}</div>
+                    <div class="item-scuola">${item.scuola}</div>
+                    <div class="item-footer">
+                        <span class="item-period periodo-${item.periodo}">${getPeriodoLabel(item.periodo)}</span>
+                        <span class="image-indicator ${hasCustomImage ? 'image-custom' : 'image-default'}">
+                            ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-image"></i>'}
+                        </span>
+                    </div>
+                </div>
+            `;
+        }
+        // Per opere (se necessario nella griglia)
         container.appendChild(gridItem);
     });
 }
@@ -1882,7 +1856,7 @@ function renderCompactItems(container, items, type) {
     if (!items || items.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-faucet"></i></div>
+                <div class="empty-state-icon"><i class="fas fa-book"></i></div>
                 <div class="empty-state-text">Nessun elemento trovato</div>
                 <div class="empty-state-subtext">Prova a cambiare i filtri di ricerca</div>
             </div>
@@ -1890,17 +1864,17 @@ function renderCompactItems(container, items, type) {
         return;
     }
     
-    // Recupera highlights
-    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "fixed": []}');
+    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
 
-    // Helper per tradurre lo stato (come abbiamo fatto per le fontane)
-    const getStatusLabel = (stato) => {
-        const statusKey = {
-            'funzionante': 'status_working',
-            'non-funzionante': 'status_broken',
-            'manutenzione': 'status_maintenance'
-        }[stato] || 'status_working';
-        return (translations && translations[currentLanguage]) ? translations[currentLanguage][statusKey] : stato;
+    const getPeriodoLabel = (periodo) => {
+        const periodoKey = {
+            'classico': 'period_classic',
+            'contemporaneo': 'period_contemporary',
+            'medioevale': 'period_medieval',
+            'moderno': 'period_modern'
+        }[periodo] || periodo;
+        return (translations && translations[currentLanguage]) ? 
+            translations[currentLanguage][periodoKey] : periodo;
     };
 
     container.innerHTML = '';
@@ -1908,40 +1882,35 @@ function renderCompactItems(container, items, type) {
         const compactItem = document.createElement('div');
         compactItem.className = 'compact-item';
 
-        // Badge Logic
         let badgeHTML = '';
         if (highlights.new.includes(item.id)) badgeHTML = '<span class="badge-new">NUOVO</span>';
-        else if (highlights.fixed.includes(item.id)) badgeHTML = '<span class="badge-fixed">RIPARATO</span>';
-
-        const totalLength = (item.nome || '').length + (item.indirizzo || '').length;
-        if (totalLength > 100) compactItem.classList.add('very-long-content');
-        else if (totalLength > 60) compactItem.classList.add('long-content');
-
-        compactItem.onclick = () => {
-            showDetail(item.id, type);
-            currentLatLng = { lat: item.latitudine, lng: item.longitudine };            
-        };
+        else if (highlights.updated.includes(item.id)) badgeHTML = '<span class="badge-updated">AGGIORNATO</span>';
 
         const hasCustomImage = item.immagine && item.immagine.trim() !== '';
+        const defaultImage = './images/default-opera.jpg';
         
-        // USA getLocalizedText QUI
+        compactItem.onclick = () => {
+            showDetail(item.id, type);
+        };
+
         compactItem.innerHTML = `
             <div class="compact-item-image-container">
-                <img src="${item.immagine || './images/default-beverino.jpg'}"
-                     alt="${getLocalizedText(item, 'nome')}" 
+                <img src="${item.immagine || defaultImage}"
+                     alt="${getLocalizedText(item, 'titolo')}" 
                      class="compact-item-image"
-                     onerror="this.style.display='none'; this.parentElement.classList.add('fallback-active'); this.parentElement.innerHTML += '<div class=\\'compact-image-fallback\\'><i class=\\'fas fa-faucet\\'></i></div>';">
+                     onerror="this.style.display='none'; this.parentElement.classList.add('fallback-active'); this.parentElement.innerHTML += '<div class=\\'compact-image-fallback\\'><i class=\\'fas fa-book\\'></i></div>';">
             </div>
             <div class="compact-item-content">
                 <div class="compact-item-header">
-                    <div class="compact-item-name">${getLocalizedText(item, 'nome')} ${badgeHTML}</div>
+                    <div class="compact-item-name">${getLocalizedText(item, 'titolo')} ${badgeHTML}</div>
                     <span class="image-indicator ${hasCustomImage ? 'image-custom' : 'image-default'}">
-                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-user"></i>'}
+                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-image"></i>'}
                     </span>
                 </div>
-                <div class="compact-item-address">${item.indirizzo}</div>
+                <div class="compact-item-autore">${item.autore_nome || 'Autore non specificato'}</div>
                 <div class="compact-item-footer">
-                    <span class="compact-item-status status-${item.stato}">${getStatusLabel(item.stato)}</span>
+                    <span class="compact-item-period periodo-${item.periodo}">${getPeriodoLabel(item.periodo)}</span>
+                    <span class="compact-item-anno">${item.anno || 'Anno sconosciuto'}</span>
                 </div>
             </div>
         `;
@@ -1949,69 +1918,74 @@ function renderCompactItems(container, items, type) {
     });
 }
 
-function renderNewsItems(container, news) {
-    if (!news || news.length === 0) {
-        container.innerHTML = '<div class="no-results">Nessuna news disponibile</div>';
+function renderConcettiItems(container, concetti) {
+    if (!concetti || concetti.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-brain"></i></div>
+                <div class="empty-state-text">Nessun concetto disponibile</div>
+                <div class="empty-state-subtext">Torna presto per aggiornamenti</div>
+            </div>
+        `;
         return;
     }
     
-    // Recupera highlights (per badge NUOVO)
-    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "fixed": []}');
+    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
     
     container.innerHTML = '';
-    // Ordina per data decrescente
-    const sortedNews = [...news].sort((a, b) => new Date(b.data) - new Date(a.data));
     
-    sortedNews.forEach(item => {
+    concetti.forEach(item => {
         let badgeHTML = '';
         if (highlights.new.includes(item.id)) {
             badgeHTML = '<span class="badge-new" style="float: right;">NUOVO</span>';
+        } else if (highlights.updated.includes(item.id)) {
+            badgeHTML = '<span class="badge-updated" style="float: right;">AGGIORNATO</span>';
         }
 
-        const newsCard = document.createElement('div');
-        newsCard.className = 'news-card';
-        
-        // QUI AVVIENE LA MAGIA per le News:
-        newsCard.innerHTML = `
-            <div class="news-header">
-                <div class="news-title">${getLocalizedText(item, 'titolo')} ${badgeHTML}</div>
-                <div class="news-date">${formatDate(item.data)}</div>
+        const concettoCard = document.createElement('div');
+        concettoCard.className = 'concetto-card';
+        concettoCard.innerHTML = `
+            <div class="concetto-header">
+                <div class="concetto-parola">${getLocalizedText(item, 'parola')} ${badgeHTML}</div>
+                <div class="concetto-periodo">${item.periodo_storico || 'Periodo non specificato'}</div>
             </div>
-            <div class="news-content">${getLocalizedText(item, 'contenuto')}</div>
-            <div class="news-footer">
-                <span class="news-category">${item.categoria}</span>
-                <span class="news-source">Fonte: ${item.fonte}</span>
+            <div class="concetto-definizione">${getLocalizedText(item, 'definizione')}</div>
+            <div class="concetto-footer">
+                <span class="concetto-autore">${item.autore_riferimento || 'Autore non specificato'}</span>
+                <span class="concetto-opera">${item.opera_riferimento || ''}</span>
             </div>
         `;
-        container.appendChild(newsCard);
+        container.appendChild(concettoCard);
     });
 }
 
-// Detail View
+// Detail View per Filosofia
 function showDetail(id, type) {
-    // 1. MEMORIA PER CAMBIO LINGUA
     currentDetailId = id;
     currentDetailType = type;
 
-    // Disabilita il ripristino automatico dello scroll del browser (SPESSO È QUESTO IL COLPEVOLE)
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
 
     let item, screenId, titleElement, contentElement;
-    const isFontana = (type === 'fontana' || type === 'fontane');
+    const isFilosofo = (type === 'filosofo' || type === 'filosofi');
 
-    // 2. IDENTIFICAZIONE ELEMENTI
-    if (isFontana) {
-        item = appData.fontane.find(f => f.id == id);
-        screenId = 'fontana-detail-screen';
-        titleElement = document.getElementById('fontana-detail-title');
-        contentElement = document.getElementById('fontana-detail-content');
+    if (isFilosofo) {
+        item = appData.filosofi.find(f => f.id == id);
+        screenId = 'filosofo-detail-screen';
+        titleElement = document.getElementById('filosofo-detail-title');
+        contentElement = document.getElementById('filosofo-detail-content');
+    } else if (type === 'opera') {
+        item = appData.opere.find(o => o.id == id);
+        screenId = 'opera-detail-screen';
+        titleElement = document.getElementById('opera-detail-title');
+        contentElement = document.getElementById('opera-detail-content');
     } else {
-        item = appData.beverini.find(b => b.id == id);
-        screenId = 'beverino-detail-screen';
-        titleElement = document.getElementById('beverino-detail-title');
-        contentElement = document.getElementById('beverino-detail-content');
+        item = appData.concetti.find(c => c.id == id);
+        screenId = 'concetto-detail-screen';
+        titleElement = document.getElementById('concetto-detail-title');
+        contentElement = document.getElementById('concetto-detail-content');
     }
     
     if (!item) {
@@ -2019,59 +1993,167 @@ function showDetail(id, type) {
         return;
     }
 
-    // 3. LOGICA TITOLI E TESTI
     const t = (window.translations && window.translations[currentLanguage]) ? window.translations[currentLanguage] : {};
-    if (t.screen_fountains) {
-        titleElement.textContent = isFontana ? t.screen_fountains : t.screen_drinkers;
+    
+    if (t.screen_philosophers) {
+        if (isFilosofo) {
+            titleElement.textContent = t.screen_philosophers;
+        } else if (type === 'opera') {
+            titleElement.textContent = t.screen_works;
+        } else {
+            titleElement.textContent = t.screen_concepts;
+        }
     }
 
-    const defaultImage = isFontana ? './images/sfondo-home.jpg' : './images/default-beverino.jpg';
-    
-    // Helper stato
-    const getStatusLabel = (stato) => {
+    // Helper per periodo
+    const getPeriodoLabel = (periodo) => {
         const key = {
-            'funzionante': 'status_working',
-            'non-funzionante': 'status_broken',
-            'manutenzione': 'status_maintenance'
-        }[stato] || 'status_working';
-        return t[key] || stato;
+            'classico': 'period_classic',
+            'contemporaneo': 'period_contemporary',
+            'medioevale': 'period_medieval',
+            'moderno': 'period_modern'
+        }[periodo] || periodo;
+        return t[key] || periodo;
     };
 
-    // 4. GENERAZIONE HTML
-    contentElement.innerHTML = `
-        <div class="detail-header-image">
-            <img src="${item.immagine || defaultImage}" class="detail-image" onerror="this.src='${defaultImage}'">
-        </div>
-        <div class="detail-info">
-            <h2 class="detail-name">${getLocalizedText(item, 'nome')}</h2>
-            <div class="info-row">
-                <span class="info-label"><i class="fas fa-map-marker-alt"></i> Luogo/Opera:</span>
-                <span class="info-value">${item.indirizzo}</span>
-            </div>
-            <div class="info-row">
-                <span class="item-status status-${item.stato}">${getStatusLabel(item.stato)}</span>
-            </div>
-            ${item.anno ? `<div class="info-row">${t.label_year || 'Anno'}: ${item.anno}</div>` : ''}
-            <div class="detail-description">${getLocalizedText(item, 'descrizione') || ''}</div>
-            ${getLocalizedText(item, 'storico') ? `<div class="detail-history"><h3>${t.label_history || 'Storia'}</h3><p>${getLocalizedText(item, 'storico')}</p></div>` : ''}
-            <div class="detail-actions">
-                <button class="detail-action-btn primary" onclick="navigateTo(${item.latitudine}, ${item.longitudine})">
-                    <i class="fas fa-location-arrow"></i> ${t.navigate_btn || 'Naviga'}
-                </button>
-                <button class="detail-action-btn" onclick="openReportScreen('${(getLocalizedText(item, 'nome') || '').replace(/'/g, "\\\\'")}')" style="background: #ef4444; color: white;">
-                    <i class="fas fa-bullhorn"></i> ${t.report_btn || 'Segnala'}
-                </button>
-            </div>
-        </div>
-    `;
+    // Genera HTML in base al tipo
+    let detailHTML = '';
+    const defaultImage = isFilosofo ? './images/default-filosofo.jpg' : './images/default-opera.jpg';
     
-    currentLatLng = { lat: item.latitudine, lng: item.longitudine };
+    if (isFilosofo) {
+        detailHTML = `
+            <div class="detail-header-image">
+                <img src="${item.ritratto || defaultImage}" class="detail-image" onerror="this.src='${defaultImage}'">
+            </div>
+            <div class="detail-info">
+                <h2 class="detail-name">${getLocalizedText(item, 'nome')}</h2>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-graduation-cap"></i></span>
+                    <span class="info-value">${item.scuola}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-calendar-alt"></i></span>
+                    <span class="info-value">${item.anni_vita}</span>
+                </div>
+                <div class="info-row">
+                    <span class="item-period periodo-${item.periodo}">${getPeriodoLabel(item.periodo)}</span>
+                </div>
+                ${item.luogo_nascita ? `<div class="info-row">
+                    <span class="info-label"><i class="fas fa-map-marker-alt"></i></span>
+                    <span class="info-value">${item.luogo_nascita}</span>
+                </div>` : ''}
+                <div class="detail-description">${getLocalizedText(item, 'biografia') || ''}</div>
+                ${item.opere_principali && item.opere_principali.length > 0 ? 
+                    `<div class="detail-opere">
+                        <h3>${t.label_main_works || 'Opere principali'}</h3>
+                        <ul>
+                            ${item.opere_principali.map(operaId => {
+                                const opera = appData.opere.find(o => o.id === operaId);
+                                return opera ? `<li>${getLocalizedText(opera, 'titolo')} (${opera.anno})</li>` : '';
+                            }).join('')}
+                        </ul>
+                    </div>` : ''}
+                ${item.concetti_principali && item.concetti_principali.length > 0 ? 
+                    `<div class="detail-concetti">
+                        <h3>${t.label_main_concepts || 'Concetti principali'}</h3>
+                        <div class="concetti-tags">
+                            ${item.concetti_principali.map(concetto => 
+                                `<span class="concetto-tag">${concetto}</span>`
+                            ).join('')}
+                        </div>
+                    </div>` : ''}
+            </div>
+        `;
+    } else if (type === 'opera') {
+        detailHTML = `
+            <div class="detail-header-image">
+                <img src="${item.immagine || defaultImage}" class="detail-image" onerror="this.src='${defaultImage}'">
+            </div>
+            <div class="detail-info">
+                <h2 class="detail-name">${getLocalizedText(item, 'titolo')}</h2>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-user"></i></span>
+                    <span class="info-value">${item.autore_nome}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-calendar"></i></span>
+                    <span class="info-value">${item.anno}</span>
+                </div>
+                <div class="info-row">
+                    <span class="item-period periodo-${item.periodo}">${getPeriodoLabel(item.periodo)}</span>
+                </div>
+                ${item.lingua ? `<div class="info-row">
+                    <span class="info-label"><i class="fas fa-language"></i></span>
+                    <span class="info-value">${item.lingua}</span>
+                </div>` : ''}
+                <div class="detail-description">${getLocalizedText(item, 'sintesi') || ''}</div>
+                ${item.concetti && item.concetti.length > 0 ? 
+                    `<div class="detail-concetti">
+                        <h3>${t.label_related_concepts || 'Concetti correlati'}</h3>
+                        <div class="concetti-tags">
+                            ${item.concetti.map(concetto => 
+                                `<span class="concetto-tag">${concetto}</span>`
+                            ).join('')}
+                        </div>
+                    </div>` : ''}
+                ${item.pdf_url ? `
+                <div class="detail-actions">
+                    <button class="detail-action-btn primary" onclick="window.open('${item.pdf_url}', '_blank')">
+                        <i class="fas fa-file-pdf"></i> ${t.read_pdf || 'Leggi PDF'}
+                    </button>
+                </div>` : ''}
+            </div>
+        `;
+    } else {
+        // Concetto
+        detailHTML = `
+            <div class="detail-info">
+                <h2 class="detail-name">${getLocalizedText(item, 'parola')}</h2>
+                <div class="info-row">
+                    <span class="info-label"><i class="fas fa-history"></i></span>
+                    <span class="info-value">${item.periodo_storico}</span>
+                </div>
+                ${item.autore_riferimento ? `<div class="info-row">
+                    <span class="info-label"><i class="fas fa-user"></i></span>
+                    <span class="info-value">${item.autore_riferimento}</span>
+                </div>` : ''}
+                ${item.opera_riferimento ? `<div class="info-row">
+                    <span class="info-label"><i class="fas fa-book"></i></span>
+                    <span class="info-value">${item.opera_riferimento}</span>
+                </div>` : ''}
+                <div class="detail-description">
+                    <h3>${t.label_definition || 'Definizione'}</h3>
+                    <p>${getLocalizedText(item, 'definizione')}</p>
+                </div>
+                ${item.esempio_citazione ? `
+                <div class="detail-citazione">
+                    <h3>${t.label_example_quote || 'Esempio/Citazione'}</h3>
+                    <blockquote>${item.esempio_citazione}</blockquote>
+                </div>` : ''}
+                ${item.evoluzione ? `
+                <div class="detail-evoluzione">
+                    <h3>${t.label_historical_evolution || 'Evoluzione storica'}</h3>
+                    <p>${item.evoluzione}</p>
+                </div>` : ''}
+                <div class="detail-actions">
+                    <button class="detail-action-btn" onclick="showConceptNetwork('${item.parola}')">
+                        <i class="fas fa-project-diagram"></i> ${t.view_concept_network || 'Vedi rete concettuale'}
+                    </button>
+                </div>
+            </div>
+        `;
+    }
     
-    // 5. CAMBIO SCHERMATA
+    if (contentElement) {
+        contentElement.innerHTML = detailHTML;
+    }
+    
+    if (item.coordinate && isFilosofo) {
+        currentLatLng = { lat: item.coordinate.lat, lng: item.coordinate.lng };
+    }
+    
     showScreen(screenId);
     
-    // 6. RESET SCROLL "NUCLEARE" (Agisce su tutto)
-    // Usiamo requestAnimationFrame per sincronizzarci col rendering del browser
     requestAnimationFrame(() => {
         window.scrollTo(0, 0);
         document.body.scrollTop = 0;
@@ -2083,102 +2165,18 @@ function showDetail(id, type) {
         if (contentElement) contentElement.scrollTop = 0;
     });
 
-    // Doppio controllo dopo 50ms per sicurezza (se l'immagine carica lentamente)
     setTimeout(() => {
         window.scrollTo(0, 0);
         const activeScreen = document.getElementById(screenId);
         if (activeScreen) activeScreen.scrollTop = 0;
     }, 50);
 }
-// ✅ generateDetailHTML con logica condizionale per nascondere la descrizione vuota
-function generateDetailHTML(item, type) {
-    let specificFields = '';
-    if (type === 'fontana') {
-        specificFields = `
-            ${item.anno ? `<div class="info-item"><span class="info-label">Anno:</span><span class="info-value">${item.anno}</span></div>` : ''}
-            ${item.storico ? `<div class="info-item"><span class="info-label">Storico:</span><span class="info-value">${item.storico}</span></div>` : ''}
-        `;
-    }
-    
-    // MODIFICA: Determina l'immagine di fallback condizionale
-    const fallbackImage = type === 'fontana' ? './images/sfondo-home.jpg' : './images/default-beverino.jpg';
 
-    // ✅ LOGICA CONDIZIONALE: crea il blocco HTML solo se la descrizione non è vuota.
-    const descriptionHTML = (item.descrizione && item.descrizione.trim())
-        ? `
-            <div class="detail-info">
-                <div class="info-item">
-                    <span class="info-label">Descrizione:</span>
-                    <span class="info-value">${item.descrizione}</span>
-                </div>
-            </div>
-        ` 
-        : ''; // Se vuota, la riga non appare
-
-    return `
-        <img src="${item.immagine || fallbackImage}" class="detail-image" alt="${item.nome}" onerror="this.src='${fallbackImage}'">
-        <div class="detail-info">
-            <div class="info-item">
-                <span class="info-label">${type === 'fontana' ? 'Indirizzo:' : 'Posizione:'}</span>
-                <span class="info-value">${item.indirizzo}</span>
-            </div>
-            <div class="info-item">
-                <span class="info-label">Stato:</span>
-                <span class="info-value">${getStatusText(item.stato)}</span>
-            </div>
-            ${specificFields}
-        </div>
-        ${descriptionHTML}
-        <div class="detail-actions">
-            <button class="detail-action-btn primary" onclick="navigateTo(${item.latitudine}, ${item.longitudine})">
-                <i class="fas fa-map-marker-alt"></i> Naviga
-            </button>
-            <button class="detail-action-btn secondary" onclick="shareItem('${item.id}', '${type}')">
-                <i class="fas fa-share-alt"></i> Condividi
-            </button>
-        </div>
-    `;
-}
-
-// Navigation
-function navigateTo(lat, lng) {
-    currentLatLng = { lat, lng };
-    document.getElementById('navigation-modal').style.display = 'flex';
-}
-
-function navigateToFixed() {
-    if (!currentLatLng) return;
-    navigateTo(currentLatLng.lat, currentLatLng.lng);
-}
-
-function openGoogleMaps() {
-    if (!currentLatLng) return;
-    const { lat, lng } = currentLatLng;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=walking`;
-    window.open(url, '_blank');
-    closeNavigationModal();
-    showToast('Apertura Google Maps...', 'info');
-}
-
-function openAppleMaps() {
-    if (!currentLatLng) return;
-    const { lat, lng } = currentLatLng;
-    const url = `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=w`;
-    window.open(url, '_blank');
-    closeNavigationModal();
-    showToast('Apertura Apple Maps...', 'info');
-}
-
-function closeNavigationModal() {
-    document.getElementById('navigation-modal').style.display = 'none';
-    currentLatLng = null;
-}
-
-// Map Functions
+// Map Functions (Aggiornata per Filosofi)
 function initMappa() {
     if (!map) {
         map = L.map('map').setView([40.8518, 14.2681], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        L.tileLayer('https://{s.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors'
         }).addTo(map);
 
@@ -2192,20 +2190,10 @@ function initMappa() {
     clusterGroup.clearLayers();
     markers.clear();
 
-    appData.fontane.forEach(fontana => {
-        if (isValidCoordinate(fontana.latitudine, fontana.longitudine)) {
-            const marker = createMarker(fontana, 'fontana');
-            const markerId = `fontana-${fontana.id}`;
-
-            markers.set(markerId, marker);
-            clusterGroup.addLayer(marker);
-        }
-    });
-
-    appData.beverini.forEach(beverino => {
-        if (isValidCoordinate(beverino.latitudine, beverino.longitudine)) {
-            const marker = createMarker(beverino, 'beverino');
-            const markerId = `beverino-${beverino.id}`;
+    appData.filosofi.forEach(filosofo => {
+        if (filosofo.coordinate && isValidCoordinate(filosofo.coordinate.lat, filosofo.coordinate.lng)) {
+            const marker = createMarker(filosofo, 'filosofo');
+            const markerId = `filosofo-${filosofo.id}`;
 
             markers.set(markerId, marker);
             clusterGroup.addLayer(marker);
@@ -2219,51 +2207,53 @@ function initMappa() {
         }
     }
 
-    // --- FUNZIONE CREATEMARKER AGGIUNTA ---
-    function createMarker(item, type) {
-        // Determina l'etichetta in base al tipo
-        const labelLuogo = type === 'fontana' ? 'Luogo di nascita:' : 'Opera:';
-        const labelEpoca = 'Epoca:';
-    
-        const marker = L.marker([item.latitudine, item.longitudine], {
-            icon: getIconForType(type)
-        });
-    
-        marker.bindPopup(`
-            <div class="leaflet-popup-content">
-                <div class="popup-title">${item.nome}</div>
-                <p><strong>${labelLuogo}</strong> ${item.indirizzo}</p>
-                <p><strong>${labelEpoca}</strong> ${getStatusText(item.stato)}</p>
-                <button class="popup-btn" onclick="showDetail('${item.id}', '${type}')">Leggi Scheda</button>
-                <button class="popup-btn" onclick="navigateTo(${item.latitudine}, ${item.longitudine})" style="margin-top: 5px; background: var(--primary-green);">Vedi Luogo</button>
-            </div>
-        `);
-        return marker;
-    }
+    requestUserLocation();
 }
+
+function createMarker(item, type) {
+    const icon = getIconForType(type, item.periodo);
+    const marker = L.marker([item.coordinate.lat, item.coordinate.lng], { icon });
+
+    marker.bindPopup(`
+        <div class="leaflet-popup-content">
+            <div class="popup-title">${item.nome}</div>
+            <p><strong>Periodo:</strong> ${getPeriodoText(item.periodo)}</p>
+            <p><strong>Scuola:</strong> ${item.scuola}</p>
+            <p><strong>Luogo di nascita:</strong> ${item.luogo_nascita || 'Non specificato'}</p>
+            <button class="popup-btn" onclick="showDetail('${item.id}', '${type}')">Dettagli</button>
+            <button class="popup-btn" onclick="centerOnLocation(${item.coordinate.lat}, ${item.coordinate.lng})" 
+                    style="margin-top: 5px; background: var(--primary-blue);">
+                <i class="fas fa-location-arrow"></i> Centra qui
+            </button>
+        </div>
+    `);
+
+    return marker;
+}
+
+function getIconForType(type, periodo = null) {
+    let iconColor = 'blue';
+    
+    if (periodo === 'contemporaneo') {
+        iconColor = 'violet';
+    } else if (periodo === 'classico') {
+        iconColor = 'orange';
+    } else if (periodo === 'medioevale') {
+        iconColor = 'green';
+    }
+    
+    return L.icon({
+        iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${iconColor}.png`,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34]
+    });
+}
+
 function isValidCoordinate(lat, lng) {
     return !isNaN(lat) && !isNaN(lng) &&
            lat >= -90 && lat <= 90 &&
            lng >= -180 && lng <= 180;
-}
-
-function getIconForType(type) {
-    const iconConfigs = {
-        fontana: {
-            iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34]
-        },
-        beverino: {
-            iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34]
-        }
-    };
-
-    return L.icon(iconConfigs[type] || iconConfigs.fontana);
 }
 
 function addMapControls() {
@@ -2279,7 +2269,7 @@ function addMapControls() {
     const fitBoundsBtn = document.createElement('button');
     fitBoundsBtn.className = 'map-control-btn';
     fitBoundsBtn.innerHTML = '<i class="fas fa-expand"></i>';
-    fitBoundsBtn.title = 'Mostra tutti i punti';
+    fitBoundsBtn.title = 'Mostra tutti i filosofi';
     fitBoundsBtn.onclick = fitMapToMarkers;
     
     controlsContainer.appendChild(locateBtn);
@@ -2348,308 +2338,295 @@ function fitMapToMarkers() {
         const bounds = clusterGroup.getBounds();
         if (bounds.isValid()) {
             map.fitBounds(bounds.pad(0.1));
-            showToast('Vista adattata a tutti i punti', 'success');
+            showToast('Vista adattata a tutti i filosofi', 'success');
         }
     } else {
-        showToast('Nessun punto da mostrare', 'info');
+        showToast('Nessun filosofo da mostrare', 'info');
     }
 }
 
-// Share Function
-function shareItem(id, type) {
-    let item;
-    if (type === 'fontana') {
-        item = appData.fontane.find(f => f.id == id);
-    } else {
-        item = appData.beverini.find(b => b.id == id);
+function centerOnLocation(lat, lng) {
+    if (map) {
+        map.setView([lat, lng], 14);
+        showToast('Mappa centrata sulla posizione', 'success');
     }
-    if (!item) {
-        showToast('Elemento non trovato', 'error');
-        return;
-    }
+}
+
+// ============================================
+// MAPPA CONCETTUALE (NUOVA FUNZIONALITÀ)
+// ============================================
+
+function loadConcettoNetwork() {
+    const container = document.getElementById('concetto-network-container');
+    if (!container) return;
     
-    const text = `${item.nome} - ${item.indirizzo}`;
-    const url = `${window.location.origin}${window.location.pathname}?${type}=${id}`;
+    container.innerHTML = '<div class="loading-network"><div class="spinner"></div><p>Caricamento rete concettuale...</p></div>';
     
-    if (navigator.share) {
-        navigator.share({
-            title: item.nome,
-            text: text,
-            url: url
-        })
-        .then(() => showToast('Condivisione completata', 'success'))
-        .catch(error => {
-            if (error.name !== 'AbortError') {
-                showToast('Errore nella condivisione', 'error');
-            }
-        });
-    } else {
-        navigator.clipboard.writeText(`${text} - ${url}`)
-            .then(() => showToast('Link copiato negli appunti', 'success'))
-            .catch(() => {
-                const textArea = document.createElement('textarea');
-                textArea.value = `${text} - ${url}`;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                showToast('Link copiato negli appunti', 'success');
-            });
-    }
-}
-
-// Search Functions
-async function searchAddressOnMap(query) {
-    try {
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=it&accept-language=it`,
-            {
-                headers: {
-                    'User-Agent': 'FontaneBeveriniNapoli/1.0'
-                }
-            }
-        );
-
-        const results = await response.json();
-
-        if (results.length > 0) {
-            return results;
-        } else {
-            showToast('Nessun risultato trovato', 'warning');
-            return [];
-        }
-    } catch (error) {
-        showToast('Errore nella ricerca', 'error');
-        return [];
-    }
-}
-
-function handleMapSearch(event) {
-    if (event.key === 'Enter') {
-        performMapSearch();
-    }
-}
-
-async function performMapSearch() {
-    const query = document.getElementById('map-search-input').value.trim();
-    if (!query) return;
-
-    showToast('Ricerca in corso...', 'info');
-
-    const results = await searchAddressOnMap(query);
-    displaySearchResults(results);
-}
-
-function displaySearchResults(results) {
-    searchResults = results;
-    const container = document.getElementById('map-search-results');
-
-    if (results.length === 0) {
-        container.innerHTML = '<div class="search-result-item">Nessun risultato trovato</div>';
-        container.style.display = 'block';
-        return;
-    }
-
-    container.innerHTML = results.map((result, index) => `
-        <div class="search-result-item" onclick="selectSearchResult(${index})">
-            <div class="search-result-name">${result.display_name.split(',')[0]}</div>
-            <div class="search-result-address">${result.display_name}</div>
-        </div>
-    `).join('');
-
-    container.style.display = 'block';
-}
-
-function selectSearchResult(index) {
-    const result = searchResults[index];
-
-    if (searchMarker) {
-        map.removeLayer(searchMarker);
-    }
-
-    searchMarker = L.marker([result.lat, result.lon])
-        .addTo(map)
-        .bindPopup(`
-            <div class="leaflet-popup-content">
-                <div class="popup-title">${result.display_name.split(',')[0]}</div>
-                <p>${result.display_name}</p>
-                <button class="popup-btn" onclick="centerOnSearchResult(${result.lat}, ${result.lon})">Centra qui</button>
-                <button class="popup-btn" onclick="addAsNewPoint('${result.display_name}', ${result.lat}, ${result.lon})"
-                        style="background: var(--primary-green); margin-top: 5px;">
-                    Aggiungi come nuovo punto
-                </button>
-            </div>
-        `)
-        .openPopup();
-
-    map.setView([result.lat], [result.lon], 16);
-
-    document.getElementById('map-search-results').style.display = 'none';
-    document.getElementById('map-search-input').value = '';
-
-    showToast('Risultato trovato!', 'success');
-}
-
-function centerOnSearchResult(lat, lng) {
-    map.setView([lat, lng], 16);
-}
-
-function addAsNewPoint(name, lat, lng) {
-    const type = name.toLowerCase().includes('fontana') ? 'fontana' : 'beverino';
-
-    showAdminTab(`${type}-admin`);
-
-    document.getElementById(`${type}-nome`).value = name.split(',')[0];
-    document.getElementById(`${type}-indirizzo`).value = name;
-    document.getElementById(`${type}-latitudine`).value = lat;
-    document.getElementById(`${type}-longitudine`).value = lng;
-
-    showToast(`Compila i campi mancanti e salva il nuovo ${type}`, 'info');
-}
-
-function setupSearchAutocomplete() {
-    const searchInput = document.getElementById('map-search-input');
-
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const query = this.value.trim();
-
-        if (query.length < 3) {
-            document.getElementById('map-search-results').style.display = 'none';
+    // Attendi caricamento dati
+    setTimeout(() => {
+        if (!window.vis) {
+            console.error('Vis.js non caricato');
+            container.innerHTML = '<div class="error-state">Errore: libreria di visualizzazione non caricata</div>';
             return;
         }
-
-        searchTimeout = setTimeout(async () => {
-            const results = await searchAddressOnMap(query);
-            displaySearchResults(results);
-        }, 500);
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.map-search-container')) {
-            document.getElementById('map-search-results').style.display = 'none';
-        }
-    });
-}
-
-// Location Functions
-function getCurrentLocationCoordinatesOnly(type) {
-    showToast('Rilevamento coordinate in corso...', 'info');
-
-    if (!navigator.geolocation) {
-        showToast('Geolocalizzazione non supportata dal browser', 'error');
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        function(position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-
-            document.getElementById(`${type}-latitudine`).value = lat.toFixed(6);
-            document.getElementById(`${type}-longitudine`).value = lng.toFixed(6);
-
-            showToast('Coordinate rilevate con successo!', 'success');
-            logActivity(`Coordinate rilevate per ${type}`);
-        },
-        handleGeolocationError,
-        {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 60000
-        }
-    );
-}
-
-async function getCurrentLocationWithAddress(type) {
-    showToast('Rilevamento posizione e indirizzo...', 'info');
-
-    if (!navigator.geolocation) {
-        showToast('Geolocalizzazione non supportata dal browser', 'error');
-        return;
-    }
-
-    try {
-        const position = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(
-                resolve,
-                reject,
-                {
-                    enableHighAccuracy: true,
-                    timeout: 15000,
-                    maximumAge: 0
-                }
-            );
-        });
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-
-        document.getElementById(`${type}-latitudine`).value = lat.toFixed(6);
-        document.getElementById(`${type}-longitudine`).value = lng.toFixed(6);
-
+        
         try {
-            const address = await reverseGeocode(lat, lng);
-            if (address) {
-                document.getElementById(`${type}-indirizzo`).value = address;
-                showToast('Posizione e indirizzo rilevati!', 'success');
-                logActivity(`Posizione e indirizzo rilevati per ${type}`);
-            } else {
-                document.getElementById(`${type}-indirizzo`).value = `Coordinate: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                showToast('Posizione rilevata (indirizzo non disponibile)', 'warning');
-            }
-        } catch (geocodeError) {
-            document.getElementById(`${type}-indirizzo`).value = `Coordinate: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            showToast('Posizione rilevata - inserisci indirizzo manualmente', 'warning');
+            createConceptNetwork(container);
+        } catch (error) {
+            console.error('Errore creazione rete concettuale:', error);
+            container.innerHTML = '<div class="error-state">Errore nella creazione della rete concettuale</div>';
         }
-
-    } catch (error) {
-        handleGeolocationError(error);
-    }
+    }, 100);
 }
 
-async function reverseGeocode(lat, lng) {
-    try {
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-            {
-                headers: {
-                    'Accept-Language': 'it-IT,it;q=0.9',
-                    'User-Agent': 'FontaneBeveriniNapoli/1.0'
+function createConceptNetwork(container) {
+    const nodes = new vis.DataSet([]);
+    const edges = new vis.DataSet([]);
+    
+    // Aggiungi filosofi
+    appData.filosofi.forEach((filosofo, index) => {
+        nodes.add({
+            id: `f-${filosofo.id}`,
+            label: filosofo.nome,
+            group: 'filosofo',
+            value: 30,
+            shape: 'circle',
+            color: filosofo.periodo === 'contemporaneo' ? 
+                { background: '#8b5cf6', border: '#7c3aed' } : 
+                { background: '#3b82f6', border: '#1d4ed8' },
+            font: { color: 'white', size: 14 },
+            title: `${filosofo.nome}<br>${filosofo.scuola}<br>${filosofo.periodo}`
+        });
+    });
+    
+    // Aggiungi concetti
+    appData.concetti.forEach((concetto, index) => {
+        nodes.add({
+            id: `c-${concetto.id}`,
+            label: concetto.parola,
+            group: 'concetto',
+            value: 25,
+            shape: 'box',
+            color: { background: '#10b981', border: '#059669' },
+            font: { color: 'white', size: 13 },
+            title: `${concetto.parola}<br>${concetto.definizione.substring(0, 100)}...`
+        });
+    });
+    
+    // Crea connessioni (esempio: collegamenti filosofo-concetto)
+    appData.filosofi.forEach(filosofo => {
+        if (filosofo.concetti_principali) {
+            filosofo.concetti_principali.forEach(concettoNome => {
+                const concetto = appData.concetti.find(c => c.parola === concettoNome);
+                if (concetto) {
+                    edges.add({
+                        from: `f-${filosofo.id}`,
+                        to: `c-${concetto.id}`,
+                        label: 'elabora',
+                        color: filosofo.periodo === 'contemporaneo' ? '#f59e0b' : '#10b981',
+                        width: 2,
+                        arrows: 'to',
+                        dashes: false
+                    });
                 }
+            });
+        }
+    });
+    
+    // Collegamenti tra filosofi (influenze)
+    // Esempio di collegamenti (dovrebbero essere nel dataset)
+    const influenze = [
+        { from: 'Platone', to: 'Aristotele', label: 'maestro' },
+        { from: 'Aristotele', to: 'Tommaso d\'Aquino', label: 'influenza' },
+        { from: 'Nietzsche', to: 'Foucault', label: 'ispirazione' },
+        { from: 'Hegel', to: 'Marx', label: 'dialettica' }
+    ];
+    
+    influenze.forEach(influenza => {
+        const filosofoFrom = appData.filosofi.find(f => f.nome.includes(influenza.from));
+        const filosofoTo = appData.filosofi.find(f => f.nome.includes(influenza.to));
+        
+        if (filosofoFrom && filosofoTo) {
+            edges.add({
+                from: `f-${filosofoFrom.id}`,
+                to: `f-${filosofoTo.id}`,
+                label: influenza.label,
+                color: '#6b7280',
+                width: 1,
+                arrows: 'to',
+                dashes: true
+            });
+        }
+    });
+    
+    const data = { nodes, edges };
+    const options = {
+        nodes: {
+            shape: 'dot',
+            size: 25,
+            font: {
+                size: 14,
+                face: 'Inter, -apple-system, sans-serif'
+            },
+            borderWidth: 2,
+            shadow: true
+        },
+        edges: {
+            width: 2,
+            smooth: {
+                type: 'continuous',
+                roundness: 0.5
+            },
+            font: {
+                size: 11,
+                align: 'middle',
+                strokeWidth: 0
+            },
+            arrows: {
+                to: {
+                    enabled: true,
+                    scaleFactor: 0.8,
+                    type: 'arrow'
+                }
+            },
+            color: {
+                inherit: false
+            },
+            selectionWidth: 3
+        },
+        physics: {
+            enabled: true,
+            solver: 'forceAtlas2Based',
+            forceAtlas2Based: {
+                gravitationalConstant: -50,
+                centralGravity: 0.01,
+                springLength: 200,
+                springConstant: 0.08,
+                damping: 0.4,
+                avoidOverlap: 1
+            },
+            stabilization: {
+                enabled: true,
+                iterations: 1000,
+                updateInterval: 100,
+                onlyDynamicEdges: false,
+                fit: true
             }
-        );
-        
-        const data = await response.json();
-        
-        if (data && data.address) {
-            const parts = [];
-            if (data.address.road) parts.push(data.address.road);
-            if (data.address.house_number) parts.push(data.address.house_number);
-            
-            if (parts.length > 0) {
-                let formattedAddress = parts.join(', ');
-                
-                if (data.address.city || data.address.town || data.address.village) {
-                    const city = data.address.city || data.address.town || data.address.village;
-                    if (data.address.postcode) {
-                        formattedAddress += `, ${data.address.postcode} ${city}`;
-                    } else {
-                        formattedAddress += `, ${city}`;
+        },
+        interaction: {
+            dragNodes: true,
+            dragView: true,
+            zoomView: true,
+            hover: true,
+            tooltipDelay: 200,
+            hideEdgesOnDrag: false,
+            hideEdgesOnZoom: false
+        },
+        layout: {
+            improvedLayout: true
+        },
+        groups: {
+            filosofo: {
+                shape: 'circle',
+                color: {
+                    background: '#3b82f6',
+                    border: '#1d4ed8',
+                    highlight: {
+                        background: '#60a5fa',
+                        border: '#3b82f6'
+                    },
+                    hover: {
+                        background: '#60a5fa',
+                        border: '#3b82f6'
                     }
                 }
-                return formattedAddress;
+            },
+            concetto: {
+                shape: 'box',
+                color: {
+                    background: '#10b981',
+                    border: '#059669',
+                    highlight: {
+                        background: '#34d399',
+                        border: '#10b981'
+                    },
+                    hover: {
+                        background: '#34d399',
+                        border: '#10b981'
+                    }
+                }
             }
-            
-            return data.address.city || data.address.town || data.address.village || null;
         }
-    } catch (error) {
-        console.error('Errore reverse geocoding:', error);
-    }
+    };
     
-    return null;
+    // Crea la rete
+    const network = new vis.Network(container, data, options);
+    
+    // Gestisci eventi
+    network.on("click", function(params) {
+        if (params.nodes.length > 0) {
+            const nodeId = params.nodes[0];
+            const node = nodes.get(nodeId);
+            
+            if (nodeId.startsWith('f-')) {
+                const filosofoId = nodeId.substring(2);
+                showDetail(filosofoId, 'filosofo');
+            } else if (nodeId.startsWith('c-')) {
+                const concettoId = nodeId.substring(2);
+                showDetail(concettoId, 'concetto');
+            }
+        }
+    });
+    
+    network.on("hoverNode", function(params) {
+        const node = nodes.get(params.node);
+        if (node) {
+            // Aggiungi effetto hover
+        }
+    });
+    
+    // Aggiungi controlli UI
+    addNetworkControls(network);
 }
 
-// Admin Panel Functions
+function addNetworkControls(network) {
+    const controlsHTML = `
+        <div class="network-controls">
+            <button class="network-btn" onclick="network.fit()" title="Adatta vista">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button class="network-btn" onclick="network.stabilize()" title="Stabilizza rete">
+                <i class="fas fa-sync"></i>
+            </button>
+            <button class="network-btn" onclick="togglePhysics()" title="Attiva/Disattiva fisica">
+                <i class="fas fa-atom"></i>
+            </button>
+        </div>
+    `;
+    
+    const container = document.getElementById('concetto-network-container');
+    const controlsDiv = document.createElement('div');
+    controlsDiv.innerHTML = controlsHTML;
+    container.parentNode.insertBefore(controlsDiv, container.nextSibling);
+}
+
+function togglePhysics() {
+    // Funzione per attivare/disattivare la fisica della rete
+    console.log('Toggle physics');
+}
+
+function showConceptNetwork(conceptName) {
+    showScreen('mappa-concettuale-screen');
+    setTimeout(() => {
+        loadConcettoNetwork();
+        // Qui potresti aggiungere logica per evidenziare il concetto specifico
+    }, 500);
+}
+
+// ============================================
+// ADMIN PANEL FUNCTIONS - FILOSOFIA
+// ============================================
+
 document.querySelectorAll('.admin-tab-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
@@ -2667,119 +2644,120 @@ function showAdminTab(tabId) {
     document.getElementById(tabId).classList.add('active');
 }
 
-// Fontane Admin
-async function loadAdminFontane() {
-    const tbody = document.getElementById('fontane-table-body');
+// Filosofi Admin
+async function loadAdminFilosofi() {
+    const tbody = document.getElementById('filosofi-table-body');
     if (!tbody) return;
     
     tbody.innerHTML = '';
     
-    // Ordina per ID decrescente (i più recenti in alto)
-    const sortedFontane = [...appData.fontane].sort((a, b) => {
-        const idA = parseInt(a.id.replace(/\D/g, '')) || 0;
-        const idB = parseInt(b.id.replace(/\D/g, '')) || 0;
-        return idB - idA; 
+    const sortedFilosofi = [...appData.filosofi].sort((a, b) => {
+        const nomeA = a.nome.toLowerCase();
+        const nomeB = b.nome.toLowerCase();
+        return nomeA.localeCompare(nomeB);
     });
 
-    sortedFontane.forEach(fontana => {
-        // Pulsante singolo elimina (solo Admin)
+    sortedFilosofi.forEach(filosofo => {
         const deleteButton = currentUserRole === 'admin' 
-            ? `<button class="delete-btn" onclick="deleteFontana('${fontana.id}')">Elimina</button>` 
+            ? `<button class="delete-btn" onclick="deleteFilosofo('${filosofo.id}')">Elimina</button>` 
             : '';
             
-        // NUOVO: Checkbox selezione multipla (SOLO ADMIN)
         const checkboxHtml = currentUserRole === 'admin'
-            ? `<input type="checkbox" class="select-item-fontane" value="${fontana.id}" onchange="updateDeleteButtonState('fontane')">`
-            : ''; 
+            ? `<input type="checkbox" class="select-item-filosofi" value="${filosofo.id}" onchange="updateDeleteButtonState('filosofi')">`
+            : '';
 
         const row = document.createElement('tr');
         row.innerHTML = `
             <td style="text-align: center;">${checkboxHtml}</td>
-            <td>${fontana.id}</td>
-            <td>${fontana.nome}</td>
-            <td>${fontana.indirizzo}</td>
-            <td><span class="item-status status-${fontana.stato}">${getStatusText(fontana.stato)}</span></td>
+            <td>${filosofo.id}</td>
+            <td>${filosofo.nome}</td>
+            <td>${filosofo.scuola}</td>
+            <td><span class="item-period periodo-${filosofo.periodo}">${getPeriodoText(filosofo.periodo)}</span></td>
             <td class="admin-item-actions">
-                <button class="edit-btn" onclick="editFontana('${fontana.id}')">Modifica</button>
+                <button class="edit-btn" onclick="editFilosofo('${filosofo.id}')">Modifica</button>
                 ${deleteButton}
             </td>
         `;
         tbody.appendChild(row);
     });
     
-    // Resetta lo stato del pulsante elimina multiplo
-    updateDeleteButtonState('fontane');
+    updateDeleteButtonState('filosofi');
 }
 
-function editFontana(id) {
-    const fontana = appData.fontane.find(f => f.id == id);
-    if (!fontana) return;
+function editFilosofo(id) {
+    const filosofo = appData.filosofi.find(f => f.id == id);
+    if (!filosofo) return;
     
-    document.getElementById('fontana-id').value = fontana.id;
+    document.getElementById('filosofo-id').value = filosofo.id;
     
     // Campi Italiani
-    document.getElementById('fontana-nome').value = fontana.nome || '';
-    document.getElementById('fontana-descrizione').value = fontana.descrizione || '';
-    document.getElementById('fontana-storico').value = fontana.storico || '';
+    document.getElementById('filosofo-nome').value = filosofo.nome || '';
+    document.getElementById('filosofo-scuola').value = filosofo.scuola || '';
+    document.getElementById('filosofo-periodo').value = filosofo.periodo || 'classico';
+    document.getElementById('filosofo-anni').value = filosofo.anni_vita || '';
+    document.getElementById('filosofo-luogo').value = filosofo.luogo_nascita || '';
+    document.getElementById('filosofo-biografia').value = filosofo.biografia || '';
     
-    // Campi Inglesi (NUOVI - Usa ?. per sicurezza)
-    if(document.getElementById('fontana-nome-en')) 
-        document.getElementById('fontana-nome-en').value = fontana.nome_en || '';
-    if(document.getElementById('fontana-descrizione-en')) 
-        document.getElementById('fontana-descrizione-en').value = fontana.descrizione_en || '';
-    if(document.getElementById('fontana-storico-en')) 
-        document.getElementById('fontana-storico-en').value = fontana.storico_en || '';
-
-    // Altri dati
-    document.getElementById('fontana-indirizzo').value = fontana.indirizzo || '';
-    document.getElementById('fontana-stato').value = fontana.stato || 'funzionante';
-    document.getElementById('fontana-anno').value = fontana.anno || '';
-    document.getElementById('fontana-latitudine').value = fontana.latitudine || '';
-    document.getElementById('fontana-longitudine').value = fontana.longitudine || '';
-    document.getElementById('fontana-immagine').value = fontana.immagine || '';
+    // Campi Inglesi
+    if(document.getElementById('filosofo-nome-en')) 
+        document.getElementById('filosofo-nome-en').value = filosofo.nome_en || '';
+    if(document.getElementById('filosofo-biografia-en')) 
+        document.getElementById('filosofo-biografia-en').value = filosofo.biografia_en || '';
     
-    showAdminTab('fontane-admin');
+    // Coordinate (se presenti)
+    if (filosofo.coordinate) {
+        document.getElementById('filosofo-lat').value = filosofo.coordinate.lat || '';
+        document.getElementById('filosofo-lng').value = filosofo.coordinate.lng || '';
+    }
+    
+    document.getElementById('filosofo-ritratto').value = filosofo.ritratto || '';
+    
+    showAdminTab('filosofi-admin');
 }
 
-// MODIFICA: saveFontana con supporto offline
-async function saveFontana(e) {
+async function saveFilosofo(e) {
     e.preventDefault();
     
     try {
-        const id = document.getElementById('fontana-id').value;
-        const nome = document.getElementById('fontana-nome').value.trim();
-        const indirizzo = document.getElementById('fontana-indirizzo').value.trim();
-        const stato = document.getElementById('fontana-stato').value;
-        const anno = document.getElementById('fontana-anno').value.trim();
-        const descrizione = document.getElementById('fontana-descrizione').value.trim();
-        const storico = document.getElementById('fontana-storico').value.trim();
-        const latitudine = parseFloat(document.getElementById('fontana-latitudine').value) || 0;
-        const longitudine = parseFloat(document.getElementById('fontana-longitudine').value) || 0;
-        const immagine = document.getElementById('fontana-immagine').value.trim();
+        const id = document.getElementById('filosofo-id').value;
+        const nome = document.getElementById('filosofo-nome').value.trim();
+        const scuola = document.getElementById('filosofo-scuola').value.trim();
+        const periodo = document.getElementById('filosofo-periodo').value;
+        const anni = document.getElementById('filosofo-anni').value.trim();
+        const luogo = document.getElementById('filosofo-luogo').value.trim();
+        const biografia = document.getElementById('filosofo-biografia').value.trim();
+        const lat = document.getElementById('filosofo-lat').value;
+        const lng = document.getElementById('filosofo-lng').value;
+        const ritratto = document.getElementById('filosofo-ritratto').value.trim();
         
-        // RECUPERO CAMPI INGLESI (Nuova parte fondamentale!)
-        const nome_en = document.getElementById('fontana-nome-en') ? document.getElementById('fontana-nome-en').value.trim() : '';
-        const descrizione_en = document.getElementById('fontana-descrizione-en') ? document.getElementById('fontana-descrizione-en').value.trim() : '';
-        const storico_en = document.getElementById('fontana-storico-en') ? document.getElementById('fontana-storico-en').value.trim() : '';
+        // Campi inglesi
+        const nome_en = document.getElementById('filosofo-nome-en') ? 
+            document.getElementById('filosofo-nome-en').value.trim() : '';
+        const biografia_en = document.getElementById('filosofo-biografia-en') ? 
+            document.getElementById('filosofo-biografia-en').value.trim() : '';
         
-        const fontanaData = {
+        const filosofoData = {
             nome,
-            nome_en, // SALVA INGLESE
-            indirizzo,
-            stato,
-            anno,
-            descrizione,
-            descrizione_en, // SALVA INGLESE
-            storico,
-            storico_en, // SALVA INGLESE
-            latitudine,
-            longitudine,
-            immagine,
+            nome_en,
+            scuola,
+            periodo,
+            anni_vita: anni,
+            luogo_nascita: luogo,
+            biografia,
+            biografia_en,
+            ritratto,
             last_modified: new Date().toISOString()
         };
         
-        // Validazione
-        const validationErrors = validateFontanaData(fontanaData);
+        // Aggiungi coordinate se disponibili
+        if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+            filosofoData.coordinate = {
+                lat: parseFloat(lat),
+                lng: parseFloat(lng)
+            };
+        }
+        
+        const validationErrors = validateFilosofoData(filosofoData);
         if (validationErrors.length > 0) throw validationErrors[0];
         
         let savedId;
@@ -2787,416 +2765,555 @@ async function saveFontana(e) {
         
         if (navigator.onLine) {
             if (id && id.trim() !== '') {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_fontana', 'fontane', fontanaData, id);
-                const index = appData.fontane.findIndex(f => f.id == id);
-                if (index !== -1) appData.fontane[index] = { id, ...fontanaData };
-                showToast('Fontana modificata con successo', 'success');
+                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_filosofo', 'filosofi', filosofoData, id);
+                const index = appData.filosofi.findIndex(f => f.id == id);
+                if (index !== -1) appData.filosofi[index] = { id, ...filosofoData };
+                showToast('Filosofo modificato con successo', 'success');
             } else {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_fontana', 'fontane', fontanaData);
-                appData.fontane.push({ id: savedId, ...fontanaData });
-                showToast(`Fontana aggiunta con successo (ID: ${savedId})`, 'success');
+                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_filosofo', 'filosofi', filosofoData);
+                appData.filosofi.push({ id: savedId, ...filosofoData });
+                showToast(`Filosofo aggiunto con successo (ID: ${savedId})`, 'success');
             }
         } else {
             savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await addToSyncQueue(operation, 'fontane', fontanaData, savedId);
+            await addToSyncQueue(operation, 'filosofi', filosofoData, savedId);
             if (operation === 'UPDATE') {
-                const index = appData.fontane.findIndex(f => f.id == id);
-                if (index !== -1) appData.fontane[index] = { id: savedId, ...fontanaData };
+                const index = appData.filosofi.findIndex(f => f.id == id);
+                if (index !== -1) appData.filosofi[index] = { id: savedId, ...filosofoData };
             } else {
-                appData.fontane.push({ id: savedId, ...fontanaData });
+                appData.filosofi.push({ id: savedId, ...filosofoData });
             }
-            showToast('Fontana salvata localmente.', 'info');
+            showToast('Filosofo salvato localmente.', 'info');
         }
         
         saveLocalData();
-        loadAdminFontane();
-        resetFontanaForm();
-        loadFontane();
+        loadAdminFilosofi();
+        resetFilosofoForm();
+        loadFilosofi();
         updateDashboardStats();
         
     } catch (error) {
-        await handleError('saveFontana', error, 'Errore nel salvataggio della fontana');
+        await handleError('saveFilosofo', error, 'Errore nel salvataggio del filosofo');
     }
 }
 
-function resetFontanaForm() {
-    document.getElementById('fontana-form').reset();
-    document.getElementById('fontana-id').value = '';
+function resetFilosofoForm() {
+    document.getElementById('filosofo-form').reset();
+    document.getElementById('filosofo-id').value = '';
 }
 
-async function deleteFontana(id) {
-    // NUOVO: Controllo permessi
+async function deleteFilosofo(id) {
     if (currentUserRole !== 'admin') {
         showToast('Non hai i permessi per eliminare', 'error');
         return;
     }
 
-    if (!confirm('Sei sicuro di voler eliminare questa fontana?')) return;
+    if (!confirm('Sei sicuro di voler eliminare questo filosofo?')) return;
     
     try {
         if (navigator.onLine) {
-            await deleteFirebaseData('fontane', id);
+            await deleteFirebaseData('filosofi', id);
         } else {
-            // Offline: aggiungi a coda sync
-            const fontana = appData.fontane.find(f => f.id == id);
-            if (fontana) {
-                await addToSyncQueue('DELETE', 'fontane', fontana, id);
+            const filosofo = appData.filosofi.find(f => f.id == id);
+            if (filosofo) {
+                await addToSyncQueue('DELETE', 'filosofi', filosofo, id);
             }
         }
         
-        appData.fontane = appData.fontane.filter(f => f.id != id);
+        appData.filosofi = appData.filosofi.filter(f => f.id != id);
         
         saveLocalData();
-        loadAdminFontane();
-        loadFontane();
+        loadAdminFilosofi();
+        loadFilosofi();
         updateDashboardStats();
         
-        showToast('Fontana eliminata con successo', 'success');
-        logActivity('Fontana eliminata');
+        showToast('Filosofo eliminato con successo', 'success');
+        logActivity('Filosofo eliminato');
     } catch (error) {
-        showToast('Errore nell\'eliminazione della fontana', 'error');
+        showToast('Errore nell\'eliminazione del filosofo', 'error');
     }
 }
-// Beverini Admin
-async function loadAdminBeverini() {
-    const tbody = document.getElementById('beverini-table-body');
+
+// Opere Admin
+async function loadAdminOpere() {
+    const tbody = document.getElementById('opere-table-body');
     if (!tbody) return;
     
     tbody.innerHTML = '';
     
-    const sortedBeverini = [...appData.beverini].sort((a, b) => {
-        const idA = parseInt(a.id.replace(/\D/g, '')) || 0;
-        const idB = parseInt(b.id.replace(/\D/g, '')) || 0;
-        return idB - idA;
+    const sortedOpere = [...appData.opere].sort((a, b) => {
+        const titoloA = a.titolo.toLowerCase();
+        const titoloB = b.titolo.toLowerCase();
+        return titoloA.localeCompare(titoloB);
     });
 
-    sortedBeverini.forEach(beverino => {
+    sortedOpere.forEach(opera => {
         const deleteButton = currentUserRole === 'admin' 
-            ? `<button class="delete-btn" onclick="deleteBeverino('${beverino.id}')">Elimina</button>` 
+            ? `<button class="delete-btn" onclick="deleteOpera('${opera.id}')">Elimina</button>` 
             : '';
 
-        // Checkbox SOLO ADMIN
         const checkboxHtml = currentUserRole === 'admin'
-            ? `<input type="checkbox" class="select-item-beverini" value="${beverino.id}" onchange="updateDeleteButtonState('beverini')">`
+            ? `<input type="checkbox" class="select-item-opere" value="${opera.id}" onchange="updateDeleteButtonState('opere')">`
             : '';
 
         const row = document.createElement('tr');
         row.innerHTML = `
             <td style="text-align: center;">${checkboxHtml}</td>
-            <td>${beverino.id}</td>
-            <td>${beverino.nome}</td>
-            <td>${beverino.indirizzo}</td>
-            <td><span class="item-status status-${beverino.stato}">${getStatusText(beverino.stato)}</span></td>
+            <td>${opera.id}</td>
+            <td>${opera.titolo}</td>
+            <td>${opera.autore_nome || 'Autore non specificato'}</td>
+            <td>${opera.anno}</td>
             <td class="admin-item-actions">
-                <button class="edit-btn" onclick="editBeverino('${beverino.id}')">Modifica</button>
+                <button class="edit-btn" onclick="editOpera('${opera.id}')">Modifica</button>
                 ${deleteButton}
             </td>
         `;
         tbody.appendChild(row);
     });
-    updateDeleteButtonState('beverini');
+    updateDeleteButtonState('opere');
 }
 
-// ✅ MODIFICA A: editBeverino con caricamento campo descrizione
-function editBeverino(id) {
-    const beverino = appData.beverini.find(b => b.id == id);
-    if (!beverino) return;
+function editOpera(id) {
+    const opera = appData.opere.find(o => o.id == id);
+    if (!opera) return;
     
-    document.getElementById('beverino-id').value = beverino.id;
-    document.getElementById('beverino-nome').value = beverino.nome || '';
-    document.getElementById('beverino-indirizzo').value = beverino.indirizzo || '';
-    document.getElementById('beverino-stato').value = beverino.stato || 'funzionante';
-    document.getElementById('beverino-descrizione').value = beverino.descrizione || ''; 
+    document.getElementById('opera-id').value = opera.id;
+    document.getElementById('opera-titolo').value = opera.titolo || '';
     
-    // Campi Inglesi (NUOVI)
-    if(document.getElementById('beverino-nome-en'))
-        document.getElementById('beverino-nome-en').value = beverino.nome_en || '';
-    if(document.getElementById('beverino-descrizione-en'))
-        document.getElementById('beverino-descrizione-en').value = beverino.descrizione_en || '';
+    // Seleziona autore dalla dropdown
+    const autoreSelect = document.getElementById('opera-autore');
+    if (autoreSelect) {
+        autoreSelect.value = opera.autore_id || '';
+    }
     
-    document.getElementById('beverino-latitudine').value = beverino.latitudine || '';
-    document.getElementById('beverino-longitudine').value = beverino.longitudine || '';
-    document.getElementById('beverino-immagine').value = beverino.immagine || '';
+    document.getElementById('opera-anno').value = opera.anno || '';
+    document.getElementById('opera-periodo').value = opera.periodo || '';
+    document.getElementById('opera-lingua').value = opera.lingua || '';
+    document.getElementById('opera-sintesi').value = opera.sintesi || '';
     
-    showAdminTab('beverini-admin');
+    // Campi inglesi
+    if(document.getElementById('opera-titolo-en'))
+        document.getElementById('opera-titolo-en').value = opera.titolo_en || '';
+    if(document.getElementById('opera-sintesi-en'))
+        document.getElementById('opera-sintesi-en').value = opera.sintesi_en || '';
+    
+    document.getElementById('opera-pdf').value = opera.pdf_url || '';
+    document.getElementById('opera-immagine').value = opera.immagine || '';
+    
+    // Concetti (come testo separato da virgola)
+    if(document.getElementById('opera-concetti') && opera.concetti) {
+        document.getElementById('opera-concetti').value = opera.concetti.join(', ');
+    }
+    
+    showAdminTab('opere-admin');
 }
 
-// ✅ MODIFICA B: saveBeverino con salvataggio campo descrizione e supporto offline
-async function saveBeverino(e) {
+async function saveOpera(e) {
     e.preventDefault();
     
-    const id = document.getElementById('beverino-id').value;
-    const nome = document.getElementById('beverino-nome').value.trim();
-    const indirizzo = document.getElementById('beverino-indirizzo').value.trim();
-    const stato = document.getElementById('beverino-stato').value;
-    const latitudine = parseFloat(document.getElementById('beverino-latitudine').value) || 0;
-    const longitudine = parseFloat(document.getElementById('beverino-longitudine').value) || 0;
-    const immagine = document.getElementById('beverino-immagine').value.trim();
-    const descrizione = document.getElementById('beverino-descrizione').value.trim();
+    const id = document.getElementById('opera-id').value;
+    const titolo = document.getElementById('opera-titolo').value.trim();
+    const autore_id = document.getElementById('opera-autore').value;
+    const autore_nome = document.getElementById('opera-autore').options[document.getElementById('opera-autore').selectedIndex].text;
+    const anno = document.getElementById('opera-anno').value;
+    const periodo = document.getElementById('opera-periodo').value;
+    const lingua = document.getElementById('opera-lingua').value;
+    const sintesi = document.getElementById('opera-sintesi').value.trim();
+    const pdf_url = document.getElementById('opera-pdf').value.trim();
+    const immagine = document.getElementById('opera-immagine').value.trim();
+    const concettiInput = document.getElementById('opera-concetti').value;
     
-    // Recupero campi inglesi
-    const nome_en = document.getElementById('beverino-nome-en') ? document.getElementById('beverino-nome-en').value.trim() : '';
-    const descrizione_en = document.getElementById('beverino-descrizione-en') ? document.getElementById('beverino-descrizione-en').value.trim() : '';
+    // Campi inglesi
+    const titolo_en = document.getElementById('opera-titolo-en') ? 
+        document.getElementById('opera-titolo-en').value.trim() : '';
+    const sintesi_en = document.getElementById('opera-sintesi-en') ? 
+        document.getElementById('opera-sintesi-en').value.trim() : '';
     
-    const beverinoData = {
-        nome,
-        nome_en, // SALVA INGLESE
-        indirizzo,
-        stato,
-        latitudine,
-        longitudine,
-        immagine,
-        descrizione, 
-        descrizione_en, // SALVA INGLESE
-        last_modified: new Date().toISOString()
-    };
-    
-    try {
-        const validationErrors = validateBeverinoData(beverinoData);
-        if (validationErrors.length > 0) throw validationErrors[0];
-        
-        let savedId;
-        const operation = id ? 'UPDATE' : 'CREATE';
-        
-        if (navigator.onLine) {
-            if (id && id.trim() !== '') {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_beverino', 'beverini', beverinoData, id);
-                const index = appData.beverini.findIndex(b => b.id == id);
-                if (index !== -1) appData.beverini[index] = { id, ...beverinoData };
-                showToast('Beverino modificato con successo', 'success');
-            } else {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_beverino', 'beverini', beverinoData);
-                appData.beverini.push({ id: savedId, ...beverinoData });
-                showToast(`Beverino aggiunto con successo (ID: ${savedId})`, 'success');
-            }
-        } else {
-            savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await addToSyncQueue(operation, 'beverini', beverinoData, savedId);
-            if (operation === 'UPDATE') {
-                const index = appData.beverini.findIndex(b => b.id == id);
-                if (index !== -1) appData.beverini[index] = { id: savedId, ...beverinoData };
-            } else {
-                appData.beverini.push({ id: savedId, ...beverinoData });
-            }
-            showToast('Beverino salvato localmente.', 'info');
-        }
-        
-        saveLocalData();
-        loadAdminBeverini();
-        resetBeverinoForm();
-        loadBeverini();
-        updateDashboardStats();
-        
-    } catch (error) {
-        await handleError('saveBeverino', error, 'Errore nel salvataggio del beverino');
-    }
-}
-
-function resetBeverinoForm() {
-    document.getElementById('beverino-form').reset();
-    document.getElementById('beverino-id').value = '';
-}
-
-async function deleteBeverino(id) {
-    // NUOVO: Controllo permessi
-    if (currentUserRole !== 'admin') {
-        showToast('Non hai i permessi per eliminare', 'error');
-        return;
-    }
-
-    if (!confirm('Sei sicuro di voler eliminare questo beverino?')) return;
-    
-    try {
-        if (navigator.onLine) {
-            await deleteFirebaseData('beverini', id);
-        } else {
-            const beverino = appData.beverini.find(b => b.id == id);
-            if (beverino) {
-                await addToSyncQueue('DELETE', 'beverini', beverino, id);
-            }
-        }
-        
-        appData.beverini = appData.beverini.filter(b => b.id != id);
-        
-        saveLocalData();
-        loadAdminBeverini();
-        loadBeverini();
-        updateDashboardStats();
-        
-        showToast('Beverino eliminato con successo', 'success');
-        logActivity('Beverino eliminato');
-    } catch (error) {
-        showToast('Errore nell\'eliminazione del beverino', 'error');
-    }
-}
-
-// News Admin
-async function loadAdminNews() {
-    const tbody = document.getElementById('news-table-body');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    // Ordina news per data (più recenti in alto)
-    const sortedNews = [...appData.news].sort((a, b) => new Date(b.data) - new Date(a.data));
-
-    sortedNews.forEach(news => {
-        const deleteButton = currentUserRole === 'admin' 
-            ? `<button class="delete-btn" onclick="deleteNews('${news.id}')">Elimina</button>` 
-            : '';
-
-        // Checkbox SOLO ADMIN
-        const checkboxHtml = currentUserRole === 'admin'
-            ? `<input type="checkbox" class="select-item-news" value="${news.id}" onchange="updateDeleteButtonState('news')">`
-            : '';
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td style="text-align: center;">${checkboxHtml}</td>
-            <td>${news.id}</td>
-            <td>${news.titolo}</td>
-            <td>${formatDate(news.data)}</td>
-            <td>${news.categoria}</td>
-            <td class="admin-item-actions">
-                <button class="edit-btn" onclick="editNews('${news.id}')">Modifica</button>
-                ${deleteButton}
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-    updateDeleteButtonState('news');
-}
-
-function editNews(id) {
-    const news = appData.news.find(n => n.id == id);
-    if (!news) return;
-    
-    document.getElementById('news-id').value = news.id;
-    
-    // Campi Italiani
-    document.getElementById('news-titolo').value = news.titolo || '';
-    document.getElementById('news-contenuto').value = news.contenuto || '';
-    document.getElementById('news-data').value = news.data || '';
-    document.getElementById('news-categoria').value = news.categoria || '';
-    document.getElementById('news-fonte').value = news.fonte || '';
-    
-    // Campi Inglesi (NUOVI)
-    if(document.getElementById('news-titolo-en'))
-        document.getElementById('news-titolo-en').value = news.titolo_en || '';
-    if(document.getElementById('news-contenuto-en'))
-        document.getElementById('news-contenuto-en').value = news.contenuto_en || '';
-    
-    showAdminTab('news-admin');
-}
-
-async function saveNews(e) {
-    e.preventDefault();
-    
-    const id = document.getElementById('news-id').value;
-    const titolo = document.getElementById('news-titolo').value;
-    const contenuto = document.getElementById('news-contenuto').value;
-    const data = document.getElementById('news-data').value;
-    const categoria = document.getElementById('news-categoria').value;
-    const fonte = document.getElementById('news-fonte').value;
-    
-    // RECUPERO CAMPI INGLESI
-    const titolo_en = document.getElementById('news-titolo-en') ? document.getElementById('news-titolo-en').value : '';
-    const contenuto_en = document.getElementById('news-contenuto-en') ? document.getElementById('news-contenuto-en').value : '';
-    
-    const newsData = {
+    const operaData = {
         titolo,
-        titolo_en, // SALVA INGLESE
-        contenuto,
-        contenuto_en, // SALVA INGLESE
-        data,
-        categoria,
-        fonte,
+        titolo_en,
+        autore_id,
+        autore_nome,
+        anno,
+        periodo,
+        lingua,
+        sintesi,
+        sintesi_en,
+        pdf_url,
+        immagine,
+        concetti: concettiInput.split(',').map(c => c.trim()).filter(c => c !== ''),
         last_modified: new Date().toISOString()
     };
     
     try {
+        const validationErrors = validateOperaData(operaData);
+        if (validationErrors.length > 0) throw validationErrors[0];
+        
         let savedId;
         const operation = id ? 'UPDATE' : 'CREATE';
 
         if (navigator.onLine) {
             if (id && id.trim() !== '') {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_news', 'news', newsData, id);
-                const index = appData.news.findIndex(n => n.id == id);
-                if (index !== -1) {
-                    appData.news[index] = { id, ...newsData };
-                }
-                showToast('News modificata con successo', 'success');
+                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_opera', 'opere', operaData, id);
+                const index = appData.opere.findIndex(o => o.id == id);
+                if (index !== -1) appData.opere[index] = { id, ...operaData };
+                showToast('Opera modificata con successo', 'success');
             } else {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_news', 'news', newsData);
-                appData.news.push({ id: savedId, ...newsData });
-                showToast(`News aggiunta con successo (ID: ${savedId})`, 'success');
+                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_opera', 'opere', operaData);
+                appData.opere.push({ id: savedId, ...operaData });
+                showToast(`Opera aggiunta con successo (ID: ${savedId})`, 'success');
             }
         } else {
-            // Offline logic
             savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await addToSyncQueue(operation, 'news', newsData, savedId);
+            await addToSyncQueue(operation, 'opere', operaData, savedId);
+            if (operation === 'UPDATE') {
+                const index = appData.opere.findIndex(o => o.id == id);
+                if (index !== -1) appData.opere[index] = { id: savedId, ...operaData };
+            } else {
+                appData.opere.push({ id: savedId, ...operaData });
+            }
+            showToast('Opera salvata localmente.', 'info');
+        }
+        
+        saveLocalData();
+        loadAdminOpere();
+        resetOperaForm();
+        loadOpere();
+        updateDashboardStats();
+        
+    } catch (error) {
+        await handleError('saveOpera', error, 'Errore nel salvataggio dell\'opera');
+    }
+}
+
+function resetOperaForm() {
+    document.getElementById('opera-form').reset();
+    document.getElementById('opera-id').value = '';
+}
+
+async function deleteOpera(id) {
+    if (currentUserRole !== 'admin') {
+        showToast('Non hai i permessi per eliminare', 'error');
+        return;
+    }
+
+    if (!confirm('Sei sicuro di voler eliminare questa opera?')) return;
+    
+    try {
+        if (navigator.onLine) {
+            await deleteFirebaseData('opere', id);
+        } else {
+            const opera = appData.opere.find(o => o.id == id);
+            if (opera) {
+                await addToSyncQueue('DELETE', 'opere', opera, id);
+            }
+        }
+        
+        appData.opere = appData.opere.filter(o => o.id != id);
+        
+        saveLocalData();
+        loadAdminOpere();
+        loadOpere();
+        updateDashboardStats();
+        
+        showToast('Opera eliminata con successo', 'success');
+        logActivity('Opera eliminata');
+    } catch (error) {
+        showToast('Errore nell\'eliminazione dell\'opera', 'error');
+    }
+}
+
+// Concetti Admin
+async function loadAdminConcetti() {
+    const tbody = document.getElementById('concetti-table-body');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    const sortedConcetti = [...appData.concetti].sort((a, b) => {
+        const parolaA = a.parola.toLowerCase();
+        const parolaB = b.parola.toLowerCase();
+        return parolaA.localeCompare(parolaB);
+    });
+
+    sortedConcetti.forEach(concetto => {
+        const deleteButton = currentUserRole === 'admin' 
+            ? `<button class="delete-btn" onclick="deleteConcetto('${concetto.id}')">Elimina</button>` 
+            : '';
+
+        const checkboxHtml = currentUserRole === 'admin'
+            ? `<input type="checkbox" class="select-item-concetti" value="${concetto.id}" onchange="updateDeleteButtonState('concetti')">`
+            : '';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td style="text-align: center;">${checkboxHtml}</td>
+            <td>${concetto.id}</td>
+            <td>${concetto.parola}</td>
+            <td>${concetto.autore_riferimento || 'N/A'}</td>
+            <td>${concetto.periodo_storico || 'N/A'}</td>
+            <td class="admin-item-actions">
+                <button class="edit-btn" onclick="editConcetto('${concetto.id}')">Modifica</button>
+                ${deleteButton}
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+    updateDeleteButtonState('concetti');
+}
+
+function editConcetto(id) {
+    const concetto = appData.concetti.find(c => c.id == id);
+    if (!concetto) return;
+    
+    document.getElementById('concetto-id').value = concetto.id;
+    document.getElementById('concetto-parola').value = concetto.parola || '';
+    document.getElementById('concetto-definizione').value = concetto.definizione || '';
+    document.getElementById('concetto-citazione').value = concetto.esempio_citazione || '';
+    document.getElementById('concetto-autore').value = concetto.autore_riferimento || '';
+    document.getElementById('concetto-opera').value = concetto.opera_riferimento || '';
+    document.getElementById('concetto-periodo').value = concetto.periodo_storico || '';
+    document.getElementById('concetto-evoluzione').value = concetto.evoluzione || '';
+    
+    // Campi inglesi
+    if(document.getElementById('concetto-parola-en'))
+        document.getElementById('concetto-parola-en').value = concetto.parola_en || '';
+    if(document.getElementById('concetto-definizione-en'))
+        document.getElementById('concetto-definizione-en').value = concetto.definizione_en || '';
+    
+    showAdminTab('concetti-admin');
+}
+
+async function saveConcetto(e) {
+    e.preventDefault();
+    
+    const id = document.getElementById('concetto-id').value;
+    const parola = document.getElementById('concetto-parola').value;
+    const definizione = document.getElementById('concetto-definizione').value;
+    const citazione = document.getElementById('concetto-citazione').value;
+    const autore = document.getElementById('concetto-autore').value;
+    const opera = document.getElementById('concetto-opera').value;
+    const periodo = document.getElementById('concetto-periodo').value;
+    const evoluzione = document.getElementById('concetto-evoluzione').value;
+    
+    // Campi inglesi
+    const parola_en = document.getElementById('concetto-parola-en') ? 
+        document.getElementById('concetto-parola-en').value : '';
+    const definizione_en = document.getElementById('concetto-definizione-en') ? 
+        document.getElementById('concetto-definizione-en').value : '';
+    
+    const concettoData = {
+        parola,
+        parola_en,
+        definizione,
+        definizione_en,
+        esempio_citazione: citazione,
+        autore_riferimento: autore,
+        opera_riferimento: opera,
+        periodo_storico: periodo,
+        evoluzione,
+        last_modified: new Date().toISOString()
+    };
+    
+    try {
+        const validationErrors = validateConcettoData(concettoData);
+        if (validationErrors.length > 0) throw validationErrors[0];
+        
+        let savedId;
+        const operation = id ? 'UPDATE' : 'CREATE';
+
+        if (navigator.onLine) {
+            if (id && id.trim() !== '') {
+                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_concetto', 'concetti', concettoData, id);
+                const index = appData.concetti.findIndex(c => c.id == id);
+                if (index !== -1) {
+                    appData.concetti[index] = { id, ...concettoData };
+                }
+                showToast('Concetto modificato con successo', 'success');
+            } else {
+                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_concetto', 'concetti', concettoData);
+                appData.concetti.push({ id: savedId, ...concettoData });
+                showToast(`Concetto aggiunto con successo (ID: ${savedId})`, 'success');
+            }
+        } else {
+            savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            await addToSyncQueue(operation, 'concetti', concettoData, savedId);
             
             if (id) {
-                const index = appData.news.findIndex(n => n.id == id);
-                if (index !== -1) appData.news[index] = { id: savedId, ...newsData };
+                const index = appData.concetti.findIndex(c => c.id == id);
+                if (index !== -1) appData.concetti[index] = { id: savedId, ...concettoData };
             } else {
-                appData.news.push({ id: savedId, ...newsData });
+                appData.concetti.push({ id: savedId, ...concettoData });
             }
-            showToast('News salvata localmente.', 'info');
+            showToast('Concetto salvato localmente.', 'info');
         }
         
         saveLocalData();
-        loadAdminNews();
-        resetNewsForm();
-        loadNews();
+        loadAdminConcetti();
+        resetConcettoForm();
+        loadConcetti();
         updateDashboardStats();
         
     } catch (error) {
-        await handleError('saveNews', error, 'Errore nel salvataggio della news');
+        await handleError('saveConcetto', error, 'Errore nel salvataggio del concetto');
     }
 }
 
-function resetNewsForm() {
-    document.getElementById('news-form').reset();
-    document.getElementById('news-id').value = '';
+function resetConcettoForm() {
+    document.getElementById('concetto-form').reset();
+    document.getElementById('concetto-id').value = '';
 }
 
-async function deleteNews(id) {
-    // NUOVO: Controllo permessi
+async function deleteConcetto(id) {
     if (currentUserRole !== 'admin') {
         showToast('Non hai i permessi per eliminare', 'error');
         return;
     }
 
-    if (!confirm('Sei sicuro di voler eliminare questa news?')) return;
+    if (!confirm('Sei sicuro di voler eliminare questo concetto?')) return;
     
     try {
         if (navigator.onLine) {
-            await deleteFirebaseData('news', id);
+            await deleteFirebaseData('concetti', id);
         } else {
-            const news = appData.news.find(n => n.id == id);
-            if (news) {
-                await addToSyncQueue('DELETE', 'news', news, id);
+            const concetto = appData.concetti.find(c => c.id == id);
+            if (concetto) {
+                await addToSyncQueue('DELETE', 'concetti', concetto, id);
             }
         }
         
-        appData.news = appData.news.filter(n => n.id != id);
+        appData.concetti = appData.concetti.filter(c => c.id != id);
         
         saveLocalData();
-        loadAdminNews();
-        loadNews();
+        loadAdminConcetti();
+        loadConcetti();
         updateDashboardStats();
         
-        showToast('News eliminata con successo', 'success');
-        logActivity('News eliminata');
+        showToast('Concetto eliminato con successo', 'success');
+        logActivity('Concetto eliminato');
     } catch (error) {
-        showToast('Errore nell\'eliminazione della news', 'error');
+        showToast('Errore nell\'eliminazione del concetto', 'error');
     }
 }
 
-// Import/Export Functions
+// ============================================
+// GESTIONE ELIMINAZIONE MULTIPLA
+// ============================================
+
+function toggleSelectAll(type, source) {
+    const checkboxes = document.querySelectorAll(`.select-item-${type}`);
+    checkboxes.forEach(cb => {
+        cb.checked = source.checked;
+    });
+    updateDeleteButtonState(type);
+}
+
+function updateDeleteButtonState(type) {
+    const checkboxes = document.querySelectorAll(`.select-item-${type}:checked`);
+    const btn = document.getElementById(`btn-delete-sel-${type}`);
+    
+    if (btn) {
+        const count = checkboxes.length;
+        
+        if (currentUserRole !== 'admin') {
+            btn.disabled = true;
+            return;
+        }
+
+        btn.disabled = count === 0;
+        btn.innerHTML = `<i class="fas fa-trash"></i> Elimina Selezionati (${count})`;
+        
+        if (count > 0) {
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'not-allowed';
+        }
+    }
+}
+
+async function deleteSelectedItems(type) {
+    if (currentUserRole !== 'admin') {
+        showToast('ERRORE: Solo l\'Amministratore può eliminare elementi.', 'error');
+        return;
+    }
+
+    const checkboxes = document.querySelectorAll(`.select-item-${type}:checked`);
+    const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
+
+    if (idsToDelete.length === 0) return;
+
+    if (!confirm(`ATTENZIONE: Stai per eliminare ${idsToDelete.length} elementi.\nQuesta azione è irreversibile.\nProcedere?`)) {
+        return;
+    }
+
+    showToast(`Eliminazione di ${idsToDelete.length} elementi in corso...`, 'info');
+    
+    const btn = document.getElementById(`btn-delete-sel-${type}`);
+    if(btn) btn.disabled = true;
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const id of idsToDelete) {
+        try {
+            if (navigator.onLine) {
+                await deleteFirebaseData(type, id);
+            } else {
+                let item;
+                if (type === 'filosofi') item = appData.filosofi.find(f => f.id == id);
+                else if (type === 'opere') item = appData.opere.find(o => o.id == id);
+                else if (type === 'concetti') item = appData.concetti.find(c => c.id == id);
+
+                if (item) {
+                    await addToSyncQueue('DELETE', type, item, id);
+                }
+            }
+
+            if (type === 'filosofi') appData.filosofi = appData.filosofi.filter(f => f.id != id);
+            else if (type === 'opere') appData.opere = appData.opere.filter(o => o.id != id);
+            else if (type === 'concetti') appData.concetti = appData.concetti.filter(c => c.id != id);
+
+            successCount++;
+        } catch (error) {
+            console.error(`Errore eliminazione ID ${id}:`, error);
+            failCount++;
+        }
+    }
+
+    saveLocalData();
+    
+    if (type === 'filosofi') {
+        loadAdminFilosofi();
+        loadFilosofi();
+    } else if (type === 'opere') {
+        loadAdminOpere();
+        loadOpere();
+    } else if (type === 'concetti') {
+        loadAdminConcetti();
+        loadConcetti();
+    }
+    
+    if (typeof updateDashboardStats === 'function') {
+        updateDashboardStats();
+    }
+
+    const selectAllCb = document.querySelector(`input[onchange="toggleSelectAll('${type}', this)"]`);
+    if(selectAllCb) selectAllCb.checked = false;
+
+    if (failCount === 0) {
+        showToast(`${successCount} elementi eliminati correttamente.`, 'success');
+    } else {
+        showToast(`Eliminati: ${successCount}. Falliti: ${failCount}.`, 'warning');
+    }
+}
+
+// ============================================
+// IMPORT/EXPORT FUNCTIONS - FILOSOFIA
+// ============================================
+
 function exportDataToExcel(type) {
-    // Controllo permessi
     if (currentUserRole !== 'admin') {
         showToast('Funzione riservata agli amministratori', 'error');
         return;
@@ -3207,61 +3324,62 @@ function exportDataToExcel(type) {
         let excelData = [];
 
         switch(type) {
-            case 'fontane':
-                data = appData.fontane;
-                filename = 'fontane_export.xlsx';
-                sheetName = 'Fontane';
-                // Mappatura Esplicita per Fontane
+            case 'filosofi':
+                data = appData.filosofi;
+                filename = 'filosofi_export.xlsx';
+                sheetName = 'Filosofi';
                 excelData = data.map(item => ({
                     'ID': item.id,
                     'Nome': item.nome || '',
-                    'Nome_EN': item.nome_en || '', // NUOVO
-                    'Indirizzo': item.indirizzo || '',
-                    'Stato': item.stato || '',
-                    'Anno': item.anno || '',
-                    'Descrizione': item.descrizione || '',
-                    'Descrizione_EN': item.descrizione_en || '', // NUOVO
-                    'Storico': item.storico || '',
-                    'Storico_EN': item.storico_en || '', // NUOVO
-                    'Latitudine': item.latitudine || 0,
-                    'Longitudine': item.longitudine || 0,
-                    'Immagine': item.immagine || ''
+                    'Nome_EN': item.nome_en || '',
+                    'Scuola': item.scuola || '',
+                    'Periodo': item.periodo || '',
+                    'Anni_Vita': item.anni_vita || '',
+                    'Luogo_Nascita': item.luogo_nascita || '',
+                    'Biografia': item.biografia || '',
+                    'Biografia_EN': item.biografia_en || '',
+                    'Coordinate_Lat': item.coordinate ? item.coordinate.lat : '',
+                    'Coordinate_Lng': item.coordinate ? item.coordinate.lng : '',
+                    'Ritratto_URL': item.ritratto || ''
                 }));
                 break;
 
-            case 'beverini':
-                data = appData.beverini;
-                filename = 'beverini_export.xlsx';
-                sheetName = 'Beverini';
-                // Mappatura Esplicita per Beverini
-                excelData = data.map(item => ({
-                    'ID': item.id,
-                    'Nome': item.nome || '',
-                    'Nome_EN': item.nome_en || '', // NUOVO
-                    'Indirizzo': item.indirizzo || '',
-                    'Stato': item.stato || '',
-                    'Descrizione': item.descrizione || '',
-                    'Descrizione_EN': item.descrizione_en || '', // NUOVO
-                    'Latitudine': item.latitudine || 0,
-                    'Longitudine': item.longitudine || 0,
-                    'Immagine': item.immagine || ''
-                }));
-                break;
-
-            case 'news':
-                data = appData.news;
-                filename = 'news_export.xlsx';
-                sheetName = 'News';
-                // Mappatura Esplicita per News
+            case 'opere':
+                data = appData.opere;
+                filename = 'opere_export.xlsx';
+                sheetName = 'Opere';
                 excelData = data.map(item => ({
                     'ID': item.id,
                     'Titolo': item.titolo || '',
-                    'Titolo_EN': item.titolo_en || '', // NUOVO
-                    'Data': item.data || '',
-                    'Contenuto': item.contenuto || '',
-                    'Contenuto_EN': item.contenuto_en || '', // NUOVO
-                    'Categoria': item.categoria || '',
-                    'Fonte': item.fonte || ''
+                    'Titolo_EN': item.titolo_en || '',
+                    'Autore_ID': item.autore_id || '',
+                    'Autore_Nome': item.autore_nome || '',
+                    'Anno': item.anno || '',
+                    'Periodo': item.periodo || '',
+                    'Lingua': item.lingua || '',
+                    'Sintesi': item.sintesi || '',
+                    'Sintesi_EN': item.sintesi_en || '',
+                    'PDF_URL': item.pdf_url || '',
+                    'Immagine_URL': item.immagine || '',
+                    'Concetti': item.concetti ? item.concetti.join('; ') : ''
+                }));
+                break;
+
+            case 'concetti':
+                data = appData.concetti;
+                filename = 'concetti_export.xlsx';
+                sheetName = 'Concetti';
+                excelData = data.map(item => ({
+                    'ID': item.id,
+                    'Parola': item.parola || '',
+                    'Parola_EN': item.parola_en || '',
+                    'Definizione': item.definizione || '',
+                    'Definizione_EN': item.definizione_en || '',
+                    'Esempio_Citazione': item.esempio_citazione || '',
+                    'Autore_Riferimento': item.autore_riferimento || '',
+                    'Opera_Riferimento': item.opera_riferimento || '',
+                    'Periodo_Storico': item.periodo_storico || '',
+                    'Evoluzione': item.evoluzione || ''
                 }));
                 break;
         }
@@ -3281,7 +3399,6 @@ function exportDataToExcel(type) {
 }
 
 function handleFileImport(type, files) {
-    // NUOVO: Controllo permessi
     if (currentUserRole !== 'admin') {
         showToast('Funzione riservata agli amministratori', 'error');
         return;
@@ -3300,29 +3417,29 @@ function handleFileImport(type, files) {
             if (type === 'all') {
                 let importedCount = 0;
 
-                if (workbook.SheetNames.includes('Fontane')) {
-                    const fontaneSheet = workbook.Sheets['Fontane'];
-                    const fontaneData = XLSX.utils.sheet_to_json(fontaneSheet);
-                    importedCount += importFontane(fontaneData);
+                if (workbook.SheetNames.includes('Filosofi')) {
+                    const filosofiSheet = workbook.Sheets['Filosofi'];
+                    const filosofiData = XLSX.utils.sheet_to_json(filosofiSheet);
+                    importedCount += importFilosofi(filosofiData);
                 }
 
-                if (workbook.SheetNames.includes('Beverini')) {
-                    const beveriniSheet = workbook.Sheets['Beverini'];
-                    const beveriniData = XLSX.utils.sheet_to_json(beveriniSheet);
-                    importedCount += importBeverini(beveriniData);
+                if (workbook.SheetNames.includes('Opere')) {
+                    const opereSheet = workbook.Sheets['Opere'];
+                    const opereData = XLSX.utils.sheet_to_json(opereSheet);
+                    importedCount += importOpere(opereData);
                 }
 
-                if (workbook.SheetNames.includes('News')) {
-                    const newsSheet = workbook.Sheets['News'];
-                    const newsData = XLSX.utils.sheet_to_json(newsSheet);
-                    importedCount += importNews(newsData);
+                if (workbook.SheetNames.includes('Concetti')) {
+                    const concettiSheet = workbook.Sheets['Concetti'];
+                    const concettiData = XLSX.utils.sheet_to_json(concettiSheet);
+                    importedCount += importConcetti(concettiData);
                 }
 
                 if (importedCount > 0) {
                     saveLocalData();
-                    loadAdminFontane();
-                    loadAdminBeverini();
-                    loadAdminNews();
+                    loadAdminFilosofi();
+                    loadAdminOpere();
+                    loadAdminConcetti();
                     updateDashboardStats();
                     showToast(`${importedCount} elementi importati con successo`, 'success');
                     logActivity('Tutti i dati importati da Excel');
@@ -3334,14 +3451,14 @@ function handleFileImport(type, files) {
                 const jsonData = XLSX.utils.sheet_to_json(firstSheet);
 
                 switch (type) {
-                    case 'fontane':
-                        importFontane(jsonData);
+                    case 'filosofi':
+                        importFilosofi(jsonData);
                         break;
-                    case 'beverini':
-                        importBeverini(jsonData);
+                    case 'opere':
+                        importOpere(jsonData);
                         break;
-                    case 'news':
-                        importNews(jsonData);
+                    case 'concetti':
+                        importConcetti(jsonData);
                         break;
                 }
             }
@@ -3355,158 +3472,167 @@ function handleFileImport(type, files) {
     reader.readAsArrayBuffer(file);
 }
 
-function importFontane(data) {
-    const newFontane = data.map((item) => ({
+function importFilosofi(data) {
+    const newFilosofi = data.map((item) => ({
         nome: item.Nome || item.nome || '',
-        nome_en: item.Nome_EN || item.nome_en || '', // LEGGE EXCEL INGLESE
-        indirizzo: item.Indirizzo || item.indirizzo || '',
-        stato: item.Stato || item.stato || 'funzionante',
-        anno: item.Anno || item.anno || '',
-        descrizione: item.Descrizione || item.descrizione || '',
-        descrizione_en: item.Descrizione_EN || item.descrizione_en || '', // LEGGE EXCEL INGLESE
-        storico: item.Storico || item.storico || '',
-        storico_en: item.Storico_EN || item.storico_en || '', // LEGGE EXCEL INGLESE
-        latitudine: parseFloat(item.Latitudine) || parseFloat(item.latitudine) || 0,
-        longitudine: parseFloat(item.Longitudine) || parseFloat(item.longitudine) || 0,
-        immagine: item.Immagine || item.immagine || '',
+        nome_en: item.Nome_EN || item.nome_en || '',
+        scuola: item.Scuola || item.scuola || '',
+        periodo: item.Periodo || item.periodo || 'classico',
+        anni_vita: item.Anni_Vita || item.anni_vita || '',
+        luogo_nascita: item.Luogo_Nascita || item.luogo_nascita || '',
+        biografia: item.Biografia || item.biografia || '',
+        biografia_en: item.Biografia_EN || item.biografia_en || '',
+        ritratto: item.Ritratto_URL || item.ritratto_url || '',
+        coordinate: (item.Coordinate_Lat && item.Coordinate_Lng) ? {
+            lat: parseFloat(item.Coordinate_Lat),
+            lng: parseFloat(item.Coordinate_Lng)
+        } : null,
         last_modified: new Date().toISOString()
     }));
 
     let importedCount = 0;
     
-    newFontane.forEach(async (fontana) => {
+    newFilosofi.forEach(async (filosofo) => {
         try {
-            const id = await saveFirebaseData('fontane', fontana);
-            appData.fontane.push({ id, ...fontana });
+            const id = await saveFirebaseData('filosofi', filosofo);
+            appData.filosofi.push({ id, ...filosofo });
             importedCount++;
             
-            if (importedCount === newFontane.length) {
+            if (importedCount === newFilosofi.length) {
                 saveLocalData();
-                loadAdminFontane();
-                showToast(`${importedCount} fontane importate con successo!`, 'success');
+                loadAdminFilosofi();
+                showToast(`${importedCount} filosofi importati con successo!`, 'success');
             }
         } catch (error) {
-            console.error('Errore import fontana:', error);
+            console.error('Errore import filosofo:', error);
         }
     });
 
-    return newFontane.length;
+    return newFilosofi.length;
 }
 
-function importBeverini(data) {
-    const newBeverini = data.map((item) => ({
-        nome: item.Nome || item.nome || '',
-        nome_en: item.Nome_EN || item.nome_en || '', // LEGGE EXCEL INGLESE
-        indirizzo: item.Indirizzo || item.indirizzo || '',
-        stato: item.Stato || item.stato || 'funzionante',
-        descrizione: item.Descrizione || item.descrizione || '',
-        descrizione_en: item.Descrizione_EN || item.descrizione_en || '', // LEGGE EXCEL INGLESE
-        latitudine: parseFloat(item.Latitudine) || parseFloat(item.latitudine) || 0,
-        longitudine: parseFloat(item.Longitudine) || parseFloat(item.longitudine) || 0,
-        immagine: item.Immagine || item.immagine || '',
-        last_modified: new Date().toISOString()
-    }));
-
-    let importedCount = 0;
-    
-    newBeverini.forEach(async (beverino) => {
-        try {
-            const id = await saveFirebaseData('beverini', beverino);
-            appData.beverini.push({ id, ...beverino });
-            importedCount++;
-            
-            if (importedCount === newBeverini.length) {
-                saveLocalData();
-                loadAdminBeverini();
-                showToast(`${importedCount} beverini importati con successo!`, 'success');
-            }
-        } catch (error) {
-            console.error('Errore import beverino:', error);
-        }
-    });
-
-    return newBeverini.length;
-}
-
-function importNews(data) {
-    const newNews = data.map((item) => ({
+function importOpere(data) {
+    const newOpere = data.map((item) => ({
         titolo: item.Titolo || item.titolo || '',
-        titolo_en: item.Titolo_EN || item.titolo_en || '', // LEGGE EXCEL INGLESE
-        contenuto: item.Contenuto || item.contenuto || '',
-        contenuto_en: item.Contenuto_EN || item.contenuto_en || '', // LEGGE EXCEL INGLESE
-        data: item.Data || item.data || new Date().toISOString().split('T')[0],
-        categoria: item.Categoria || item.categoria || '',
-        fonte: item.Fonte || item.fonte || '',
+        titolo_en: item.Titolo_EN || item.titolo_en || '',
+        autore_id: item.Autore_ID || item.autore_id || '',
+        autore_nome: item.Autore_Nome || item.autore_nome || '',
+        anno: item.Anno || item.anno || '',
+        periodo: item.Periodo || item.periodo || '',
+        lingua: item.Lingua || item.lingua || '',
+        sintesi: item.Sintesi || item.sintesi || '',
+        sintesi_en: item.Sintesi_EN || item.sintesi_en || '',
+        pdf_url: item.PDF_URL || item.pdf_url || '',
+        immagine: item.Immagine_URL || item.immagine_url || '',
+        concetti: (item.Concetti || '').split(';').map(c => c.trim()).filter(c => c !== ''),
         last_modified: new Date().toISOString()
     }));
 
     let importedCount = 0;
     
-    newNews.forEach(async (news) => {
+    newOpere.forEach(async (opera) => {
         try {
-            const id = await saveFirebaseData('news', news);
-            appData.news.push({ id, ...news });
+            const id = await saveFirebaseData('opere', opera);
+            appData.opere.push({ id, ...opera });
             importedCount++;
             
-            if (importedCount === newNews.length) {
+            if (importedCount === newOpere.length) {
                 saveLocalData();
-                loadAdminNews();
-                showToast(`${importedCount} news importate con successo!`, 'success');
+                loadAdminOpere();
+                showToast(`${importedCount} opere importati con successo!`, 'success');
             }
         } catch (error) {
-            console.error('Errore import news:', error);
+            console.error('Errore import opera:', error);
         }
     });
 
-    return newNews.length;
+    return newOpere.length;
 }
+
+function importConcetti(data) {
+    const newConcetti = data.map((item) => ({
+        parola: item.Parola || item.parola || '',
+        parola_en: item.Parola_EN || item.parola_en || '',
+        definizione: item.Definizione || item.definizione || '',
+        definizione_en: item.Definizione_EN || item.definizione_en || '',
+        esempio_citazione: item.Esempio_Citazione || item.esempio_citazione || '',
+        autore_riferimento: item.Autore_Riferimento || item.autore_riferimento || '',
+        opera_riferimento: item.Opera_Riferimento || item.opera_riferimento || '',
+        periodo_storico: item.Periodo_Storico || item.periodo_storico || '',
+        evoluzione: item.Evoluzione || item.evoluzione || '',
+        last_modified: new Date().toISOString()
+    }));
+
+    let importedCount = 0;
+    
+    newConcetti.forEach(async (concetto) => {
+        try {
+            const id = await saveFirebaseData('concetti', concetto);
+            appData.concetti.push({ id, ...concetto });
+            importedCount++;
+            
+            if (importedCount === newConcetti.length) {
+                saveLocalData();
+                loadAdminConcetti();
+                showToast(`${importedCount} concetti importati con successo!`, 'success');
+            }
+        } catch (error) {
+            console.error('Errore import concetto:', error);
+        }
+    });
+
+    return newConcetti.length;
+}
+
 function downloadTemplate(type) {
     let columns = [];
     let filename = '';
     let sheetName = '';
 
     switch (type) {
-        case 'fontane':
-            // ABBIAMO AGGIUNTO LE COLONNE _EN
+        case 'filosofi':
             columns = [
                 'Nome', 'Nome_EN', 
-                'Indirizzo', 
-                'Stato', 
-                'Anno', 
-                'Descrizione', 'Descrizione_EN',
-                'Storico', 'Storico_EN',
-                'Latitudine', 'Longitudine', 
-                'Immagine'
+                'Scuola', 
+                'Periodo', 
+                'Anni_Vita', 
+                'Luogo_Nascita',
+                'Biografia', 'Biografia_EN',
+                'Coordinate_Lat', 'Coordinate_Lng',
+                'Ritratto_URL'
             ];
-            filename = 'template_fontane_multilingua.xlsx';
-            sheetName = 'Fontane';
+            filename = 'template_filosofi.xlsx';
+            sheetName = 'Filosofi';
             break;
             
-        case 'beverini':
-            // ABBIAMO AGGIUNTO LE COLONNE _EN
-            columns = [
-                'Nome', 'Nome_EN',
-                'Indirizzo', 
-                'Stato', 
-                'Latitudine', 'Longitudine', 
-                'Immagine', 
-                'Descrizione', 'Descrizione_EN'
-            ];
-            filename = 'template_beverini_multilingua.xlsx';
-            sheetName = 'Beverini';
-            break;
-            
-        case 'news':
-            // ABBIAMO AGGIUNTO LE COLONNE _EN
+        case 'opere':
             columns = [
                 'Titolo', 'Titolo_EN',
-                'Contenuto', 'Contenuto_EN',
-                'Data', 
-                'Categoria', 
-                'Fonte'
+                'Autore_ID', 'Autore_Nome',
+                'Anno', 
+                'Periodo', 
+                'Lingua',
+                'Sintesi', 'Sintesi_EN',
+                'PDF_URL',
+                'Immagine_URL',
+                'Concetti'
             ];
-            filename = 'template_news_multilingua.xlsx';
-            sheetName = 'News';
+            filename = 'template_opere.xlsx';
+            sheetName = 'Opere';
+            break;
+            
+        case 'concetti':
+            columns = [
+                'Parola', 'Parola_EN',
+                'Definizione', 'Definizione_EN',
+                'Esempio_Citazione', 
+                'Autore_Riferimento', 
+                'Opera_Riferimento',
+                'Periodo_Storico',
+                'Evoluzione'
+            ];
+            filename = 'template_concetti.xlsx';
+            sheetName = 'Concetti';
             break;
     }
 
@@ -3515,873 +3641,180 @@ function downloadTemplate(type) {
     XLSX.utils.book_append_sheet(wb, ws, sheetName);
     XLSX.writeFile(wb, filename);
 
-    showToast(`Template ${type} (multilingua) scaricato con successo`, 'success');
-}
-
-// Utility Functions
-function showInfoModal(title, message) {
-    document.getElementById('info-modal-title').textContent = title;
-    document.getElementById('info-modal-message').textContent = message;
-    document.getElementById('info-modal').style.display = 'flex';
-}
-
-function closeInfoModal() {
-    document.getElementById('info-modal').style.display = 'none';
-}
-
-function checkOnlineStatus() {
-    const offlineIndicator = document.getElementById('offline-indicator');
-    if (!navigator.onLine) {
-        offlineIndicator.style.display = 'block';
-    } else {
-        offlineIndicator.style.display = 'none';
-    }
-}
-
-function handleUrlParameters() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const fontanaId = urlParams.get('fontana');
-    const beverinoId = urlParams.get('beverino');
-    if (fontanaId) {
-        showDetail(fontanaId, 'fontana');
-    } else if (beverinoId) {
-        showDetail(beverinoId, 'beverino');
-    }
+    showToast(`Template ${type} scaricato con successo`, 'success');
 }
 
 // ============================================
-// ANALYTICS DASHBOARD FUNCTIONS
+// GESTIONE TASTO INDIETRO ANDROID
 // ============================================
 
-// Carica dashboard analytics
-function loadAnalyticsDashboard() {
-    if (!window.Analytics) {
-        console.warn('Analytics non inizializzato');
-        return;
-    }
-
-    // Aggiorna statistiche
-    updateAnalyticsStats();
-    
-    // Aggiorna tabelle
-    updateAnalyticsTables();
-    
-    // Aggiorna info sessione
-    updateSessionInfo();
-    
-    // Aggiorna info storage
-    updateStorageInfo();
-    
-    // Aggiorna grafico
-    updateActivityChart();
-}
-
-// Aggiorna statistiche
-function updateAnalyticsStats() {
-    try {
-        const today = new Date().toDateString();
-        const allEvents = JSON.parse(localStorage.getItem('analytics_events') || '[]');
-        const allErrors = JSON.parse(localStorage.getItem('analytics_errors') || '[]');
-        
-        // Eventi di oggi
-        const todayEvents = allEvents.filter(event => 
-            new Date(event.timestamp).toDateString() === today
-        );
-        
-        // Sessioni di oggi (eventi di tipo SESSION_START)
-        const todaySessions = todayEvents.filter(event => event.type === 'SESSION_START');
-        
-        // Errori di oggi
-        const todayErrors = allErrors.filter(error => 
-            new Date(error.timestamp).toDateString() === today
-        );
-        
-        // Page views
-        const pageViews = todayEvents.filter(event => event.type === 'PAGE_VIEW').length;
-        
-        // Aggiorna UI
-        document.getElementById('analytics-session-count').textContent = todaySessions.length;
-        document.getElementById('analytics-events-count').textContent = todayEvents.length;
-        document.getElementById('analytics-pageviews-count').textContent = pageViews;
-        document.getElementById('analytics-errors-count').textContent = todayErrors.length;
-        
-    } catch (error) {
-        console.error('Errore aggiornamento stats:', error);
-    }
-}
-
-// Aggiorna tabelle
-function updateAnalyticsTables() {
-    updateErrorsTable();
-    updateEventsTable();
-}
-
-// Aggiorna tabella errori
-function updateErrorsTable() {
-    const errorsTable = document.getElementById('analytics-errors-table');
-    if (!errorsTable) return;
-    
-    const errors = JSON.parse(localStorage.getItem('analytics_errors') || '[]');
-    const recentErrors = errors.slice(0, 10); // Ultimi 10 errori
-    
-    errorsTable.innerHTML = recentErrors.map(error => {
-        const date = new Date(error.timestamp);
-        const timeString = date.toLocaleTimeString('it-IT', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-        const dateString = date.toLocaleDateString('it-IT');
-        
-        return `
-            <tr>
-                <td>${dateString} ${timeString}</td>
-                <td>${error.context || 'N/A'}</td>
-                <td title="${error.error?.message || 'N/A'}">
-                    ${(error.error?.message || 'N/A').substring(0, 50)}${(error.error?.message || '').length > 50 ? '...' : ''}
-                </td>
-                <td>
-                    <span class="item-status status-${error.severity || 'medium'}">
-                        ${error.severity || 'medium'}
-                    </span>
-                </td>
-            </tr>
-        `;
-    }).join('');
-    
-    if (recentErrors.length === 0) {
-        errorsTable.innerHTML = `
-            <tr>
-                <td colspan="4" style="text-align: center; padding: 20px; color: var(--light-text);">
-                    Nessun errore registrato
-                </td>
-            </tr>
-        `;
-    }
-}
-
-// Aggiorna tabella eventi
-function updateEventsTable() {
-    const eventsTable = document.getElementById('analytics-events-table');
-    if (!eventsTable) return;
-    
-    const events = JSON.parse(localStorage.getItem('analytics_events') || '[]');
-    
-    // Raggruppa eventi per categoria/azione
-    const eventCounts = {};
-    events.forEach(event => {
-        if (event.category && event.action) {
-            const key = `${event.category}.${event.action}`;
-            eventCounts[key] = eventCounts[key] || { count: 0, lastTime: null };
-            eventCounts[key].count++;
-            
-            const eventTime = new Date(event.timestamp);
-            if (!eventCounts[key].lastTime || eventTime > eventCounts[key].lastTime) {
-                eventCounts[key].lastTime = eventTime;
-            }
-        }
-    });
-    
-    // Converti in array e ordina
-    const eventArray = Object.entries(eventCounts)
-        .map(([key, data]) => {
-            const [category, action] = key.split('.');
-            return {
-                category,
-                action,
-                count: data.count,
-                lastTime: data.lastTime
-            };
-        })
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 10); // Top 10
-    
-    eventsTable.innerHTML = eventArray.map(event => {
-        const lastTime = event.lastTime ? 
-            event.lastTime.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }) : 
-            'N/A';
-        
-        return `
-            <tr>
-                <td>${event.category}</td>
-                <td>${event.action}</td>
-                <td>${event.count}</td>
-                <td>${lastTime}</td>
-            </tr>
-        `;
-    }).join('');
-    
-    if (eventArray.length === 0) {
-        eventsTable.innerHTML = `
-            <tr>
-                <td colspan="4" style="text-align: center; padding: 20px; color: var(--light-text);">
-                    Nessun evento registrato
-                </td>
-            </tr>
-        `;
-    }
-}
-
-// Aggiorna info sessione
-function updateSessionInfo() {
-    if (window.Analytics && window.Analytics.session) {
-        document.getElementById('current-session-id').textContent = 
-            window.Analytics.session.id.substring(0, 15) + '...';
-        
-        const statusIndicator = document.getElementById('analytics-status-indicator');
-        const statusText = document.getElementById('analytics-status-text');
-        
-        if (window.Analytics.config.trackingEnabled) {
-            statusIndicator.classList.remove('inactive');
-            statusIndicator.classList.add('active');
-            statusText.textContent = 'Analytics Attivo';
-            statusText.className = 'status-active';
-        } else {
-            statusIndicator.classList.remove('active');
-            statusIndicator.classList.add('inactive');
-            statusText.textContent = 'Analytics Disattivo';
-            statusText.className = 'status-inactive';
-        }
-    }
-}
-
-// Aggiorna info storage
-function updateStorageInfo() {
-    try {
-        // Calcola storage utilizzato
-        let totalSize = 0;
-        const analyticsKeys = [
-            'analytics_events',
-            'analytics_errors',
-            'analytics_pending',
-            'analytics_user_id',
-            'analytics_tracking_enabled'
-        ];
-        
-        analyticsKeys.forEach(key => {
-            const item = localStorage.getItem(key);
-            if (item) {
-                totalSize += new Blob([item]).size;
-            }
-        });
-        
-        // Converti in KB
-        const sizeKB = (totalSize / 1024).toFixed(2);
-        const storageUsedEl = document.getElementById('storage-used');
-        if (storageUsedEl) storageUsedEl.textContent = `${sizeKB} KB`;
-        
-        // Eventi pendenti - FIX: Usa l'ID corretto (pending-events-count)
-        const pendingEvents = JSON.parse(localStorage.getItem('analytics_pending') || '[]');
-        const pendingEl = document.getElementById('pending-events-count');
-        if (pendingEl) pendingEl.textContent = pendingEvents.length;
-        
-        // Ultimo sync
-        const lastSync = localStorage.getItem('analytics_last_sync');
-        const lastSyncEl = document.getElementById('last-sync-time');
-        
-        if (lastSync && lastSyncEl) {
-            const lastSyncDate = new Date(lastSync);
-            const now = new Date();
-            const diffMinutes = Math.floor((now - lastSyncDate) / (1000 * 60));
-            
-            if (diffMinutes < 1) {
-                lastSyncEl.textContent = 'Poco fa';
-            } else if (diffMinutes < 60) {
-                lastSyncEl.textContent = `${diffMinutes} minuti fa`;
-            } else {
-                lastSyncEl.textContent = lastSyncDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-            }
-        }
-        
-    } catch (error) {
-        console.warn('Errore non critico in updateStorageInfo:', error);
-    }
-}
-
-// Aggiorna grafico attività
-function updateActivityChart() {
-    const canvas = document.getElementById('activity-chart');
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
-    // FIX: Distruggi grafico precedente se esiste per evitare l'errore "Canvas already in use"
-    // Questo usa la variabile che abbiamo messo in cima al file
-    if (typeof activityChartInstance !== 'undefined' && activityChartInstance) {
-        activityChartInstance.destroy();
-        activityChartInstance = null;
-    }
-    
-    // Dati fake per il grafico (ultimi 7 giorni)
-    const labels = [];
-    const data = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        labels.push(d.toLocaleDateString('it-IT', { weekday: 'short' }));
-        data.push(Math.floor(Math.random() * 20) + 5); // Dati casuali
-    }
-    
-    // Crea il nuovo grafico salvandolo nella variabile globale
-    activityChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Attività',
-                data: data,
-                borderColor: 'rgb(59, 130, 246)',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: { 
-            responsive: true, 
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
-                x: { grid: { display: false } }
-            }
-        }
-    });
-}
-
-// Aggiorna metriche performance
-function updatePerformanceMetrics() {
-    const metrics = JSON.parse(localStorage.getItem('performance_metrics') || '[]');
-    
-    if (metrics.length > 0) {
-        // Calcola medie
-        const firstLoadMetrics = metrics.filter(m => m.name === 'app_start' || m.name.includes('first'));
-        const dataLoadMetrics = metrics.filter(m => m.name.includes('data_load') || m.name.includes('firebase'));
-        const imageLoadMetrics = metrics.filter(m => m.name.includes('image') || m.name.includes('load'));
-        
-        const avgFirstLoad = firstLoadMetrics.length > 0 ? 
-            firstLoadMetrics.reduce((sum, m) => sum + m.duration, 0) / firstLoadMetrics.length : 0;
-        
-        const avgDataLoad = dataLoadMetrics.length > 0 ? 
-            dataLoadMetrics.reduce((sum, m) => sum + m.duration, 0) / dataLoadMetrics.length : 0;
-        
-        const avgImageLoad = imageLoadMetrics.length > 0 ? 
-            imageLoadMetrics.reduce((sum, m) => sum + m.value || m.duration, 0) / imageLoadMetrics.length : 0;
-        
-        // Aggiorna UI
-        document.getElementById('metric-first-load').textContent = `${Math.round(avgFirstLoad)}ms`;
-        document.getElementById('metric-data-load').textContent = `${Math.round(avgDataLoad)}ms`;
-        document.getElementById('metric-image-load').textContent = `${Math.round(avgImageLoad)}ms`;
-    }
-}
-
-// Funzioni azioni analytics
-function exportAnalyticsData() {
-    if (window.Analytics && window.Analytics.exportAnalyticsData) {
-        window.Analytics.exportAnalyticsData();
-        showToast('Dati analytics esportati', 'success');
-    } else {
-        // Fallback manuale
-        const allData = {
-            events: JSON.parse(localStorage.getItem('analytics_events') || '[]'),
-            errors: JSON.parse(localStorage.getItem('analytics_errors') || '[]'),
-            performance: JSON.parse(localStorage.getItem('performance_metrics') || '[]'),
-            timestamp: new Date().toISOString(),
-            user_id: localStorage.getItem('analytics_user_id')
-        };
-        
-        const dataStr = JSON.stringify(allData, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = `analytics_export_${new Date().toISOString().split('T')[0]}.json`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-        
-        showToast('Dati analytics esportati', 'success');
-    }
-    
-    // Traccia l'evento
-    if (window.Analytics) {
-        window.Analytics.trackEvent('analytics', 'data_exported');
-    }
-}
-
-function refreshAnalyticsDashboard() {
-    loadAnalyticsDashboard();
-    updatePerformanceMetrics();
-    showToast('Dashboard analytics aggiornata', 'success');
-    
-    if (window.Analytics) {
-        window.Analytics.trackEvent('analytics', 'dashboard_refreshed');
-    }
-}
-
-function toggleAnalyticsTracking() {
-    if (window.Analytics) {
-        const newState = !window.Analytics.config.trackingEnabled;
-        window.Analytics.setTrackingEnabled(newState);
-        
-        showToast(`Analytics ${newState ? 'attivato' : 'disattivato'}`, 'info');
-        updateSessionInfo();
-        
-        window.Analytics.trackEvent('analytics', 'tracking_toggled', null, null, {
-            new_state: newState
-        });
-    }
-}
-
-function resetAnalyticsData() {
-    if (confirm('Sei sicuro di voler resettare tutti i dati analytics? Questa azione non può essere annullata.')) {
-        // Cancella tutti i dati analytics
-        const analyticsKeys = [
-            'analytics_events',
-            'analytics_errors',
-            'analytics_pending',
-            'analytics_last_sync',
-            'performance_metrics'
-        ];
-        
-        analyticsKeys.forEach(key => {
-            localStorage.removeItem(key);
-        });
-        
-        // Resetta user ID
-        localStorage.removeItem('analytics_user_id');
-        
-        // Re-inizializza analytics
-        if (window.Analytics) {
-            window.Analytics.user.id = window.Analytics.getUserId();
-            window.Analytics.session.id = window.Analytics.generateSessionId();
-            window.Analytics.session.startTime = Date.now();
-        }
-        
-        // Aggiorna dashboard
-        loadAnalyticsDashboard();
-        
-        showToast('Dati analytics resettati', 'success');
-        
-        if (window.Analytics) {
-            window.Analytics.trackEvent('analytics', 'data_reset');
-        }
-    }
-}
-
-function clearAnalyticsErrors() {
-    if (confirm('Cancellare tutti gli errori registrati?')) {
-        localStorage.removeItem('analytics_errors');
-        updateErrorsTable();
-        updateAnalyticsStats();
-        showToast('Errori cancellati', 'success');
-        
-        if (window.Analytics) {
-            window.Analytics.trackEvent('analytics', 'errors_cleared');
-        }
-    }
-}
-
-// Funzioni debug
-function testAnalyticsEvent() {
-    if (window.Analytics) {
-        window.Analytics.trackEvent('test', 'manual_event', 'Test manuale', 1, {
-            test_mode: true,
-            timestamp: new Date().toISOString()
-        });
-        showToast('Evento test registrato', 'info');
-    }
-}
-
-function testAnalyticsError() {
-    if (window.Analytics) {
-        const testError = new Error('Errore di test manuale');
-        testError.name = 'TestError';
-        testError.code = 'TEST_001';
-        
-        window.Analytics.trackError(testError, 'test_manual', 'low', {
-            test_mode: true
-        });
-        showToast('Errore test registrato', 'info');
-    }
-}
-
-function testPerformanceMetric() {
-    const loadTime = Math.random() * 1000 + 500; // Valore casuale 500-1500ms
-    logPerformanceMetric('test_manual_load', loadTime);
-    showToast(`Metrica test: ${Math.round(loadTime)}ms`, 'info');
-}
-
-function forceSyncAnalytics() {
-    if (window.Analytics && window.Analytics.flushQueue) {
-        window.Analytics.flushQueue(true);
-        localStorage.setItem('analytics_last_sync', new Date().toISOString());
-        updateStorageInfo();
-        showToast('Sync analytics forzato', 'info');
-    }
-}
-
-// ============================================
-// GESTIONE TASTO INDIETRO ANDROID (CORRETTO)
-// ============================================
-
-// Gestione tasto indietro fisico/software
 function setupBackButtonHandler() {
-    // Unifichiamo la gestione: funziona sia per PWA che per Browser
-    // L'unica differenza è che nella PWA vogliamo "intrappolare" l'utente nell'app
-    // finché non è nella home.
-    
-    // 1. Inseriamo uno stato iniziale fittizio per attivare la history
     window.history.pushState({ page: 'app_root' }, document.title, window.location.href);
 
-    // 2. Ascoltiamo il cambiamento di stato (tasto indietro premuto)
     window.addEventListener('popstate', function(event) {
-        // Tentiamo di gestire la navigazione internamente
         const actionTaken = handleBackNavigation();
 
         if (actionTaken) {
-            // Se abbiamo gestito l'azione (es. chiuso un modale o cambiato schermata),
-            // dobbiamo RIPRISTINARE lo stato nella history, altrimenti al prossimo
-            // "back" l'app si chiuderà perché abbiamo consumato lo stato precedente.
             window.history.pushState({ page: 'app_active' }, document.title, window.location.href);
-        } else {
-            // Se siamo nella Home e non ci sono modali aperti (actionTaken = false),
-            // lasciamo che l'evento popstate faccia il suo corso.
-             if (window.matchMedia('(display-mode: standalone)').matches) {
-                // Se volessimo chiedere conferma/evitare l'uscita automatica,
-                // qui bisognerebbe re-iniettare uno stato, ma in questo caso 
-                // vogliamo permettere l'uscita dopo il doppio tocco.
-             }
         }
     });
 }
 
-/**
- * Gestisce la logica del tasto indietro.
- * @returns {boolean} true se l'azione è stata gestita internamente (non uscire), false se si deve uscire.
- */
 function handleBackNavigation() {
     console.log('Tasto indietro premuto - Stato navigazione:', screenHistory);
     
-    // 1. Controllo Modali/Overlay (Priorità massima)
-    
-    // Auth Admin
+    // 1. Controllo Modali/Overlay
     const adminAuth = document.getElementById('admin-auth');
     if (adminAuth && adminAuth.style.display === 'flex') {
         closeAdminAuth();
         return true;
     }
 
-    // Pannello Admin
     const adminPanel = document.getElementById('admin-panel');
     if (adminPanel && adminPanel.style.display === 'flex') {
         closeAdminPanel();
         return true;
     }
     
-    // Modale Navigazione
-    const navModal = document.getElementById('navigation-modal');
-    if (navModal && navModal.style.display === 'flex') {
-        closeNavigationModal();
-        return true;
-    }
-    
-    // Modale Info
-    const infoModal = document.getElementById('info-modal');
-    if (infoModal && infoModal.style.display === 'flex') {
-        closeInfoModal();
-        return true;
-    }
-    
-    // Modale Istruzioni Installazione (se presente)
-    const installModal = document.querySelector('.install-instructions');
-    if (installModal && installModal.style.display === 'flex') {
-        installModal.style.display = 'none'; // Assumendo che ci sia una funzione o stile per chiuderlo
-        return true;
-    }
-    
-    // Risultati ricerca mappa (se visibili)
-    const searchResults = document.getElementById('map-search-results');
-    if (searchResults && searchResults.style.display === 'block') {
-        searchResults.style.display = 'none';
-        return true;
-    }
-
     // 2. Controllo Navigazione Schermate
-    
     const currentScreen = screenHistory[screenHistory.length - 1]; 
     
-    // Se non siamo nella home, torna indietro nella cronologia schermate
     if (currentScreen !== 'home-screen') {
         goBack();
         return true;
     } 
 
-    // 3. Siamo nella Home e nessun modale è aperto -> Gestione Uscita (Doppio Tocco)
-    
+    // 3. Gestione Uscita (Doppio Tocco)
     if (backPressTimer) {
-        // Doppio tocco entro il timeout: Esegui l'uscita
         clearTimeout(backPressTimer);
         backPressTimer = null;
-        // Permetti al popstate handler di uscire (ritorna false)
         showToast('Uscita dall\'applicazione...', 'info', 1000); 
         return false; 
     } else {
-        // Prima pressione: mostra toast di avviso e imposta il timer
         showToast('Premi di nuovo per uscire', 'warning', EXIT_TOAST_TIMEOUT);
         
         backPressTimer = setTimeout(() => {
             backPressTimer = null;
-            // Nascondi il toast se il timer scade.
             const toast = document.getElementById('toast');
             if (toast) toast.classList.remove('show');
         }, EXIT_TOAST_TIMEOUT);
         
-        // Dopo la prima pressione, re-inseriamo lo stato nella history
-        // per intercettare la seconda pressione senza uscire.
-        return true; // Azione gestita, non uscire ancora.
+        return true;
     }
 }
 
 // ============================================
-// NUOVE FUNZIONI: ORDINAMENTO E BADGE (AGGIORNATE)
+// NUOVE FUNZIONI: MENU E TRADUZIONE AI
 // ============================================
 
-// Aggiorna getFilteredItems con ordinamento
-function getFilteredItems(type) {
-    const items = appData[type];
-    const filter = currentFilter[type];
-
-    // 1. Filtra normalmente
-    let filteredList = [];
-    if (!items || filter === 'all') {
-        filteredList = items || [];
+function toggleMenuModal() {
+    const modal = document.getElementById('top-menu-modal');
+    if (!modal.style.display || modal.style.display === 'none') {
+        modal.style.display = 'flex';
     } else {
-        filteredList = items.filter(item => item.stato === filter);
+        modal.style.display = 'none';
     }
-
-    // 2. Ordinamento Intelligente (Nuovi/Riparati in cima)
-    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "fixed": []}');
-
-    // Se non ci sono novità, ritorna la lista normale (ma ordinata per ID decrescente se vuoi coerenza)
-    if (highlights.new.length === 0 && highlights.fixed.length === 0) {
-        return filteredList;
-    }
-
-    return filteredList.sort((a, b) => {
-        const isANew = highlights.new.includes(a.id);
-        const isBNew = highlights.new.includes(b.id);
-        const isAFixed = highlights.fixed.includes(a.id);
-        const isBFixed = highlights.fixed.includes(b.id);
-
-        // Priorità assoluta ai NUOVI
-        if (isANew && !isBNew) return -1;
-        if (!isANew && isBNew) return 1;
-
-        // Seconda priorità ai RIPARATI
-        if (isAFixed && !isBFixed) return -1;
-        if (!isAFixed && isBFixed) return 1;
-
-        return 0; // Nessuna priorità
-    });
 }
 
-// Aggiorna renderGridItems con badge
-function renderGridItems(container, items, type) {
-    // 1. GESTIONE STATO VUOTO (Tuo codice originale mantenuto)
-    if (!items || items.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-${type === 'fontana' ? 'monument' : 'faucet'}"></i></div>
-                <div class="empty-state-text">Nessun elemento trovato</div>
-                <div class="empty-state-subtext">Prova a cambiare i filtri di ricerca</div>
-            </div>
-        `;
-        return;
+function closeMenuModal(event) {
+    if (event.target.id === 'top-menu-modal') {
+        document.getElementById('top-menu-modal').style.display = 'none';
     }
-    
-    // 2. RECUPERA HIGHLIGHTS (Badge Nuovo/Riparato)
-    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "fixed": []}');
-
-    // 3. HELPER PER TRADURRE LO STATO (Funzionante -> Working)
-    const getStatusLabel = (stato) => {
-        const statusKey = {
-            'funzionante': 'status_working',
-            'non-funzionante': 'status_broken',
-            'manutenzione': 'status_maintenance'
-        }[stato] || 'status_working';
-        
-        // Se esiste la traduzione usa quella, altrimenti usa lo stato originale
-        return (translations && translations[currentLanguage]) ? translations[currentLanguage][statusKey] : stato;
-    };
-
-    container.innerHTML = '';
-    
-    items.forEach(item => {
-        const gridItem = document.createElement('div');
-        gridItem.className = 'grid-item';
-        
-        // GESTORE CLICK (Mantiene la tua logica di navigazione)
-        gridItem.onclick = () => {
-            // Nota: passo item.id come nel tuo codice originale
-            showDetail(item.id, type);
-            
-        };
-        
-        // LOGICA BADGE (Mantenuta)
-        let badgeHTML = '';
-        if (highlights.new.includes(item.id)) badgeHTML = '<span class="badge-new">NUOVO</span>';
-        else if (highlights.fixed.includes(item.id)) badgeHTML = '<span class="badge-fixed">RIPARATO</span>';
-
-        // LOGICA IMMAGINE CUSTOM (Mantenuta)
-        const hasCustomImage = item.immagine && item.immagine.trim() !== '';
-        
-        // RENDER HTML (Aggiornato con getLocalizedText e getStatusLabel)
-        gridItem.innerHTML = `
-            <div class="item-image-container">
-                <img src="${item.immagine || './images/sfondo-home.jpg'}" 
-                     alt="${getLocalizedText(item, 'nome')}" 
-                     class="item-image" 
-                     onerror="this.style.display='none'; this.parentElement.classList.add('fallback-active'); this.parentElement.innerHTML += '<div class=\\'image-fallback\\'><i class=\\'fas fa-image\\'></i></div>';">
-            </div>
-            <div class="item-content">
-                <div class="item-name">${getLocalizedText(item, 'nome')} ${badgeHTML}</div>
-                
-                <div class="item-address">${item.indirizzo}</div>
-                
-                <div class="item-footer">
-                    <span class="item-status status-${item.stato}">${getStatusLabel(item.stato)}</span>
-                    
-                    <span class="image-indicator ${hasCustomImage ? 'image-custom' : 'image-default'}">
-                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-image"></i>'}
-                    </span>
-                </div>
-            </div>
-        `;
-        container.appendChild(gridItem);
-    });
 }
 
-// Aggiorna renderCompactItems con badge
-function renderCompactItems(container, items, type) {
-    if (!items || items.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-faucet"></i></div>
-                <div class="empty-state-text">Nessun elemento trovato</div>
-                <div class="empty-state-subtext">Prova a cambiare i filtri di ricerca</div>
-            </div>
-        `;
-        return;
-    }
-    
-    // Recupera highlights
-    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "fixed": []}');
-
-    // Helper per tradurre lo stato (come abbiamo fatto per le fontane)
-    const getStatusLabel = (stato) => {
-        const statusKey = {
-            'funzionante': 'status_working',
-            'non-funzionante': 'status_broken',
-            'manutenzione': 'status_maintenance'
-        }[stato] || 'status_working';
-        return (translations && translations[currentLanguage]) ? translations[currentLanguage][statusKey] : stato;
-    };
-
-    container.innerHTML = '';
-    items.forEach(item => {
-        const compactItem = document.createElement('div');
-        compactItem.className = 'compact-item';
-
-        // Badge Logic
-        let badgeHTML = '';
-        if (highlights.new.includes(item.id)) badgeHTML = '<span class="badge-new">NUOVO</span>';
-        else if (highlights.fixed.includes(item.id)) badgeHTML = '<span class="badge-fixed">RIPARATO</span>';
-
-        const totalLength = (item.nome || '').length + (item.indirizzo || '').length;
-        if (totalLength > 100) compactItem.classList.add('very-long-content');
-        else if (totalLength > 60) compactItem.classList.add('long-content');
-
-        compactItem.onclick = () => {
-            showDetail(item.id, type);
-            currentLatLng = { lat: item.latitudine, lng: item.longitudine };            
-        };
-
-        const hasCustomImage = item.immagine && item.immagine.trim() !== '';
-        
-        // USA getLocalizedText QUI
-        compactItem.innerHTML = `
-            <div class="compact-item-image-container">
-                <img src="${item.immagine || './images/default-beverino.jpg'}"
-                     alt="${getLocalizedText(item, 'nome')}" 
-                     class="compact-item-image"
-                     onerror="this.style.display='none'; this.parentElement.classList.add('fallback-active'); this.parentElement.innerHTML += '<div class=\\'compact-image-fallback\\'><i class=\\'fas fa-faucet\\'></i></div>';">
-            </div>
-            <div class="compact-item-content">
-                <div class="compact-item-header">
-                    <div class="compact-item-name">${getLocalizedText(item, 'nome')} ${badgeHTML}</div>
-                    <span class="image-indicator ${hasCustomImage ? 'image-custom' : 'image-default'}">
-                        ${hasCustomImage ? '<i class="fas fa-check"></i>' : '<i class="fas fa-image"></i>'}
-                    </span>
-                </div>
-                <div class="compact-item-address">${item.indirizzo}</div>
-                <div class="compact-item-footer">
-                    <span class="compact-item-status status-${item.stato}">${getStatusLabel(item.stato)}</span>
-                </div>
-            </div>
-        `;
-        container.appendChild(compactItem);
-    });
+function openReportScreen() {
+    document.getElementById('top-menu-modal').style.display = 'none';
+    showScreen('segnalazioni-screen');
 }
 
-// Aggiorna renderNewsItems con badge
-function renderNewsItems(container, news) {
-    if (!news || news.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon"><i class="fas fa-newspaper"></i></div>
-                <div class="empty-state-text">Nessuna news disponibile</div>
-                <div class="empty-state-subtext">Torna presto per aggiornamenti</div>
-            </div>
-        `;
+function goToAdmin() {
+    const menu = document.getElementById('top-menu-modal');
+    if (menu) menu.style.display = 'none';
+    
+    if (typeof openAdminPanel === 'function') {
+        openAdminPanel(); 
+    } else {
+        const authModal = document.getElementById('admin-auth');
+        if (authModal) authModal.style.display = 'flex';
+    }
+}
+
+function inviaSegnalazione(event) {
+    event.preventDefault();
+
+    const tipo = document.getElementById('report-type').value;
+    const descrizione = document.getElementById('report-desc').value;
+    
+    const emailDestinatario = "aeterna.lexicon@abc.napoli.it"; 
+    const oggetto = encodeURIComponent(`Segnalazione App Aeterna Lexicon: ${tipo}`);
+    
+    const corpo = encodeURIComponent(
+        `Gentile Assistenza Aeterna Lexicon,\n\n` +
+        `Vorrei segnalare il seguente problema:\n` +
+        `TIPO: ${tipo}\n\n` +
+        `DESCRIZIONE:\n${descrizione}\n\n` +
+        `---\nInviato dall'App Aeterna Lexicon in Motu`
+    );
+
+    window.location.href = `mailto:${emailDestinatario}?subject=${oggetto}&body=${corpo}`;
+}
+
+function openCreditsScreen() {
+    const menu = document.getElementById('top-menu-modal');
+    if (menu) menu.style.display = 'none';
+    
+    showScreen('credits-screen');
+    window.scrollTo(0, 0);
+}
+
+// Funzione traduzione automatica AI
+async function autoTranslate(sourceId, targetId) {
+    const sourceInput = document.getElementById(sourceId);
+    const targetInput = document.getElementById(targetId);
+    
+    if (!sourceInput || !sourceInput.value.trim()) {
+        showToast('Scrivi prima il testo in italiano!', 'warning');
         return;
     }
+
+    const textToTranslate = sourceInput.value.trim();
     
-    // Recupera highlights
-    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "fixed": []}');
-    
-    container.innerHTML = '';
-    const sortedNews = [...news].sort((a, b) => new Date(b.data) - new Date(a.data));
-    
-    sortedNews.forEach(item => {
-        // Badge Logic
-        let badgeHTML = '';
-        if (highlights.new.includes(item.id)) {
-            badgeHTML = '<span class="badge-new" style="float: right;">NUOVO</span>';
+    const originalPlaceholder = targetInput.placeholder;
+    targetInput.value = '';
+    targetInput.placeholder = 'Traduzione in corso... ⏳';
+    targetInput.disabled = true;
+
+    try {
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textToTranslate)}&langpair=it|en`;
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.responseStatus === 200) {
+            targetInput.value = data.responseData.translatedText;
+            showToast('Traduzione completata! ✨', 'success');
+        } else {
+            throw new Error('Errore API');
         }
-
-        const newsCard = document.createElement('div');
-        newsCard.className = 'news-card';
-        newsCard.innerHTML = `
-            <div class="news-header">
-                <div class="news-title">${getLocalizedText(item, 'titolo')} ${badgeHTML}</div>
-                <div class="news-date">${formatDate(item.data)}</div>
-            </div>
-            <div class="news-content">${getLocalizedText(item, 'contenuto')}</div>
-            <div class="news-footer">
-                <span class="news-category">${item.categoria}</span>
-                <span class="news-source">Fonte: ${item.fonte}</span>
-            </div>
-        `;
-        container.appendChild(newsCard);
-    });
+        
+    } catch (error) {
+        console.error("Errore traduzione:", error);
+        showToast('Errore traduzione. Riprova o scrivi a mano.', 'error');
+        targetInput.value = '';
+    } finally {
+        targetInput.placeholder = originalPlaceholder;
+        targetInput.disabled = false;
+    }
 }
 
 // ============================================
-// Initialize App (MODIFICATO CON NOTIFICHE)
+// Initialize App (MODIFICATO)
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("%c Aeterna Lexicon in Motu v1.0 ", "background: #3b82f6; color: white; padding: 4px; border-radius: 3px;");
+    console.log("%c Dataset filosofico per l'analisi del linguaggio ", "font-size: 10px; color: #64748b; font-style: italic;");
+    
     loadLocalData();
     checkOnlineStatus();
     showScreen('home-screen');
@@ -4389,14 +3822,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setupBackButtonHandler();
     
-    // >>> NUOVO: Richiesta Permessi Notifiche <<<
     if ('Notification' in window && Notification.permission !== 'granted') {
         Notification.requestPermission().then(permission => {
             if (permission === 'granted') console.log('Notifiche attivate!');
         });
     }
 
-    // >>> NUOVO: Pulizia Badge dopo 24 ore <<<
     const lastHighlightTime = localStorage.getItem('last_highlight_time');
     const now = Date.now();
     if (lastHighlightTime && (now - parseInt(lastHighlightTime)) > 24 * 60 * 60 * 1000) {
@@ -4404,7 +3835,6 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('last_highlight_time', now.toString());
     }
     if (!lastHighlightTime) localStorage.setItem('last_highlight_time', now.toString());
-    // >>> FINE NUOVO <<<
     
     if ('serviceWorker' in navigator) {
         setTimeout(() => {
@@ -4414,13 +3844,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     setTimeout(async () => {
         try {
-            await loadFirebaseData('fontane');
-            await loadFirebaseData('beverini');
-            await loadFirebaseData('news');
+            await loadFirebaseData('filosofi');
+            await loadFirebaseData('opere');
+            await loadFirebaseData('concetti');
             
-            if (document.getElementById('fontane-list').innerHTML.includes('Caricamento')) loadFontane();
-            if (document.getElementById('beverini-list').innerHTML.includes('Caricamento')) loadBeverini();
-            if (document.getElementById('news-list').innerHTML.includes('Caricamento')) loadNews();
+            if (document.getElementById('filosofi-list')) loadFilosofi();
+            if (document.getElementById('opere-list')) loadOpere();
+            if (document.getElementById('concetti-list')) loadConcetti();
             
         } catch (error) {
             showToast('Utilizzo dati locali', 'info');
@@ -4459,672 +3889,7 @@ document.addEventListener('DOMContentLoaded', function() {
         setupLazyLoading();
     }, 1000);
     
-    logActivity('Applicazione avviata');
+    logActivity('Applicazione Aeterna Lexicon avviata');
 });
 
-// ===== SPLASH SCREEN MANAGEMENT (VERSIONE CON PROGRESS BAR) =====
-
-let splashProgressInterval;
-let splashProgress = 0;
-let splashMinTime = 1500; // Mostra per almeno 1.5 secondi
-let splashStartTime = Date.now();
-
-// Funzione per nascondere lo splash screen
-function hideSplashScreen() {
-    clearInterval(splashProgressInterval);
-    
-    const splashScreen = document.getElementById('splash-screen');
-    if (splashScreen) {
-        splashScreen.classList.add('hidden');
-        
-        // Rimuovi completamente dopo l'animazione
-        setTimeout(() => {
-            splashScreen.style.display = 'none';
-            console.log('✅ Splash screen nascosto');
-            
-            // Inizializza l'app dopo che lo splash screen è nascosto
-            initializeAppAfterSplash();
-        }, 500);
-    }
-}
-
-// Funzione per mostrare lo splash screen
-function showSplashScreen() {
-    const splashScreen = document.getElementById('splash-screen');
-    if (splashScreen) {
-        splashScreen.style.display = 'flex';
-        splashScreen.classList.remove('hidden');
-        splashScreen.style.opacity = '1';
-        splashScreen.style.visibility = 'visible';
-        
-        // Resetta il progresso
-        splashProgress = 0;
-        splashStartTime = Date.now();
-        updateSplashProgress(10); // Inizia subito con 10%
-    }
-}
-
-// Aggiorna la barra di progresso
-function updateSplashProgress(increment) {
-    splashProgress += increment;
-    if (splashProgress > 100) splashProgress = 100;
-    
-    const progressBar = document.querySelector('.splash-progress-bar');
-    if (progressBar) {
-        progressBar.style.width = splashProgress + '%';
-    }
-    
-    // Aggiorna il testo
-    const splashText = document.querySelector('.splash-text');
-    if (splashText) {
-        if (splashProgress < 30) {
-            splashText.textContent = 'Caricamento iniziale...';
-        } else if (splashProgress < 60) {
-            splashText.textContent = 'Caricamento dati...';
-        } else if (splashProgress < 90) {
-            splashText.textContent = 'Preparazione interfaccia...';
-        } else {
-            splashText.textContent = 'Completamento...';
-        }
-    }
-}
-
-// Inizializza l'app dopo lo splash screen
-function initializeAppAfterSplash() {
-    console.log('🚀 App inizializzata dopo splash screen');
-    
-    // Contenuto corretto (senza setTimeout esterno)
-    if (typeof loadAllData === 'function') {
-        loadAllData();
-    }
-    
-    // Controlla se c'è un parametro admin nell'URL
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has('admin') && urlParams.get('admin') === 'true') {
-        setTimeout(() => {
-            openAdminAuth();
-        }, 300);
-    }
-    
-    // Se ci sono altri parametri, gestiscili
-    if (urlParams.has('screen')) {
-        const screen = urlParams.get('screen');
-        setTimeout(() => {
-            showScreen(screen + '-screen');
-        }, 400);
-    }
-    
-    // Forza l'aggiornamento dell'ultima schermata attiva nel caso in cui fosse 'home-screen'
-    if (window.screenHistory && window.screenHistory[window.screenHistory.length - 1] === 'home-screen') {
-        document.getElementById('home-screen').style.display = 'flex';
-        setTimeout(() => {
-            document.getElementById('home-screen').classList.add('active');
-        }, 10);
-    }
-}
-
-// Gestione del caricamento della pagina
-window.addEventListener('load', function() {
-    console.log('📄 Pagina completamente caricata');
-    
-    // Inizia la progress bar
-    splashProgressInterval = setInterval(() => {
-        const elapsed = Date.now() - splashStartTime;
-        const progressNeeded = Math.min(90, Math.floor((elapsed / splashMinTime) * 100));
-        
-        if (progressNeeded > splashProgress) {
-            updateSplashProgress(progressNeeded - splashProgress);
-        }
-        
-        // Se è passato il tempo minimo e abbiamo raggiunto il 90%, completa
-        if (elapsed >= splashMinTime && splashProgress >= 90) {
-            updateSplashProgress(10); // Completa al 100%
-            clearInterval(splashProgressInterval);
-            hideSplashScreen();
-        }
-    }, 100);
-    
-    // Fallback: nascondi dopo 5 secondi massimo (Timeout aumentato per stabilità)
-    setTimeout(() => {
-        if (document.getElementById('splash-screen') && 
-            !document.getElementById('splash-screen').classList.contains('hidden')) {
-            console.log('⏱️ Timeout splash screen (5s)');
-            hideSplashScreen();
-        }
-    }, 5000);
-});
-
-// Nascondi lo splash screen anche se c'è un errore di caricamento
-window.addEventListener('error', function(e) {
-    console.error('❌ Errore durante il caricamento:', e.message);
-    
-    const splashText = document.querySelector('.splash-text');
-    if (splashText) {
-        splashText.textContent = 'Errore di caricamento, riprovare...';
-        splashText.style.color = '#ff6b6b';
-    }
-    
-    setTimeout(() => {
-        hideSplashScreen();
-    }, 1000);
-});
-
-// Gestisci il caso in cui la pagina viene caricata dalla cache
-if (document.readyState === 'complete') {
-    console.log('⚡ Pagina già caricata dalla cache');
-    
-    // Mostra comunque lo splash screen brevemente per coerenza
-    showSplashScreen();
-    setTimeout(() => {
-        updateSplashProgress(100);
-        setTimeout(hideSplashScreen, 500);
-    }, 800);
-}
-
-// Verifica quando la pagina è diventata interattiva
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎯 DOM completamente caricato e parsato');
-    updateSplashProgress(20); // Aggiorna progresso
-});
-
-// Monitora il caricamento delle risorse
-window.addEventListener('DOMContentLoaded', function() {
-    // Conta le risorse ancora da caricare
-    const resources = document.querySelectorAll('img, script, link[rel="stylesheet"]');
-    let loadedResources = 0;
-    const totalResources = resources.length;
-    
-    resources.forEach(resource => {
-        if (resource.complete || resource.readyState === 'complete') {
-            loadedResources++;
-        } else {
-            resource.addEventListener('load', function() {
-                loadedResources++;
-                const progress = Math.min(70, 20 + (loadedResources / totalResources) * 50);
-                updateSplashProgress(progress - splashProgress);
-            });
-            
-            resource.addEventListener('error', function() {
-                loadedResources++;
-                // Non bloccare per errori di risorse
-            });
-        }
-    });
-    
-    // Se tutte le risorse sono già caricate
-    if (loadedResources === totalResources) {
-        updateSplashProgress(70);
-    }
-});
-
-// ===== GESTIONE BACK BUTTON PER SPLASH =====
-
-// Impedisci il back button quando lo splash screen è visibile
-let splashVisible = true;
-
-// Sovrascrivi la funzione goBack per gestire lo splash screen
-const originalGoBack = window.goBack;
-if (originalGoBack) {
-    window.goBack = function() {
-        if (!splashVisible) {
-            originalGoBack();
-        } else {
-            console.log('🔙 Back button bloccato durante splash screen');
-        }
-    };
-}
-
-// Aggiorna lo stato quando lo splash screen è nascosto
-const splashScreen = document.getElementById('splash-screen');
-if (splashScreen) {
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.attributeName === 'class') {
-                if (splashScreen.classList.contains('hidden')) {
-                    splashVisible = false;
-                    console.log('🎯 Splash screen nascosto, back button abilitato');
-                } else {
-                    splashVisible = true;
-                }
-            }
-        });
-    });
-    
-    observer.observe(splashScreen, { attributes: true });
-}
-
-// Pulsante di emergenza per saltare lo splash screen (debug)
-document.addEventListener('keydown', function(e) {
-    // Premendo ESC durante lo splash screen, lo salti
-    if (e.key === 'Escape' && splashVisible) {
-        console.log('🚨 Splash screen saltato con ESC');
-        hideSplashScreen();
-    }
-});
-
-// Touch per saltare splash screen (doppio tap)
-let lastTap = 0;
-document.addEventListener('touchend', function(e) {
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTap;
-    
-    if (tapLength < 500 && tapLength > 0 && splashVisible) {
-        // Doppio tap rilevato
-        console.log('👆 Doppio tap per saltare splash screen');
-        hideSplashScreen();
-        e.preventDefault();
-    }
-    
-    lastTap = currentTime;
-});
-
-console.log('✨ Sistema splash screen inizializzato');
-
-// ==========================================
-// NUOVE FUNZIONI: MENU E SEGNALAZIONI EMAIL
-// ==========================================
-
-// Apre/Chiude il menu a tendina (3 puntini)
-function toggleMenuModal() {
-    const modal = document.getElementById('top-menu-modal');
-    // Se è nascosto o non ha stile display, lo mostra, altrimenti lo nasconde
-    if (!modal.style.display || modal.style.display === 'none') {
-        modal.style.display = 'flex';
-    } else {
-        modal.style.display = 'none';
-    }
-}
-
-// Chiude il menu se clicchi sulla parte scura (fuori dal box)
-function closeMenuModal(event) {
-    if (event.target.id === 'top-menu-modal') {
-        document.getElementById('top-menu-modal').style.display = 'none';
-    }
-}
-
-// Apre la schermata rossa di segnalazione
-function openReportScreen() {
-    document.getElementById('top-menu-modal').style.display = 'none'; // Chiude menu
-    showScreen('segnalazioni-screen'); // Mostra schermata
-}
-
-// --- VERSIONE CORRETTA E SICURA ---
-function goToAdmin() {
-    // 1. Chiude il menu a tendina
-    const menu = document.getElementById('top-menu-modal');
-    if (menu) menu.style.display = 'none';
-    
-    // 2. Chiama la funzione che controlla la password
-    if (typeof openAdminPanel === 'function') {
-        openAdminPanel(); 
-    } else {
-        // Fallback di sicurezza: se qualcosa non va, mostra comunque il login
-        console.warn("Funzione openAdminPanel non trovata, apro login manualmente");
-        const authModal = document.getElementById('admin-auth');
-        if (authModal) authModal.style.display = 'flex';
-    }
-}
-
-// FUNZIONE CHE PREPARA L'EMAIL
-function inviaSegnalazione(event) {
-    event.preventDefault();
-
-    const tipo = document.getElementById('report-type').value;
-    const descrizione = document.getElementById('report-desc').value;
-    
-    // INDIRIZZO EMAIL UFFICIALE
-    const emailDestinatario = "fontane.beverini@abc.napoli.it"; 
-    
-    const oggetto = encodeURIComponent(`Segnalazione App ABC: ${tipo}`);
-    
-    // Costruiamo il corpo della mail in modo ordinato
-    const corpo = encodeURIComponent(
-        `Gentile Assistenza ABC Napoli,\n\n` +
-        `Vorrei segnalare il seguente problema:\n` +
-        `TIPO: ${tipo}\n\n` +
-        `DESCRIZIONE E POSIZIONE:\n${descrizione}\n\n` +
-        `---\nInviato dall'App ABC Napoli F&B`
-    );
-
-    // Apre l'app di posta predefinita
-    window.location.href = `mailto:${emailDestinatario}?subject=${oggetto}&body=${corpo}`;
-    
-    // Opzionale: svuota il campo descrizione dopo l'invio
-    // document.getElementById('report-desc').value = ''; 
-}
-
-// ==========================================
-// FUNZIONE PER SCHERMATA CREDITI
-// ==========================================
-
-function openCreditsScreen() {
-    // 1. Chiude il menu a tendina (se aperto)
-    const menu = document.getElementById('top-menu-modal');
-    if (menu) menu.style.display = 'none';
-    
-    // 2. Mostra la schermata crediti
-    // (Usa la funzione showScreen che hai già nel file)
-    showScreen('credits-screen');
-    
-    // 3. Scrolla in alto per sicurezza
-    window.scrollTo(0, 0);
-}
-
-// ==========================================
-// GESTIONE ELIMINAZIONE MULTIPLA (BULK DELETE)
-// ==========================================
-
-// 1. Funzione per selezionare/deselezionare tutte le righe
-function toggleSelectAll(type, source) {
-    const checkboxes = document.querySelectorAll(`.select-item-${type}`);
-    checkboxes.forEach(cb => {
-        cb.checked = source.checked;
-    });
-    updateDeleteButtonState(type);
-}
-
-// 2. Funzione per aggiornare lo stato del pulsante "Elimina" (Attivo/Disattivo)
-function updateDeleteButtonState(type) {
-    const checkboxes = document.querySelectorAll(`.select-item-${type}:checked`);
-    const btn = document.getElementById(`btn-delete-sel-${type}`);
-    
-    if (btn) {
-        const count = checkboxes.length;
-        
-        // Se non sei admin, il pulsante rimane nascosto/disabilitato dalla logica HTML, 
-        // ma qui lo forziamo per sicurezza
-        if (currentUserRole !== 'admin') {
-            btn.disabled = true;
-            return;
-        }
-
-        btn.disabled = count === 0;
-        btn.innerHTML = `<i class="fas fa-trash"></i> Elimina Selezionati (${count})`;
-        
-        if (count > 0) {
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
-        } else {
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'not-allowed';
-        }
-    }
-}
-
-// 3. Funzione Principale: Esegue l'eliminazione
-async function deleteSelectedItems(type) {
-    // --- BLOCCO DI SICUREZZA ---
-    if (currentUserRole !== 'admin') {
-        showToast('ERRORE: Solo l\'Amministratore può eliminare elementi.', 'error');
-        return;
-    }
-    // ---------------------------
-
-    const checkboxes = document.querySelectorAll(`.select-item-${type}:checked`);
-    const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
-
-    if (idsToDelete.length === 0) return;
-
-    if (!confirm(`ATTENZIONE: Stai per eliminare ${idsToDelete.length} elementi.\nQuesta azione è irreversibile.\nProcedere?`)) {
-        return;
-    }
-
-    showToast(`Eliminazione di ${idsToDelete.length} elementi in corso...`, 'info');
-    
-    // Disabilita il pulsante per evitare doppi click
-    const btn = document.getElementById(`btn-delete-sel-${type}`);
-    if(btn) btn.disabled = true;
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const id of idsToDelete) {
-        try {
-            // Elimina effettivamente i dati (Online o Offline queue)
-            if (navigator.onLine) {
-                await deleteFirebaseData(type, id);
-            } else {
-                // Gestione Offline
-                let item;
-                if (type === 'fontane') item = appData.fontane.find(f => f.id == id);
-                else if (type === 'beverini') item = appData.beverini.find(b => b.id == id);
-                else if (type === 'news') item = appData.news.find(n => n.id == id);
-
-                if (item) {
-                    await addToSyncQueue('DELETE', type, item, id);
-                }
-            }
-
-            // Aggiorna l'array locale in memoria
-            if (type === 'fontane') appData.fontane = appData.fontane.filter(f => f.id != id);
-            else if (type === 'beverini') appData.beverini = appData.beverini.filter(b => b.id != id);
-            else if (type === 'news') appData.news = appData.news.filter(n => n.id != id);
-
-            successCount++;
-        } catch (error) {
-            console.error(`Errore eliminazione ID ${id}:`, error);
-            failCount++;
-        }
-    }
-
-    // Salva i cambiamenti nel LocalStorage
-    saveLocalData();
-    
-    // Ricarica la tabella specifica per vedere i cambiamenti
-    if (type === 'fontane') {
-        loadAdminFontane(); // Ricarica tabella admin
-        loadFontane();      // Ricarica vista utente
-    } else if (type === 'beverini') {
-        loadAdminBeverini();
-        loadBeverini();
-    } else if (type === 'news') {
-        loadAdminNews();
-        loadNews();
-    }
-    
-    // Aggiorna i contatori nella dashboard
-    if (typeof updateDashboardStats === 'function') {
-        updateDashboardStats();
-    }
-
-    // Resetta la checkbox "Seleziona Tutti" nell'intestazione
-    const selectAllCb = document.querySelector(`input[onchange="toggleSelectAll('${type}', this)"]`);
-    if(selectAllCb) selectAllCb.checked = false;
-
-    // Feedback finale
-    if (failCount === 0) {
-        showToast(`${successCount} elementi eliminati correttamente.`, 'success');
-    } else {
-        showToast(`Eliminati: ${successCount}. Falliti: ${failCount}.`, 'warning');
-    }
-}
-
-console.log('✨ Sistema notifiche, badge e ordinamento inizializzato');
-// ==========================================
-// FUNZIONE TRADUZIONE AUTOMATICA (AI)
-// ==========================================
-async function autoTranslate(sourceId, targetId) {
-    const sourceInput = document.getElementById(sourceId);
-    const targetInput = document.getElementById(targetId);
-    
-    // Controllo se c'è testo da tradurre
-    if (!sourceInput || !sourceInput.value.trim()) {
-        showToast('Scrivi prima il testo in italiano!', 'warning');
-        return;
-    }
-
-    const textToTranslate = sourceInput.value.trim();
-    
-    // Feedback visivo: "Sto lavorando..."
-    const originalPlaceholder = targetInput.placeholder;
-    targetInput.value = '';
-    targetInput.placeholder = 'Traduzione in corso... ⏳';
-    targetInput.disabled = true;
-
-    try {
-        // Usiamo l'API gratuita di MyMemory (limite 500 parole/giorno senza email)
-        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(textToTranslate)}&langpair=it|en`;
-        
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.responseStatus === 200) {
-            // Successo!
-            targetInput.value = data.responseData.translatedText;
-            showToast('Traduzione completata! ✨', 'success');
-        } else {
-            throw new Error('Errore API');
-        }
-        
-    } catch (error) {
-        console.error("Errore traduzione:", error);
-        showToast('Errore traduzione. Riprova o scrivi a mano.', 'error');
-        targetInput.value = ''; // Pulisce se fallisce
-    } finally {
-        // Ripristina la casella
-        targetInput.placeholder = originalPlaceholder;
-        targetInput.disabled = false;
-    }
-}
-// ============================================
-// GESTIONE INSTALLAZIONE (Android & iOS)
-// ============================================
-
-let deferredPrompt; 
-
-// 1. Rileva se è iOS
-function isIOS() {
-  return [
-    'iPad Simulator', 'iPhone Simulator', 'iPod Simulator', 'iPad', 'iPhone', 'iPod'
-  ].includes(navigator.platform) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-}
-
-// 2. Rileva se l'app è già installata (Standalone)
-function isAppInstalled() {
-    return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-}
-
-// 3. Gestione Android (evento automatico)
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-  
-  // Appare la SMART BAR per Android
-  showSmartInstallBanner();
-});
-
-// 4. Gestione iOS e Avvio
-document.addEventListener('DOMContentLoaded', () => {
-    // Se siamo su iOS e NON è installata -> Mostra la barra
-    if (isIOS() && !isAppInstalled()) {
-        showSmartInstallBanner();
-    }
-});
-
-// Funzione per mostrare la barra
-function showSmartInstallBanner() {
-    // Controllo extra: se l'utente l'ha chiusa in questa sessione, non mostrarla
-    if (sessionStorage.getItem('install_banner_closed')) return;
-
-    const banner = document.getElementById('smart-install-banner');
-    const btn = document.getElementById('smart-install-btn');
-    
-    if (banner && btn) {
-        banner.style.display = 'flex';
-        
-        // Assegna l'azione al click
-        btn.onclick = installAppLogic;
-    }
-}
-
-// Logica del Click su "Installa"
-async function installAppLogic() {
-    // CASO ANDROID
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`Esito installazione: ${outcome}`);
-        deferredPrompt = null;
-        document.getElementById('smart-install-banner').style.display = 'none';
-    } 
-    // CASO iOS
-    else if (isIOS()) {
-        // Apre il modale con le istruzioni che hai già creato
-        // Assicurati che in index.html esista il div con id="ios-install-modal"
-        const iosModal = document.getElementById('ios-install-modal');
-        if (iosModal) {
-            iosModal.style.display = 'flex';
-        } else {
-            alert("Per installare: Premi Condividi e poi 'Aggiungi alla schermata Home'");
-        }
-    }
-}
-// ==========================================
-// SYSTEM INTEGRITY & AUTHOR SIGNATURE
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. Firma Tecnica in Console (Visibile solo agli sviluppatori premendo F12)
-    console.log("%c ABC Napoli F&B v1.0 ", "background: #3b82f6; color: white; padding: 4px; border-radius: 3px;");
-    console.log("%c Software Architecture & Code developed by Salvatore De Rosa ", "font-size: 10px; color: #64748b; font-style: italic;");
-
-    // 2. Easter Egg: 10 click sul logo per rivelare l'autore
-    let _dbg_clicks = 0;
-    // Cerca il logo o il titolo come target
-    const _dbg_target = document.querySelector('.logo-container') || document.querySelector('.home-title');
-    
-    if (_dbg_target) {
-        _dbg_target.addEventListener('click', () => {
-            _dbg_clicks++;
-            if (_dbg_clicks === 10) {
-                alert("App developed by Salvatore De Rosa.\nOriginal Build: 2026.\nAll Rights Reserved.");
-                _dbg_clicks = 0;
-            }
-            // Reset contatore dopo 3 secondi di inattività
-            setTimeout(() => { _dbg_clicks = 0; }, 3000);
-        });
-    }
-});
-// ==========================================
-// GESTIONE QR CODE (CONDIVISIONE)
-// ==========================================
-
-function openQRModal() {
-    // 1. Chiudi il menu laterale
-    const menu = document.getElementById('top-menu-modal');
-    if (menu) menu.style.display = 'none';
-    
-    // 2. Apri il popup
-    const qrModal = document.getElementById('qr-modal');
-    if (qrModal) {
-        qrModal.style.display = 'flex';
-        
-        // 3. Genera il QR Code (solo se vuoto o per rigenerarlo pulito)
-        const container = document.getElementById('qrcode-container');
-        container.innerHTML = ''; // Pulisce precedenti QR
-        
-        // URL UFFICIALE (Così funziona sempre, anche se lo apri da localhost)
-        const officialUrl = "https://fontanebeverininapoli.github.io/";
-        
-        new QRCode(container, {
-            text: officialUrl,
-            width: 180,
-            height: 180,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H // Alta correzione errori per scansione facile
-        });
-    }
-}
-
-function closeQRModal() {
-    const qrModal = document.getElementById('qr-modal');
-    if (qrModal) qrModal.style.display = 'none';
-}
-
-// Chiude cliccando fuori dal box
-document.addEventListener('click', function(event) {
-    const qrModal = document.getElementById('qr-modal');
-    if (event.target === qrModal) {
-        closeQRModal();
-    }
-});
+console.log('✨ Aeterna Lexicon in Motu - App filosofica inizializzata');
