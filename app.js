@@ -1321,18 +1321,6 @@ function showToast(message, type = 'info', duration = 3000) {
 // FINE MODIFICA
 // ======================================================
 
-function logActivity(description) {
-    const timestamp = new Date().toLocaleString('it-IT');
-    activityLog.unshift({ description, timestamp });
-
-    if (activityLog.length > 10) {
-        activityLog = activityLog.slice(0, 10);
-    }
-
-    localStorage.setItem('activityLog', JSON.stringify(activityLog));
-    updateActivityLog();
-}
-
 function updateActivityLog() {
     const activityList = document.getElementById('activity-list');
     if (!activityList) return;
@@ -1347,6 +1335,8 @@ function updateActivityLog() {
         `;
         activityList.appendChild(activityItem);
     });
+} // <--- QUESTA PARENTESI MANCAVA! È FONDAMENTALE.
+
 function updateDashboardStats() {
     // Funzione helper per evitare crash se l'elemento non esiste
     const safeSetText = (id, text) => {
@@ -1355,7 +1345,9 @@ function updateDashboardStats() {
             el.textContent = text;
         }
     };
-
+    
+    // ... il resto della funzione updateDashboardStats continua qui ...
+    
     // Filosofi
     if (appData.filosofi) {
         safeSetText('total-filosofi', appData.filosofi.length);
