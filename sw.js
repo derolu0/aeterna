@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aeterna-lexicon-v5.2.1-PHILOSOPHIA';
+const CACHE_NAME = 'aeterna-lexicon-v5.2.2-PHILOSOPHIA';
 const STATIC_CACHE = 'static-philosophy-v2';
 const DYNAMIC_CACHE = 'dynamic-philosophy-v2';
 
