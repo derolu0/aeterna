@@ -1348,8 +1348,7 @@ function updateActivityLog() {
         activityList.appendChild(activityItem);
     });
 function updateDashboardStats() {
-    // 1. Creiamo una piccola funzione interna che controlla se l'elemento esiste
-    // prima di provare a scriverci. Questo evita l'errore "null".
+    // Funzione helper per evitare crash se l'elemento non esiste
     const safeSetText = (id, text) => {
         const el = document.getElementById(id);
         if (el) {
@@ -1357,9 +1356,7 @@ function updateDashboardStats() {
         }
     };
 
-    // 2. Ora aggiorniamo i dati usando la funzione sicura
-    
-    // Filosofi per periodo
+    // Filosofi
     if (appData.filosofi) {
         safeSetText('total-filosofi', appData.filosofi.length);
         safeSetText('filosofi-classici', appData.filosofi.filter(f => f.periodo === 'classico').length);
@@ -1367,17 +1364,16 @@ function updateDashboardStats() {
         safeSetText('filosofi-medioevali', appData.filosofi.filter(f => f.periodo === 'medioevale').length);
     }
     
-    // Opere per periodo
+    // Opere
     if (appData.opere) {
         safeSetText('total-opere', appData.opere.length);
         safeSetText('opere-classiche', appData.opere.filter(o => o.periodo === 'classico').length);
         safeSetText('opere-contemporanee', appData.opere.filter(o => o.periodo === 'contemporaneo').length);
     }
     
-    // Concetti (Qui avveniva l'errore principale)
+    // Concetti
     if (appData.concetti) {
         safeSetText('total-concetti', appData.concetti.length);
-        // Questi due sotto non faranno più crashare l'app se mancano nell'HTML
         safeSetText('concetti-ontologia', appData.concetti.filter(c => c.categoria === 'ontologia').length);
         safeSetText('concetti-etica', appData.concetti.filter(c => c.categoria === 'etica').length);
     }
