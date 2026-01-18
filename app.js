@@ -3808,26 +3808,57 @@ async function autoTranslate(sourceId, targetId) {
 }
 
 // ============================================
-// Initialize App (MODIFICATO)
+// Initialize App (MODIFICATO E CORRETTO)
 // ============================================
 
+// --- 1. AGGIUNGIAMO LA FUNZIONE CHE MANCAVA ---
+function checkOnlineStatus() {
+    const isOnline = navigator.onLine;
+    const offlineIndicator = document.getElementById('offline-indicator');
+    
+    if (offlineIndicator) {
+        if (isOnline) {
+            offlineIndicator.style.display = 'none';
+        } else {
+            offlineIndicator.style.display = 'block';
+            // Controllo di sicurezza per evitare errori se showToast non è ancora pronto
+            if (typeof showToast === 'function') {
+                showToast('Sei offline. Modalità limitata attiva.', 'warning');
+            } else {
+                console.warn('Sei offline (showToast non disponibile)');
+            }
+        }
+    }
+}
+
+// --- 2. INIZIALIZZAZIONE ---
 document.addEventListener('DOMContentLoaded', function() {
     console.log("%c Aeterna Lexicon in Motu v1.0 ", "background: #3b82f6; color: white; padding: 4px; border-radius: 3px;");
     console.log("%c Dataset filosofico per l'analisi del linguaggio ", "font-size: 10px; color: #64748b; font-style: italic;");
     
-    loadLocalData();
+    // Caricamento dati locali (con controllo sicurezza)
+    if (typeof loadLocalData === 'function') loadLocalData();
+    
+    // Controllo connessione (ora la funzione esiste qui sopra!)
     checkOnlineStatus();
-    showScreen('home-screen');
-    handleUrlParameters();
     
-    setupBackButtonHandler();
+    // Mostra la home
+    if (typeof showScreen === 'function') showScreen('home-screen');
     
+    // Gestione URL
+    if (typeof handleUrlParameters === 'function') handleUrlParameters();
+    
+    // Setup tasto indietro
+    if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
+    
+    // Permessi Notifiche
     if ('Notification' in window && Notification.permission !== 'granted') {
         Notification.requestPermission().then(permission => {
             if (permission === 'granted') console.log('Notifiche attivate!');
         });
     }
 
+    // Gestione Highlights
     const lastHighlightTime = localStorage.getItem('last_highlight_time');
     const now = Date.now();
     if (lastHighlightTime && (now - parseInt(lastHighlightTime)) > 24 * 60 * 60 * 1000) {
@@ -3836,34 +3867,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (!lastHighlightTime) localStorage.setItem('last_highlight_time', now.toString());
     
+    // Service Worker
     if ('serviceWorker' in navigator) {
         setTimeout(() => {
-            registerServiceWorker();
+            if (typeof registerServiceWorker === 'function') registerServiceWorker();
         }, 1000);
     }
     
+    // Caricamento Dati Firebase
     setTimeout(async () => {
         try {
-            await loadFirebaseData('filosofi');
-            await loadFirebaseData('opere');
-            await loadFirebaseData('concetti');
-            
-            if (document.getElementById('filosofi-list')) loadFilosofi();
-            if (document.getElementById('opere-list')) loadOpere();
-            if (document.getElementById('concetti-list')) loadConcetti();
-            
+            if (typeof loadFirebaseData === 'function') {
+                await loadFirebaseData('filosofi');
+                await loadFirebaseData('opere');
+                await loadFirebaseData('concetti');
+                
+                if (document.getElementById('filosofi-list') && typeof loadFilosofi === 'function') loadFilosofi();
+                if (document.getElementById('opere-list') && typeof loadOpere === 'function') loadOpere();
+                if (document.getElementById('concetti-list') && typeof loadConcetti === 'function') loadConcetti();
+            }
         } catch (error) {
-            showToast('Utilizzo dati locali', 'info');
+            if (typeof showToast === 'function') showToast('Utilizzo dati locali', 'info');
         }
     }, 1000);
     
-    document.getElementById('admin-password').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') checkAdminAuth();
-    });
+    // Event Listeners Vari
+    const pwdInput = document.getElementById('admin-password');
+    if (pwdInput) {
+        pwdInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && typeof checkAdminAuth === 'function') checkAdminAuth();
+        });
+    }
     
-    document.getElementById('admin-auth').addEventListener('click', function(e) {
-        if (e.target === this) closeAdminAuth();
-    });
+    const authModal = document.getElementById('admin-auth');
+    if (authModal) {
+        authModal.addEventListener('click', function(e) {
+            if (e.target === this && typeof closeAdminAuth === 'function') closeAdminAuth();
+        });
+    }
     
     window.addEventListener('online', checkOnlineStatus);
     window.addEventListener('offline', checkOnlineStatus);
@@ -3874,22 +3915,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, true);
     
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && document.getElementById('admin-panel').style.display === 'flex') {
-            closeAdminPanel();
-        }
-    });
+    const adminPanel = document.getElementById('admin-panel');
+    if (adminPanel) {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && adminPanel.style.display === 'flex') {
+                if (typeof closeAdminPanel === 'function') closeAdminPanel();
+            }
+        });
+        
+        adminPanel.addEventListener('click', function(e) {
+            if (e.target === this && typeof closeAdminPanel === 'function') closeAdminPanel();
+        });
+    }
     
-    document.getElementById('admin-panel').addEventListener('click', function(e) {
-        if (e.target === this) closeAdminPanel();
-    });
+    if (typeof initializeOfflineSync === 'function') initializeOfflineSync();
     
-    initializeOfflineSync();
     setTimeout(() => {
-        setupLazyLoading();
+        if (typeof setupLazyLoading === 'function') setupLazyLoading();
     }, 1000);
     
-    logActivity('Applicazione Aeterna Lexicon avviata');
+    if (typeof logActivity === 'function') logActivity('Applicazione Aeterna Lexicon avviata');
+
+    // === PARTE FONDAMENTALE MANCANTE NEL TUO CODICE ===
+    // Questo serve a far sparire il logo di caricamento!
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        setTimeout(() => {
+            splash.style.transition = 'opacity 0.5s ease';
+            splash.style.opacity = '0'; // Dissolvenza
+            setTimeout(() => {
+                splash.style.display = 'none'; // Rimozione
+            }, 500);
+        }, 1500); // Ritardo per mostrare il logo
+    }
+    // ==================================================
 });
 
 console.log('✨ Aeterna Lexicon in Motu - App filosofica inizializzata');
