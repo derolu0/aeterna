@@ -947,12 +947,13 @@ function saveOfflineData(context, data) {
 // ============================================
 
 function logErrorToAnalytics(error, context, additionalData = {}) {
+    // 1. Costruzione dell'oggetto errore
     const errorLog = {
         timestamp: new Date().toISOString(),
-        context,
+        context: context,
         error: {
             name: error.name,
-            message: error.message,
+            message: error.message || 'Errore sconosciuto',
             code: error.code,
             stack: error.stack
         },
@@ -962,21 +963,36 @@ function logErrorToAnalytics(error, context, additionalData = {}) {
         ...additionalData
     };
     
-    const analyticsLog = JSON.parse(localStorage.getItem('analytics_errors') || '[]');
+    // 2. Salvataggio locale sicuro (con try-catch per evitare crash se il JSON è corrotto)
+    let analyticsLog = [];
+    try {
+        const saved = localStorage.getItem('analytics_errors');
+        if (saved) analyticsLog = JSON.parse(saved);
+    } catch (e) { 
+        analyticsLog = []; 
+    }
+
     analyticsLog.push(errorLog);
     
-    if (analyticsLog.length > 100) {
-        analyticsLog.splice(0, analyticsLog.length - 100);
+    // Limitiamo a 50 errori per non riempire la memoria
+    if (analyticsLog.length > 50) {
+        analyticsLog.splice(0, analyticsLog.length - 50);
     }
     
     localStorage.setItem('analytics_errors', JSON.stringify(analyticsLog));
     
-    if (window.firebaseAnalytics) {
-        window.firebaseAnalytics.logEvent('error_occurred', {
-            error_context: context,
-            error_message: error.message.substring(0, 100),
-            error_code: error.code || 'none'
-        });
+    // 3. FIX CRUCIALE: Controlliamo se la funzione logEvent esiste davvero
+    // Questo è il pezzo che risolve l'errore "window.firebaseAnalytics.logEvent is not a function"
+    if (window.firebaseAnalytics && typeof window.firebaseAnalytics.logEvent === 'function') {
+        try {
+            window.firebaseAnalytics.logEvent('error_occurred', {
+                error_context: context,
+                error_message: (error.message || '').substring(0, 100),
+                error_code: error.code || 'none'
+            });
+        } catch (e) {
+            console.warn('Impossibile inviare a Analytics, ma l\'errore è salvato localmente.');
+        }
     }
 }
 
@@ -1321,6 +1337,37 @@ function showToast(message, type = 'info', duration = 3000) {
 // FINE MODIFICA
 // ======================================================
 
+Sì, esatto!
+
+Devi sostituire quella funzione che mi hai appena incollato (quella "semplice") con questa versione più robusta che ti ho scritto sotto.
+
+La versione che hai tu dà errore perché dà per scontato che la lista activityLog esista sempre, ma a volte (soprattutto all'avvio) non è ancora pronta. La mia versione controlla prima se esiste e, se non c'è, la crea.
+
+1. Copia e Incolla questo al posto del tuo logActivity:
+JavaScript
+
+function logActivity(description) {
+    const timestamp = new Date().toLocaleString('it-IT');
+    
+    // CORREZIONE: Se la lista non esiste ancora, la creiamo al volo
+    // Questo evita l'errore "undefined" che bloccava tutto
+    if (typeof activityLog === 'undefined') {
+        window.activityLog = [];
+    }
+
+    activityLog.unshift({ description, timestamp });
+
+    if (activityLog.length > 10) {
+        activityLog = activityLog.slice(0, 10);
+    }
+
+    localStorage.setItem('activityLog', JSON.stringify(activityLog));
+    
+    // CORREZIONE: Aggiorniamo la grafica solo se la funzione è pronta
+    if (typeof updateActivityLog === 'function') {
+        updateActivityLog();
+    }
+}
 function updateActivityLog() {
     const activityList = document.getElementById('activity-list');
     if (!activityList) return;
@@ -1335,20 +1382,19 @@ function updateActivityLog() {
         `;
         activityList.appendChild(activityItem);
     });
-} // <--- QUESTA PARENTESI MANCAVA! È FONDAMENTALE.
-
 function updateDashboardStats() {
-    // Funzione helper per evitare crash se l'elemento non esiste
+    // 1. Creiamo una piccola funzione interna che controlla se l'elemento esiste
+    // prima di provare a scriverci. Questo evita l'errore "null".
     const safeSetText = (id, text) => {
         const el = document.getElementById(id);
         if (el) {
             el.textContent = text;
         }
     };
+
+    // 2. Ora aggiorniamo i dati usando la funzione sicura
     
-    // ... il resto della funzione updateDashboardStats continua qui ...
-    
-    // Filosofi
+    // Filosofi per periodo
     if (appData.filosofi) {
         safeSetText('total-filosofi', appData.filosofi.length);
         safeSetText('filosofi-classici', appData.filosofi.filter(f => f.periodo === 'classico').length);
@@ -1356,16 +1402,17 @@ function updateDashboardStats() {
         safeSetText('filosofi-medioevali', appData.filosofi.filter(f => f.periodo === 'medioevale').length);
     }
     
-    // Opere
+    // Opere per periodo
     if (appData.opere) {
         safeSetText('total-opere', appData.opere.length);
         safeSetText('opere-classiche', appData.opere.filter(o => o.periodo === 'classico').length);
         safeSetText('opere-contemporanee', appData.opere.filter(o => o.periodo === 'contemporaneo').length);
     }
     
-    // Concetti
+    // Concetti (Qui avveniva l'errore principale)
     if (appData.concetti) {
         safeSetText('total-concetti', appData.concetti.length);
+        // Questi due sotto non faranno più crashare l'app se mancano nell'HTML
         safeSetText('concetti-ontologia', appData.concetti.filter(c => c.categoria === 'ontologia').length);
         safeSetText('concetti-etica', appData.concetti.filter(c => c.categoria === 'etica').length);
     }
@@ -1668,17 +1715,30 @@ function getFilteredItems(type) {
 function setFilter(type, filterValue) {
     currentFilter[type] = filterValue;
 
-    document.querySelectorAll(`#${type}-screen .filter-btn`).forEach(btn => {
+    // 1. Rimuovi la classe 'active' da tutti i bottoni
+    const allBtns = document.querySelectorAll(`#${type}-screen .filter-btn`);
+    allBtns.forEach(btn => {
         btn.classList.remove('active');
     });
-    document.querySelector(`#${type}-screen .filter-btn.${filterValue}`).classList.add('active');
 
-    if (type === 'filosofi') {
-        renderGridItems(document.getElementById('filosofi-list'), getFilteredItems('filosofi'), 'filosofo');
-    } else if (type === 'opere') {
-        renderCompactItems(document.getElementById('opere-list'), getFilteredItems('opere'), 'opera');
-    } else if (type === 'concetti') {
-        renderConcettiItems(document.getElementById('concetti-list'), getFilteredItems('concetti'));
+    // 2. Aggiungi 'active' SOLO se il bottone esiste (CORREZIONE IMPORTANTE)
+    // Questo controllo if(activeBtn) evita che l'app si blocchi se non trova il bottone
+    const activeBtn = document.querySelector(`#${type}-screen .filter-btn.${filterValue}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+    }
+
+    // 3. Aggiorna la griglia (con controllo di sicurezza sul contenitore)
+    const container = document.getElementById(`${type}-list`);
+    
+    if (container) {
+        if (type === 'filosofi') {
+            renderGridItems(container, getFilteredItems('filosofi'), 'filosofo');
+        } else if (type === 'opere') {
+            renderCompactItems(container, getFilteredItems('opere'), 'opera');
+        } else if (type === 'concetti') {
+            renderConcettiItems(container, getFilteredItems('concetti'));
+        }
     }
 }
 
