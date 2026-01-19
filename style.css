@@ -2836,7 +2836,7 @@ textarea[id$="-en"]:focus {
 }
 .modal-btn.btn-info i { color: #64748b; }
 /* =======================================================
-   FIX DEFINITIVO HOME E LAYOUT (Versione Sicura)
+   FIX DEFINITIVO SFONDO HOME (No Zoom, No Scroll)
    ======================================================= */
 
 /* 1. RESET GENERALE: Abilita lo scroll di default */
@@ -2847,82 +2847,71 @@ html, body {
     overflow: hidden; /* Gestiamo lo scroll dentro le schermate */
 }
 
-/* 2. HOME PAGE: Fissa e senza scroll */
+/* 2. HOME PAGE (Versione Base - Mobile) */
 #home-screen {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    overflow: hidden !important; /* Blocca scroll solo qui */
-    
-    /* Centratura verticale */
+    overflow: hidden !important;
+    z-index: 5;
+
+    /* LAYOUT CONTENUTO (Centrato) */
     display: flex !important;
     flex-direction: column;
-    justify-content: center; 
-    align-items: center;
-    padding-bottom: 70px !important;
-    background-size: cover !important;
-    background-position: center !important;
-    z-index: 5;
+    justify-content: center; /* Centra verticalmente */
+    align-items: center;     /* Centra orizzontalmente */
+    padding-bottom: 80px !important; /* Spazio per la barra sotto */
+
+    /* FIX SFONDO (Il segreto è togliere 'fixed') */
+    background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), 
+                      url('./images/sfondo-home-mobile.jpg') !important;
+    background-size: cover !important;       /* Copre tutto lo schermo */
+    background-position: center top !important; /* Parte dall'alto (vedrai le teste dei filosofi) */
+    background-attachment: scroll !important;   /* IMPORTANTE: Risolve lo zoom enorme su mobile */
+    background-repeat: no-repeat !important;
 }
 
-/* 3. ALTRE PAGINE (Filosofi, Opere, ecc): Scroll attivo */
+/* 3. ALTRE PAGINE (Filosofi, Opere, ecc) - Scroll attivo */
 .screen:not(#home-screen) {
     height: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Contenitore fisso */
+    overflow: hidden;
 }
-
-/* Assicura che l'area contenuti scrolli correttamente */
 .content-area {
     flex: 1;
-    overflow-y: auto !important; /* Abilita scroll verticale */
-    -webkit-overflow-scrolling: touch; /* Scroll fluido su mobile */
-    padding-bottom: 90px; /* Spazio per non coprire l'ultimo elemento con la barra */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 90px;
 }
-
-/* 4. FIX HEADER SCOMPARSI */
 .app-header {
-    flex-shrink: 0; /* Impedisce all'header di schiacciarsi */
+    flex-shrink: 0;
     width: 100%;
     position: relative;
     z-index: 10;
 }
 
-/* 5. AGGIUSTAMENTI VISIVI HOME (Compattare spazi) */
-.logo-container {
-    margin-top: 0 !important;
-    margin-bottom: 10px !important;
-    transform: scale(0.9);
-}
-.home-welcome-animated {
-    margin: 0 !important;
-}
-.home-subtitle {
-    margin-bottom: 15px !important;
-}
-.home-buttons {
-    margin-top: 5px !important;
-    gap: 10px !important;
-}
-.home-btn {
-    min-height: 70px !important; 
-    padding: 10px !important;
-}
-
-/* 6. FIX SPECIFICO DESKTOP */
+/* 4. FIX SPECIFICO PER PC/DESKTOP (Schermi grandi) */
 @media (min-width: 1024px) {
+    #home-screen {
+        /* Su PC usiamo l'immagine orizzontale */
+        background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), 
+                          url('./images/sfondo-home.jpg') !important;
+        background-position: center !important;
+        background-attachment: fixed !important; /* Su PC l'effetto fisso è bello e non rompe nulla */
+    }
+
     .home-title {
-        font-size: 2rem !important; 
-        margin-bottom: 5px !important;
+        font-size: 2.5rem !important; 
+        margin-bottom: 10px !important;
     }
     .home-welcome-animated {
-        font-size: 1.5rem !important;
+        font-size: 1.8rem !important;
     }
     .home-subtitle {
-        font-size: 1rem !important;
+        font-size: 1.1rem !important;
         max-width: 600px;
     }
 }
