@@ -2716,55 +2716,61 @@ textarea[id$="-en"]:focus {
     border-color: var(--primary-blue);
 }
 /* =======================================================
-   FIX DEFINITIVO COLORI MENU E PAGINE
+   FIX DEFINITIVO COLORI (Con ID corretti)
    ======================================================= */
 
-/* --- 1. PAGINA SEGNALA ERRORE (Rosso e Bianco) --- */
+/* --- 1. PAGINA SEGNALAZIONI (ID: segnalazioni-screen) --- */
 
-/* Header Rosso con scritte Bianche */
-#report-screen .secondary-header {
-    background-color: #ef4444 !important; /* ROSSO */
-    color: white !important;
-    border-bottom: none;
+/* Forza l'intestazione Rossa sovrascrivendo il gradiente blu */
+#segnalazioni-screen .app-header {
+    background: #ef4444 !important; /* ROSSO PURO */
     box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
 }
 
-/* Forza Titolo e Icona Indietro bianchi */
-#report-screen .secondary-header h2,
-#report-screen .secondary-header .icon-btn {
+/* Assicura che titolo, sottotitolo e freccia siano BIANCHI */
+#segnalazioni-screen .screen-title,
+#segnalazioni-screen .screen-subtitle,
+#segnalazioni-screen .back-btn {
     color: white !important;
 }
-#report-screen .secondary-header .icon-btn {
-    background: rgba(255, 255, 255, 0.25);
+
+/* Sfondo del pulsante indietro leggermente visibile */
+#segnalazioni-screen .back-btn {
+    background: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Testo interno pagina: TUTTO NERO */
-#report-screen {
+/* Testo del modulo (Label e descrizioni) tutto NERO */
+#segnalazioni-screen .content-area,
+#segnalazioni-screen label,
+#segnalazioni-screen p {
     color: #000000 !important;
-}
-#report-screen label {
-    color: #1f2937 !important; /* Grigio scuro quasi nero */
-    font-weight: 600;
-}
-#report-screen input, 
-#report-screen textarea,
-#report-screen select {
-    color: #000000 !important;
-    background-color: #fff;
-    border: 1px solid #ccc;
 }
 
-/* Pulsante INVIO SEGNALAZIONE: Rosso */
-#report-form button[type="submit"],
-.submit-btn {
-    background-color: #ef4444 !important;
+/* Input e Textarea: Sfondo bianco e testo nero */
+#segnalazioni-screen select,
+#segnalazioni-screen textarea {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #ccc !important;
+}
+
+/* Pulsante INVIA: Rosso solido (sovrascrive stile home-btn) */
+#segnalazioni-screen button[type="submit"] {
+    background: #ef4444 !important;
+    background-color: #ef4444 !important; /* Ridondanza per sicurezza */
     color: white !important;
-    font-weight: bold;
-    box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4) !important;
+}
+/* Icona dentro il pulsante invia */
+#segnalazioni-screen button[type="submit"] .btn-icon {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border: none !important;
 }
 
 
-/* --- 2. PULSANTI MENU COLORATI (Match con le sezioni) --- */
+/* --- 2. PULSANTI MENU COLORATI (Confermati) --- */
 
 /* Stile base per i pulsanti aggiunti */
 .modal-btn.btn-admin, 
@@ -2775,50 +2781,38 @@ textarea[id$="-en"]:focus {
     font-weight: 500;
     border-width: 1px;
     border-style: solid;
-    justify-content: flex-start; /* Allinea testo a sinistra */
+    justify-content: flex-start;
     padding-left: 20px;
 }
 
 /* AREA RISERVATA -> BLU */
 .modal-btn.btn-admin {
-    background-color: #eff6ff; /* Blu chiarissimo */
-    color: #1d4ed8;            /* Blu scuro testo */
-    border-color: #bfdbfe;     /* Blu bordo */
+    background-color: #eff6ff; 
+    color: #1d4ed8;            
+    border-color: #bfdbfe;     
 }
 .modal-btn.btn-admin i { color: #2563eb; }
 
 /* SEGNALA ERRORE -> ROSSO */
 .modal-btn.btn-report {
-    background-color: #fef2f2; /* Rosso chiarissimo */
-    color: #b91c1c;            /* Rosso scuro testo */
-    border-color: #fecaca;     /* Rosso bordo */
+    background-color: #fef2f2; 
+    color: #b91c1c;            
+    border-color: #fecaca;     
 }
 .modal-btn.btn-report i { color: #dc2626; }
 
-/* QR CODE -> AZZURRO (Modificato come richiesto) */
+/* QR CODE -> AZZURRO */
 .modal-btn.btn-qr {
-    background-color: #e0f2fe; /* Azzurro cielo chiarissimo */
-    color: #0369a1;            /* Azzurro scuro testo */
-    border-color: #bae6fd;     /* Azzurro bordo */
+    background-color: #e0f2fe; 
+    color: #0369a1;            
+    border-color: #bae6fd;     
 }
 .modal-btn.btn-qr i { color: #0ea5e9; }
 
-/* INFO & CREDITI -> GRIGIO (Neutro) */
+/* INFO & CREDITI -> GRIGIO */
 .modal-btn.btn-info {
     background-color: #f8fafc;
     color: #334155;
     border-color: #cbd5e1;
 }
 .modal-btn.btn-info i { color: #64748b; }
-
-/* --- 3. PAGINA INFO E CREDITI (Standard) --- */
-/* Assicuriamo che l'header di Info rimanga standard (bianco/grigio) */
-#credits-screen .secondary-header {
-    background-color: #ffffff !important;
-    color: #1f2937 !important;
-    border-bottom: 1px solid #e2e8f0;
-}
-#credits-screen .secondary-header .icon-btn {
-    color: #1f2937 !important;
-    background: transparent;
-}
