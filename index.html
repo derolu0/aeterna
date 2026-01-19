@@ -1308,8 +1308,50 @@
                 <span class="tab-icon"><i class="fas fa-map-marked-alt"></i></span><span>Mappa</span>
             </button>
         </div>
-    </div> </div> <div id="top-menu-modal" class="modal-overlay" onclick="closeMenuModal(event)" style="z-index: 9999;">
+    </div> </div> 
 
+    <div id="top-menu-modal" class="modal-overlay" onclick="closeMenuModal(event)" style="z-index: 9999; display: none;">
+        <div class="modal-content menu-modal-content" onclick="event.stopPropagation()">
+            <h3 class="modal-title" style="margin-bottom: 20px;">Menu</h3>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn lang-switch" onclick="window.toggleLanguage()">
+                    <span id="lang-flag">🇬🇧</span>
+                    <span id="lang-label">Switch to English</span>
+                </button>
+
+                <button class="modal-btn secondary" onclick="goToAdmin()">
+                    <i class="fas fa-lock"></i>
+                    <span data-i18n="admin_btn">Area Riservata</span>
+                </button>
+
+                <button class="modal-btn secondary" onclick="openReportScreen()">
+                    <i class="fas fa-bullhorn"></i>
+                    <span data-i18n="report_btn">Segnala Errore</span>
+                </button>
+                
+                <button class="modal-btn secondary" onclick="openQRModal()">
+                    <i class="fas fa-qrcode"></i>
+                    <span data-i18n="btn_qr">Condividi App</span>
+                </button>
+
+                <button class="modal-btn secondary" onclick="openCreditsScreen()">
+                    <i class="fas fa-info-circle"></i>
+                    <span data-i18n="info_btn">Info & Crediti</span>
+                </button>
+                
+                <button id="menu-install-btn" class="modal-btn primary" onclick="installPWA()" style="display: none; background-color: #10b981; color: white;">
+                    <i class="fas fa-download"></i>
+                    <span data-i18n="install_btn">Installa App</span>
+                </button>
+
+                <button class="modal-btn" onclick="document.getElementById('top-menu-modal').style.display='none'">
+                    <i class="fas fa-times"></i>
+                    <span data-i18n="close_btn">Chiudi</span>
+                </button>
+            </div>
+        </div>
+    </div>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     
