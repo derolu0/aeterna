@@ -1401,6 +1401,7 @@ function updateActivityLog() {
         `;
         activityList.appendChild(activityItem);
     });
+}
 function updateDashboardStats() {
     // 1. Creiamo una piccola funzione interna che controlla se l'elemento esiste
     // prima di provare a scriverci. Questo evita l'errore "null".
