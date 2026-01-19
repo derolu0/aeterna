@@ -1254,7 +1254,7 @@
         <button class="fixed-navigate-btn hidden" id="fixed-navigate-btn" onclick="navigateToFixed()">
             <i class="fas fa-map-marker-alt"></i> <span id="nav-btn-text">Naviga Verso</span>
         </button>
-        </div>
+       
     <div class="screen" id="segnalazioni-screen" style="display: none;">
         <div class="screen-header">
             <h2>Segnalazioni</h2>
@@ -1271,9 +1271,9 @@
                 </p>
 
                 <form onsubmit="inviaSegnalazione(event)" class="report-form">
-                    <div class="form-group">
-                        <label for="report-type">Tipo di Segnalazione</label>
-                        <select id="report-type" class="form-select" required>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="report-type" style="display: block; margin-bottom: 5px; font-weight: 500;">Tipo di Segnalazione</label>
+                        <select id="report-type" class="form-select" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
                             <option value="Dato inesatto">Dato inesatto (Data/Nome)</option>
                             <option value="Errore testo">Errore nel testo/biografia</option>
                             <option value="Bug App">Problema tecnico App</option>
@@ -1282,19 +1282,17 @@
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="report-desc">Descrizione</label>
-                        <textarea id="report-desc" class="form-textarea" rows="5" 
-                                  placeholder="Descrivi il problema riscontrato..." required></textarea>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="report-desc" style="display: block; margin-bottom: 5px; font-weight: 500;">Descrizione</label>
+                        <textarea id="report-desc" class="form-textarea" rows="5" placeholder="Descrivi il problema riscontrato..." required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;"></textarea>
                     </div>
 
-                    <button type="submit" class="action-btn primary full-width">
-                        <i class="fas fa-paper-plane"></i> Invia a derolu0@gmail.com
+                    <button type="submit" class="action-btn primary full-width" style="margin-top: 10px; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 15px; border-radius: 12px; border: none; width: 100%; font-weight: 600; cursor: pointer;">
+                        <i class="fas fa-paper-plane"></i> Invia Segnalazione
                     </button>
                 </form>
             </div>
         </div>
-        
         <div class="tab-bar">
             <button class="tab-btn" onclick="showScreen('home-screen')">
                 <i class="fas fa-home"></i><span>Home</span>
@@ -1309,6 +1307,7 @@
                 <i class="fas fa-map-marked-alt"></i><span>Mappa</span>
             </button>
         </div>
+    </div>
     </div>
     <div id="top-menu-modal" class="modal-overlay" onclick="closeMenuModal(event)" style="z-index: 9999;">
     <div class="modal-content menu-modal-content" style="width: 280px; padding: 20px; position: absolute; top: 70px; right: 20px;">

@@ -3890,10 +3890,10 @@ function inviaSegnalazione(event) {
     const tipo = document.getElementById('report-type').value;
     const descrizione = document.getElementById('report-desc').value;
     
-    // INDIRIZZO EMAIL AGGIORNATO
+    // INDIRIZZO EMAIL
     const emailDestinatario = "derolu0@gmail.com"; 
     
-    const oggetto = encodeURIComponent(`Segnalazione App Lexicon: ${tipo}`);
+    const oggetto = encodeURIComponent(`Segnalazione App Aeterna: ${tipo}`);
     
     const corpo = encodeURIComponent(
         `Gentile Assistenza Project Work,\n\n` +
@@ -3903,7 +3903,20 @@ function inviaSegnalazione(event) {
         `---\nInviato da App Aeterna Lexicon in Motu`
     );
     
+    // Apre il client email
     window.location.href = `mailto:${emailDestinatario}?subject=${oggetto}&body=${corpo}`;
+
+    // Messaggio di conferma a schermo (senza mostrare la mail)
+    if (typeof showToast === 'function') {
+        showToast("Apertura client email...", "success");
+    }
+
+    // Torna alla home dopo un breve delay per non lasciare l'utente sulla pagina invio
+    setTimeout(() => {
+        showScreen('home-screen');
+        // Pulisce il modulo per la prossima volta
+        event.target.reset();
+    }, 1500);
 }
 
 function openCreditsScreen() {
