@@ -2716,37 +2716,35 @@ textarea[id$="-en"]:focus {
     border-color: var(--primary-blue);
 }
 /* =======================================================
-   FIX DEFINITIVO COLORI (Con ID corretti)
+   FIX DEFINITIVO COLORI E DIMENSIONI (Con tasto normale)
    ======================================================= */
 
 /* --- 1. PAGINA SEGNALAZIONI (ID: segnalazioni-screen) --- */
 
-/* Forza l'intestazione Rossa sovrascrivendo il gradiente blu */
+/* Intestazione Rossa */
 #segnalazioni-screen .app-header {
-    background: #ef4444 !important; /* ROSSO PURO */
+    background: #ef4444 !important;
     box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
 }
 
-/* Assicura che titolo, sottotitolo e freccia siano BIANCHI */
+/* Testi bianchi nell'intestazione */
 #segnalazioni-screen .screen-title,
 #segnalazioni-screen .screen-subtitle,
 #segnalazioni-screen .back-btn {
     color: white !important;
 }
-
-/* Sfondo del pulsante indietro leggermente visibile */
 #segnalazioni-screen .back-btn {
     background: rgba(255, 255, 255, 0.2) !important;
 }
 
-/* Testo del modulo (Label e descrizioni) tutto NERO */
+/* Testo del modulo NERO */
 #segnalazioni-screen .content-area,
 #segnalazioni-screen label,
 #segnalazioni-screen p {
     color: #000000 !important;
 }
 
-/* Input e Textarea: Sfondo bianco e testo nero */
+/* Input e Textarea */
 #segnalazioni-screen select,
 #segnalazioni-screen textarea {
     background-color: #ffffff !important;
@@ -2754,25 +2752,50 @@ textarea[id$="-en"]:focus {
     border: 1px solid #ccc !important;
 }
 
-/* Pulsante INVIA: Rosso solido (sovrascrive stile home-btn) */
+/* --- FIX PULSANTE INVIA (Ora dimensioni normali) --- */
 #segnalazioni-screen button[type="submit"] {
-    background: #ef4444 !important;
-    background-color: #ef4444 !important; /* Ridondanza per sicurezza */
+    background-color: #ef4444 !important; /* Rosso */
     color: white !important;
+    
+    /* Resetta le dimensioni enormi ereditate */
+    width: auto !important; 
+    max-width: 250px !important; /* Larghezza massima contenuta */
+    min-height: unset !important;
+    height: auto !important;
+    
+    /* Spaziatura normale */
+    padding: 12px 30px !important;
+    margin: 30px auto !important; /* Centrato con margine sopra/sotto */
+    
+    /* Forma a pillola */
+    border-radius: 50px !important;
     border: none !important;
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4) !important;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
+    
+    /* Allineamento */
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
 }
-/* Icona dentro il pulsante invia */
+
+/* Rimpicciolisce l'icona interna al pulsante */
 #segnalazioni-screen button[type="submit"] .btn-icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1rem !important;
     background: rgba(255, 255, 255, 0.2) !important;
     color: white !important;
     border: none !important;
+    margin-right: 10px;
+}
+
+/* Rimuove effetti strani di sfondo ereditati */
+#segnalazioni-screen button[type="submit"]::before {
+    display: none !important;
 }
 
 
-/* --- 2. PULSANTI MENU COLORATI (Confermati) --- */
-
-/* Stile base per i pulsanti aggiunti */
+/* --- 2. PULSANTI MENU (Invariati) --- */
 .modal-btn.btn-admin, 
 .modal-btn.btn-report, 
 .modal-btn.btn-qr, 
@@ -2785,7 +2808,6 @@ textarea[id$="-en"]:focus {
     padding-left: 20px;
 }
 
-/* AREA RISERVATA -> BLU */
 .modal-btn.btn-admin {
     background-color: #eff6ff; 
     color: #1d4ed8;            
@@ -2793,7 +2815,6 @@ textarea[id$="-en"]:focus {
 }
 .modal-btn.btn-admin i { color: #2563eb; }
 
-/* SEGNALA ERRORE -> ROSSO */
 .modal-btn.btn-report {
     background-color: #fef2f2; 
     color: #b91c1c;            
@@ -2801,7 +2822,6 @@ textarea[id$="-en"]:focus {
 }
 .modal-btn.btn-report i { color: #dc2626; }
 
-/* QR CODE -> AZZURRO */
 .modal-btn.btn-qr {
     background-color: #e0f2fe; 
     color: #0369a1;            
@@ -2809,7 +2829,6 @@ textarea[id$="-en"]:focus {
 }
 .modal-btn.btn-qr i { color: #0ea5e9; }
 
-/* INFO & CREDITI -> GRIGIO */
 .modal-btn.btn-info {
     background-color: #f8fafc;
     color: #334155;
