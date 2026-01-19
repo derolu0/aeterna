@@ -1315,27 +1315,27 @@
             <h3 class="modal-title" style="margin-bottom: 20px;">Menu</h3>
             
             <div class="modal-buttons">
-                <button class="modal-btn lang-switch" onclick="window.toggleLanguage()">
+                <button class="modal-btn lang-switch" onclick="window.toggleLanguage()" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #333;">
                     <span id="lang-flag">🇬🇧</span>
                     <span id="lang-label">Switch to English</span>
                 </button>
 
-                <button class="modal-btn secondary" onclick="goToAdmin()">
+                <button class="modal-btn btn-admin" onclick="goToAdmin()">
                     <i class="fas fa-lock"></i>
                     <span data-i18n="admin_btn">Area Riservata</span>
                 </button>
 
-                <button class="modal-btn secondary" onclick="openReportScreen()">
+                <button class="modal-btn btn-report" onclick="openReportScreen()">
                     <i class="fas fa-bullhorn"></i>
                     <span data-i18n="report_btn">Segnala Errore</span>
                 </button>
                 
-                <button class="modal-btn secondary" onclick="openQRModal()">
+                <button class="modal-btn btn-qr" onclick="openQRModal()">
                     <i class="fas fa-qrcode"></i>
                     <span data-i18n="btn_qr">Condividi App</span>
                 </button>
 
-                <button class="modal-btn secondary" onclick="openCreditsScreen()">
+                <button class="modal-btn btn-info" onclick="openCreditsScreen()">
                     <i class="fas fa-info-circle"></i>
                     <span data-i18n="info_btn">Info & Crediti</span>
                 </button>
@@ -1345,7 +1345,7 @@
                     <span data-i18n="install_btn">Installa App</span>
                 </button>
 
-                <button class="modal-btn" onclick="document.getElementById('top-menu-modal').style.display='none'">
+                <button class="modal-btn" onclick="document.getElementById('top-menu-modal').style.display='none'" style="margin-top: 10px; border: 1px solid #ef4444; color: #ef4444; background: transparent;">
                     <i class="fas fa-times"></i>
                     <span data-i18n="close_btn">Chiudi</span>
                 </button>
