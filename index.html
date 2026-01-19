@@ -1568,5 +1568,53 @@
             <i class="fas fa-times"></i>
         </button>
     </div>
-    </body>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="./translations.js"></script>
+    <script src="./app.js"></script>
+    <script src="./analytics.js" defer></script>
+    
+    <script>
+        // SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swUrl = './sw.js';
+                fetch(swUrl, { mode: 'no-cors' })
+                  .then(response => {
+                      return navigator.serviceWorker.register(swUrl)
+                          .then(registration => {
+                              console.log('✅ Service Worker registrato:', registration.scope);
+                              registration.addEventListener('updatefound', () => {
+                                  const newWorker = registration.installing;
+                                  newWorker.addEventListener('statechange', () => {
+                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
+                                      }
+                                  });
+                              });
+                              return registration;
+                          });
+                  })
+                  .catch(error => {
+                      console.warn('⚠️ Registrazione SW fallita:', error.message);
+                  });
+            });
+        }
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+        });
+
+        // INIZIALIZZAZIONE ANALYTICS E DASHBOARD
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {
+                    refreshAnalyticsDashboard();
+                }
+            }, 2000);
+        });
+    </script>
+</body>
 </html>

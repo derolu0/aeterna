@@ -3887,8 +3887,11 @@ function goToAdmin() {
 function inviaSegnalazione(event) {
     event.preventDefault();
 
+    // Recupera i valori dai campi
     const tipo = document.getElementById('report-type').value;
     const descrizione = document.getElementById('report-desc').value;
+    
+    // Configurazione email
     const emailDestinatario = "derolu0@gmail.com"; 
     
     const oggetto = encodeURIComponent("Segnalazione App Lexicon: " + tipo);
@@ -3901,12 +3904,15 @@ function inviaSegnalazione(event) {
         "---\nInviato da App Aeterna Lexicon in Motu"
     );
     
+    // Apre il client email
     window.location.href = "mailto:" + emailDestinatario + "?subject=" + oggetto + "&body=" + corpo;
 
+    // Feedback visivo
     if (typeof showToast === 'function') {
         showToast("Apertura client email...", "success");
     }
 
+    // Ritorno alla home
     setTimeout(() => {
         showScreen('home-screen');
         if (event.target && typeof event.target.reset === 'function') {
