@@ -4018,8 +4018,25 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }, 500);
     
-    // RIMOZIONE SPLASH SCREEN (Fix Mobile)
+    // 5. *** GESTIONE SPLASH SCREEN E PROGRESS BAR ***
     const splash = document.getElementById('splash-screen');
+    const progressBar = document.querySelector('.splash-progress-bar');
+
+    // A. Animazione Barra: La riempiamo da 0% a 100%
+    if (progressBar) {
+        // Impostiamo la velocità via codice per sicurezza
+        progressBar.style.transition = 'width 1.5s ease-in-out';
+        
+        // Partiamo da poco
+        progressBar.style.width = '5%';
+        
+        // Dopo un attimo la spingiamo al massimo
+        setTimeout(() => {
+            progressBar.style.width = '100%';
+        }, 100);
+    }
+
+    // B. Rimozione Schermata: Dopo 1.5 secondi (quando la barra è piena)
     if (splash) {
         setTimeout(() => {
             splash.style.transition = 'opacity 0.5s ease';
@@ -4027,7 +4044,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             setTimeout(() => {
                 splash.style.display = 'none'; 
             }, 500);
-        }, 1500);
+        }, 1500); // Aspettiamo 1.5 secondi che finisca la barra
     }
     
     console.log('✨ Aeterna Lexicon in Motu - App pronta');
@@ -4078,3 +4095,98 @@ function closeQRModal() {
         modal.style.display = 'none';
     }
 }
+// ============================================
+// GESTIONE INSTALLAZIONE PWA (Installa App)
+// ============================================
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // 1. Impedisci che il mini-infobar compaia subito (Chrome su Mobile)
+    e.preventDefault();
+    
+    // 2. Salva l'evento per usarlo dopo
+    deferredPrompt = e;
+    
+    // 3. Mostra il tuo banner personalizzato o il pulsante nel menu
+    showInstallPromotion();
+    
+    console.log('✅ Evento "beforeinstallprompt" catturato: App installabile');
+});
+
+function showInstallPromotion() {
+    // A. Opzione Banner in basso (se usi il banner smart)
+    const banner = document.getElementById('smart-install-banner');
+    if (banner) {
+        banner.style.display = 'flex';
+    }
+    
+    // B. Opzione Pulsante nel Menu (se vuoi abilitare un tasto "Installa" nel menu)
+    const installBtn = document.getElementById('menu-install-btn');
+    if (installBtn) {
+        installBtn.style.display = 'block'; // Mostra il tasto solo se installabile
+    }
+}
+
+async function installPWA() {
+    if (!deferredPrompt) {
+        showToast('App già installata o non supportata', 'info');
+        return;
+    }
+    
+    // 1. Mostra il prompt nativo
+    deferredPrompt.prompt();
+    
+    // 2. Attendi la scelta dell'utente
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    
+    // 3. Pulisci la variabile, non serve più
+    deferredPrompt = null;
+    
+    // 4. Nascondi il banner
+    const banner = document.getElementById('smart-install-banner');
+    if (banner) banner.style.display = 'none';
+}
+
+window.addEventListener('appinstalled', () => {
+    console.log('🎉 PWA Installata con successo');
+    // Nascondi tutto post-installazione
+    const banner = document.getElementById('smart-install-banner');
+    if (banner) banner.style.display = 'none';
+    deferredPrompt = null;
+});
+// ============================================
+// RICONOSCIMENTO DISPOSITIVO E ISTRUZIONI
+// ============================================
+function detectAndShowInstallInstructions() {
+    // Verifica se l'app è già installata (schermo intero)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isStandalone) return; // Se è già app, non dire nulla
+
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+    // Rilevamento iOS (iPhone/iPad)
+    if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+        // Mostra messaggio specifico per Apple (che non ha banner automatici)
+        setTimeout(() => {
+            showToast('📱 iPhone: Premi il tasto "Condividi" (quadrato con freccia) e poi "Aggiungi alla schermata Home"', 'info');
+        }, 2000); // Aspetta 2 secondi dopo il caricamento
+    } 
+    // Rilevamento Android (Se non esce il banner automatico)
+    else if (/android/i.test(userAgent)) {
+        // Su Android di solito esce il banner, ma diamo un rinforzo
+        setTimeout(() => {
+            // Se il banner smart non è visibile, mostriamo il toast
+            const banner = document.getElementById('smart-install-banner');
+            if (!banner || banner.style.display === 'none') {
+                showToast('🤖 Android: Premi su "Installa app" o sui tre puntini per aggiungere a Home', 'info');
+            }
+        }, 3000);
+    }
+}
+
+// Avvia il controllo quando la pagina è pronta
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (altre funzioni di avvio) ...
+    detectAndShowInstallInstructions();
+});
