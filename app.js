@@ -3982,62 +3982,73 @@ function checkOnlineStatus() {
 }
 
 // ============================================
-// Initialize App (VERSIONE ROBUSTA PER MOBILE)
+// 1. FUNZIONE CHECK ONLINE (Definita qui per sicurezza)
 // ============================================
+function checkOnlineStatus() {
+    const isOnline = navigator.onLine;
+    const offlineIndicator = document.getElementById('offline-indicator');
+    
+    if (offlineIndicator) {
+        if (isOnline) {
+            offlineIndicator.style.display = 'none';
+        } else {
+            offlineIndicator.style.display = 'block';
+            // Controllo sicurezza se showToast esiste
+            if (typeof showToast === 'function') {
+                showToast('Sei offline. Modalità limitata attiva.', 'warning');
+            } else {
+                console.warn('Sei offline (showToast non disponibile)');
+            }
+        }
+    }
+}
 
+// ============================================
+// 2. INIZIALIZZAZIONE APP (Sostituisce tutto il finale)
+// ============================================
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
 
-    // 1. Caricamento dati locali e traduzioni (Protetto da errori)
+    // Init dati
     try {
         if (typeof loadLocalData === 'function') loadLocalData();
         if (typeof applyTranslations === 'function') applyTranslations();
         if (typeof updateLangButton === 'function') updateLangButton();
     } catch (e) { console.warn("Errore init locale:", e); }
 
-    // 2. Init UI Base
+    // Init UI
     if (typeof showScreen === 'function') showScreen('home-screen');
-    
-    // Gestione URL e Tasto Indietro
     if (typeof handleUrlParameters === 'function') handleUrlParameters();
     if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
+    
+    // Check connessione
+    checkOnlineStatus();
 
-    // 3. Controllo Online
-    if (typeof checkOnlineStatus === 'function') checkOnlineStatus();
-
-    // 4. Caricamento Firebase Asincrono (NON BLOCCANTE)
+    // Caricamento remoto (ritardato per non bloccare)
     setTimeout(async () => {
-        // Init funzioni remote
         if (typeof initRemoteControl === 'function') initRemoteControl();
         if (typeof registerServiceWorker === 'function') registerServiceWorker();
 
-        // Caricamento Dati
         if (typeof loadFirebaseData === 'function') {
             try {
-                // Carichiamo prima i filosofi (più importanti)
                 await loadFirebaseData('filosofi');
-                // Aggiorniamo la lista se siamo nella schermata filosofi
                 if(document.getElementById('filosofi-list') && typeof loadFilosofi === 'function') loadFilosofi();
-                
-                // Poi il resto in background
                 loadFirebaseData('opere');
                 loadFirebaseData('concetti');
             } catch (error) {
-                console.warn("Errore caricamento dati remoti (uso cache locale):", error);
+                console.warn("Dati remoti non disponibili:", error);
             }
         }
     }, 500);
     
-    // 5. *** FIX CRUCIALE: RIMOZIONE SPLASH SCREEN ***
-    // Questo codice forza la scomparsa del logo di caricamento dopo 1.5 secondi
-    // IMPEDISCE CHE L'APP RIMANGA BLOCCATA SUL LOGO
+    // RIMOZIONE SPLASH SCREEN (Fix Mobile)
     const splash = document.getElementById('splash-screen');
     if (splash) {
         setTimeout(() => {
             splash.style.transition = 'opacity 0.5s ease';
-            splash.style.opacity = '0'; // Dissolvenza
+            splash.style.opacity = '0'; 
             setTimeout(() => {
-                splash.style.display = 'none'; // Rimozione fisica
+                splash.style.display = 'none'; 
             }, 500);
         }, 1500);
     }
