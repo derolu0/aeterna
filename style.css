@@ -2836,86 +2836,93 @@ textarea[id$="-en"]:focus {
 }
 .modal-btn.btn-info i { color: #64748b; }
 /* =======================================================
-   FIX DEFINITIVO HOME: SFONDO, SCROLL E DIMENSIONI
+   FIX DEFINITIVO HOME E LAYOUT (Versione Sicura)
    ======================================================= */
 
-/* 1. RIPRISTINO SFONDO CHIARO E BLOCCO SCROLL */
+/* 1. RESET GENERALE: Abilita lo scroll di default */
 html, body {
-    background-color: #f8fafc !important; /* Ripristina il bianco/grigio chiaro */
-    overflow: hidden !important; /* Blocca lo scroll della pagina intera */
+    background-color: #f8fafc !important;
     height: 100%;
     margin: 0;
+    overflow: hidden; /* Gestiamo lo scroll dentro le schermate */
 }
 
+/* 2. HOME PAGE: Fissa e senza scroll */
 #home-screen {
-    /* Forza l'altezza esatta dello schermo */
-    height: 100vh;
-    height: 100dvh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden !important; /* Blocca scroll solo qui */
     
-    /* Disabilita lo scroll interno */
-    overflow: hidden !important; 
-    
-    /* Centra tutto il contenuto verticalmente */
+    /* Centratura verticale */
     display: flex !important;
     flex-direction: column;
-    justify-content: center; /* Questo è il segreto per centrare senza scroll */
+    justify-content: center; 
     align-items: center;
-    
-    /* Reset dei padding che causavano lo scroll */
-    padding-top: 0 !important;
-    padding-bottom: 70px !important; /* Solo lo spazio per la barra sotto */
+    padding-bottom: 70px !important;
+    background-size: cover !important;
+    background-position: center !important;
+    z-index: 5;
 }
 
-/* 2. COMPATTARE GLI SPAZI (Per evitare che il contenuto esca fuori) */
+/* 3. ALTRE PAGINE (Filosofi, Opere, ecc): Scroll attivo */
+.screen:not(#home-screen) {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Contenitore fisso */
+}
+
+/* Assicura che l'area contenuti scrolli correttamente */
+.content-area {
+    flex: 1;
+    overflow-y: auto !important; /* Abilita scroll verticale */
+    -webkit-overflow-scrolling: touch; /* Scroll fluido su mobile */
+    padding-bottom: 90px; /* Spazio per non coprire l'ultimo elemento con la barra */
+}
+
+/* 4. FIX HEADER SCOMPARSI */
+.app-header {
+    flex-shrink: 0; /* Impedisce all'header di schiacciarsi */
+    width: 100%;
+    position: relative;
+    z-index: 10;
+}
+
+/* 5. AGGIUSTAMENTI VISIVI HOME (Compattare spazi) */
 .logo-container {
     margin-top: 0 !important;
     margin-bottom: 10px !important;
-    transform: scale(0.9); /* Rimpicciolisce leggermente i loghi */
+    transform: scale(0.9);
 }
-
 .home-welcome-animated {
     margin: 0 !important;
 }
-
 .home-subtitle {
     margin-bottom: 15px !important;
 }
-
 .home-buttons {
     margin-top: 5px !important;
     gap: 10px !important;
 }
-
-/* Riduciamo leggermente i pulsanti per farli entrare tutti */
 .home-btn {
     min-height: 70px !important; 
     padding: 10px !important;
 }
 
-
-/* 3. FIX SPECIFICO PER PC/DESKTOP (Schermi grandi) */
+/* 6. FIX SPECIFICO DESKTOP */
 @media (min-width: 1024px) {
-    
-    /* Riduciamo drasticamente il titolo su Desktop */
     .home-title {
-        font-size: 2rem !important; /* Era troppo grande, ora più contenuto */
+        font-size: 2rem !important; 
         margin-bottom: 5px !important;
     }
-
-    /* Riduciamo anche la scritta AETERNA */
     .home-welcome-animated {
         font-size: 1.5rem !important;
     }
-
-    /* Aggiustiamo il sottotitolo */
     .home-subtitle {
         font-size: 1rem !important;
         max-width: 600px;
-    }
-
-    /* Gestione immagine di sfondo su Desktop */
-    #home-screen {
-        background-size: cover !important;
-        background-position: center !important;
     }
 }
