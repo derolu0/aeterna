@@ -3887,23 +3887,38 @@ function goToAdmin() {
 function inviaSegnalazione(event) {
     event.preventDefault();
 
+    // Recupera i valori dai campi
     const tipo = document.getElementById('report-type').value;
     const descrizione = document.getElementById('report-desc').value;
     
-    // INDIRIZZO EMAIL AGGIORNATO
+    // Configurazione email
     const emailDestinatario = "derolu0@gmail.com"; 
     
-    const oggetto = encodeURIComponent(`Segnalazione App Lexicon: ${tipo}`);
+    const oggetto = encodeURIComponent("Segnalazione App Lexicon: " + tipo);
     
     const corpo = encodeURIComponent(
-        `Gentile Assistenza Project Work,\n\n` +
-        `Vorrei segnalare il seguente problema:\n` +
-        `TIPO: ${tipo}\n` +
-        `DESCRIZIONE:\n${descrizione}\n\n` +
-        `---\nInviato da App Aeterna Lexicon in Motu`
+        "Gentile Assistenza Project Work,\n\n" +
+        "Vorrei segnalare il seguente problema:\n" +
+        "TIPO: " + tipo + "\n" +
+        "DESCRIZIONE:\n" + descrizione + "\n\n" +
+        "---\nInviato da App Aeterna Lexicon in Motu"
     );
     
-    window.location.href = `mailto:${emailDestinatario}?subject=${oggetto}&body=${corpo}`;
+    // Apre il client email
+    window.location.href = "mailto:" + emailDestinatario + "?subject=" + oggetto + "&body=" + corpo;
+
+    // Feedback visivo
+    if (typeof showToast === 'function') {
+        showToast("Apertura client email...", "success");
+    }
+
+    // Ritorno alla home
+    setTimeout(() => {
+        showScreen('home-screen');
+        if (event.target && typeof event.target.reset === 'function') {
+            event.target.reset();
+        }
+    }, 1500);
 }
 
 function openCreditsScreen() {

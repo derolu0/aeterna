@@ -1254,96 +1254,62 @@
         <button class="fixed-navigate-btn hidden" id="fixed-navigate-btn" onclick="navigateToFixed()">
             <i class="fas fa-map-marker-alt"></i> <span id="nav-btn-text">Naviga Verso</span>
         </button>
-        </div>
-    <div class="screen" id="segnalazioni-screen" style="display: none;">
-        <div class="screen-header">
-            <h2>Segnalazioni</h2>
-            <button class="close-btn" onclick="goBack()">
-                <i class="fas fa-arrow-left"></i>
-            </button>
-        </div>
+       
+       <div class="screen list-screen" id="segnalazioni-screen" style="display: none;">
+           <header class="app-header">
+               <button class="back-btn" onclick="goBack()">
+                   <i class="fas fa-arrow-left"></i>
+               </button>
+               <h1 class="screen-title">Segnalazioni</h1>
+               <p class="screen-subtitle">Inviaci un feedback sul Project Work</p>
+            </header>
 
-        <div class="content-area">
-            <div class="report-container" style="padding: 20px;">
-                <p style="margin-bottom: 20px; color: var(--text-secondary);">
-                    Hai trovato un'inesattezza in un concetto o un bug nell'App?
-                    Invia una segnalazione per il Project Work.
-                </p>
+            <div class="content-area">
+                <div class="report-container" style="padding: 20px;">
+                    <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.9rem;">
+                        Hai trovato un'inesattezza in un concetto o un bug nell'App? 
+                        La tua segnalazione aiuterà a migliorare il dataset.
+                    </p>
 
-                <form onsubmit="inviaSegnalazione(event)" class="report-form">
-                    <div class="form-group">
-                        <label for="report-type">Tipo di Segnalazione</label>
-                        <select id="report-type" class="form-select" required>
-                            <option value="Dato inesatto">Dato inesatto (Data/Nome)</option>
-                            <option value="Errore testo">Errore nel testo/biografia</option>
-                            <option value="Bug App">Problema tecnico App</option>
-                            <option value="Suggerimento">Suggerimento didattico</option>
-                            <option value="Altro">Altro</option>
-                        </select>
-                    </div>
+                    <form onsubmit="inviaSegnalazione(event)" class="report-form">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tipo di Segnalazione</label>
+                            <select id="report-type" class="search-input" style="width: 100%; height: 50px;" required>
+                                <option value="Dato inesatto">Dato inesatto (Data/Nome)</option>
+                                <option value="Errore testo">Errore nel testo/biografia</option>
+                                <option value="Bug App">Problema tecnico App</option>
+                                <option value="Suggerimento">Suggerimento didattico</option>
+                                <option value="Altro">Altro</option>
+                            </select>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="report-desc">Descrizione</label>
-                        <textarea id="report-desc" class="form-textarea" rows="5" 
-                                  placeholder="Descrivi il problema riscontrato..." required></textarea>
-                    </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Descrizione</label>
+                            <textarea id="report-desc" class="search-input" style="width: 100%; height: 150px; padding: 12px; resize: none;" 
+                                      placeholder="Descrivi il problema riscontrato..." required></textarea>
+                        </div>
 
-                    <button type="submit" class="action-btn primary full-width">
-                        <i class="fas fa-paper-plane"></i> Invia a derolu0@gmail.com
-                    </button>
-                </form>
+                        <button type="submit" class="home-btn network-btn" style="width: 100%; justify-content: center; margin-top: 20px; border: none; cursor: pointer;">
+                            <span class="btn-icon"><i class="fas fa-paper-plane"></i></span>
+                            <span class="btn-text">Invia Segnalazione</span>
+                        </button>
+                    </form>
             </div>
-        </div>
-        
         <div class="tab-bar">
             <button class="tab-btn" onclick="showScreen('home-screen')">
-                <i class="fas fa-home"></i><span>Home</span>
+                <span class="tab-icon"><i class="fas fa-home"></i></span><span>Home</span>
             </button>
             <button class="tab-btn" onclick="showScreen('filosofi-screen')">
-                <i class="fas fa-user-graduate"></i><span>Filosofi</span>
+                <span class="tab-icon"><i class="fas fa-user-graduate"></i></span><span>Filosofi</span>
             </button>
             <button class="tab-btn" onclick="showScreen('opere-screen')">
-                <i class="fas fa-book"></i><span>Opere</span>
+                <span class="tab-icon"><i class="fas fa-book"></i></span><span>Opere</span>
             </button>
             <button class="tab-btn" onclick="showScreen('mappa-screen')">
-                <i class="fas fa-map-marked-alt"></i><span>Mappa</span>
+                <span class="tab-icon"><i class="fas fa-map-marked-alt"></i></span><span>Mappa</span>
             </button>
         </div>
-    </div>
-    <div id="top-menu-modal" class="modal-overlay" onclick="closeMenuModal(event)" style="z-index: 9999;">
-    <div class="modal-content menu-modal-content" style="width: 280px; padding: 20px; position: absolute; top: 70px; right: 20px;">
-        <h3 class="modal-title" style="margin-bottom: 20px; font-size:1.2rem;">Menu</h3>
-        
-        <div class="modal-buttons">
-            <button class="modal-btn lang-switch" onclick="toggleLanguage()">
-                <span id="lang-flag">🇬🇧</span> 
-                <span id="lang-label">Switch to English</span>
-            </button>
-
-            <button class="modal-btn primary" onclick="showScreen('mappa-concettuale-screen')" style="background: #8b5cf6;">
-                <i class="fas fa-project-diagram"></i> <span>Mappa Concettuale</span>
-            </button>
-            
-            <button class="modal-btn primary" onclick="openCreditsScreen()" style="background: #3b82f6;">
-                <i class="fas fa-info-circle"></i> <span data-i18n="info_btn">Info & Crediti</span>
-            </button>
-
-            <button class="modal-btn" onclick="openReportScreen()" style="background: #ef4444; color: white;">
-                <i class="fas fa-exclamation-triangle"></i> Segnala un problema
-            </button>
-            <button class="modal-btn secondary" onclick="goToAdmin()">
-                <i class="fas fa-user-shield"></i> <span data-i18n="admin_btn">Area Riservata</span>
-            </button>
-
-            <button class="modal-btn" onclick="openQRModal()" style="margin-top: 10px; background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd;">
-                <i class="fas fa-qrcode"></i> <span data-i18n="btn_qr">Condividi App</span>
-            </button>
-            <button class="modal-btn" onclick="toggleMenuModal()" style="border: 1px solid #ddd; background:white; margin-top:10px;">
-                <span data-i18n="btn_close">Chiudi</span>
-            </button>
-        </div>
-    </div>
-</div>
+    </div> </div> <div id="top-menu-modal" class="modal-overlay" onclick="closeMenuModal(event)" style="z-index: 9999;">
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
@@ -1602,5 +1568,53 @@
             <i class="fas fa-times"></i>
         </button>
     </div>
-    </body>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="./translations.js"></script>
+    <script src="./app.js"></script>
+    <script src="./analytics.js" defer></script>
+    
+    <script>
+        // SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swUrl = './sw.js';
+                fetch(swUrl, { mode: 'no-cors' })
+                  .then(response => {
+                      return navigator.serviceWorker.register(swUrl)
+                          .then(registration => {
+                              console.log('✅ Service Worker registrato:', registration.scope);
+                              registration.addEventListener('updatefound', () => {
+                                  const newWorker = registration.installing;
+                                  newWorker.addEventListener('statechange', () => {
+                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
+                                      }
+                                  });
+                              });
+                              return registration;
+                          });
+                  })
+                  .catch(error => {
+                      console.warn('⚠️ Registrazione SW fallita:', error.message);
+                  });
+            });
+        }
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
+        });
+
+        // INIZIALIZZAZIONE ANALYTICS E DASHBOARD
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {
+                    refreshAnalyticsDashboard();
+                }
+            }, 2000);
+        });
+    </script>
+</body>
 </html>
