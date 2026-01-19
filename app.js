@@ -3959,30 +3959,6 @@ async function autoTranslate(sourceId, targetId) {
 }
 
 // ============================================
-// Initialize App (MODIFICATO E CORRETTO)
-// ============================================
-
-// --- 1. AGGIUNGIAMO LA FUNZIONE CHE MANCAVA ---
-function checkOnlineStatus() {
-    const isOnline = navigator.onLine;
-    const offlineIndicator = document.getElementById('offline-indicator');
-    
-    if (offlineIndicator) {
-        if (isOnline) {
-            offlineIndicator.style.display = 'none';
-        } else {
-            offlineIndicator.style.display = 'block';
-            // Controllo di sicurezza per evitare errori se showToast non è ancora pronto
-            if (typeof showToast === 'function') {
-                showToast('Sei offline. Modalità limitata attiva.', 'warning');
-            } else {
-                console.warn('Sei offline (showToast non disponibile)');
-            }
-        }
-    }
-}
-
-// ============================================
 // 1. FUNZIONE CHECK ONLINE (Definita qui per sicurezza)
 // ============================================
 function checkOnlineStatus() {
@@ -4056,3 +4032,49 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     console.log('✨ Aeterna Lexicon in Motu - App pronta');
 });
+// ============================================
+// GESTIONE QR CODE (Versione con Libreria)
+// ============================================
+
+function openQRModal() {
+    // 1. Chiudi il menu se è aperto
+    const menu = document.getElementById('top-menu-modal');
+    if (menu) menu.style.display = 'none';
+
+    // 2. Trova la modale (il riquadro)
+    const modal = document.getElementById('qr-modal'); 
+    
+    if (modal) {
+        modal.style.display = 'flex';
+        
+        // 3. Trova il contenitore bianco dove disegnare il codice
+        const container = document.getElementById('qrcode-container');
+        
+        if (container) {
+            container.innerHTML = ''; // Pulisci eventuali disegni vecchi per non duplicarli
+            
+            // 4. Genera il QR Code usando la libreria
+            try {
+                new QRCode(container, {
+                    text: "https://derolu0.github.io/aeterna/",
+                    width: 200,
+                    height: 200,
+                    colorDark : "#1e3a8a", // Colore Blu scuro
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            } catch (e) {
+                console.error("Errore QRCode:", e);
+                // Fallback testuale se qualcosa va storto
+                container.textContent = "Errore caricamento QR. Ricarica la pagina.";
+            }
+        }
+    }
+}
+
+function closeQRModal() {
+    const modal = document.getElementById('qr-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
