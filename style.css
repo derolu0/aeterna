@@ -2836,82 +2836,92 @@ textarea[id$="-en"]:focus {
 }
 .modal-btn.btn-info i { color: #64748b; }
 /* =======================================================
-   FIX DEFINITIVO SFONDO HOME (No Zoom, No Scroll)
+   FIX DEFINITIVO DESKTOP (PC) - SPAZIO VERTICALE
    ======================================================= */
 
-/* 1. RESET GENERALE: Abilita lo scroll di default */
-html, body {
-    background-color: #f8fafc !important;
-    height: 100%;
-    margin: 0;
-    overflow: hidden; /* Gestiamo lo scroll dentro le schermate */
-}
-
-/* 2. HOME PAGE (Versione Base - Mobile) */
-#home-screen {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden !important;
-    z-index: 5;
-
-    /* LAYOUT CONTENUTO (Centrato) */
-    display: flex !important;
-    flex-direction: column;
-    justify-content: center; /* Centra verticalmente */
-    align-items: center;     /* Centra orizzontalmente */
-    padding-bottom: 80px !important; /* Spazio per la barra sotto */
-
-    /* FIX SFONDO (Il segreto è togliere 'fixed') */
-    background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), 
-                      url('./images/sfondo-home-mobile.jpg') !important;
-    background-size: cover !important;       /* Copre tutto lo schermo */
-    background-position: center top !important; /* Parte dall'alto (vedrai le teste dei filosofi) */
-    background-attachment: scroll !important;   /* IMPORTANTE: Risolve lo zoom enorme su mobile */
-    background-repeat: no-repeat !important;
-}
-
-/* 3. ALTRE PAGINE (Filosofi, Opere, ecc) - Scroll attivo */
-.screen:not(#home-screen) {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-.content-area {
-    flex: 1;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 90px;
-}
-.app-header {
-    flex-shrink: 0;
-    width: 100%;
-    position: relative;
-    z-index: 10;
-}
-
-/* 4. FIX SPECIFICO PER PC/DESKTOP (Schermi grandi) */
 @media (min-width: 1024px) {
+    
+    /* 1. Gestione Sfondo e Contenitore */
     #home-screen {
-        /* Su PC usiamo l'immagine orizzontale */
-        background-image: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), 
+        background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), 
                           url('./images/sfondo-home.jpg') !important;
         background-position: center !important;
-        background-attachment: fixed !important; /* Su PC l'effetto fisso è bello e non rompe nulla */
+        background-attachment: fixed !important;
+        background-size: cover !important;
+        
+        /* Centratura perfetta */
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding-top: 40px !important;
+        padding-bottom: 100px !important; /* Lascia spazio alla barra sotto */
+    }
+
+    /* 2. Riduciamo drasticamente i Loghi su PC per fare spazio */
+    .logo-container {
+        margin-top: 0 !important;
+        margin-bottom: 15px !important;
+        transform: scale(0.7); /* Molto più piccoli su PC */
+    }
+
+    /* 3. Testi più compatti */
+    .home-welcome-animated {
+        font-size: 1.2rem !important;
+        margin: 0 !important;
     }
 
     .home-title {
-        font-size: 2.5rem !important; 
-        margin-bottom: 10px !important;
+        font-size: 2.2rem !important; /* Titolo grande ma contenuto */
+        margin-bottom: 5px !important;
+        line-height: 1.1 !important;
     }
-    .home-welcome-animated {
-        font-size: 1.8rem !important;
-    }
+
     .home-subtitle {
-        font-size: 1.1rem !important;
+        font-size: 0.9rem !important;
         max-width: 600px;
+        margin-bottom: 25px !important;
+        line-height: 1.4 !important;
     }
+
+    /* 4. Pulsanti: Layout a Griglia Orizzontale su PC */
+    .home-buttons {
+        display: flex !important;
+        flex-direction: row !important; /* Mette i pulsanti in riga */
+        flex-wrap: wrap !important;
+        justify-content: center;
+        gap: 15px !important;
+        max-width: 900px !important; /* Più larghi su PC */
+    }
+
+    .button-row {
+        width: auto !important; /* Lascia che si adattino */
+        flex: 0 0 auto;
+        display: flex;
+        gap: 15px;
+    }
+
+    .home-btn {
+        width: 160px !important; /* Pulsanti più stretti e larghi */
+        min-height: 90px !important;
+        padding: 15px !important;
+    }
+
+    /* 5. FIX BARRA IN BASSO (Tab Bar) */
+    .tab-bar {
+        max-width: 800px; /* Non troppo larga su PC */
+        border-radius: 50px 50px 0 0 !important;
+        bottom: 0 !important;
+        padding-bottom: 15px !important;
+        z-index: 9999 !important; /* Assicura che sia sempre sopra tutto */
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.2) !important;
+    }
+}
+
+/* Fix per schermi PC piccoli (Laptop 13 pollici) */
+@media (min-width: 1024px) and (max-height: 800px) {
+    .logo-container { transform: scale(0.6); margin-bottom: 5px !important; }
+    .home-title { font-size: 1.8rem !important; }
+    .home-btn { min-height: 70px !important; padding: 10px !important; }
+    .btn-icon { width: 40px !important; height: 40px !important; font-size: 1.2rem !important; }
 }
