@@ -554,8 +554,8 @@ window.translatePage = function(lang = null) {
     };
     
     // Home page elements
-    updateDynamicText('home-title', 'home_title');
-    updateDynamicText('home-subtitle', 'home_subtitle');
+    //updateDynamicText('home-title', 'home_title');
+    //updateDynamicText('home-subtitle', 'home_subtitle');
     
     // Screen titles
     updateDynamicText('filosofi-title', 'screen_filosofi');
