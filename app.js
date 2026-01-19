@@ -3887,35 +3887,28 @@ function goToAdmin() {
 function inviaSegnalazione(event) {
     event.preventDefault();
 
-    // Recupera i valori dai campi della nuova interfaccia [cite: 791, 1152, 1155]
     const tipo = document.getElementById('report-type').value;
     const descrizione = document.getElementById('report-desc').value;
-    
-    // Configurazione email destinatario [cite: 792]
     const emailDestinatario = "derolu0@gmail.com"; 
     
-    const oggetto = encodeURIComponent(`Segnalazione App Lexicon: ${tipo}`); [cite: 792]
+    const oggetto = encodeURIComponent("Segnalazione App Lexicon: " + tipo);
     
     const corpo = encodeURIComponent(
-        `Gentile Assistenza Project Work,\n\n` +
-        `Vorrei segnalare il seguente problema:\n` +
-        `TIPO: ${tipo}\n` +
-        `DESCRIZIONE:\n${descrizione}\n\n` +
-        `---\nInviato da App Aeterna Lexicon in Motu`
-    ); [cite: 793]
+        "Gentile Assistenza Project Work,\n\n" +
+        "Vorrei segnalare il seguente problema:\n" +
+        "TIPO: " + tipo + "\n" +
+        "DESCRIZIONE:\n" + descrizione + "\n\n" +
+        "---\nInviato da App Aeterna Lexicon in Motu"
+    );
     
-    // Apre il client email dell'utente [cite: 794]
-    window.location.href = `mailto:${emailDestinatario}?subject=${oggetto}&body=${corpo}`;
+    window.location.href = "mailto:" + emailDestinatario + "?subject=" + oggetto + "&body=" + corpo;
 
-    // Feedback visivo pulito (Toast) [cite: 293]
     if (typeof showToast === 'function') {
         showToast("Apertura client email...", "success");
     }
 
-    // Ritorno automatico alla home per una navigazione fluida [cite: 340]
     setTimeout(() => {
         showScreen('home-screen');
-        // Pulisce i campi del modulo [cite: 791]
         if (event.target && typeof event.target.reset === 'function') {
             event.target.reset();
         }
