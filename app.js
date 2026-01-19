@@ -1365,15 +1365,6 @@ function showToast(message, type = 'info', duration = 3000) {
 // FINE MODIFICA
 // ======================================================
 
-Sì, esatto!
-
-Devi sostituire quella funzione che mi hai appena incollato (quella "semplice") con questa versione più robusta che ti ho scritto sotto.
-
-La versione che hai tu dà errore perché dà per scontato che la lista activityLog esista sempre, ma a volte (soprattutto all'avvio) non è ancora pronta. La mia versione controlla prima se esiste e, se non c'è, la crea.
-
-1. Copia e Incolla questo al posto del tuo logActivity:
-JavaScript
-
 function logActivity(description) {
     const timestamp = new Date().toLocaleString('it-IT');
     
@@ -1534,6 +1525,7 @@ async function checkAdminAuth() {
         errorElement.textContent = "Email o password errati";
         passInput.value = '';
     }
+}
 function showAdminPanel() {
     document.getElementById('admin-panel').style.display = 'flex';
     
