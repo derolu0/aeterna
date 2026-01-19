@@ -2836,66 +2836,86 @@ textarea[id$="-en"]:focus {
 }
 .modal-btn.btn-info i { color: #64748b; }
 /* =======================================================
-   FIX HOME PAGE: SPAZI E SCROLL
+   FIX DEFINITIVO HOME: SFONDO, SCROLL E DIMENSIONI
    ======================================================= */
 
-/* 1. ELIMINA LO SCROLL BIANCO SOTTO */
+/* 1. RIPRISTINO SFONDO CHIARO E BLOCCO SCROLL */
 html, body {
-    background-color: #000 !important; /* Sfondo nero di base per evitare flash bianchi */
-    overflow: hidden; /* Impedisce lo scroll della pagina intera */
+    background-color: #f8fafc !important; /* Ripristina il bianco/grigio chiaro */
+    overflow: hidden !important; /* Blocca lo scroll della pagina intera */
+    height: 100%;
+    margin: 0;
 }
 
 #home-screen {
     /* Forza l'altezza esatta dello schermo */
-    height: 100vh; 
-    height: 100dvh; /* Per mobile moderni */
-    min-height: 100%;
+    height: 100vh;
+    height: 100dvh;
     
-    /* Gestisce l'immagine di sfondo */
-    background-size: cover !important;
-    background-position: center !important;
-    background-attachment: fixed !important;
+    /* Disabilita lo scroll interno */
+    overflow: hidden !important; 
     
-    /* Rimuove padding eccessivo che crea scroll */
-    padding-bottom: 80px !important; 
-    overflow-y: auto; /* Permette scroll solo interno se necessario */
+    /* Centra tutto il contenuto verticalmente */
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center; /* Questo è il segreto per centrare senza scroll */
+    align-items: center;
+    
+    /* Reset dei padding che causavano lo scroll */
+    padding-top: 0 !important;
+    padding-bottom: 70px !important; /* Solo lo spazio per la barra sotto */
 }
 
-/* 2. RIDUZIONE SPAZI (Fa salire i pulsanti) */
-
-/* Contenitore Loghi */
+/* 2. COMPATTARE GLI SPAZI (Per evitare che il contenuto esca fuori) */
 .logo-container {
-    margin-bottom: 10px !important; /* Ridotto da 30px */
-    margin-top: 40px !important;    /* Spazio dal top */
+    margin-top: 0 !important;
+    margin-bottom: 10px !important;
+    transform: scale(0.9); /* Rimpicciolisce leggermente i loghi */
 }
 
-/* Scritta AETERNA */
 .home-welcome-animated {
-    margin: 5px 0 !important;       /* Ridotto al minimo */
-    font-size: 1.8rem !important;   /* Leggermente più piccolo */
+    margin: 0 !important;
 }
 
-/* Titolo "Lexicon in Motu" */
-.home-title {
-    margin-bottom: 5px !important;
-    line-height: 1.1 !important;
-}
-
-/* Sottotitolo Tesi */
 .home-subtitle {
-    margin-bottom: 15px !important; /* Meno spazio prima dei bottoni */
-    font-size: 0.85rem !important;  /* Testo più compatto */
-    max-width: 95% !important;      /* Usa più larghezza */
+    margin-bottom: 15px !important;
 }
 
-/* Contenitore Pulsanti */
 .home-buttons {
-    margin-top: 0 !important;       /* Attaccato al sottotitolo */
-    gap: 12px !important;           /* Meno spazio tra le righe dei bottoni */
+    margin-top: 5px !important;
+    gap: 10px !important;
 }
 
-/* Riduci altezza pulsanti per farli entrare tutti */
+/* Riduciamo leggermente i pulsanti per farli entrare tutti */
 .home-btn {
-    min-height: 75px !important;
-    padding: 12px 10px !important;
+    min-height: 70px !important; 
+    padding: 10px !important;
+}
+
+
+/* 3. FIX SPECIFICO PER PC/DESKTOP (Schermi grandi) */
+@media (min-width: 1024px) {
+    
+    /* Riduciamo drasticamente il titolo su Desktop */
+    .home-title {
+        font-size: 2rem !important; /* Era troppo grande, ora più contenuto */
+        margin-bottom: 5px !important;
+    }
+
+    /* Riduciamo anche la scritta AETERNA */
+    .home-welcome-animated {
+        font-size: 1.5rem !important;
+    }
+
+    /* Aggiustiamo il sottotitolo */
+    .home-subtitle {
+        font-size: 1rem !important;
+        max-width: 600px;
+    }
+
+    /* Gestione immagine di sfondo su Desktop */
+    #home-screen {
+        background-size: cover !important;
+        background-position: center !important;
+    }
 }
