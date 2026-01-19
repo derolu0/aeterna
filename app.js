@@ -85,13 +85,7 @@ function applyTranslations() {
     });
 
     // 2. HOME & MENU (Aggiornati per Filosofia)
-    setText('home-title', t.home_title);
     
-    const subtitleEl = document.getElementById('home-subtitle');
-    if (subtitleEl) {
-        subtitleEl.innerHTML = t.home_subtitle; 
-    }
-
     setText('nav-filosofi', t.tab_filosophers);
     setText('nav-opere', t.tab_works);
     setText('nav-map', t.tab_map);
@@ -3896,17 +3890,19 @@ function inviaSegnalazione(event) {
     const tipo = document.getElementById('report-type').value;
     const descrizione = document.getElementById('report-desc').value;
     
-    const emailDestinatario = "aeterna.lexicon@abc.napoli.it"; 
-    const oggetto = encodeURIComponent(`Segnalazione App Aeterna Lexicon: ${tipo}`);
+    // INDIRIZZO EMAIL AGGIORNATO
+    const emailDestinatario = "derolu0@gmail.com"; 
+    
+    const oggetto = encodeURIComponent(`Segnalazione App Lexicon: ${tipo}`);
     
     const corpo = encodeURIComponent(
-        `Gentile Assistenza Aeterna Lexicon,\n\n` +
+        `Gentile Assistenza Project Work,\n\n` +
         `Vorrei segnalare il seguente problema:\n` +
-        `TIPO: ${tipo}\n\n` +
+        `TIPO: ${tipo}\n` +
         `DESCRIZIONE:\n${descrizione}\n\n` +
-        `---\nInviato dall'App Aeterna Lexicon in Motu`
+        `---\nInviato da App Aeterna Lexicon in Motu`
     );
-
+    
     window.location.href = `mailto:${emailDestinatario}?subject=${oggetto}&body=${corpo}`;
 }
 
