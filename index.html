@@ -121,7 +121,6 @@
             });
         });
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
     <div id="maintenance-mode" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
@@ -160,7 +159,7 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="navigation-modal">
+    <div class="modal-overlay" id="navigation-modal" style="display: none;">
         <div class="modal-content">
             <h3 class="modal-title">Scegli l'app di navigazione</h3>
             <div class="modal-buttons">
@@ -177,7 +176,7 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="info-modal">
+    <div class="modal-overlay" id="info-modal" style="display: none;">
         <div class="modal-content">
             <h3 class="modal-title" id="info-modal-title">Informazioni</h3>
             <p id="info-modal-message"></p>
