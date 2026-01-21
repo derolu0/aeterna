@@ -2956,3 +2956,25 @@ html, body {
     .home-title { font-size: 2.5rem; }
     .logo-container { transform: scale(0.8); }
 }
+/* =======================================================
+   FIX LOGHI HOME (Trasparenza e Bordino)
+   ======================================================= */
+
+.app-logo, .comune-logo {
+    /* 1. Sfondo Trasparente (invece che bianco) */
+    background-color: rgba(255, 255, 255, 0.1) !important; /* Leggerissima patina per staccare */
+    
+    /* 2. Bordino Sottile (Stile Menu) */
+    border: 1px solid rgba(255, 255, 255, 0.6) !important; /* Bianco semi-trasparente */
+    
+    /* 3. Rimuove ombre pesanti per un look pulito */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; 
+    
+    /* Mantiene la forma rotonda */
+    border-radius: 50% !important; 
+}
+
+/* Opzionale: Rende l'immagine dentro il logo leggermente più luminosa */
+.app-logo {
+    background-blend-mode: overlay;
+}
