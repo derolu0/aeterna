@@ -1604,18 +1604,13 @@
                 if (window.Analytics) refreshAnalyticsDashboard();
             }, 2000);
         });
-    </script>
-
-    <div id="qr-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
+   <div id="qr-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
         <div class="modal-content" style="text-align: center; max-width: 300px; padding: 25px; border-radius: 20px;">
             <h3 class="modal-title" data-i18n="qr_title" style="margin-bottom: 15px;">Scarica l'App</h3>
-            
             <div id="qrcode-container" style="display: flex; justify-content: center; margin: 20px auto; padding: 10px; background: white; border-radius: 10px;"></div>
-            
             <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px; line-height: 1.4;" data-i18n="qr_subtitle">
                 Fai scansionare questo codice per aprire l'app.
             </p>
-            
             <button class="modal-btn" onclick="closeQRModal()" style="width: 100%; padding: 12px; background: #e2e8f0; border: none; border-radius: 12px; font-weight: 600;">
                 <span data-i18n="btn_close">Chiudi</span>
             </button>
@@ -1641,25 +1636,21 @@
                 <h2 id="modal-concept-title">Analisi del Concetto</h2>
                 <button onclick="closeAnalysisModal()" class="close-btn">&times;</button>
             </div>
-            
             <div class="analysis-body">
                 <div class="concept-definition-box">
                     <h4>Definizione Generale</h4>
                     <p id="modal-concept-def">...</p>
                 </div>
-
                 <div class="comparison-grid">
                     <div class="era-column classic">
                         <h3><i class="fas fa-landmark"></i> Pensiero Classico</h3>
                         <div id="classic-interpretations" class="interpretations-list"></div>
                     </div>
-
                     <div class="era-column modern">
                         <h3><i class="fas fa-lightbulb"></i> Riletture Moderne</h3>
                         <div id="modern-interpretations" class="interpretations-list"></div>
                     </div>
                 </div>
-                
                 <div class="linguistic-box">
                     <h4><i class="fas fa-language"></i> Evoluzione Linguistica</h4>
                     <div id="linguistic-timeline" class="timeline-row"></div>
@@ -1670,13 +1661,12 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    
     <script src="./translations.js"></script>
     <script src="./app.js"></script>
     <script src="./analytics.js" defer></script>
     
     <script>
-        // REGISTRAZIONE SERVICE WORKER
+        // --- A. REGISTRAZIONE SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swUrl = './sw.js';
@@ -1689,33 +1679,215 @@
                                   const newWorker = registration.installing;
                                   newWorker.addEventListener('statechange', () => {
                                       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                          if (typeof showToast === 'function') {
-                                              showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
-                                          }
+                                          if (typeof showToast === 'function') showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
                                       }
                                   });
                               });
-                              return registration;
                           });
                   })
-                  .catch(error => {
-                      console.warn('⚠️ Registrazione SW fallita:', error.message);
-                  });
+                  .catch(err => console.warn('⚠️ Errore SW:', err));
             });
         }
 
-        // GESTIONE INSTALLAZIONE PWA
+        // --- B. GESTIONE INSTALLAZIONE PWA ---
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             window.deferredPrompt = e;
         });
 
-        // INIZIALIZZAZIONE ANALYTICS
+        // --- C. FUNZIONI DASHBOARD ANALYTICS ---
+        function refreshAnalyticsDashboard() {
+            if (window.Analytics) {
+                const summary = window.Analytics.getAnalyticsSummary();
+                // Aggiorna contatori in modo sicuro (controlla se esistono)
+                const updateText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+
+                updateText('analytics-session-count', summary.sessions.today || 0);
+                updateText('analytics-events-count', summary.events.today || 0);
+                updateText('analytics-pageviews-count', summary.pageViews.today || 0);
+                updateText('analytics-errors-count', summary.errors.today || 0);
+                
+                // Metriche Performance
+                updateText('metric-page-load', Math.round(summary.metrics.performance.average || 0) + 'ms');
+                updateText('metric-image-load', Math.round(summary.metrics.performance.imageLoad || 0) + 'ms');
+                
+                // Storage
+                updateText('storage-events', summary.events.total || 0);
+                updateText('storage-errors', summary.errors.total || 0);
+                updateText('storage-used', Math.round(summary.metrics.storage.eventsSize / 1024) + ' KB');
+                
+                // Info Sessione
+                if(summary.sessions.current) updateText('current-session-id', (summary.sessions.current.id || '').substring(0, 15) + '...');
+                if(summary.user) updateText('current-user-id', (summary.user.id || '').substring(0, 15) + '...');
+                
+                // Stato Sistema UI
+                const statusIndicator = document.getElementById('analytics-status-indicator');
+                const statusText = document.getElementById('analytics-status-text');
+                if (statusIndicator && statusText) {
+                    if (window.Analytics.config.trackingEnabled) {
+                        statusIndicator.className = 'status-indicator active';
+                        statusText.textContent = 'Analytics Attivo';
+                        statusText.className = 'status-active';
+                    } else {
+                        statusIndicator.className = 'status-indicator inactive';
+                        statusText.textContent = 'Analytics Disattivo';
+                        statusText.className = 'status-inactive';
+                    }
+                }
+                
+                // Debug Info
+                updateText('debug-initialized', window.Analytics.isInitialized ? 'Si' : 'No');
+                updateText('debug-firebase', window.firebaseAnalytics ? 'Si' : 'No');
+                updateText('debug-pwa', window.matchMedia('(display-mode: standalone)').matches ? 'Si' : 'No');
+                updateText('debug-online', navigator.onLine ? 'Si' : 'No');
+                
+                if(typeof showToast === 'function') showToast('Dashboard analytics aggiornata', 'success');
+            }
+        }
+        
+        // Funzioni Admin richiamate dai pulsanti
+        function exportAnalyticsData() {
+            if (window.Analytics) {
+                const f = window.Analytics.exportAnalyticsData();
+                if(typeof showToast === 'function') showToast(`Dati esportati: ${f}`, 'success');
+            }
+        }
+        
+        function resetAnalyticsData() {
+            if (confirm('Resettare tutti i dati analytics?')) {
+                if(window.Analytics) {
+                    window.Analytics.resetUserData();
+                    refreshAnalyticsDashboard();
+                    if(typeof showToast === 'function') showToast('Dati resettati', 'success');
+                }
+            }
+        }
+        
+        function toggleAnalyticsTracking() {
+            if (window.Analytics) {
+                window.Analytics.setTrackingEnabled(!window.Analytics.config.trackingEnabled);
+                refreshAnalyticsDashboard();
+            }
+        }
+        
+        function forceSyncAnalytics() {
+            if (window.Analytics && window.Analytics.flushQueue) {
+                window.Analytics.flushQueue(true);
+                localStorage.setItem('analytics_last_sync', new Date().toISOString());
+                refreshAnalyticsDashboard();
+                if(typeof showToast === 'function') showToast('Sync analytics forzato', 'info');
+            }
+        }
+
+        function clearAnalyticsErrors() {
+             if (confirm('Cancellare tutti gli errori registrati?')) {
+                localStorage.removeItem('analytics_errors');
+                refreshAnalyticsDashboard();
+                if(typeof showToast === 'function') showToast('Errori cancellati', 'success');
+            }
+        }
+
+        // Funzioni di Test
+        function testAnalyticsEvent() {
+            if (window.Analytics) {
+                window.Analytics.trackEvent('test', 'manual_event', 'Test manuale', 1, { test_mode: true });
+                if(typeof showToast === 'function') showToast('Evento test registrato', 'info');
+                refreshAnalyticsDashboard();
+            }
+        }
+
+        function testAnalyticsError() {
+            if (window.Analytics) {
+                const testError = new Error('Errore di test manuale');
+                window.Analytics.trackError(testError, 'test_manual', 'low', { test_mode: true });
+                if(typeof showToast === 'function') showToast('Errore test registrato', 'info');
+                refreshAnalyticsDashboard();
+            }
+        }
+
+        function testPerformanceMetric() {
+            if (window.Analytics) {
+                const loadTime = Math.random() * 1000 + 500;
+                window.Analytics.trackPerformance('test_manual_load', loadTime);
+                if(typeof showToast === 'function') showToast(`Metrica test: ${Math.round(loadTime)}ms`, 'info');
+                refreshAnalyticsDashboard();
+            }
+        }
+
+        // Funzioni Mappa Concettuale (Placeholder per evitare errori se non in app.js)
+        function filterConcetti(periodo) {
+            console.log(`Filtra concetti per periodo: ${periodo}`);
+            if(typeof showToast === 'function') showToast(`Filtro attivo: ${periodo}`, 'info');
+        }
+        
+        function searchConcetti(query) {
+            console.log(`Cerca concetto: ${query}`);
+            if (query.length > 2) {
+                if(typeof showToast === 'function') showToast(`Ricerca: ${query}`, 'info');
+            }
+        }
+
+        // --- D. GESTIONE GRAFICO ATTIVITÀ ---
+        function createActivityChart() {
+            const canvas = document.getElementById('activity-chart');
+            if (!canvas || !window.Chart) return;
+            const ctx = canvas.getContext('2d');
+            
+            if (window.activityChart instanceof Chart) {
+                window.activityChart.destroy();
+            }
+            
+            const labels = [];
+            const data = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString('it-IT', { weekday: 'short' }));
+                data.push(Math.floor(Math.random() * 50) + 20);
+            }
+            
+            window.activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Eventi',
+                        data: data,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Listener per i Tab Admin (Aggiorna grafici al click)
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                if (this.getAttribute('data-tab') === 'analytics-admin') {
+                    setTimeout(() => {
+                        refreshAnalyticsDashboard();
+                        createActivityChart();
+                    }, 200);
+                }
+            });
+        });
+
+        // Avvio automatico dashboard se Analytics è pronto
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
-                if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {
-                    refreshAnalyticsDashboard();
-                }
+                if (window.Analytics) refreshAnalyticsDashboard();
             }, 2000);
         });
     </script>
