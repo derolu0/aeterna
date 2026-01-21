@@ -1396,51 +1396,73 @@
         function refreshAnalyticsDashboard() {
             if (window.Analytics) {
                 const summary = window.Analytics.getAnalyticsSummary();
-                document.getElementById('analytics-session-count').textContent = summary.sessions.today || '0';
-                document.getElementById('analytics-events-count').textContent = summary.events.today || '0';
-                document.getElementById('analytics-pageviews-count').textContent = summary.pageViews.today || '0';
-                document.getElementById('analytics-errors-count').textContent = summary.errors.today || '0';
-                document.getElementById('metric-page-load').textContent = Math.round(summary.metrics.performance.average || 0) + 'ms';
-                document.getElementById('metric-image-load').textContent = Math.round(summary.metrics.performance.imageLoad || 0) + 'ms';
-                document.getElementById('metric-data-load').textContent = '0ms';
-                document.getElementById('storage-events').textContent = summary.events.total || '0';
-                document.getElementById('storage-errors').textContent = summary.errors.total || '0';
-                document.getElementById('storage-used').textContent = Math.round(summary.metrics.storage.eventsSize / 1024) + ' KB';
-                document.getElementById('current-session-id').textContent = summary.sessions.current.id.substring(0, 15) + '...';
-                document.getElementById('current-user-id').textContent = summary.user.id.substring(0, 15) + '...';
+                if(document.getElementById('analytics-session-count')) 
+                    document.getElementById('analytics-session-count').textContent = summary.sessions.today || '0';
+                if(document.getElementById('analytics-events-count')) 
+                    document.getElementById('analytics-events-count').textContent = summary.events.today || '0';
+                if(document.getElementById('analytics-pageviews-count')) 
+                    document.getElementById('analytics-pageviews-count').textContent = summary.pageViews.today || '0';
+                if(document.getElementById('analytics-errors-count')) 
+                    document.getElementById('analytics-errors-count').textContent = summary.errors.today || '0';
                 
+                // Metriche Performance
+                if(document.getElementById('metric-page-load'))
+                    document.getElementById('metric-page-load').textContent = Math.round(summary.metrics.performance.average || 0) + 'ms';
+                if(document.getElementById('metric-image-load'))
+                    document.getElementById('metric-image-load').textContent = Math.round(summary.metrics.performance.imageLoad || 0) + 'ms';
+                if(document.getElementById('metric-data-load'))
+                    document.getElementById('metric-data-load').textContent = '0ms';
+                
+                // Storage
+                if(document.getElementById('storage-events'))
+                    document.getElementById('storage-events').textContent = summary.events.total || '0';
+                if(document.getElementById('storage-errors'))
+                    document.getElementById('storage-errors').textContent = summary.errors.total || '0';
+                if(document.getElementById('storage-used'))
+                    document.getElementById('storage-used').textContent = Math.round(summary.metrics.storage.eventsSize / 1024) + ' KB';
+                
+                // Info Sessione
+                if(document.getElementById('current-session-id'))
+                    document.getElementById('current-session-id').textContent = (summary.sessions.current.id || '').substring(0, 15) + '...';
+                if(document.getElementById('current-user-id'))
+                    document.getElementById('current-user-id').textContent = (summary.user.id || '').substring(0, 15) + '...';
+                
+                // Stato Sistema
                 const statusIndicator = document.getElementById('analytics-status-indicator');
                 const statusText = document.getElementById('analytics-status-text');
-                
-                if (window.Analytics.config.trackingEnabled) {
-                    statusIndicator.classList.remove('inactive');
-                    statusIndicator.classList.add('active');
-                    statusText.textContent = 'Analytics Attivo';
-                    statusText.className = 'status-active';
-                } else {
-                    statusIndicator.classList.remove('active');
-                    statusIndicator.classList.add('inactive');
-                    statusText.textContent = 'Analytics Disattivo';
-                    statusText.className = 'status-inactive';
+                if (statusIndicator && statusText) {
+                    if (window.Analytics.config.trackingEnabled) {
+                        statusIndicator.classList.remove('inactive');
+                        statusIndicator.classList.add('active');
+                        statusText.textContent = 'Analytics Attivo';
+                        statusText.className = 'status-active';
+                    } else {
+                        statusIndicator.classList.remove('active');
+                        statusIndicator.classList.add('inactive');
+                        statusText.textContent = 'Analytics Disattivo';
+                        statusText.className = 'status-inactive';
+                    }
                 }
                 
-                document.getElementById('debug-initialized').textContent = window.Analytics.isInitialized ? 'Si' : 'No';
-                document.getElementById('debug-firebase').textContent = window.firebaseAnalytics ? 'Si' : 'No';
-                document.getElementById('debug-pwa').textContent = window.matchMedia('(display-mode: standalone)').matches ? 'Si' : 'No';
-                document.getElementById('debug-online').textContent = navigator.onLine ? 'Si' : 'No';
+                // Debug Info
+                if(document.getElementById('debug-initialized'))
+                    document.getElementById('debug-initialized').textContent = window.Analytics.isInitialized ? 'Si' : 'No';
+                if(document.getElementById('debug-firebase'))
+                    document.getElementById('debug-firebase').textContent = window.firebaseAnalytics ? 'Si' : 'No';
+                if(document.getElementById('debug-pwa'))
+                    document.getElementById('debug-pwa').textContent = window.matchMedia('(display-mode: standalone)').matches ? 'Si' : 'No';
+                if(document.getElementById('debug-online'))
+                    document.getElementById('debug-online').textContent = navigator.onLine ? 'Si' : 'No';
                 
-                showToast('Dashboard analytics aggiornata', 'success');
+                if(typeof showToast === 'function') showToast('Dashboard analytics aggiornata', 'success');
                 window.Analytics.trackEvent('analytics', 'dashboard_refreshed');
-            } else {
-                showToast('Analytics non inizializzato', 'error');
             }
         }
         
         function exportAnalyticsData() {
             if (window.Analytics) {
                 const filename = window.Analytics.exportAnalyticsData();
-                showToast(`Dati analytics esportati in ${filename}`, 'success');
-                window.Analytics.trackEvent('analytics', 'data_exported');
+                if(typeof showToast === 'function') showToast(`Dati analytics esportati in ${filename}`, 'success');
             }
         }
         
@@ -1449,8 +1471,7 @@
                 if (window.Analytics) {
                     window.Analytics.resetUserData();
                     refreshAnalyticsDashboard();
-                    showToast('Dati analytics resettati', 'success');
-                    window.Analytics.trackEvent('analytics', 'data_reset');
+                    if(typeof showToast === 'function') showToast('Dati analytics resettati', 'success');
                 }
             }
         }
@@ -1468,7 +1489,7 @@
                 window.Analytics.flushQueue(true);
                 localStorage.setItem('analytics_last_sync', new Date().toISOString());
                 refreshAnalyticsDashboard();
-                showToast('Sync analytics forzato', 'info');
+                if(typeof showToast === 'function') showToast('Sync analytics forzato', 'info');
             }
         }
         
@@ -1476,14 +1497,14 @@
             if (confirm('Cancellare tutti gli errori registrati?')) {
                 localStorage.removeItem('analytics_errors');
                 refreshAnalyticsDashboard();
-                showToast('Errori cancellati', 'success');
+                if(typeof showToast === 'function') showToast('Errori cancellati', 'success');
             }
         }
         
         function testAnalyticsEvent() {
             if (window.Analytics) {
                 window.Analytics.trackEvent('test', 'manual_event', 'Test manuale', 1, { test_mode: true });
-                showToast('Evento test registrato', 'info');
+                if(typeof showToast === 'function') showToast('Evento test registrato', 'info');
                 refreshAnalyticsDashboard();
             }
         }
@@ -1492,7 +1513,7 @@
             if (window.Analytics) {
                 const testError = new Error('Errore di test manuale');
                 window.Analytics.trackError(testError, 'test_manual', 'low', { test_mode: true });
-                showToast('Errore test registrato', 'info');
+                if(typeof showToast === 'function') showToast('Errore test registrato', 'info');
                 refreshAnalyticsDashboard();
             }
         }
@@ -1501,7 +1522,7 @@
             if (window.Analytics) {
                 const loadTime = Math.random() * 1000 + 500;
                 window.Analytics.trackPerformance('test_manual_load', loadTime);
-                showToast(`Metrica test: ${Math.round(loadTime)}ms`, 'info');
+                if(typeof showToast === 'function') showToast(`Metrica test: ${Math.round(loadTime)}ms`, 'info');
                 refreshAnalyticsDashboard();
             }
         }
@@ -1509,24 +1530,23 @@
         // FUNZIONI PER MAPPA CONCETTUALE
         function filterConcetti(periodo) {
             console.log(`Filtra concetti per periodo: ${periodo}`);
-            // Implementa logica di filtraggio
-            showToast(`Filtro attivo: ${periodo}`, 'info');
+            if(typeof showToast === 'function') showToast(`Filtro attivo: ${periodo}`, 'info');
         }
         
         function searchConcetti(query) {
             console.log(`Cerca concetto: ${query}`);
-            // Implementa ricerca
             if (query.length > 2) {
-                showToast(`Ricerca: ${query}`, 'info');
+                if(typeof showToast === 'function') showToast(`Ricerca: ${query}`, 'info');
             }
         }
         
+        // GESTIONE TAB ADMIN E GRAFICO
         document.querySelectorAll('.admin-tab-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const tabId = this.getAttribute('data-tab');
                 if (tabId === 'analytics-admin') {
                     setTimeout(() => {
-                        refreshAnalyticsDashboard();
+                        if(typeof refreshAnalyticsDashboard === 'function') refreshAnalyticsDashboard();
                         setTimeout(createActivityChart, 500);
                     }, 100);
                 }
@@ -1538,7 +1558,12 @@
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
-            if (window.activityChart) window.activityChart.destroy();
+            
+            // Distruggi il grafico precedente se esiste per evitare errori
+            if (window.activityChart instanceof Chart) {
+                window.activityChart.destroy();
+            }
+            
             const labels = [];
             const data = [];
             for (let i = 6; i >= 0; i--) {
@@ -1547,6 +1572,7 @@
                 labels.push(date.toLocaleDateString('it-IT', { weekday: 'short' }));
                 data.push(Math.floor(Math.random() * 50) + 20);
             }
+            
             window.activityChart = new Chart(ctx, {
                 type: 'line',
                 data: {
