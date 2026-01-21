@@ -2957,24 +2957,40 @@ html, body {
     .logo-container { transform: scale(0.8); }
 }
 /* =======================================================
-   FIX LOGHI HOME (Trasparenza e Bordino)
+   FIX LOGHI HOME (App Trasparente, Comune Piccolo)
    ======================================================= */
 
-.app-logo, .comune-logo {
-    /* 1. Sfondo Trasparente (invece che bianco) */
-    background-color: rgba(255, 255, 255, 0.1) !important; /* Leggerissima patina per staccare */
+/* 1. LOGO APP: Trasparente con Bordo Doppio */
+.app-logo {
+    /* Sfondo trasparente */
+    background-color: rgba(255, 255, 255, 0.1) !important; 
     
-    /* 2. Bordino Sottile (Stile Menu) */
-    border: 1px solid rgba(255, 255, 255, 0.6) !important; /* Bianco semi-trasparente */
+    /* Bordo Bianco più doppio (3px) */
+    border: 3px solid #ffffff !important; 
     
-    /* 3. Rimuove ombre pesanti per un look pulito */
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; 
+    /* Cerchio perfetto */
+    border-radius: 50% !important;
     
-    /* Mantiene la forma rotonda */
-    border-radius: 50% !important; 
+    /* Ombra */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+    
+    /* Sfocatura dietro */
+    backdrop-filter: blur(2px); 
 }
 
-/* Opzionale: Rende l'immagine dentro il logo leggermente più luminosa */
-.app-logo {
-    background-blend-mode: overlay;
+/* 2. LOGO COMUNE: Più piccolo */
+.comune-logo {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    
+    /* RIMPICCIOLISCE IL LOGO:
+       1.0 = Grandezza normale
+       0.7 = 70% (più piccolo)
+       0.5 = Metà grandezza 
+    */
+    transform: scale(0.7) !important; 
+    
+    /* Opzionale: Se risulta troppo attaccato o staccato, regola il margine */
+    margin-left: 5px !important; 
 }
