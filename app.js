@@ -4551,3 +4551,86 @@ function closeAnalysisModal() {
 
 window.openComparativeAnalysis = openComparativeAnalysis;
 window.closeAnalysisModal = closeAnalysisModal;
+// =========================================================
+// ❌ FIX ERRORI DI RIFERIMENTO (Da incollare alla fine di app.js)
+// =========================================================
+
+// 1. Funzione mancante: Chiude il modale "Informazioni" (Quello dell'errore in console)
+function closeInfoModal() {
+    const modal = document.getElementById('info-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 2. Funzione mancante: Chiude il modale "Navigazione"
+function closeNavigationModal() {
+    const modal = document.getElementById('navigation-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 3. Funzione mancante: Chiude il modale "Analisi"
+function closeAnalysisModal() {
+    const modal = document.getElementById('analysis-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// 4. Assicura che le funzioni siano accessibili globalmente (Dall'HTML)
+window.closeInfoModal = closeInfoModal;
+window.closeNavigationModal = closeNavigationModal;
+window.closeAnalysisModal = closeAnalysisModal;
+
+// 5. Ripristino Logica Analisi (Se mancante)
+window.openComparativeAnalysis = async function(conceptId) {
+    const db = window.db; 
+    const modal = document.getElementById('analysis-modal');
+    if (!modal) return;
+
+    document.getElementById('modal-concept-title').innerText = "Caricamento...";
+    modal.style.display = 'flex'; 
+
+    try {
+        const docRef = window.doc(db, "concetti", conceptId);
+        const docSnap = await window.getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            // Renderizza i dati
+            document.getElementById('modal-concept-title').innerText = "Analisi: " + data.parola;
+            document.getElementById('modal-concept-def').innerText = (data.interpretazioni && data.interpretazioni[0]) ? data.interpretazioni[0].testo : "Definizione standard...";
+            
+            // Pulisci container
+            const classic = document.getElementById('classic-interpretations');
+            const modern = document.getElementById('modern-interpretations');
+            const timeline = document.getElementById('linguistic-timeline');
+            if(classic) classic.innerHTML = '';
+            if(modern) modern.innerHTML = '';
+            if(timeline) timeline.innerHTML = '';
+
+            // Popola
+            if (data.interpretazioni) {
+                data.interpretazioni.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'interpretation-card';
+                    div.innerHTML = `<h4>${item.nomeAutore}</h4><p>${item.testo}</p>`;
+                    
+                    // Logica semplice per dividere le epoche
+                    const isModern = ['contemporaneo', 'moderno', '900'].some(k => (item.scuola || "").toLowerCase().includes(k));
+                    
+                    if (isModern && modern) modern.appendChild(div);
+                    else if (classic) classic.appendChild(div);
+                });
+            }
+        } else {
+            alert("Dati non trovati.");
+            modal.style.display = 'none';
+        }
+    } catch (e) {
+        console.error("Errore:", e);
+        modal.style.display = 'none';
+    }
+};
