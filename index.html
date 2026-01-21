@@ -1351,260 +1351,8 @@
             </div>
         </div>
     </div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    
-    <script src="./translations.js"></script>
-    
-    <script src="./app.js"></script>
-    
-    <script src="./analytics.js" defer></script>
-    
-    <script>
-        // SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swUrl = './sw.js';
-                fetch(swUrl, { mode: 'no-cors' })
-                  .then(response => {
-                      return navigator.serviceWorker.register(swUrl)
-                          .then(registration => {
-                              console.log('✅ Service Worker registrato:', registration.scope);
-                              registration.addEventListener('updatefound', () => {
-                                  const newWorker = registration.installing;
-                                  newWorker.addEventListener('statechange', () => {
-                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
-                                      }
-                                  });
-                              });
-                              return registration;
-                          });
-                  })
-                  .catch(error => {
-                      console.warn('⚠️ Registrazione SW fallita:', error.message);
-                  });
-            });
-        }
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            window.deferredPrompt = e;
-        });
-        
-        // FUNZIONI ANALYTICS
-        function refreshAnalyticsDashboard() {
-            if (window.Analytics) {
-                const summary = window.Analytics.getAnalyticsSummary();
-                if(document.getElementById('analytics-session-count')) 
-                    document.getElementById('analytics-session-count').textContent = summary.sessions.today || '0';
-                if(document.getElementById('analytics-events-count')) 
-                    document.getElementById('analytics-events-count').textContent = summary.events.today || '0';
-                if(document.getElementById('analytics-pageviews-count')) 
-                    document.getElementById('analytics-pageviews-count').textContent = summary.pageViews.today || '0';
-                if(document.getElementById('analytics-errors-count')) 
-                    document.getElementById('analytics-errors-count').textContent = summary.errors.today || '0';
-                
-                // Metriche Performance
-                if(document.getElementById('metric-page-load'))
-                    document.getElementById('metric-page-load').textContent = Math.round(summary.metrics.performance.average || 0) + 'ms';
-                if(document.getElementById('metric-image-load'))
-                    document.getElementById('metric-image-load').textContent = Math.round(summary.metrics.performance.imageLoad || 0) + 'ms';
-                if(document.getElementById('metric-data-load'))
-                    document.getElementById('metric-data-load').textContent = '0ms';
-                
-                // Storage
-                if(document.getElementById('storage-events'))
-                    document.getElementById('storage-events').textContent = summary.events.total || '0';
-                if(document.getElementById('storage-errors'))
-                    document.getElementById('storage-errors').textContent = summary.errors.total || '0';
-                if(document.getElementById('storage-used'))
-                    document.getElementById('storage-used').textContent = Math.round(summary.metrics.storage.eventsSize / 1024) + ' KB';
-                
-                // Info Sessione
-                if(document.getElementById('current-session-id'))
-                    document.getElementById('current-session-id').textContent = (summary.sessions.current.id || '').substring(0, 15) + '...';
-                if(document.getElementById('current-user-id'))
-                    document.getElementById('current-user-id').textContent = (summary.user.id || '').substring(0, 15) + '...';
-                
-                // Stato Sistema
-                const statusIndicator = document.getElementById('analytics-status-indicator');
-                const statusText = document.getElementById('analytics-status-text');
-                if (statusIndicator && statusText) {
-                    if (window.Analytics.config.trackingEnabled) {
-                        statusIndicator.classList.remove('inactive');
-                        statusIndicator.classList.add('active');
-                        statusText.textContent = 'Analytics Attivo';
-                        statusText.className = 'status-active';
-                    } else {
-                        statusIndicator.classList.remove('active');
-                        statusIndicator.classList.add('inactive');
-                        statusText.textContent = 'Analytics Disattivo';
-                        statusText.className = 'status-inactive';
-                    }
-                }
-                
-                // Debug Info
-                if(document.getElementById('debug-initialized'))
-                    document.getElementById('debug-initialized').textContent = window.Analytics.isInitialized ? 'Si' : 'No';
-                if(document.getElementById('debug-firebase'))
-                    document.getElementById('debug-firebase').textContent = window.firebaseAnalytics ? 'Si' : 'No';
-                if(document.getElementById('debug-pwa'))
-                    document.getElementById('debug-pwa').textContent = window.matchMedia('(display-mode: standalone)').matches ? 'Si' : 'No';
-                if(document.getElementById('debug-online'))
-                    document.getElementById('debug-online').textContent = navigator.onLine ? 'Si' : 'No';
-                
-                if(typeof showToast === 'function') showToast('Dashboard analytics aggiornata', 'success');
-                window.Analytics.trackEvent('analytics', 'dashboard_refreshed');
-            }
-        }
-        
-        function exportAnalyticsData() {
-            if (window.Analytics) {
-                const filename = window.Analytics.exportAnalyticsData();
-                if(typeof showToast === 'function') showToast(`Dati analytics esportati in ${filename}`, 'success');
-            }
-        }
-        
-        function resetAnalyticsData() {
-            if (confirm('Sei sicuro di voler resettare tutti i dati analytics?')) {
-                if (window.Analytics) {
-                    window.Analytics.resetUserData();
-                    refreshAnalyticsDashboard();
-                    if(typeof showToast === 'function') showToast('Dati analytics resettati', 'success');
-                }
-            }
-        }
-        
-        function toggleAnalyticsTracking() {
-            if (window.Analytics) {
-                const newState = !window.Analytics.config.trackingEnabled;
-                window.Analytics.setTrackingEnabled(newState);
-                refreshAnalyticsDashboard();
-            }
-        }
-        
-        function forceSyncAnalytics() {
-            if (window.Analytics && window.Analytics.flushQueue) {
-                window.Analytics.flushQueue(true);
-                localStorage.setItem('analytics_last_sync', new Date().toISOString());
-                refreshAnalyticsDashboard();
-                if(typeof showToast === 'function') showToast('Sync analytics forzato', 'info');
-            }
-        }
-        
-        function clearAnalyticsErrors() {
-            if (confirm('Cancellare tutti gli errori registrati?')) {
-                localStorage.removeItem('analytics_errors');
-                refreshAnalyticsDashboard();
-                if(typeof showToast === 'function') showToast('Errori cancellati', 'success');
-            }
-        }
-        
-        function testAnalyticsEvent() {
-            if (window.Analytics) {
-                window.Analytics.trackEvent('test', 'manual_event', 'Test manuale', 1, { test_mode: true });
-                if(typeof showToast === 'function') showToast('Evento test registrato', 'info');
-                refreshAnalyticsDashboard();
-            }
-        }
-        
-        function testAnalyticsError() {
-            if (window.Analytics) {
-                const testError = new Error('Errore di test manuale');
-                window.Analytics.trackError(testError, 'test_manual', 'low', { test_mode: true });
-                if(typeof showToast === 'function') showToast('Errore test registrato', 'info');
-                refreshAnalyticsDashboard();
-            }
-        }
-        
-        function testPerformanceMetric() {
-            if (window.Analytics) {
-                const loadTime = Math.random() * 1000 + 500;
-                window.Analytics.trackPerformance('test_manual_load', loadTime);
-                if(typeof showToast === 'function') showToast(`Metrica test: ${Math.round(loadTime)}ms`, 'info');
-                refreshAnalyticsDashboard();
-            }
-        }
-        
-        // FUNZIONI PER MAPPA CONCETTUALE
-        function filterConcetti(periodo) {
-            console.log(`Filtra concetti per periodo: ${periodo}`);
-            if(typeof showToast === 'function') showToast(`Filtro attivo: ${periodo}`, 'info');
-        }
-        
-        function searchConcetti(query) {
-            console.log(`Cerca concetto: ${query}`);
-            if (query.length > 2) {
-                if(typeof showToast === 'function') showToast(`Ricerca: ${query}`, 'info');
-            }
-        }
-        
-        // GESTIONE TAB ADMIN E GRAFICO
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                if (tabId === 'analytics-admin') {
-                    setTimeout(() => {
-                        if(typeof refreshAnalyticsDashboard === 'function') refreshAnalyticsDashboard();
-                        setTimeout(createActivityChart, 500);
-                    }, 100);
-                }
-            });
-        });
-        
-        function createActivityChart() {
-            const canvas = document.getElementById('activity-chart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-            
-            // Distruggi il grafico precedente se esiste per evitare errori
-            if (window.activityChart instanceof Chart) {
-                window.activityChart.destroy();
-            }
-            
-            const labels = [];
-            const data = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString('it-IT', { weekday: 'short' }));
-                data.push(Math.floor(Math.random() * 50) + 20);
-            }
-            
-            window.activityChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Eventi',
-                        data: data,
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                if (window.Analytics) refreshAnalyticsDashboard();
-            }, 2000);
-        });
-   <div id="qr-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
+
+    <div id="qr-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
         <div class="modal-content" style="text-align: center; max-width: 300px; padding: 25px; border-radius: 20px;">
             <h3 class="modal-title" data-i18n="qr_title" style="margin-bottom: 15px;">Scarica l'App</h3>
             <div id="qrcode-container" style="display: flex; justify-content: center; margin: 20px auto; padding: 10px; background: white; border-radius: 10px;"></div>
@@ -1666,7 +1414,7 @@
     <script src="./analytics.js" defer></script>
     
     <script>
-        // --- A. REGISTRAZIONE SERVICE WORKER ---
+        // --- 1. REGISTRAZIONE SERVICE WORKER ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swUrl = './sw.js';
@@ -1689,38 +1437,33 @@
             });
         }
 
-        // --- B. GESTIONE INSTALLAZIONE PWA ---
+        // --- 2. GESTIONE INSTALLAZIONE PWA ---
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             window.deferredPrompt = e;
         });
 
-        // --- C. FUNZIONI DASHBOARD ANALYTICS ---
+        // --- 3. FUNZIONI DASHBOARD ANALYTICS (Necessarie per il pannello Admin) ---
         function refreshAnalyticsDashboard() {
             if (window.Analytics) {
                 const summary = window.Analytics.getAnalyticsSummary();
-                // Aggiorna contatori in modo sicuro (controlla se esistono)
-                const updateText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+                const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
 
-                updateText('analytics-session-count', summary.sessions.today || 0);
-                updateText('analytics-events-count', summary.events.today || 0);
-                updateText('analytics-pageviews-count', summary.pageViews.today || 0);
-                updateText('analytics-errors-count', summary.errors.today || 0);
+                setText('analytics-session-count', summary.sessions.today || 0);
+                setText('analytics-events-count', summary.events.today || 0);
+                setText('analytics-pageviews-count', summary.pageViews.today || 0);
+                setText('analytics-errors-count', summary.errors.today || 0);
                 
-                // Metriche Performance
-                updateText('metric-page-load', Math.round(summary.metrics.performance.average || 0) + 'ms');
-                updateText('metric-image-load', Math.round(summary.metrics.performance.imageLoad || 0) + 'ms');
+                setText('metric-page-load', Math.round(summary.metrics.performance.average || 0) + 'ms');
+                setText('metric-image-load', Math.round(summary.metrics.performance.imageLoad || 0) + 'ms');
                 
-                // Storage
-                updateText('storage-events', summary.events.total || 0);
-                updateText('storage-errors', summary.errors.total || 0);
-                updateText('storage-used', Math.round(summary.metrics.storage.eventsSize / 1024) + ' KB');
+                setText('storage-events', summary.events.total || 0);
+                setText('storage-errors', summary.errors.total || 0);
+                setText('storage-used', Math.round(summary.metrics.storage.eventsSize / 1024) + ' KB');
                 
-                // Info Sessione
-                if(summary.sessions.current) updateText('current-session-id', (summary.sessions.current.id || '').substring(0, 15) + '...');
-                if(summary.user) updateText('current-user-id', (summary.user.id || '').substring(0, 15) + '...');
+                if(summary.sessions.current) setText('current-session-id', (summary.sessions.current.id || '').substring(0, 15) + '...');
+                if(summary.user) setText('current-user-id', (summary.user.id || '').substring(0, 15) + '...');
                 
-                // Stato Sistema UI
                 const statusIndicator = document.getElementById('analytics-status-indicator');
                 const statusText = document.getElementById('analytics-status-text');
                 if (statusIndicator && statusText) {
@@ -1735,17 +1478,15 @@
                     }
                 }
                 
-                // Debug Info
-                updateText('debug-initialized', window.Analytics.isInitialized ? 'Si' : 'No');
-                updateText('debug-firebase', window.firebaseAnalytics ? 'Si' : 'No');
-                updateText('debug-pwa', window.matchMedia('(display-mode: standalone)').matches ? 'Si' : 'No');
-                updateText('debug-online', navigator.onLine ? 'Si' : 'No');
+                setText('debug-initialized', window.Analytics.isInitialized ? 'Si' : 'No');
+                setText('debug-firebase', window.firebaseAnalytics ? 'Si' : 'No');
+                setText('debug-pwa', window.matchMedia('(display-mode: standalone)').matches ? 'Si' : 'No');
+                setText('debug-online', navigator.onLine ? 'Si' : 'No');
                 
                 if(typeof showToast === 'function') showToast('Dashboard analytics aggiornata', 'success');
             }
         }
         
-        // Funzioni Admin richiamate dai pulsanti
         function exportAnalyticsData() {
             if (window.Analytics) {
                 const f = window.Analytics.exportAnalyticsData();
@@ -1787,7 +1528,6 @@
             }
         }
 
-        // Funzioni di Test
         function testAnalyticsEvent() {
             if (window.Analytics) {
                 window.Analytics.trackEvent('test', 'manual_event', 'Test manuale', 1, { test_mode: true });
@@ -1814,7 +1554,7 @@
             }
         }
 
-        // Funzioni Mappa Concettuale (Placeholder per evitare errori se non in app.js)
+        // Funzioni Mappa Concettuale
         function filterConcetti(periodo) {
             console.log(`Filtra concetti per periodo: ${periodo}`);
             if(typeof showToast === 'function') showToast(`Filtro attivo: ${periodo}`, 'info');
@@ -1872,7 +1612,7 @@
             });
         }
 
-        // Listener per i Tab Admin (Aggiorna grafici al click)
+        // Listener per i Tab Admin
         document.querySelectorAll('.admin-tab-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 if (this.getAttribute('data-tab') === 'analytics-admin') {
@@ -1884,7 +1624,6 @@
             });
         });
 
-        // Avvio automatico dashboard se Analytics è pronto
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 if (window.Analytics) refreshAnalyticsDashboard();

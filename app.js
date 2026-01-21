@@ -4457,3 +4457,97 @@ function closeAnalysisModal() {
 // Rendi la funzione globale per poterla chiamare dall'HTML
 window.openComparativeAnalysis = openComparativeAnalysis;
 window.closeAnalysisModal = closeAnalysisModal;
+// ==========================================
+// 2. LOGICA FINESTRA ANALISI COMPARATIVA
+// ==========================================
+
+async function openComparativeAnalysis(conceptId) {
+    const db = window.db; 
+    const modal = document.getElementById('analysis-modal');
+    
+    if (!modal) {
+        console.error("Modale analisi non trovato nell'HTML");
+        return;
+    }
+
+    document.getElementById('modal-concept-title').innerText = "Caricamento...";
+    modal.style.display = 'flex'; 
+
+    try {
+        const docRef = window.doc(db, "concetti", conceptId);
+        const docSnap = await window.getDoc(docRef);
+
+        if (docSnap.exists()) {
+            renderAnalysisData(docSnap.data());
+        } else {
+            alert("Dati del concetto non trovati.");
+            closeAnalysisModal();
+        }
+    } catch (e) {
+        console.error("Errore recupero concetto:", e);
+    }
+}
+
+function renderAnalysisData(data) {
+    document.getElementById('modal-concept-title').innerText = "Analisi: " + data.parola;
+    
+    const defGenerale = (data.interpretazioni && data.interpretazioni[0]) ? data.interpretazioni[0].testo : "Definizione in elaborazione...";
+    document.getElementById('modal-concept-def').innerText = defGenerale;
+
+    const classicContainer = document.getElementById('classic-interpretations');
+    const modernContainer = document.getElementById('modern-interpretations');
+    const timelineContainer = document.getElementById('linguistic-timeline');
+    
+    if(classicContainer) classicContainer.innerHTML = '';
+    if(modernContainer) modernContainer.innerHTML = '';
+    if(timelineContainer) timelineContainer.innerHTML = '';
+
+    if (data.interpretazioni) {
+        data.interpretazioni.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'interpretation-card';
+            
+            const termineHtml = item.termine_originale 
+                ? `<div class="original-term"><i class="fas fa-font"></i> ${item.termine_originale}</div>` : '';
+            const citazioneHtml = item.citazione 
+                ? `<div class="citation-box">"${item.citazione}"</div>` : '';
+            const operaHtml = item.opera 
+                ? `<small>Fonte: <em>${item.opera}</em></small>` : '';
+
+            card.innerHTML = `
+                <h4>${item.nomeAutore}</h4>
+                ${termineHtml}
+                <p>${item.testo}</p>
+                ${citazioneHtml}
+                ${operaHtml}
+            `;
+
+            if (isPhilosopherModern(item)) {
+                if(modernContainer) modernContainer.appendChild(card);
+            } else {
+                if(classicContainer) classicContainer.appendChild(card);
+            }
+
+            if (item.termine_originale && timelineContainer) {
+                const timeTag = document.createElement('div');
+                timeTag.className = 'timeline-item';
+                timeTag.innerHTML = `${item.termine_originale} <span>(${item.nomeAutore})</span>`;
+                timelineContainer.appendChild(timeTag);
+            }
+        });
+    }
+}
+
+function isPhilosopherModern(item) {
+    const period = (item.scuola || "").toLowerCase();
+    const keywords = ['contemporaneo', 'moderno', 'esistenzialismo', 'fenomenologia', '900', '800', 'nietzsche', 'heidegger', 'sartre'];
+    return keywords.some(k => period.includes(k) || (item.nomeAutore && item.nomeAutore.toLowerCase().includes(k)));
+}
+
+function closeAnalysisModal() {
+    const modal = document.getElementById('analysis-modal');
+    if(modal) modal.style.display = 'none';
+}
+
+window.openComparativeAnalysis = openComparativeAnalysis;
+window.closeAnalysisModal = closeAnalysisModal;
