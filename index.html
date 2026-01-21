@@ -1609,39 +1609,7 @@
         </button>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <script src="./translations.js"></script>
-    <script src="./app.js"></script>
-    <script src="./analytics.js" defer></script>
-    
-    <script>
-        // SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swUrl = './sw.js';
-                fetch(swUrl, { mode: 'no-cors' })
-                  .then(response => {
-                      return navigator.serviceWorker.register(swUrl)
-                          .then(registration => {
-                              console.log('✅ Service Worker registrato:', registration.scope);
-                              registration.addEventListener('updatefound', () => {
-                                  const newWorker = registration.installing;
-                                  newWorker.addEventListener('statechange', () => {
-                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
-                                      }
-                                  });
-                              });
-                              return registration;
-                          });
-                  })
-                  .catch(error => {
-                      console.warn('⚠️ Registrazione SW fallita:', error.message);
-                  });
-            });
-        } // <--- QUESTA GRAFFA MANCAVA
-    </script> <div id="analysis-modal" class="modal-overlay" style="display: none;">
+    <div id="analysis-modal" class="modal-overlay" style="display: none;">
         <div class="analysis-container">
             <div class="analysis-header">
                 <h2 id="modal-concept-title">Analisi del Concetto</h2>
@@ -1657,33 +1625,66 @@
                 <div class="comparison-grid">
                     <div class="era-column classic">
                         <h3><i class="fas fa-landmark"></i> Pensiero Classico</h3>
-                        <div id="classic-interpretations" class="interpretations-list">
-                        </div>
+                        <div id="classic-interpretations" class="interpretations-list"></div>
                     </div>
 
                     <div class="era-column modern">
                         <h3><i class="fas fa-lightbulb"></i> Riletture Moderne</h3>
-                        <div id="modern-interpretations" class="interpretations-list">
-                        </div>
+                        <div id="modern-interpretations" class="interpretations-list"></div>
                     </div>
                 </div>
                 
                 <div class="linguistic-box">
                     <h4><i class="fas fa-language"></i> Evoluzione Linguistica</h4>
-                    <div id="linguistic-timeline" class="timeline-row">
-                    </div>
+                    <div id="linguistic-timeline" class="timeline-row"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script>        
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    
+    <script src="./translations.js"></script>
+    <script src="./app.js"></script>
+    <script src="./analytics.js" defer></script>
+    
+    <script>
+        // REGISTRAZIONE SERVICE WORKER
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swUrl = './sw.js';
+                fetch(swUrl, { mode: 'no-cors' })
+                  .then(response => {
+                      return navigator.serviceWorker.register(swUrl)
+                          .then(registration => {
+                              console.log('✅ Service Worker registrato');
+                              registration.addEventListener('updatefound', () => {
+                                  const newWorker = registration.installing;
+                                  newWorker.addEventListener('statechange', () => {
+                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                          if (typeof showToast === 'function') {
+                                              showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
+                                          }
+                                      }
+                                  });
+                              });
+                              return registration;
+                          });
+                  })
+                  .catch(error => {
+                      console.warn('⚠️ Registrazione SW fallita:', error.message);
+                  });
+            });
+        }
+
+        // GESTIONE INSTALLAZIONE PWA
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             window.deferredPrompt = e;
         });
 
-        // INIZIALIZZAZIONE ANALYTICS E DASHBOARD
+        // INIZIALIZZAZIONE ANALYTICS
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {
