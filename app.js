@@ -4205,3 +4205,255 @@ document.addEventListener('DOMContentLoaded', () => {
     // ... (altre funzioni di avvio) ...
     detectAndShowInstallInstructions();
 });
+// ==========================================
+// NUOVA FUNZIONE: COLLEGAMENTO BIDIREZIONALE (Richiesta PDF)
+// ==========================================
+async function linkConceptToPhilosopher(filosofoId, concettoData) {
+    // concettoData deve contenere: { parola, termine_originale, citazione, definizione, opera }
+    
+    const db = window.db; 
+    const batch = window.writeBatch(db); // Usiamo batch per salvare tutto insieme o niente
+
+    // 1. Riferimenti ai documenti
+    const philRef = window.doc(db, "filosofi", filosofoId);
+    // Normalizziamo l'ID del concetto (es. "Verità" -> "verita")
+    const concettoId = concettoData.parola.toLowerCase().trim().replace(/\s+/g, '_');
+    const conceptRef = window.doc(db, "concetti", concettoId);
+
+    try {
+        // A. Prepara dati per il FILOSOFO (aggiorna la sua lista concetti)
+        // Nota: usiamo la notazione dot notation per aggiornare solo questo campo specifico
+        const updatePhil = {};
+        updatePhil[`concetti_trattati.${concettoId}`] = {
+            parola: concettoData.parola,
+            definizione: concettoData.definizione,
+            termine_originale: concettoData.termine_originale || "", // Es. "Aletheia"
+            citazione: concettoData.citazione || "",               // Testo per il dataset
+            opera: concettoData.opera || ""
+        };
+        batch.update(philRef, updatePhil);
+
+        // B. Prepara dati per il CONCETTO (Global)
+        // Verifichiamo prima se il concetto esiste, altrimenti lo creiamo nel batch
+        const conceptSnap = await window.getDoc(conceptRef);
+        
+        const nuovaInterpretazione = {
+            autoreId: filosofoId,
+            nomeAutore: concettoData.nomeFilosofo, // Passiamo anche il nome per visualizzarlo subito
+            scuola: concettoData.scuolaFilosofo,   // Utile per i filtri (es. "Platonismo")
+            testo: concettoData.definizione,
+            citazione: concettoData.citazione || "",
+            termine_originale: concettoData.termine_originale || "",
+            opera: concettoData.opera || "",
+            data_inserimento: new Date().toISOString()
+        };
+
+        if (!conceptSnap.exists()) {
+            // Se il concetto è nuovo, crealo da zero
+            batch.set(conceptRef, {
+                parola: concettoData.parola, // Es. "Verità" (Capitalizzato)
+                filosofi_coinvolti: [filosofoId], // Array per ricerche veloci
+                interpretazioni: [nuovaInterpretazione]
+            });
+        } else {
+            // Se esiste, aggiungiamo l'interpretazione all'array esistente
+            // Nota: qui usiamo arrayUnion per aggiungere senza sovrascrivere gli altri
+            batch.update(conceptRef, {
+                filosofi_coinvolti: window.arrayUnion(filosofoId),
+                interpretazioni: window.arrayUnion(nuovaInterpretazione)
+            });
+        }
+
+        // Eseguiamo le scritture
+        await batch.commit();
+        console.log(`✅ Collegamento creato: ${filosofoId} <-> ${concettoData.parola}`);
+        return true;
+
+    } catch (e) {
+        console.error("Errore nel linking:", e);
+        return false;
+    }
+}
+// ==========================================
+// PASSO 2: GESTIONE IMPORTAZIONE EXCEL (Da incollare alla fine di app.js)
+// ==========================================
+
+// 1. Assicuriamoci che il Worker esista
+if (!window.excelWorker) {
+    console.log("Inizializzazione Excel Worker...");
+    window.excelWorker = new Worker('excel-worker.js');
+}
+
+// 2. Configura la ricezione dei messaggi dal Worker
+window.excelWorker.onmessage = async function(e) {
+    const { type, data } = e.data;
+
+    // Quando l'elaborazione è finita (PROCESSING_COMPLETE)
+    if (type === 'PROCESSING_COMPLETE') {
+        console.log('📦 Dati ricevuti dal Worker:', data.length, 'elementi');
+        
+        // Se abbiamo una funzione per mostrare messaggi (Toast), usiamola
+        if (typeof showToast === 'function') {
+            showToast('Elaborazione completata. Inizio salvataggio...', 'info');
+        }
+
+        let collegamentiFatti = 0;
+
+        // 3. Ciclo sui dati per creare i collegamenti
+        for (let item of data) {
+            // Controlliamo se la riga ha i dati necessari (Filosofo + Concetto)
+            // Supportiamo sia i nomi delle colonne "umane" che quelle in codice
+            const nomeFilosofo = item.Filosofo || item.filosofo;
+            const nomeConcetto = item.Concetto || item.concetto || item.Parola || item.parola;
+
+            if (nomeFilosofo && nomeConcetto) {
+                
+                // Prepariamo i dati per la funzione del PASSO 1
+                const linkData = {
+                    parola: nomeConcetto,
+                    definizione: item.Definizione || item.Significato || item.testo || "",
+                    termine_originale: item.Termine_Originale || item.Greco_Latino || "", // Es. Aletheia
+                    citazione: item.Citazione || item.Testo || item.Fonte || "",
+                    opera: item.Opera || item.opera || "",
+                    nomeFilosofo: nomeFilosofo,
+                    scuolaFilosofo: item.Scuola || item.scuola || ""
+                };
+                
+                // Generiamo un ID sicuro per il filosofo (es. "Martin Heidegger" -> "martin_heidegger")
+                const philId = nomeFilosofo.toLowerCase().trim().replace(/\s+/g, '_');
+                
+                // CHIAMATA ALLA FUNZIONE DEL PASSO 1
+                // (Assicurati di aver incollato prima la funzione linkConceptToPhilosopher!)
+                if (typeof linkConceptToPhilosopher === 'function') {
+                    await linkConceptToPhilosopher(philId, linkData);
+                    collegamentiFatti++;
+                }
+            }
+        }
+
+        console.log(`✅ Importazione terminata. Creati ${collegamentiFatti} collegamenti.`);
+        if (typeof showToast === 'function') {
+            showToast(`Importazione completata! Creati ${collegamentiFatti} collegamenti.`, 'success');
+        }
+        
+        // Se c'è una funzione per ricaricare la vista, chiamala qui
+        // es. loadPhilosophers();
+    }
+    
+    // Gestione errori opzionale
+    if (type === 'ERROR') {
+        console.error('Errore dal Worker:', e.data.message);
+        if (typeof showToast === 'function') showToast('Errore importazione: ' + e.data.message, 'error');
+    }
+};
+// ==========================================
+// LOGICA FRONTEND ANALISI COMPARATIVA
+// ==========================================
+
+// 1. Funzione per aprire la finestra e caricare i dati
+async function openComparativeAnalysis(conceptId) {
+    const db = window.db;
+    const modal = document.getElementById('analysis-modal');
+    
+    // Mostra caricamento...
+    document.getElementById('modal-concept-title').innerText = "Caricamento...";
+    modal.style.display = 'flex'; // Mostra la finestra
+
+    try {
+        // Recupera il documento del concetto
+        const docRef = window.doc(db, "concetti", conceptId);
+        const docSnap = await window.getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            renderAnalysisData(data);
+        } else {
+            alert("Dati del concetto non trovati.");
+            closeAnalysisModal();
+        }
+    } catch (e) {
+        console.error("Errore recupero concetto:", e);
+        alert("Errore nel caricamento dell'analisi.");
+    }
+}
+
+// 2. Funzione che disegna i dati nella finestra
+function renderAnalysisData(data) {
+    // Titolo e Definizione
+    document.getElementById('modal-concept-title').innerText = "Analisi: " + data.parola;
+    // Se c'è una definizione generale, prendiamo la prima o una generica
+    const defGenerale = data.interpretazioni[0]?.testo || "Definizione non disponibile";
+    document.getElementById('modal-concept-def').innerText = defGenerale;
+
+    // Svuota le colonne
+    const classicContainer = document.getElementById('classic-interpretations');
+    const modernContainer = document.getElementById('modern-interpretations');
+    const timelineContainer = document.getElementById('linguistic-timeline');
+    
+    classicContainer.innerHTML = '';
+    modernContainer.innerHTML = '';
+    timelineContainer.innerHTML = '';
+
+    // Cicla su tutte le interpretazioni (Filosofi)
+    data.interpretazioni.forEach(item => {
+        // A. Crea la Card del Filosofo
+        const card = document.createElement('div');
+        card.className = 'interpretation-card';
+        
+        // Verifica se ci sono i campi del PDF (Termine, Citazione)
+        const termineHtml = item.termine_originale 
+            ? `<div class="original-term"><i class="fas fa-font"></i> ${item.termine_originale}</div>` 
+            : '';
+            
+        const citazioneHtml = item.citazione 
+            ? `<div class="citation-box">"${item.citazione}"</div>` 
+            : '';
+
+        const operaHtml = item.opera 
+            ? `<small>Fonte: <em>${item.opera}</em></small>` 
+            : '';
+
+        card.innerHTML = `
+            <h4>${item.nomeAutore}</h4>
+            ${termineHtml}
+            <p>${item.testo}</p>
+            ${citazioneHtml}
+            ${operaHtml}
+        `;
+
+        // B. Decide dove metterlo (Classici vs Moderni)
+        // Logica semplice: se l'anno è > 1600 è Moderno/Contemporaneo, altrimenti Classico
+        // (Puoi affinare questa logica basandoti sul campo "periodo" o "scuola")
+        const isModern = isPhilosopherModern(item); 
+        
+        if (isModern) {
+            modernContainer.appendChild(card);
+        } else {
+            classicContainer.appendChild(card);
+        }
+
+        // C. Aggiungi alla Timeline Linguistica (solo se c'è un termine originale)
+        if (item.termine_originale) {
+            const timeTag = document.createElement('div');
+            timeTag.className = 'timeline-item';
+            timeTag.innerHTML = `${item.termine_originale} <span>(${item.nomeAutore})</span>`;
+            timelineContainer.appendChild(timeTag);
+        }
+    });
+}
+
+// Helper per decidere l'epoca (puoi personalizzarlo)
+function isPhilosopherModern(item) {
+    const period = (item.scuola || "").toLowerCase();
+    const modernKeywords = ['contemporaneo', 'moderno', 'esistenzialismo', 'fenomenologia', 'novecento', '800', '900'];
+    return modernKeywords.some(k => period.includes(k));
+}
+
+// 3. Chiudi Modale
+function closeAnalysisModal() {
+    document.getElementById('analysis-modal').style.display = 'none';
+}
+
+// Rendi la funzione globale per poterla chiamare dall'HTML
+window.openComparativeAnalysis = openComparativeAnalysis;
+window.closeAnalysisModal = closeAnalysisModal;

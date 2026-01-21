@@ -40,6 +40,23 @@ self.onmessage = function(e) {
 
 async function handleProcessExcel(data, options) {
     const { fileType, dataType, rawData } = data;
+// ============================================================
+    // MODIFICA LINKER (Per Dataset PDF e Collegamenti)
+    // ============================================================
+    
+    // Se ci sono dati grezzi (dall'Excel), li normalizziamo subito
+    if (rawData && Array.isArray(rawData)) {
+        // Usiamo la funzione che hai messo in fondo al file
+        const dataNormalizzati = rawData.map(row => normalizePhilosophicalHeaders(row));
+
+        // Inviamo subito i dati puliti ad app.js (che aspetta 'PROCESSING_COMPLETE')
+        self.postMessage({
+            type: 'PROCESSING_COMPLETE',
+            data: dataNormalizzati,
+            stats: { total: dataNormalizzati.length }
+        });
+    }
+    // ============================================================
     
     try {
         // Mostra progresso iniziale
@@ -590,9 +607,16 @@ function getExportColumnHeaders(dataType) {
             
         case 'concetti':
             return [
-                'ID', 'Parola', 'Parola_EN', 'Definizione', 'Definizione_EN',
-                'Esempio_Citazione', 'Autore_Riferimento', 'Opera_Riferimento',
-                'Periodo_Storico', 'Evoluzione', 'Categoria', 'Import_Timestamp'
+                'ID', 
+                'Parola', 
+                'Filosofo',          // NUOVO: Chi lo dice?
+                'Definizione', 
+                'Termine_Originale', // NUOVO: Aletheia, Adaequatio (Richiesta PDF)
+                'Citazione',         // NUOVO: Testo esatto (Richiesta PDF)
+                'Opera',             // NUOVO: Fonte
+                'Scuola',            // Per i marker colorati
+                'Categoria', 
+                'Import_Timestamp'
             ];
             
         default:
@@ -1266,11 +1290,13 @@ function getExampleRows(dataType) {
         concetti: [
             {
                 Parola: 'Verità',
-                Parola_EN: 'Truth',
-                Definizione: 'Corrispondenza tra pensiero e realtà, o svelamento dell\'essere...',
-                Autore_Riferimento: 'Platone, Aristotele, Heidegger',
-                Periodo_Storico: 'dall\'antichità a oggi',
-                Categoria: 'epistemologia'
+                Filosofo: 'Platone',
+                Definizione: 'Visione intellettuale delle idee',
+                Termine_Originale: 'Aletheia',
+                Citazione: 'La verità dimora nella pianura della verità...',
+                Opera: 'Fedro',
+                Scuola: 'Platonismo',
+                Categoria: 'Epistemologia'
             }
         ]
     };
@@ -1325,3 +1351,51 @@ self.postMessage({
 });
 
 console.log('✅ Excel Worker per Aeterna Lexicon caricato correttamente');
+// ==========================================
+// FUNZIONE DI NORMALIZZAZIONE HEADER (Per il PDF)
+// ==========================================
+function normalizePhilosophicalHeaders(row) {
+    const normalized = {};
+    
+    Object.keys(row).forEach(key => {
+        const val = row[key];
+        const lowerKey = key.toLowerCase().trim();
+
+        // MAPPATURA INTELLIGENTE DELLE COLONNE
+        
+        // 1. Identificazione Filosofo
+        if (['filosofo', 'autore', 'nome', 'pensatore'].some(k => lowerKey.includes(k))) {
+            normalized.Filosofo = val;
+        }
+        // 2. Identificazione Concetto
+        else if (['concetto', 'parola', 'termine', 'keyword'].some(k => lowerKey === k)) {
+            normalized.Concetto = val;
+        }
+        // 3. Termine Originale (Richiesta PDF: Aletheia, Veritas...)
+        else if (['originale', 'greco', 'latino', 'termine originale', 'etimologia'].some(k => lowerKey.includes(k))) {
+            normalized.Termine_Originale = val;
+        }
+        // 4. Citazione Testuale (Richiesta PDF: Dataset testi)
+        else if (['citazione', 'testo', 'fonte', 'estratto', 'brano'].some(k => lowerKey.includes(k))) {
+            normalized.Citazione = val;
+        }
+        // 5. Definizione/Interpretazione
+        else if (['definizione', 'significato', 'interpretazione', 'pensiero'].some(k => lowerKey.includes(k))) {
+            normalized.Definizione = val;
+        }
+        // 6. Opera di riferimento
+        else if (['opera', 'libro', 'trattato', 'riferimento'].some(k => lowerKey.includes(k))) {
+            normalized.Opera = val;
+        }
+        // 7. Scuola (per i marker colorati)
+        else if (['scuola', 'corrente', 'periodo', 'gruppo'].some(k => lowerKey.includes(k))) {
+            normalized.Scuola = val;
+        }
+        // Mantieni tutto il resto (es. date, luoghi)
+        else {
+            normalized[key] = val;
+        }
+    });
+
+    return normalized;
+}

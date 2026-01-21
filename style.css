@@ -2989,3 +2989,109 @@ html, body {
     transform: scale(0.7) !important; 
     margin-left: 5px !important;
 }
+/* ========================================== */
+/* STILI ANALISI COMPARATIVA (DA INCOLLARE IN FONDO) */
+/* ========================================== */
+
+/* Sfondo scuro */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+/* La finestra bianca */
+.analysis-container {
+    background: white;
+    width: 90%;
+    max-width: 1200px;
+    height: 90vh;
+    border-radius: 15px;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.analysis-header {
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 15px 15px 0 0;
+}
+
+.analysis-body { padding: 20px; }
+
+/* Griglia Confronto */
+.comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+    .comparison-grid { grid-template-columns: 1fr; }
+}
+
+.era-column {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    border-top: 5px solid #ccc;
+}
+
+.era-column.classic { border-color: #d4af37; /* Oro per classici */ }
+.era-column.modern { border-color: #ff6b6b; /* Rosso per moderni */ }
+
+/* Card del singolo filosofo */
+.interpretation-card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border-left: 4px solid #2575fc;
+}
+
+.original-term {
+    background: #eef2ff;
+    color: #4338ca;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+
+.citation-box {
+    font-style: italic;
+    color: #555;
+    border-left: 2px solid #ddd;
+    padding-left: 10px;
+    margin: 10px 0;
+    font-size: 0.95em;
+}
+
+/* Timeline linguistica */
+.linguistic-box { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+.timeline-row { display: flex; gap: 15px; flex-wrap: wrap; }
+.timeline-item {
+    background: #4a5568;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+}
+.timeline-item span { opacity: 0.7; font-size: 0.8em; margin-left: 5px; }
+
+.close-btn { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; }
