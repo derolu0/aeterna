@@ -1,4 +1,7 @@
-// Analytics Manager - Versione Filosofica
+[file name]: analytics.js
+[file content begin]
+// Analytics Manager - Versione Filosofica Avanzata
+// Integrazione completa con sistema Aeterna Lexicon in Motu
 class AnalyticsManager {
     constructor() {
         this.isInitialized = false;
@@ -7,7 +10,9 @@ class AnalyticsManager {
             trackingEnabled: true,
             sessionTimeout: 30 * 60 * 1000,
             batchSize: 10,
-            flushInterval: 10000
+            flushInterval: 10000,
+            comparativeAnalysis: true,
+            conceptMapTracking: true
         };
         
         this.session = {
@@ -15,13 +20,16 @@ class AnalyticsManager {
             startTime: Date.now(),
             pageViews: 0,
             events: 0,
-            lastActivity: Date.now()
+            lastActivity: Date.now(),
+            comparativeAnalyses: 0,
+            conceptMapInteractions: 0
         };
         
         this.user = {
             id: this.getUserId(),
             device: this.getDeviceInfo(),
-            preferences: {}
+            preferences: {},
+            analysisHistory: []
         };
         
         // Performance metrics
@@ -29,12 +37,26 @@ class AnalyticsManager {
             appStart: Date.now(),
             pageLoadTimes: [],
             imageLoadTimes: [],
-            dataFetchTimes: []
+            dataFetchTimes: [],
+            comparativeAnalysisTimes: [],
+            conceptMapLoadTimes: []
         };
         
-        // Initialize Service Worker for analytics
+        // Analytics specifici per Aeterna Lexicon
+        this.philosophyAnalytics = {
+            conceptsViewed: new Set(),
+            philosophersViewed: new Set(),
+            worksViewed: new Set(),
+            comparativeAnalyses: [],
+            timelineInteractions: [],
+            transformationsIdentified: []
+        };
+        
+        // Inizializza supporto Service Worker
         this.initializeServiceWorkerSupport();
     }
+    
+    // ============ INIZIALIZZAZIONE ============
     
     async initializeServiceWorkerSupport() {
         if ('serviceWorker' in navigator) {
@@ -42,14 +64,15 @@ class AnalyticsManager {
                 const registration = await navigator.serviceWorker.ready;
                 console.log('[Analytics] Service Worker pronto');
                 
-                // Send analytics config to Service Worker
+                // Invia configurazione analytics a Service Worker
                 if (registration.active) {
                     registration.active.postMessage({
                         type: 'ANALYTICS_CONFIG',
                         config: {
                             enabled: this.config.trackingEnabled,
                             sessionId: this.session.id,
-                            userId: this.user.id
+                            userId: this.user.id,
+                            project: 'Aeterna Lexicon in Motu'
                         }
                     });
                 }
@@ -69,11 +92,21 @@ class AnalyticsManager {
             this.startAutoFlush();
             this.trackSessionStart();
             this.setupEventListeners();
+            this.setupComparativeAnalysisListeners();
             
             this.isInitialized = true;
-            console.log('[Analytics] Inizializzato con successo');
+            console.log('[Analytics] Inizializzato con successo - Sistema Filosofico Attivo');
+            
+            // Traccia avvio sistema analitico filosofico
+            this.trackEvent('analytics', 'system_initialized', 'philosophical_system', null, {
+                features: ['comparative_analysis', 'concept_map', 'timeline_tracking'],
+                project: 'Aeterna Lexicon in Motu',
+                version: '2.0.0'
+            });
+            
         } catch (error) {
             console.error('[Analytics] Errore inizializzazione:', error);
+            this.trackError(error, 'analytics_initialization', 'high');
         }
     }
     
@@ -84,26 +117,39 @@ class AnalyticsManager {
         }
         
         try {
-            const { getAnalytics, logEvent } = await import(
-                "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
-            );
-            
-            if (window.app) {
-                window.firebaseAnalytics = getAnalytics(window.app);
-                console.log('[Analytics] Firebase Analytics inizializzato');
+            // Controlla se Firebase è disponibile via modulo ES
+            if (typeof import !== 'undefined') {
+                const { getAnalytics } = await import(
+                    "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
+                );
                 
-                // Traccia prima pagina
+                if (window.app) {
+                    window.firebaseAnalytics = getAnalytics(window.app);
+                    console.log('[Analytics] Firebase Analytics inizializzato (ES Module)');
+                }
+            }
+            
+            // Fallback: controlla se Firebase esiste globalmente
+            if (!window.firebaseAnalytics && window.firebase && window.firebase.analytics) {
+                window.firebaseAnalytics = window.firebase.analytics();
+                console.log('[Analytics] Firebase Analytics inizializzato (Global)');
+            }
+            
+            if (window.firebaseAnalytics) {
+                // Traccia avvio app filosofica
                 this.sendToFirebaseAnalytics({
                     type: 'APP_START',
                     timestamp: Date.now(),
                     session_id: this.session.id,
                     user_id: this.user.id,
                     device: this.user.device,
-                    project: 'Aeterna Lexicon in Motu'
+                    project: 'Aeterna Lexicon in Motu',
+                    philosophical_system: true
                 });
                 
                 return window.firebaseAnalytics;
             }
+            
         } catch (error) {
             console.warn('[Analytics] Firebase Analytics non disponibile:', error);
         }
@@ -111,7 +157,7 @@ class AnalyticsManager {
         return null;
     }
     
-    // ============ EVENTI FILOSOFICI ============
+    // ============ EVENTI FILOSOFICI AVANZATI ============
     
     trackEvent(category, action, label = null, value = null, customParams = {}) {
         if (!this.config.trackingEnabled) return;
@@ -125,7 +171,8 @@ class AnalyticsManager {
             value,
             session_id: this.session.id,
             user_id: this.user.id,
-            project: 'Aeterna Lexicon',
+            project: 'Aeterna Lexicon in Motu',
+            philosophical_context: true,
             ...customParams
         };
         
@@ -156,13 +203,12 @@ class AnalyticsManager {
             session_id: this.session.id,
             user_id: this.user.id,
             page_views: ++this.session.pageViews,
-            project: 'Aeterna Lexicon',
+            project: 'Aeterna Lexicon in Motu',
+            philosophical_section: this.getPhilosophicalSection(pageName),
             ...customParams
         };
         
         this.queue.push(pageView);
-        
-        // Invia a Firebase Analytics
         this.sendToFirebaseAnalytics(pageView);
         
         this.session.lastActivity = Date.now();
@@ -170,6 +216,8 @@ class AnalyticsManager {
         
         return pageView;
     }
+    
+    // ============ TRACKING FILOSOFICO SPECIFICO ============
     
     trackFilosofoView(filosofoName, periodo, customParams = {}) {
         const event = {
@@ -179,11 +227,15 @@ class AnalyticsManager {
             periodo: periodo,
             session_id: this.session.id,
             user_id: this.user.id,
+            philosophical_tracking: true,
             ...customParams
         };
         
         this.queue.push(event);
         this.sendToFirebaseAnalytics(event);
+        
+        // Aggiungi alla cronologia
+        this.philosophyAnalytics.philosophersViewed.add(filosofoName);
         
         this.logActivity(`Filosofo visto: ${filosofoName} (${periodo})`, event);
         
@@ -199,11 +251,15 @@ class AnalyticsManager {
             anno: anno,
             session_id: this.session.id,
             user_id: this.user.id,
+            philosophical_tracking: true,
             ...customParams
         };
         
         this.queue.push(event);
         this.sendToFirebaseAnalytics(event);
+        
+        // Aggiungi alla cronologia
+        this.philosophyAnalytics.worksViewed.add(operaName);
         
         this.logActivity(`Opera vista: ${operaName} (${autore})`, event);
         
@@ -218,16 +274,221 @@ class AnalyticsManager {
             periodo: periodo,
             session_id: this.session.id,
             user_id: this.user.id,
+            philosophical_tracking: true,
             ...customParams
         };
         
         this.queue.push(event);
         this.sendToFirebaseAnalytics(event);
         
+        // Aggiungi alla cronologia
+        this.philosophyAnalytics.conceptsViewed.add(concettoName);
+        
         this.logActivity(`Concetto visto: ${concettoName} (${periodo})`, event);
         
         return event;
     }
+    
+    // ============ ANALISI COMPARATIVA ============
+    
+    async trackComparativeAnalysis(termine, trigger = 'manual') {
+        if (!this.config.trackingEnabled || !this.config.comparativeAnalysis) return;
+        
+        const startTime = Date.now();
+        
+        try {
+            // Usa le funzioni di analisi comparativa da firebase-init.js
+            let analisi;
+            if (window.firebaseHelpers && window.firebaseHelpers.analizzaTermineComparativo) {
+                analisi = await window.firebaseHelpers.analizzaTermineComparativo(termine);
+            } else {
+                // Fallback a dati demo
+                analisi = await this.performDemoComparativeAnalysis(termine);
+            }
+            
+            const duration = Date.now() - startTime;
+            this.metrics.comparativeAnalysisTimes.push(duration);
+            
+            const event = {
+                type: 'COMPARATIVE_ANALYSIS',
+                timestamp: Date.now(),
+                termine: termine,
+                trigger: trigger,
+                duration: duration,
+                risultati: {
+                    classico_occorrenze: analisi.analisi?.classico?.occorrenze || 0,
+                    contemporaneo_occorrenze: analisi.analisi?.contemporaneo?.occorrenze || 0,
+                    trasformazioni: analisi.analisi?.trasformazioni?.length || 0,
+                    timeline_entries: analisi.analisi?.timeline?.length || 0
+                },
+                session_id: this.session.id,
+                user_id: this.user.id,
+                project: 'Aeterna Lexicon in Motu',
+                analysis_id: this.generateAnalysisId()
+            };
+            
+            this.queue.push(event);
+            this.sendToFirebaseAnalytics(event);
+            
+            // Aggiorna statistiche sessione
+            this.session.comparativeAnalyses++;
+            this.philosophyAnalytics.comparativeAnalyses.push({
+                termine,
+                timestamp: new Date().toISOString(),
+                results: event.risultati
+            });
+            
+            // Salva nella cronologia utente
+            this.user.analysisHistory.push({
+                termine,
+                timestamp: new Date().toISOString(),
+                duration,
+                results: event.risultati
+            });
+            
+            // Limita cronologia a 50 analisi
+            if (this.user.analysisHistory.length > 50) {
+                this.user.analysisHistory = this.user.analysisHistory.slice(-50);
+            }
+            
+            this.logActivity(`Analisi comparativa: ${termine} (${duration}ms)`, event);
+            
+            return { success: true, event, analisi };
+            
+        } catch (error) {
+            const duration = Date.now() - startTime;
+            
+            const errorEvent = {
+                type: 'COMPARATIVE_ANALYSIS_ERROR',
+                timestamp: Date.now(),
+                termine: termine,
+                trigger: trigger,
+                duration: duration,
+                error: error.message,
+                session_id: this.session.id,
+                user_id: this.user.id,
+                project: 'Aeterna Lexicon in Motu'
+            };
+            
+            this.queue.push(errorEvent);
+            this.sendToFirebaseAnalytics(errorEvent);
+            this.trackError(error, 'comparative_analysis', 'medium');
+            
+            return { success: false, error: error.message, event: errorEvent };
+        }
+    }
+    
+    trackTimelineInteraction(action, periodo, secolo, elementType) {
+        const event = {
+            type: 'TIMELINE_INTERACTION',
+            timestamp: Date.now(),
+            action: action,
+            periodo: periodo,
+            secolo: secolo,
+            element_type: elementType,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            project: 'Aeterna Lexicon in Motu'
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        // Salva interazione timeline
+        this.philosophyAnalytics.timelineInteractions.push({
+            action,
+            periodo,
+            secolo,
+            timestamp: new Date().toISOString()
+        });
+        
+        this.logActivity(`Timeline: ${action} - ${periodo} (${secolo})`, event);
+        
+        return event;
+    }
+    
+    trackTransformationView(trasformazione, termine) {
+        const event = {
+            type: 'TRANSFORMATION_VIEW',
+            timestamp: Date.now(),
+            trasformazione: trasformazione,
+            termine: termine,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            project: 'Aeterna Lexicon in Motu'
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        // Salva trasformazione vista
+        this.philosophyAnalytics.transformationsIdentified.push({
+            trasformazione,
+            termine,
+            timestamp: new Date().toISOString()
+        });
+        
+        this.logActivity(`Trasformazione: ${trasformazione} per ${termine}`, event);
+        
+        return event;
+    }
+    
+    // ============ MAPPA CONCETTUALE ============
+    
+    trackConceptMapInteraction(nodeType, nodeName, action, customParams = {}) {
+        if (!this.config.conceptMapTracking) return;
+        
+        const event = {
+            type: 'CONCEPT_MAP_INTERACTION',
+            timestamp: Date.now(),
+            node_type: nodeType,
+            node_name: nodeName,
+            action: action,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            project: 'Aeterna Lexicon in Motu',
+            ...customParams
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        // Aggiorna statistiche
+        this.session.conceptMapInteractions++;
+        
+        // Se è un concetto, aggiungi a quelli visti
+        if (nodeType === 'concetto') {
+            this.philosophyAnalytics.conceptsViewed.add(nodeName);
+        }
+        
+        this.logActivity(`Mappa concettuale: ${action} ${nodeType} - ${nodeName}`, event);
+        
+        return event;
+    }
+    
+    trackConceptMapLoad(duration, nodeCount, edgeCount) {
+        const event = {
+            type: 'CONCEPT_MAP_LOAD',
+            timestamp: Date.now(),
+            duration: duration,
+            node_count: nodeCount,
+            edge_count: edgeCount,
+            session_id: this.session.id,
+            user_id: this.user.id,
+            project: 'Aeterna Lexicon in Motu'
+        };
+        
+        this.queue.push(event);
+        this.sendToFirebaseAnalytics(event);
+        
+        this.metrics.conceptMapLoadTimes.push(duration);
+        
+        this.logActivity(`Mappa concettuale caricata: ${nodeCount} nodi, ${edgeCount} relazioni (${duration}ms)`, event);
+        
+        return event;
+    }
+    
+    // ============ MAPPA GEOGRAFICA ============
     
     trackMapInteraction(action, target, coordinates = null, customParams = {}) {
         const event = {
@@ -238,6 +499,7 @@ class AnalyticsManager {
             coordinates: coordinates,
             session_id: this.session.id,
             user_id: this.user.id,
+            project: 'Aeterna Lexicon in Motu',
             ...customParams
         };
         
@@ -249,24 +511,7 @@ class AnalyticsManager {
         return event;
     }
     
-    trackConceptMapInteraction(nodeType, nodeName, customParams = {}) {
-        const event = {
-            type: 'CONCEPT_MAP_INTERACTION',
-            timestamp: Date.now(),
-            node_type: nodeType,
-            node_name: nodeName,
-            session_id: this.session.id,
-            user_id: this.user.id,
-            ...customParams
-        };
-        
-        this.queue.push(event);
-        this.sendToFirebaseAnalytics(event);
-        
-        this.logActivity(`Mappa concettuale: ${nodeType} - ${nodeName}`, event);
-        
-        return event;
-    }
+    // ============ RICERCHE ============
     
     trackSearch(query, category, resultsCount = 0, customParams = {}) {
         const event = {
@@ -277,6 +522,8 @@ class AnalyticsManager {
             results_count: resultsCount,
             session_id: this.session.id,
             user_id: this.user.id,
+            project: 'Aeterna Lexicon in Motu',
+            philosophical_search: category === 'concetti' || category === 'filosofi',
             ...customParams
         };
         
@@ -288,6 +535,8 @@ class AnalyticsManager {
         return event;
     }
     
+    // ============ ERRORI E PERFORMANCE ============
+    
     trackError(error, context, severity = 'medium', customParams = {}) {
         const errorEvent = {
             type: 'ERROR',
@@ -295,21 +544,22 @@ class AnalyticsManager {
             error: {
                 name: error.name,
                 message: error.message,
-                stack: error.stack,
+                stack: error.stack?.substring(0, 500), // Limita stack trace
                 code: error.code
             },
             context,
             severity,
             session_id: this.session.id,
             user_id: this.user.id,
-            project: 'Aeterna Lexicon',
+            project: 'Aeterna Lexicon in Motu',
             ...customParams
         };
         
         this.queue.push(errorEvent);
-        
-        // Invia a Firebase Analytics
         this.sendToFirebaseAnalytics(errorEvent);
+        
+        // Salva errori localmente
+        this.saveErrorLocally(errorEvent);
         
         this.logActivity(`Errore: ${context} - ${error.message}`, errorEvent);
         
@@ -324,6 +574,7 @@ class AnalyticsManager {
             duration: duration,
             session_id: this.session.id,
             user_id: this.user.id,
+            project: 'Aeterna Lexicon in Motu',
             ...customParams
         };
         
@@ -336,6 +587,10 @@ class AnalyticsManager {
             this.metrics.imageLoadTimes.push(duration);
         } else if (name.includes('data')) {
             this.metrics.dataFetchTimes.push(duration);
+        } else if (name.includes('comparative')) {
+            this.metrics.comparativeAnalysisTimes.push(duration);
+        } else if (name.includes('concept_map')) {
+            this.metrics.conceptMapLoadTimes.push(duration);
         }
         
         this.logActivity(`Performance: ${name} - ${duration}ms`, perfEvent);
@@ -343,14 +598,78 @@ class AnalyticsManager {
         return perfEvent;
     }
     
+    // ============ SESSIONI ============
+    
+    trackSessionStart() {
+        const sessionEvent = {
+            type: 'SESSION_START',
+            timestamp: Date.now(),
+            session_id: this.session.id,
+            user_id: this.user.id,
+            device: this.user.device,
+            app_version: '2.0.0',
+            project: 'Aeterna Lexicon in Motu',
+            philosophical_dataset: true
+        };
+        
+        this.queue.push(sessionEvent);
+        this.sendToFirebaseAnalytics(sessionEvent);
+        
+        this.logActivity('Sessione iniziata', sessionEvent);
+    }
+    
+    trackSessionEnd() {
+        const sessionDuration = Date.now() - this.session.startTime;
+        const sessionEvent = {
+            type: 'SESSION_END',
+            timestamp: Date.now(),
+            session_id: this.session.id,
+            user_id: this.user.id,
+            duration: sessionDuration,
+            page_views: this.session.pageViews,
+            events: this.session.events,
+            comparative_analyses: this.session.comparativeAnalyses,
+            concept_map_interactions: this.session.conceptMapInteractions,
+            project: 'Aeterna Lexicon in Motu'
+        };
+        
+        this.queue.push(sessionEvent);
+        this.sendToFirebaseAnalytics(sessionEvent);
+        
+        // Genera nuova sessione
+        this.session = {
+            id: this.generateSessionId(),
+            startTime: Date.now(),
+            pageViews: 0,
+            events: 0,
+            lastActivity: Date.now(),
+            comparativeAnalyses: 0,
+            conceptMapInteractions: 0
+        };
+        
+        this.logActivity('Sessione terminata', sessionEvent);
+    }
+    
+    // ============ FIREBASE ANALYTICS INTEGRATION ============
+    
     async sendToFirebaseAnalytics(eventData) {
         if (!window.firebaseAnalytics) return;
         
         try {
-            const { logEvent } = await import(
-                "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
-            );
+            // Prova con ES modules
+            let logEvent;
+            if (typeof import !== 'undefined') {
+                const analyticsModule = await import(
+                    "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
+                );
+                logEvent = analyticsModule.logEvent;
+            } else if (window.firebase && window.firebase.analytics) {
+                logEvent = window.firebase.analytics.logEvent;
+            } else {
+                return;
+            }
             
+            // Mappa eventi personalizzati su eventi Firebase
             switch(eventData.type) {
                 case 'PAGE_VIEW':
                     logEvent(window.firebaseAnalytics, 'page_view', {
@@ -359,7 +678,8 @@ class AnalyticsManager {
                         page_path: window.location.pathname,
                         session_id: eventData.session_id,
                         user_id: eventData.user_id,
-                        project: eventData.project || 'Aeterna Lexicon'
+                        project: eventData.project,
+                        philosophical_section: eventData.philosophical_section
                     });
                     break;
                     
@@ -380,7 +700,7 @@ class AnalyticsManager {
                         filosofo_periodo: eventData.periodo,
                         session_id: eventData.session_id,
                         user_id: eventData.user_id,
-                        project: 'Aeterna Lexicon'
+                        project: 'Aeterna Lexicon in Motu'
                     });
                     break;
                     
@@ -391,7 +711,7 @@ class AnalyticsManager {
                         opera_anno: eventData.anno,
                         session_id: eventData.session_id,
                         user_id: eventData.user_id,
-                        project: 'Aeterna Lexicon'
+                        project: 'Aeterna Lexicon in Motu'
                     });
                     break;
                     
@@ -401,7 +721,53 @@ class AnalyticsManager {
                         concetto_periodo: eventData.periodo,
                         session_id: eventData.session_id,
                         user_id: eventData.user_id,
-                        project: 'Aeterna Lexicon'
+                        project: 'Aeterna Lexicon in Motu'
+                    });
+                    break;
+                    
+                case 'COMPARATIVE_ANALYSIS':
+                    logEvent(window.firebaseAnalytics, 'comparative_analysis', {
+                        termine: eventData.termine,
+                        analysis_trigger: eventData.trigger,
+                        analysis_duration: eventData.duration,
+                        classico_occorrenze: eventData.risultati?.classico_occorrenze,
+                        contemporaneo_occorrenze: eventData.risultati?.contemporaneo_occorrenze,
+                        trasformazioni_trovate: eventData.risultati?.trasformazioni,
+                        timeline_entries: eventData.risultati?.timeline_entries,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id,
+                        project: 'Aeterna Lexicon in Motu'
+                    });
+                    break;
+                    
+                case 'CONCEPT_MAP_INTERACTION':
+                    logEvent(window.firebaseAnalytics, 'concept_map_interaction', {
+                        node_type: eventData.node_type,
+                        node_name: eventData.node_name,
+                        interaction_action: eventData.action,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id,
+                        project: 'Aeterna Lexicon in Motu'
+                    });
+                    break;
+                    
+                case 'TIMELINE_INTERACTION':
+                    logEvent(window.firebaseAnalytics, 'timeline_interaction', {
+                        timeline_action: eventData.action,
+                        timeline_periodo: eventData.periodo,
+                        timeline_secolo: eventData.secolo,
+                        element_type: eventData.element_type,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id
+                    });
+                    break;
+                    
+                case 'TRANSFORMATION_VIEW':
+                    logEvent(window.firebaseAnalytics, 'transformation_viewed', {
+                        trasformazione: eventData.trasformazione,
+                        termine: eventData.termine,
+                        session_id: eventData.session_id,
+                        user_id: eventData.user_id
                     });
                     break;
                     
@@ -416,20 +782,12 @@ class AnalyticsManager {
                     });
                     break;
                     
-                case 'CONCEPT_MAP_INTERACTION':
-                    logEvent(window.firebaseAnalytics, 'concept_map_interaction', {
-                        node_type: eventData.node_type,
-                        node_name: eventData.node_name,
-                        session_id: eventData.session_id,
-                        user_id: eventData.user_id
-                    });
-                    break;
-                    
                 case 'SEARCH':
                     logEvent(window.firebaseAnalytics, 'search_performed', {
                         search_query: eventData.query?.substring(0, 100) || '',
                         search_category: eventData.category,
                         search_results: eventData.results_count,
+                        philosophical_search: eventData.philosophical_search,
                         session_id: eventData.session_id,
                         user_id: eventData.user_id
                     });
@@ -443,7 +801,7 @@ class AnalyticsManager {
                         error_severity: eventData.severity,
                         session_id: eventData.session_id,
                         user_id: eventData.user_id,
-                        project: 'Aeterna Lexicon'
+                        project: 'Aeterna Lexicon in Motu'
                     });
                     break;
                     
@@ -463,7 +821,7 @@ class AnalyticsManager {
                         device_platform: eventData.device?.platform,
                         device_online: eventData.device?.online,
                         app_version: '2.0.0',
-                        project: 'Aeterna Lexicon'
+                        project: 'Aeterna Lexicon in Motu'
                     });
                     break;
                     
@@ -473,7 +831,8 @@ class AnalyticsManager {
                         user_id: eventData.user_id,
                         device_type: eventData.device?.userAgent?.includes('Mobile') ? 'mobile' : 'desktop',
                         pwa_mode: window.matchMedia('(display-mode: standalone)').matches,
-                        project: eventData.project || 'Aeterna Lexicon'
+                        project: eventData.project || 'Aeterna Lexicon in Motu',
+                        philosophical_system: true
                     });
                     break;
             }
@@ -482,50 +841,7 @@ class AnalyticsManager {
         }
     }
     
-    trackSessionStart() {
-        const sessionEvent = {
-            type: 'SESSION_START',
-            timestamp: Date.now(),
-            session_id: this.session.id,
-            user_id: this.user.id,
-            device: this.user.device,
-            app_version: '2.0.0',
-            project: 'Aeterna Lexicon'
-        };
-        
-        this.queue.push(sessionEvent);
-        this.sendToFirebaseAnalytics(sessionEvent);
-        
-        this.logActivity('Sessione iniziata', sessionEvent);
-    }
-    
-    trackSessionEnd() {
-        const sessionDuration = Date.now() - this.session.startTime;
-        const sessionEvent = {
-            type: 'SESSION_END',
-            timestamp: Date.now(),
-            session_id: this.session.id,
-            user_id: this.user.id,
-            duration: sessionDuration,
-            page_views: this.session.pageViews,
-            events: this.session.events,
-            project: 'Aeterna Lexicon'
-        };
-        
-        this.queue.push(sessionEvent);
-        this.sendToFirebaseAnalytics(sessionEvent);
-        
-        // Genera nuova sessione
-        this.session = {
-            id: this.generateSessionId(),
-            startTime: Date.now(),
-            pageViews: 0,
-            events: 0,
-            lastActivity: Date.now()
-        };
-        
-        this.logActivity('Sessione terminata', sessionEvent);
-    }
+    // ============ GESTIONE DATI LOCALI ============
     
     async flushQueue(force = false) {
         if (this.queue.length === 0) return;
@@ -541,13 +857,17 @@ class AnalyticsManager {
             // Salva localmente
             this.saveEventsLocally(eventsToSend);
             
-            // Invia a Firestore (se online)
+            // Invia a Firestore (se online e db disponibile)
             if (navigator.onLine && window.db) {
                 await this.sendToFirestore(eventsToSend);
                 this.cleanupOldLocalEvents();
             } else {
                 this.saveForLater(eventsToSend);
             }
+            
+            // Aggiorna last sync time
+            localStorage.setItem('analytics_last_sync', new Date().toISOString());
+            
         } catch (error) {
             console.error('[Analytics] Errore flush queue:', error);
             this.queue.unshift(...eventsToSend);
@@ -557,24 +877,35 @@ class AnalyticsManager {
     
     async sendToFirestore(events) {
         try {
-            const { collection, addDoc } = await import(
-                "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js"
-            );
+            // Usa le funzioni Firebase disponibili
+            if (window.firebaseHelpers && window.firebaseHelpers.sendAnalytics) {
+                await window.firebaseHelpers.sendAnalytics({
+                    events: events,
+                    sent_at: new Date().toISOString(),
+                    session_id: this.session.id,
+                    user_id: this.user.id,
+                    device: this.user.device,
+                    source: 'analytics_js_v2',
+                    project: 'Aeterna Lexicon in Motu',
+                    philosophical_analytics: true
+                });
+            } else if (window.db) {
+                // Fallback a Firestore diretto
+                const batchData = {
+                    events: events,
+                    sent_at: new Date().toISOString(),
+                    session_id: this.session.id,
+                    user_id: this.user.id,
+                    device: this.user.device,
+                    source: 'analytics_js',
+                    project: 'Aeterna Lexicon in Motu',
+                    philosophical_analytics: true
+                };
+                
+                const analyticsRef = window.db.collection('analytics');
+                await analyticsRef.add(batchData);
+            }
             
-            const batchData = {
-                events: events,
-                sent_at: new Date().toISOString(),
-                session_id: this.session.id,
-                user_id: this.user.id,
-                device: this.user.device,
-                source: 'analytics_js',
-                project: 'Aeterna Lexicon'
-            };
-            
-            const analyticsRef = collection(window.db, 'analytics');
-            await addDoc(analyticsRef, batchData);
-            
-            localStorage.setItem('analytics_last_sync', new Date().toISOString());
             console.log(`[Analytics] ${events.length} eventi inviati a Firestore`);
         } catch (error) {
             console.error('[Analytics] Errore invio a Firestore:', error);
@@ -582,8 +913,72 @@ class AnalyticsManager {
         }
     }
     
+    saveEventsLocally(events) {
+        try {
+            const localEvents = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+            localEvents.push(...events);
+            
+            if (localEvents.length > 5000) {
+                localEvents.splice(0, localEvents.length - 5000);
+            }
+            
+            localStorage.setItem('analytics_events', JSON.stringify(localEvents));
+        } catch (error) {
+            console.error('[Analytics] Errore salvataggio locale:', error);
+        }
+    }
+    
+    saveErrorLocally(errorEvent) {
+        try {
+            const errors = JSON.parse(localStorage.getItem('analytics_errors') || '[]');
+            errors.push(errorEvent);
+            
+            if (errors.length > 1000) {
+                errors.splice(0, errors.length - 1000);
+            }
+            
+            localStorage.setItem('analytics_errors', JSON.stringify(errors));
+        } catch (error) {
+            console.warn('[Analytics] Errore salvataggio errori:', error);
+        }
+    }
+    
+    saveForLater(events) {
+        try {
+            const pendingEvents = JSON.parse(localStorage.getItem('analytics_pending') || '[]');
+            pendingEvents.push(...events);
+            localStorage.setItem('analytics_pending', JSON.stringify(pendingEvents));
+            
+            console.log(`[Analytics] ${events.length} eventi salvati per dopo (offline)`);
+        } catch (error) {
+            console.error('[Analytics] Errore salvataggio pending:', error);
+        }
+    }
+    
+    async sendPendingEvents() {
+        try {
+            const pendingEvents = JSON.parse(localStorage.getItem('analytics_pending') || '[]');
+            
+            if (pendingEvents.length === 0) return;
+            
+            if (navigator.onLine && window.db) {
+                await this.sendToFirestore(pendingEvents);
+                localStorage.removeItem('analytics_pending');
+                console.log(`[Analytics] ${pendingEvents.length} eventi pendenti inviati`);
+            }
+        } catch (error) {
+            console.error('[Analytics] Errore invio eventi pendenti:', error);
+        }
+    }
+    
+    // ============ UTILITY ============
+    
     generateSessionId() {
-        return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        return 'sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
+    generateAnalysisId() {
+        return 'analisi_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
     }
     
     getUserId() {
@@ -611,9 +1006,23 @@ class AnalyticsManager {
             },
             online: navigator.onLine,
             pwa: window.matchMedia('(display-mode: standalone)').matches,
-            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            deviceMemory: navigator.deviceMemory || 'unknown',
+            hardwareConcurrency: navigator.hardwareConcurrency || 'unknown'
         };
     }
+    
+    getPhilosophicalSection(pageName) {
+        if (pageName.includes('filosofi')) return 'filosofi';
+        if (pageName.includes('opere')) return 'opere';
+        if (pageName.includes('concetti')) return 'concetti';
+        if (pageName.includes('mappa')) return 'mappa';
+        if (pageName.includes('analisi')) return 'analisi';
+        if (pageName.includes('home')) return 'home';
+        return 'altro';
+    }
+    
+    // ============ SETUP EVENT LISTENERS ============
     
     startAutoFlush() {
         setInterval(() => {
@@ -623,47 +1032,6 @@ class AnalyticsManager {
         setTimeout(() => {
             this.sendPendingEvents();
         }, 5000);
-    }
-    
-    saveEventsLocally(events) {
-        try {
-            const localEvents = JSON.parse(localStorage.getItem('analytics_events') || '[]');
-            localEvents.push(...events);
-            
-            if (localEvents.length > 1000) {
-                localEvents.splice(0, localEvents.length - 1000);
-            }
-            
-            localStorage.setItem('analytics_events', JSON.stringify(localEvents));
-        } catch (error) {
-            console.error('[Analytics] Errore salvataggio locale:', error);
-        }
-    }
-    
-    saveForLater(events) {
-        try {
-            const pendingEvents = JSON.parse(localStorage.getItem('analytics_pending') || '[]');
-            pendingEvents.push(...events);
-            localStorage.setItem('analytics_pending', JSON.stringify(pendingEvents));
-        } catch (error) {
-            console.error('[Analytics] Errore salvataggio pending:', error);
-        }
-    }
-    
-    async sendPendingEvents() {
-        try {
-            const pendingEvents = JSON.parse(localStorage.getItem('analytics_pending') || '[]');
-            
-            if (pendingEvents.length === 0) return;
-            
-            if (navigator.onLine && window.db) {
-                await this.sendToFirestore(pendingEvents);
-                localStorage.removeItem('analytics_pending');
-                console.log(`[Analytics] ${pendingEvents.length} eventi pendenti inviati`);
-            }
-        } catch (error) {
-            console.error('[Analytics] Errore invio eventi pendenti:', error);
-        }
     }
     
     setupEventListeners() {
@@ -712,7 +1080,80 @@ class AnalyticsManager {
                 console.warn('[Analytics] PerformanceObserver non disponibile');
             }
         }
+        
+        // Click tracking per elementi filosofici
+        this.setupPhilosophicalClickTracking();
     }
+    
+    setupComparativeAnalysisListeners() {
+        // Ascolta eventi di analisi comparativa dall'app
+        window.addEventListener('comparative-analysis-request', async (event) => {
+            const { termine, trigger } = event.detail;
+            const result = await this.trackComparativeAnalysis(termine, trigger);
+            
+            // Invia risultato
+            window.dispatchEvent(new CustomEvent('comparative-analysis-result', {
+                detail: result
+            }));
+        });
+        
+        // Ascolta click su concetti per analisi
+        document.addEventListener('click', (e) => {
+            const concettoElement = e.target.closest('.concetto-card, .concetto-badge, [data-concetto]');
+            if (concettoElement) {
+                const concettoName = concettoElement.dataset.concetto || 
+                                   concettoElement.textContent.trim();
+                
+                // Traccia click su concetto
+                this.trackConcettoView(concettoName, 'click_detected', {
+                    element_type: concettoElement.tagName,
+                    source: 'click_tracking'
+                });
+                
+                // Se doppio click, avvia analisi
+                if (e.detail === 2) {
+                    this.trackComparativeAnalysis(concettoName, 'double_click');
+                    
+                    // Apri modale analisi
+                    if (window.openComparativeAnalysis) {
+                        window.openComparativeAnalysis(concettoName);
+                    }
+                }
+            }
+        });
+    }
+    
+    setupPhilosophicalClickTracking() {
+        // Click su filosofi
+        document.addEventListener('click', (e) => {
+            const filosofoElement = e.target.closest('.grid-item, [data-filosofo]');
+            if (filosofoElement) {
+                const filosofoName = filosofoElement.dataset.filosofo || 
+                                    filosofoElement.querySelector('.item-name')?.textContent;
+                if (filosofoName) {
+                    this.trackFilosofoView(filosofoName, 'click_detected', {
+                        element_type: filosofoElement.tagName
+                    });
+                }
+            }
+        });
+        
+        // Click su opere
+        document.addEventListener('click', (e) => {
+            const operaElement = e.target.closest('.compact-item, [data-opera]');
+            if (operaElement) {
+                const operaName = operaElement.dataset.opera || 
+                                 operaElement.querySelector('.compact-item-name')?.textContent;
+                if (operaName) {
+                    this.trackOperaView(operaName, 'click_detected', {
+                        element_type: operaElement.tagName
+                    });
+                }
+            }
+        });
+    }
+    
+    // ============ LOGGING E ATTIVITÀ ============
     
     logActivity(description, data) {
         try {
@@ -721,14 +1162,15 @@ class AnalyticsManager {
                 description: description,
                 data: data,
                 session_id: this.session.id,
-                project: 'Aeterna Lexicon'
+                user_id: this.user.id,
+                project: 'Aeterna Lexicon in Motu'
             };
             
             const activities = JSON.parse(localStorage.getItem('analytics_activities') || '[]');
             activities.unshift(activity);
             
-            if (activities.length > 50) {
-                activities.splice(50);
+            if (activities.length > 100) {
+                activities.splice(100);
             }
             
             localStorage.setItem('analytics_activities', JSON.stringify(activities));
@@ -736,6 +1178,8 @@ class AnalyticsManager {
             console.warn('[Analytics] Errore log attività:', error);
         }
     }
+    
+    // ============ ANALISI E REPORTING ============
     
     getAnalyticsSummary() {
         const today = new Date().toDateString();
@@ -755,24 +1199,24 @@ class AnalyticsManager {
             new Date(error.timestamp).toDateString() === today
         );
         
-        // Page views oggi
-        const pageViews = todayEvents.filter(event => event.type === 'PAGE_VIEW').length;
-        
-        // Filosofi visti oggi
+        // Analisi filosofiche
         const filosofiViews = todayEvents.filter(event => event.type === 'FILOSOFO_VIEW').length;
-        
-        // Opere viste oggi
         const opereViews = todayEvents.filter(event => event.type === 'OPERA_VIEW').length;
-        
-        // Concetti visti oggi
         const concettiViews = todayEvents.filter(event => event.type === 'CONCETTO_VIEW').length;
+        const comparativeAnalyses = todayEvents.filter(event => event.type === 'COMPARATIVE_ANALYSIS').length;
+        const conceptMapInteractions = todayEvents.filter(event => event.type === 'CONCEPT_MAP_INTERACTION').length;
         
-        // Performance media
+        // Performance
         const avgPageLoad = this.metrics.pageLoadTimes.length > 0 ? 
             this.metrics.pageLoadTimes.reduce((a, b) => a + b, 0) / this.metrics.pageLoadTimes.length : 0;
         
-        const avgImageLoad = this.metrics.imageLoadTimes.length > 0 ? 
-            this.metrics.imageLoadTimes.reduce((a, b) => a + b, 0) / this.metrics.imageLoadTimes.length : 0;
+        const avgComparativeAnalysis = this.metrics.comparativeAnalysisTimes.length > 0 ? 
+            this.metrics.comparativeAnalysisTimes.reduce((a, b) => a + b, 0) / this.metrics.comparativeAnalysisTimes.length : 0;
+        
+        // Dati filosofici unici
+        const uniqueConcepts = Array.from(this.philosophyAnalytics.conceptsViewed);
+        const uniquePhilosophers = Array.from(this.philosophyAnalytics.philosophersViewed);
+        const uniqueWorks = Array.from(this.philosophyAnalytics.worksViewed);
         
         return {
             sessions: {
@@ -783,24 +1227,35 @@ class AnalyticsManager {
             events: {
                 today: todayEvents.length,
                 total: allEvents.length,
-                queued: this.queue.length
+                queued: this.queue.length,
+                pending: JSON.parse(localStorage.getItem('analytics_pending') || '[]').length
             },
-            pageViews: {
-                today: pageViews,
-                total: allEvents.filter(e => e.type === 'PAGE_VIEW').length,
-                session: this.session.pageViews
-            },
-            filosofiViews: {
-                today: filosofiViews,
-                total: allEvents.filter(e => e.type === 'FILOSOFO_VIEW').length
-            },
-            opereViews: {
-                today: opereViews,
-                total: allEvents.filter(e => e.type === 'OPERA_VIEW').length
-            },
-            concettiViews: {
-                today: concettiViews,
-                total: allEvents.filter(e => e.type === 'CONCETTO_VIEW').length
+            philosophical: {
+                filosofiViews: {
+                    today: filosofiViews,
+                    total: allEvents.filter(e => e.type === 'FILOSOFO_VIEW').length,
+                    unique: uniquePhilosophers.length
+                },
+                opereViews: {
+                    today: opereViews,
+                    total: allEvents.filter(e => e.type === 'OPERA_VIEW').length,
+                    unique: uniqueWorks.length
+                },
+                concettiViews: {
+                    today: concettiViews,
+                    total: allEvents.filter(e => e.type === 'CONCETTO_VIEW').length,
+                    unique: uniqueConcepts.length
+                },
+                comparativeAnalyses: {
+                    today: comparativeAnalyses,
+                    total: this.philosophyAnalytics.comparativeAnalyses.length,
+                    lastAnalyses: this.philosophyAnalytics.comparativeAnalyses.slice(0, 5)
+                },
+                conceptMap: {
+                    interactions: conceptMapInteractions,
+                    today: this.session.conceptMapInteractions,
+                    loadTimes: this.metrics.conceptMapLoadTimes
+                }
             },
             errors: {
                 today: todayErrors.length,
@@ -813,21 +1268,61 @@ class AnalyticsManager {
             },
             metrics: {
                 performance: {
-                    average: avgPageLoad,
-                    imageLoad: avgImageLoad
+                    pageLoad: avgPageLoad,
+                    imageLoad: this.metrics.imageLoadTimes.length > 0 ? 
+                        this.metrics.imageLoadTimes.reduce((a, b) => a + b, 0) / this.metrics.imageLoadTimes.length : 0,
+                    dataFetch: this.metrics.dataFetchTimes.length > 0 ? 
+                        this.metrics.dataFetchTimes.reduce((a, b) => a + b, 0) / this.metrics.dataFetchTimes.length : 0,
+                    comparativeAnalysis: avgComparativeAnalysis
                 },
                 storage: {
                     eventsSize: new Blob([JSON.stringify(allEvents)]).size,
-                    errorsSize: new Blob([JSON.stringify(allErrors)]).size
+                    errorsSize: new Blob([JSON.stringify(allErrors)]).size,
+                    activitiesSize: new Blob([JSON.stringify(JSON.parse(localStorage.getItem('analytics_activities') || '[]'))]).size
                 }
             },
             user: {
                 id: this.user.id,
-                device: this.user.device
+                device: this.user.device,
+                analysisHistory: this.user.analysisHistory.slice(0, 10)
             },
-            project: 'Aeterna Lexicon in Motu'
+            config: this.config,
+            project: 'Aeterna Lexicon in Motu',
+            timestamp: new Date().toISOString()
         };
     }
+    
+    getComparativeAnalytics() {
+        return {
+            totalAnalyses: this.philosophyAnalytics.comparativeAnalyses.length,
+            analysesByTerm: this.groupAnalysesByTerm(),
+            averageDuration: this.metrics.comparativeAnalysisTimes.length > 0 ? 
+                this.metrics.comparativeAnalysisTimes.reduce((a, b) => a + b, 0) / this.metrics.comparativeAnalysisTimes.length : 0,
+            timelineInteractions: this.philosophyAnalytics.timelineInteractions.length,
+            transformationsViewed: this.philosophyAnalytics.transformationsIdentified.length,
+            mostAnalyzedTerms: this.getMostAnalyzedTerms(5)
+        };
+    }
+    
+    groupAnalysesByTerm() {
+        const grouped = {};
+        this.philosophyAnalytics.comparativeAnalyses.forEach(analysis => {
+            const term = analysis.termine;
+            if (!grouped[term]) grouped[term] = 0;
+            grouped[term]++;
+        });
+        return grouped;
+    }
+    
+    getMostAnalyzedTerms(limit = 5) {
+        const grouped = this.groupAnalysesByTerm();
+        return Object.entries(grouped)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, limit)
+            .map(([term, count]) => ({ term, count }));
+    }
+    
+    // ============ ESPORTAZIONE DATI ============
     
     exportAnalyticsData() {
         const allData = {
@@ -835,12 +1330,15 @@ class AnalyticsManager {
             errors: JSON.parse(localStorage.getItem('analytics_errors') || '[]'),
             activities: JSON.parse(localStorage.getItem('analytics_activities') || '[]'),
             performance: this.metrics,
+            philosophicalAnalytics: this.philosophyAnalytics,
             summary: this.getAnalyticsSummary(),
+            comparativeAnalytics: this.getComparativeAnalytics(),
             config: this.config,
             timestamp: new Date().toISOString(),
             user_id: this.user.id,
             session_id: this.session.id,
-            project: 'Aeterna Lexicon in Motu'
+            project: 'Aeterna Lexicon in Motu',
+            export_version: '2.0.0'
         };
         
         const dataStr = JSON.stringify(allData, null, 2);
@@ -853,13 +1351,45 @@ class AnalyticsManager {
         linkElement.setAttribute('download', exportFileDefaultName);
         linkElement.click();
         
+        // Traccia esportazione
+        this.trackEvent('analytics', 'data_exported', 'json_export', null, {
+            file_size: new Blob([dataStr]).size,
+            export_type: 'json'
+        });
+        
         return exportFileDefaultName;
     }
+    
+    async exportAnalyticsToExcel() {
+        if (window.ExcelWorker && window.ExcelWorker.exportAnalyticsData) {
+            try {
+                const summary = this.getAnalyticsSummary();
+                const fileName = await window.ExcelWorker.exportAnalyticsData(summary);
+                
+                // Traccia esportazione Excel
+                this.trackEvent('analytics', 'data_exported', 'excel_export', null, {
+                    file_name: fileName,
+                    export_type: 'excel'
+                });
+                
+                return fileName;
+            } catch (error) {
+                console.error('[Analytics] Errore esportazione Excel:', error);
+                this.trackError(error, 'excel_export', 'medium');
+                return null;
+            }
+        } else {
+            console.warn('[Analytics] ExcelWorker non disponibile');
+            return null;
+        }
+    }
+    
+    // ============ RESET E GESTIONE ============
     
     resetUserData() {
         const userId = this.user.id;
         
-        // Reset locale ma mantieni user ID
+        // Reset dati locali ma mantieni user ID
         localStorage.removeItem('analytics_events');
         localStorage.removeItem('analytics_errors');
         localStorage.removeItem('analytics_activities');
@@ -875,26 +1405,57 @@ class AnalyticsManager {
             startTime: Date.now(),
             pageViews: 0,
             events: 0,
-            lastActivity: Date.now()
+            lastActivity: Date.now(),
+            comparativeAnalyses: 0,
+            conceptMapInteractions: 0
         };
         
+        // Reset queue e metrics
         this.queue = [];
         this.metrics = {
             appStart: Date.now(),
             pageLoadTimes: [],
             imageLoadTimes: [],
-            dataFetchTimes: []
+            dataFetchTimes: [],
+            comparativeAnalysisTimes: [],
+            conceptMapLoadTimes: []
         };
         
-        this.trackEvent('analytics', 'data_reset', null, null, { manual: true });
+        // Reset analytics filosofici
+        this.philosophyAnalytics = {
+            conceptsViewed: new Set(),
+            philosophersViewed: new Set(),
+            worksViewed: new Set(),
+            comparativeAnalyses: [],
+            timelineInteractions: [],
+            transformationsIdentified: []
+        };
+        
+        // Reset cronologia utente
+        this.user.analysisHistory = [];
+        
+        // Traccia reset
+        this.trackEvent('analytics', 'data_reset', 'manual_reset', null, { 
+            user_id_preserved: userId,
+            manual: true 
+        });
         
         return { userId, newSessionId: this.session.id };
     }
     
     setTrackingEnabled(enabled) {
         this.config.trackingEnabled = enabled;
+        this.config.comparativeAnalysis = enabled;
+        this.config.conceptMapTracking = enabled;
+        
         localStorage.setItem('analytics_tracking_enabled', enabled.toString());
-        this.trackEvent('analytics', 'tracking_toggled', null, null, { enabled: enabled });
+        
+        // Traccia cambiamento
+        this.trackEvent('analytics', 'tracking_toggled', null, null, { 
+            enabled: enabled,
+            features_affected: ['basic_tracking', 'comparative_analysis', 'concept_map']
+        });
+        
         return enabled;
     }
     
@@ -914,12 +1475,14 @@ class AnalyticsManager {
             }
         }
         
-        // Carica errori vecchi
-        const oldErrors = localStorage.getItem('analytics_errors');
-        if (!oldErrors) {
-            // Migra errori vecchi se esistono
-            const analyticsErrors = localStorage.getItem('analytics_errors') || '[]';
-            localStorage.setItem('analytics_errors', analyticsErrors);
+        // Carica cronologia analisi utente se esiste
+        const savedAnalysisHistory = localStorage.getItem('user_analysis_history');
+        if (savedAnalysisHistory) {
+            try {
+                this.user.analysisHistory = JSON.parse(savedAnalysisHistory);
+            } catch (e) {
+                console.warn('[Analytics] Cronologia analisi non valida');
+            }
         }
     }
     
@@ -940,19 +1503,91 @@ class AnalyticsManager {
             console.error('[Analytics] Errore cleanup eventi:', error);
         }
     }
+    
+    // ============ FUNZIONI DEMO PER ANALISI ============
+    
+    async performDemoComparativeAnalysis(termine) {
+        console.log('[Analytics] Esecuzione analisi demo per:', termine);
+        
+        // Dati demo per test
+        const datiDemo = {
+            verita: {
+                classico: { occorrenze: 12, contesti: { ontologico: 8, epistemico: 4 } },
+                contemporaneo: { occorrenze: 18, contesti: { politico: 10, linguistico: 8 } },
+                timeline: [
+                    { secolo: 'V-IV a.C.', periodo: 'classico', autori: ['Platone', 'Aristotele'], occorrenze: 3 },
+                    { secolo: 'XIII d.C.', periodo: 'medioevale', autori: ['Tommaso d\'Aquino'], occorrenze: 2 },
+                    { secolo: 'XX d.C.', periodo: 'contemporaneo', autori: ['Foucault', 'Nietzsche'], occorrenze: 5 }
+                ],
+                trasformazioni: [
+                    { tipo: 'trasformazione', da: 'ontologico', a: 'politico', descrizione: 'Da concetto metafisico a strumento di analisi sociale' }
+                ]
+            },
+            potere: {
+                classico: { occorrenze: 8, contesti: { ontologico: 6, politico: 2 } },
+                contemporaneo: { occorrenze: 24, contesti: { politico: 15, sociale: 9 } },
+                timeline: [
+                    { secolo: 'V-IV a.C.', periodo: 'classico', autori: ['Platone'], occorrenze: 2 },
+                    { secolo: 'XVI d.C.', periodo: 'rinascimentale', autori: ['Machiavelli'], occorrenze: 3 },
+                    { secolo: 'XX d.C.', periodo: 'contemporaneo', autori: ['Foucault', 'Weber'], occorrenze: 8 }
+                ],
+                trasformazioni: [
+                    { tipo: 'trasformazione', da: 'ontologico', a: 'politico', descrizione: 'Da facoltà metafisica a relazione sociale' }
+                ]
+            }
+        };
+        
+        const termineLower = termine.toLowerCase();
+        const dati = datiDemo[termineLower] || {
+            classico: { occorrenze: 5, contesti: { ontologico: 3, altro: 2 } },
+            contemporaneo: { occorrenze: 7, contesti: { politico: 4, linguistico: 3 } },
+            timeline: [],
+            trasformazioni: []
+        };
+        
+        return {
+            termine: termine.charAt(0).toUpperCase() + termine.slice(1),
+            definizione: 'Termine filosofico analizzato in modalità dimostrativa',
+            periodo: 'entrambi',
+            analisi: {
+                classico: dati.classico,
+                contemporaneo: dati.contemporaneo,
+                timeline: dati.timeline,
+                trasformazioni: dati.trasformazioni,
+                metriche: {
+                    occorrenze: {
+                        classico: dati.classico.occorrenze,
+                        contemporaneo: dati.contemporaneo.occorrenze,
+                        totale: dati.classico.occorrenze + dati.contemporaneo.occorrenze,
+                        rapporto: dati.contemporaneo.occorrenze / dati.classico.occorrenze
+                    }
+                }
+            },
+            metadata: {
+                analizzatoIl: new Date().toISOString(),
+                modalita: 'demo',
+                source: 'analytics_demo'
+            }
+        };
+    }
 }
 
-// Inizializza Analytics Manager
+// ============ INIZIALIZZAZIONE GLOBALE ============
+
+// Crea istanza globale di AnalyticsManager
 window.Analytics = new AnalyticsManager();
 
-// Inizializzazione automatica MODIFICATA per attendere Firebase
+// Inizializzazione automatica
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('[Analytics] Avvio inizializzazione Aeterna Lexicon...');
+    
     // Funzione helper per attendere Firebase
     const waitForFirebase = (retries = 0) => {
         return new Promise((resolve) => {
-            if (window.app && window.firebaseAnalytics) {
+            if ((window.app && window.firebaseAnalytics) || window.firebase) {
+                console.log('[Analytics] Firebase disponibile');
                 resolve();
-            } else if (retries > 20) { // Timeout dopo ~10 secondi
+            } else if (retries > 40) { // Timeout dopo ~20 secondi
                 console.warn('[Analytics] Firebase non disponibile dopo timeout. Avvio limitato.');
                 resolve();
             } else {
@@ -981,26 +1616,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         await window.Analytics.initialize();
         
         // Traccia avvio app
-        window.Analytics.trackEvent('app', 'loaded', null, null, {
+        window.Analytics.trackEvent('app', 'loaded', 'Aeterna Lexicon', null, {
             online: navigator.onLine,
             pwa: window.matchMedia('(display-mode: standalone)').matches,
             platform: navigator.platform,
             screen_size: `${window.screen.width}x${window.screen.height}`,
             viewport_size: `${window.innerWidth}x${window.innerHeight}`,
             service_worker: 'serviceWorker' in navigator,
-            project: 'Aeterna Lexicon in Motu'
+            project: 'Aeterna Lexicon in Motu',
+            version: '2.0.0'
         });
         
         // Traccia prima pagina
         window.Analytics.trackPageView('app_start', {
             load_time: window.performance?.timing ? 
                 window.performance.timing.loadEventEnd - window.performance.timing.navigationStart : 0,
-            project: 'Aeterna Lexicon'
+            project: 'Aeterna Lexicon in Motu'
         });
         
-        console.log('[Analytics] Inizializzazione completata');
+        console.log('[Analytics] Inizializzazione completata - Sistema filosofico attivo');
+        
     } catch (error) {
         console.error('[Analytics] Errore inizializzazione:', error);
+        // Traccia errore anche se analytics non è pienamente inizializzato
+        if (window.Analytics) {
+            window.Analytics.trackError(error, 'initialization_failed', 'high');
+        }
     }
 });
 
@@ -1016,7 +1657,7 @@ if (originalShowScreen) {
                 from_screen: currentScreen,
                 to_screen: screenId,
                 history_length: window.screenHistory?.length || 0,
-                project: 'Aeterna Lexicon'
+                project: 'Aeterna Lexicon in Motu'
             });
             
             window.Analytics.trackPageView(`screen_${screenId}`, {
@@ -1025,8 +1666,9 @@ if (originalShowScreen) {
                           screenId.includes('opera') ? 'opera_detail' : 
                           screenId.includes('concetto') ? 'concetto_detail' : 
                           screenId === 'home-screen' ? 'home' : 
-                          screenId === 'mappa-concettuale-screen' ? 'concept_map' : 'list',
-                project: 'Aeterna Lexicon'
+                          screenId === 'mappa-concettuale-screen' ? 'concept_map' : 
+                          screenId === 'mappa-screen' ? 'geographic_map' : 'list',
+                project: 'Aeterna Lexicon in Motu'
             });
         }
         
@@ -1049,7 +1691,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.Analytics) {
                     window.Analytics.trackEvent('home', 'button_click', btnType, null, {
                         button_text: this.querySelector('.btn-text')?.textContent || 'N/A',
-                        project: 'Aeterna Lexicon'
+                        project: 'Aeterna Lexicon in Motu'
                     });
                 }
             });
@@ -1068,7 +1710,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     item_name: name || 'N/A',
                     item_type: 'filosofo',
                     periodo: periodo || 'N/A',
-                    project: 'Aeterna Lexicon'
+                    project: 'Aeterna Lexicon in Motu'
                 });
             }
             
@@ -1079,7 +1721,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     item_name: name || 'N/A',
                     item_type: 'opera',
                     autore: autore || 'N/A',
-                    project: 'Aeterna Lexicon'
+                    project: 'Aeterna Lexicon in Motu'
                 });
             }
             
@@ -1088,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.Analytics.trackEvent('list', 'item_click', 'concetto_item', null, {
                     item_name: title || 'N/A',
                     item_type: 'concetto',
-                    project: 'Aeterna Lexicon'
+                    project: 'Aeterna Lexicon in Motu'
                 });
             }
         });
@@ -1104,7 +1746,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const category = this.id.includes('map') ? 'map' : 
                                        this.id.includes('concetto') ? 'concept' : 'general';
                         window.Analytics.trackSearch(this.value, category, 0, {
-                            project: 'Aeterna Lexicon'
+                            project: 'Aeterna Lexicon in Motu'
                         });
                     }
                 }, 1000);
@@ -1121,28 +1763,207 @@ window.analyticsFunctions = {
         }
         return null;
     },
+    
     exportAnalyticsData: () => {
         if (window.Analytics) {
             return window.Analytics.exportAnalyticsData();
         }
         return null;
     },
+    
+    exportAnalyticsToExcel: async () => {
+        if (window.Analytics) {
+            return await window.Analytics.exportAnalyticsToExcel();
+        }
+        return null;
+    },
+    
     resetAnalyticsData: () => {
         if (window.Analytics) {
             return window.Analytics.resetUserData();
         }
         return null;
     },
+    
     toggleTracking: (enabled) => {
         if (window.Analytics) {
             return window.Analytics.setTrackingEnabled(enabled);
         }
         return false;
     },
+    
     getConfig: () => {
         if (window.Analytics) {
             return { ...window.Analytics.config };
         }
         return null;
+    },
+    
+    getComparativeAnalytics: () => {
+        if (window.Analytics) {
+            return window.Analytics.getComparativeAnalytics();
+        }
+        return null;
+    },
+    
+    performComparativeAnalysis: async (termine) => {
+        if (window.Analytics) {
+            return await window.Analytics.trackComparativeAnalysis(termine, 'manual');
+        }
+        return null;
+    },
+    
+    getPhilosophicalStats: () => {
+        if (window.Analytics) {
+            return {
+                conceptsViewed: Array.from(window.Analytics.philosophyAnalytics.conceptsViewed),
+                philosophersViewed: Array.from(window.Analytics.philosophyAnalytics.philosophersViewed),
+                worksViewed: Array.from(window.Analytics.philosophyAnalytics.worksViewed),
+                analysisHistory: window.Analytics.user.analysisHistory
+            };
+        }
+        return null;
+    },
+    
+    forceSync: () => {
+        if (window.Analytics) {
+            window.Analytics.flushQueue(true);
+            return { success: true, timestamp: new Date().toISOString() };
+        }
+        return null;
     }
 };
+
+// Global function per avviare analisi comparativa
+window.openComparativeAnalysis = async function(termine) {
+    console.log(`[Global] Avvio analisi comparativa per: ${termine}`);
+    
+    if (window.Analytics) {
+        const result = await window.Analytics.trackComparativeAnalysis(termine, 'global_function');
+        
+        if (result.success && result.analisi) {
+            // Mostra modale con i risultati
+            showComparativeAnalysisModal(termine, result.analisi);
+            return result.analisi;
+        } else {
+            console.error('Analisi fallita:', result.error);
+            showToast(`Analisi fallita per "${termine}": ${result.error}`, 'error');
+            return null;
+        }
+    } else {
+        console.warn('Analytics non disponibile');
+        showToast('Sistema analytics non disponibile', 'warning');
+        return null;
+    }
+};
+
+// Funzione helper per mostrare modale analisi
+function showComparativeAnalysisModal(termine, analisi) {
+    const modal = document.getElementById('comparative-analysis-modal');
+    if (!modal) {
+        console.warn('Modale analisi comparativa non trovata');
+        return;
+    }
+    
+    // Aggiorna titolo
+    const titleElement = document.getElementById('comparative-term-title');
+    if (titleElement) {
+        titleElement.textContent = termine.toUpperCase();
+    }
+    
+    // Popola dati classici
+    const classicoOriginal = document.getElementById('classical-original-text');
+    const classicoMetrics = document.getElementById('classical-metrics');
+    const classicoDefinition = document.getElementById('classical-definition');
+    
+    if (classicoOriginal && analisi.analisi?.classico?.esempi?.[0]?.testo) {
+        classicoOriginal.textContent = `"${analisi.analisi.classico.esempi[0].testo}"`;
+    }
+    
+    if (classicoMetrics && analisi.analisi?.classico) {
+        const metrics = analisi.analisi.classico;
+        classicoMetrics.innerHTML = `
+            <div class="metric">
+                <span class="metric-label">Occorrenze:</span>
+                <span class="metric-value">${metrics.occorrenze || 0}</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Contesti:</span>
+                <span class="metric-value">${Object.keys(metrics.contesti || {}).join(', ') || 'N/D'}</span>
+            </div>
+        `;
+    }
+    
+    if (classicoDefinition) {
+        classicoDefinition.textContent = analisi.definizione || 'Definizione non disponibile';
+    }
+    
+    // Popola dati contemporanei
+    const contemporaneoOriginal = document.getElementById('contemporary-original-text');
+    const contemporaneoMetrics = document.getElementById('contemporary-metrics');
+    const contemporaneoDefinition = document.getElementById('contemporary-definition');
+    
+    if (contemporaneoOriginal && analisi.analisi?.contemporaneo?.esempi?.[0]?.testo) {
+        contemporaneoOriginal.textContent = `"${analisi.analisi.contemporaneo.esempi[0].testo}"`;
+    }
+    
+    if (contemporaneoMetrics && analisi.analisi?.contemporaneo) {
+        const metrics = analisi.analisi.contemporaneo;
+        contemporaneoMetrics.innerHTML = `
+            <div class="metric">
+                <span class="metric-label">Occorrenze:</span>
+                <span class="metric-value">${metrics.occorrenze || 0}</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">Contesti:</span>
+                <span class="metric-value">${Object.keys(metrics.contesti || {}).join(', ') || 'N/D'}</span>
+            </div>
+        `;
+    }
+    
+    if (contemporaneoDefinition) {
+        contemporaneoDefinition.textContent = analisi.definizione || 'Definizione non disponibile';
+    }
+    
+    // Popola trasformazioni
+    const transformationsBody = document.getElementById('transformations-body');
+    if (transformationsBody && analisi.analisi?.trasformazioni) {
+        transformationsBody.innerHTML = analisi.analisi.trasformazioni.map((t, i) => `
+            <tr>
+                <td>${t.da ? t.da.toUpperCase() : 'N/D'}</td>
+                <td>${t.descrizione || `${t.da} → ${t.a}`}</td>
+                <td>${t.tipo || 'sconosciuto'}</td>
+            </tr>
+        `).join('');
+    }
+    
+    // Mostra modale
+    modal.style.display = 'flex';
+    
+    // Inizializza timeline se disponibile
+    if (window.TimelineEvolution && analisi.analisi?.timeline) {
+        setTimeout(() => {
+            window.TimelineEvolution.init('evolution-timeline', analisi.analisi.timeline);
+        }, 500);
+    }
+    
+    // Traccia apertura modale
+    if (window.Analytics) {
+        window.Analytics.trackEvent('ui', 'modal_opened', 'comparative_analysis', null, {
+            termine: termine,
+            analisi_id: analisi.metadata?.analizzatoIl
+        });
+    }
+}
+
+// Helper function per showToast (se non esiste già)
+if (!window.showToast) {
+    window.showToast = function(message, type = 'info') {
+        console.log(`[Toast ${type}]: ${message}`);
+        // Implementazione base - può essere sovrascritta da app.js
+        alert(`${type.toUpperCase()}: ${message}`);
+    };
+}
+
+console.log('[Analytics] Sistema Aeterna Lexicon Analytics v2.0.0 caricato');
+[file content end]
