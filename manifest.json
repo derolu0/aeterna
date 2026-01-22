@@ -2,8 +2,8 @@
   "name": "Aeterna Lexicon in Motu",
   "short_name": "Lexicon Motu",
   "description": "Dataset per l'analisi delle trasformazioni del linguaggio filosofico. Confronto tra pensiero classico e contemporaneo.",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "https://derolu0.github.io/aeterna/index.html",
+  "scope": "https://derolu0.github.io/aeterna/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
   "background_color": "#f8fafc",
@@ -11,49 +11,49 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "./images/icona-avvio-72.png",
+      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./images/icona-avvio-96.png",
+      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./images/icona-avvio-128.png",
+      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-128.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./images/icona-avvio-144.png",
+      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./images/icona-avvio-152.png",
+      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-152.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./images/icona-avvio-192.png",
+      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./images/icona-avvio-384.png",
+      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-384.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./images/icona-avvio-512.png",
+      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -62,19 +62,19 @@
   "categories": ["education", "books", "productivity"],
   "screenshots": [
     {
-      "src": "./images/screenshot-1.png",
+      "src": "https://derolu0.github.io/aeterna/images/screenshot-1.png",
       "sizes": "1280x720",
       "type": "image/png",
       "label": "Dataset Filosofico - Panoramica"
     },
     {
-      "src": "./images/screenshot-2.png",
+      "src": "https://derolu0.github.io/aeterna/images/screenshot-2.png",
       "sizes": "1280x720",
       "type": "image/png",
       "label": "Mappa Geografica dei Filosofi"
     },
     {
-      "src": "./images/screenshot-3.png",
+      "src": "https://derolu0.github.io/aeterna/images/screenshot-3.png",
       "sizes": "1280x720",
       "type": "image/png",
       "label": "Mappa Concettuale delle Idee"
@@ -85,10 +85,10 @@
       "name": "Filosofi",
       "short_name": "Filosofi",
       "description": "Visualizza tutti i filosofi",
-      "url": "./index.html?screen=filosofi",
+      "url": "https://derolu0.github.io/aeterna/index.html?screen=filosofi",
       "icons": [
         {
-          "src": "./images/shortcut-filosofi.png",
+          "src": "https://derolu0.github.io/aeterna/images/shortcut-filosofi.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -98,10 +98,10 @@
       "name": "Opere",
       "short_name": "Opere",
       "description": "Visualizza tutte le opere filosofiche",
-      "url": "./index.html?screen=opere",
+      "url": "https://derolu0.github.io/aeterna/index.html?screen=opere",
       "icons": [
         {
-          "src": "./images/shortcut-opere.png",
+          "src": "https://derolu0.github.io/aeterna/images/shortcut-opere.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -111,10 +111,10 @@
       "name": "Concetti",
       "short_name": "Concetti",
       "description": "Analizza i concetti filosofici",
-      "url": "./index.html?screen=concetti",
+      "url": "https://derolu0.github.io/aeterna/index.html?screen=concetti",
       "icons": [
         {
-          "src": "./images/shortcut-concetti.png",
+          "src": "https://derolu0.github.io/aeterna/images/shortcut-concetti.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -124,10 +124,10 @@
       "name": "Mappa Geografica",
       "short_name": "Mappa Geo",
       "description": "Esplora filosofi sulla mappa",
-      "url": "./index.html?screen=mappa",
+      "url": "https://derolu0.github.io/aeterna/index.html?screen=mappa",
       "icons": [
         {
-          "src": "./images/shortcut-mappa.png",
+          "src": "https://derolu0.github.io/aeterna/images/shortcut-mappa.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -137,10 +137,10 @@
       "name": "Mappa Concettuale",
       "short_name": "Mappa Conc",
       "description": "Visualizza relazioni tra idee",
-      "url": "./index.html?screen=mappa-concettuale",
+      "url": "https://derolu0.github.io/aeterna/index.html?screen=mappa-concettuale",
       "icons": [
         {
-          "src": "./images/shortcut-rete.png",
+          "src": "https://derolu0.github.io/aeterna/images/shortcut-rete.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -150,10 +150,23 @@
       "name": "Pannello Admin",
       "short_name": "Admin",
       "description": "Gestisci il dataset filosofico",
-      "url": "./index.html?admin=true",
+      "url": "https://derolu0.github.io/aeterna/index.html?admin=true",
       "icons": [
         {
-          "src": "./images/shortcut-admin.png",
+          "src": "https://derolu0.github.io/aeterna/images/shortcut-admin.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Analisi Comparativa",
+      "short_name": "Analisi",
+      "description": "Analizza l'evoluzione dei concetti filosofici",
+      "url": "https://derolu0.github.io/aeterna/index.html?screen=analisi-comparativa",
+      "icons": [
+        {
+          "src": "https://derolu0.github.io/aeterna/images/shortcut-analisi.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -165,15 +178,15 @@
   "protocol_handlers": [
     {
       "protocol": "web+lexicon",
-      "url": "./index.html?concept=%s"
+      "url": "https://derolu0.github.io/aeterna/index.html?concept=%s"
     },
     {
       "protocol": "web+filosofo",
-      "url": "./index.html?filosofo=%s"
+      "url": "https://derolu0.github.io/aeterna/index.html?filosofo=%s"
     }
   ],
   "share_target": {
-    "action": "./index.html",
+    "action": "https://derolu0.github.io/aeterna/index.html",
     "method": "GET",
     "params": {
       "title": "name",
@@ -192,7 +205,7 @@
   },
   "file_handlers": [
     {
-      "action": "./index.html",
+      "action": "https://derolu0.github.io/aeterna/index.html",
       "accept": {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
         "application/vnd.ms-excel": [".xls"],
@@ -205,7 +218,7 @@
   "permissions": [
     "clipboard-write"
   ],
-  "id": "/index.html",
+  "id": "https://derolu0.github.io/aeterna/index.html",
   "lang": "it",
   "dir": "ltr",
   "scope_extensions": [

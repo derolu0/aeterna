@@ -1,10 +1,11 @@
 // ==========================================
 // FILE TRADUZIONI - AETERNA LEXICON IN MOTU
+// VERSIONE AGGIORNATA CON ANALISI COMPARATIVA
 // ==========================================
 
 window.translations = {
     'it': {
-        // === HOME PAGE ===
+        // === TRADUZIONI ESISTENTI (INTATTE) ===
         'home_title': 'Aeterna Lexicon',
         'home_subtitle': "Dataset per l'analisi delle trasformazioni<br>del linguaggio filosofico tra classico e contemporaneo",
         'tab_home': 'Home',
@@ -12,8 +13,7 @@ window.translations = {
         'tab_opere': 'Opere',
         'tab_concetti': 'Concetti',
         'tab_mappa': 'Mappa',
-
-        // === SCREEN TITLES ===
+        
         'screen_filosofi': 'Filosofi',
         'screen_opere': 'Opere',
         'screen_concetti': 'Concetti',
@@ -21,14 +21,12 @@ window.translations = {
         'screen_mappa_concettuale': 'Mappa Concettuale',
         'screen_admin': 'Pannello Admin',
         
-        // === SCREEN SUBTITLES ===
         'subtitle_filosofi': 'Esplora i filosofi della storia',
         'subtitle_opere': 'Scopri le opere filosofiche',
         'subtitle_concetti': 'Analizza le parole chiave della filosofia',
         'subtitle_mappa': 'Visualizza filosofi sulla mappa',
         'subtitle_mappa_concettuale': 'Esplora relazioni tra idee',
-
-        // === SEARCH & FILTERS ===
+        
         'search_placeholder_filosofi': '🔍 Cerca filosofi...',
         'search_placeholder_opere': '🔍 Cerca opere...',
         'search_placeholder_concetti': '🔍 Cerca concetti...',
@@ -43,8 +41,7 @@ window.translations = {
         'filter_ethics': 'Etica',
         'filter_politics': 'Politica',
         'filter_epistemology': 'Gnoseologia',
-
-        // === LEGENDS ===
+        
         'legend_title': 'Legenda',
         'legend_item_filosofo_classico': 'Filosofo Classico',
         'legend_item_filosofo_contemporaneo': 'Filosofo Contemporaneo',
@@ -53,8 +50,7 @@ window.translations = {
         'legend_item_concetto': 'Concetto',
         'legend_relation_classic': 'Relazione Classica',
         'legend_relation_contemporary': 'Relazione Contemporanea',
-
-        // === BUTTONS & ACTIONS ===
+        
         'report_btn': 'Segnala Errore',
         'info_btn': 'Info & Crediti',
         'admin_btn': 'Area Riservata',
@@ -69,7 +65,6 @@ window.translations = {
         'edit_btn': 'Modifica',
         'add_btn': 'Aggiungi',
         
-        // === STATUS & PERIODS ===
         'status_classic': 'Classico',
         'status_contemporary': 'Contemporaneo',
         'status_medieval': 'Medioevale',
@@ -81,8 +76,7 @@ window.translations = {
         'period_renaissance': 'Rinascimento',
         'period_modern': 'Età Moderna',
         'period_contemporary': 'Contemporaneo',
-
-        // === LABELS (DETAIL PAGES) ===
+        
         'label_name': 'Nome',
         'label_full_name': 'Nome Completo',
         'label_period': 'Periodo',
@@ -112,8 +106,7 @@ window.translations = {
         'label_reference_work': 'Opera di Riferimento',
         'label_historical_evolution': 'Evoluzione Storica',
         'label_bibliography': 'Bibliografia',
-
-        // === ADMIN PANEL ===
+        
         'admin_dashboard': 'Dashboard',
         'admin_filosofi': 'Filosofi',
         'admin_opere': 'Opere',
@@ -135,8 +128,7 @@ window.translations = {
         'admin_other_count': 'Altri',
         'admin_recent_activity': 'Attività Recenti',
         'admin_clear_log': 'Pulisci Log',
-
-        // === ANALYTICS ===
+        
         'analytics_today_sessions': 'Sessioni Oggi',
         'analytics_today_events': 'Eventi Oggi',
         'analytics_pageviews': 'Page Views',
@@ -170,8 +162,7 @@ window.translations = {
         'metric_page_load': 'Tempo medio caricamento pagine',
         'metric_image_load': 'Tempo medio caricamento immagini',
         'metric_data_load': 'Tempo medio caricamento dati',
-
-        // === MAP CONTROLS ===
+        
         'map_show_classical': 'Mostra Classici',
         'map_show_contemporary': 'Mostra Contemporanei',
         'map_show_all': 'Mostra Tutti',
@@ -179,7 +170,6 @@ window.translations = {
         'map_zoom_in': 'Zoom In',
         'map_zoom_out': 'Zoom Out',
         
-        // === CONCEPT MAP CONTROLS ===
         'concept_map_filter_all': 'Tutti i Concetti',
         'concept_map_filter_classic': 'Periodo Classico',
         'concept_map_filter_contemporary': 'Periodo Contemporaneo',
@@ -187,18 +177,15 @@ window.translations = {
         'concept_map_zoom_out': 'Riduci',
         'concept_map_reset_view': 'Reset Vista',
         
-        // === QR CODE & MODALS ===
         'btn_qr': 'Condividi App',
         'qr_title': 'Scarica Aeterna Lexicon',
         'qr_subtitle': 'Inquadra il codice con la fotocamera per installare il dataset filosofico.',
         'btn_close': 'Chiudi',
         
-        // === SMART INSTALL BANNER ===
         'install_title': 'Installa Aeterna Lexicon',
         'install_subtitle': 'Per dataset offline e analisi avanzate',
         'install_btn': 'Installa',
         
-        // === ERROR & MESSAGES ===
         'error_loading': 'Errore nel caricamento',
         'error_no_data': 'Nessun dato disponibile',
         'error_offline': 'Connessione assente',
@@ -213,13 +200,11 @@ window.translations = {
         'confirm_delete': 'Sei sicuro di voler eliminare?',
         'confirm_reset': 'Sei sicuro di voler resettare?',
         
-        // === EMPTY STATES ===
         'empty_filosofi': 'Nessun filosofo disponibile',
         'empty_opere': 'Nessuna opera disponibile',
         'empty_concetti': 'Nessun concetto disponibile',
         'empty_search': 'Nessun risultato per la ricerca',
         
-        // === LOADING STATES ===
         'loading_filosofi': 'Caricamento filosofi in corso...',
         'loading_opere': 'Caricamento opere in corso...',
         'loading_concetti': 'Caricamento concetti in corso...',
@@ -227,7 +212,6 @@ window.translations = {
         'loading_concept_map': 'Caricamento mappa concettuale...',
         'loading_details': 'Caricamento dettagli...',
         
-        // === CREDITS PAGE ===
         'credits_title': 'Info & Crediti',
         'credits_version': 'v. 2.0.0',
         'credits_project': 'PROJECT WORK',
@@ -239,22 +223,104 @@ window.translations = {
         'credits_license': 'Licenza d\'uso accademica',
         'credits_copyright': 'Software © 2026 Salvatore De Rosa',
         
-        // === MAINTENANCE MODE ===
         'maintenance_title': 'Manutenzione in Corso',
         'maintenance_message': 'Stiamo aggiornando il dataset filosofico. Torneremo online a breve.',
         'maintenance_admin': 'Area Riservata',
         
-        // === AUTH MODAL ===
         'auth_title': 'Accesso Amministratore',
         'auth_email': 'Email',
         'auth_password': 'Password',
         'auth_login': 'Accedi',
         'auth_cancel': 'Annulla',
-        'auth_error': 'Credenziali non valide'
+        'auth_error': 'Credenziali non valide',
+
+        // === NUOVE TRADUZIONI PER ANALISI COMPARATIVA (AGGIUNTE) ===
+        'analisi_comparativa': 'Analisi Comparativa',
+        'analisi_in_corso': 'Analisi in corso...',
+        'timeline_evolutiva': 'Timeline Evolutiva',
+        'confronto_periodi': 'Confronto Periodi Storici',
+        'classico_vs_contemporaneo': 'Classico vs Contemporaneo',
+        'evoluzione_terminologica': 'Evoluzione Terminologica',
+        'trasformazioni_identificate': 'Trasformazioni Identificate',
+        'esporta_analisi': 'Esporta Analisi',
+        'avvia_analisi': 'Avvia Analisi Comparativa',
+        'termini_correlati': 'Termini Correlati',
+        'frequenza_uso': 'Frequenza d\'uso',
+        'contesto_duso': 'Contesto d\'uso',
+        'periodo_classico': 'Periodo Classico',
+        'periodo_contemporaneo': 'Periodo Contemporaneo',
+        
+        'modale_titolo_analisi': 'Analisi Comparativa: ',
+        'modale_sottotitolo': 'Confronto tra interpretazioni classiche e contemporanee',
+        'colonna_classica': 'Interpretazione Classica',
+        'colonna_contemporanea': 'Rilettura Contemporanea',
+        'timeline_linguistica': 'Timeline Linguistica',
+        'tabella_trasformazioni': 'Tabella delle Trasformazioni',
+        
+        'badge_nuova_analisi': 'NUOVA ANALISI',
+        'badge_evoluzione': 'EVOLUZIONE',
+        'badge_comparativo': 'COMPARATIVO',
+        
+        'metriche_analisi': 'Metriche Analisi',
+        'metrica_occ_classiche': 'Occorrenze Classiche',
+        'metrica_occ_contemporanee': 'Occorrenze Contemporanee',
+        'metrica_variazione': 'Variazione Semantica',
+        'metrica_correlazioni': 'Correlazioni Identificate',
+        'metrica_intensita': 'Intensità d\'uso',
+        'metrica_contesti': 'Contesti Diversi',
+        
+        'testo_originale': 'Testo Originale',
+        'traduzione': 'Traduzione',
+        'anno_riferimento': 'Anno Riferimento',
+        'autore_riferimento': 'Autore Riferimento',
+        'opera_riferimento': 'Opera di Riferimento',
+        
+        'evoluzione_linguistica': 'Evoluzione Linguistica',
+        'greco_antico': 'Greco Antico',
+        'latino': 'Latino',
+        'volgare': 'Volgare',
+        'tedesco': 'Tedesco',
+        'francese': 'Francese',
+        'italiano': 'Italiano',
+        
+        'dimensione_ontologica': 'Dimensione Ontologica',
+        'dimensione_epistemica': 'Dimensione Epistemica',
+        'dimensione_etica': 'Dimensione Etica',
+        'dimensione_politica': 'Dimensione Politica',
+        
+        'continuita_identificate': 'Continuità Identificate',
+        'rotture_identificate': 'Rotture Identificate',
+        'trasformazione_semantica': 'Trasformazione Semantica',
+        'trasformazione_contestuale': 'Trasformazione Contestuale',
+        
+        'pulsante_confronta': 'Confronta con altro termine',
+        'pulsante_espandi': 'Espandi Analisi',
+        'pulsante_riduci': 'Riduci Analisi',
+        'pulsante_stampa': 'Stampa Analisi',
+        'pulsante_condividi': 'Condividi Analisi',
+        
+        'tooltip_analisi': 'Clicca per analisi comparativa',
+        'tooltip_timeline': 'Visualizza timeline evolutiva',
+        'tooltip_metriche': 'Mostra metriche quantitative',
+        'tooltip_esporta': 'Esporta dati analisi',
+        
+        'modalita_analisi_semplice': 'Modalità Analisi Semplice',
+        'modalita_analisi_avanzata': 'Modalità Analisi Avanzata',
+        'filtro_per_contesto': 'Filtro per Contesto',
+        'filtro_per_autore': 'Filtro per Autore',
+        'filtro_per_secolo': 'Filtro per Secolo',
+        
+        'nessuna_analisi_disponibile': 'Nessuna analisi disponibile',
+        'caricamento_analisi': 'Caricamento analisi...',
+        'analisi_completata': 'Analisi completata',
+        'analisi_fallita': 'Analisi fallita',
+        
+        'istruzioni_analisi': 'Seleziona un termine per avviare l\'analisi comparativa',
+        'esempio_analisi': 'Esempio: confronta "Verità" tra Platone e Foucault'
     },
    
     'en': {
-        // === HOME PAGE ===
+        // === EXISTING TRANSLATIONS (UNTOUCHED) ===
         'home_title': 'Aeterna Lexicon',
         'home_subtitle': 'Dataset for analyzing philosophical language transformations<br>between classical and contemporary thought',
         'tab_home': 'Home',
@@ -262,8 +328,7 @@ window.translations = {
         'tab_opere': 'Works',
         'tab_concetti': 'Concepts',
         'tab_mappa': 'Map',
-
-        // === SCREEN TITLES ===
+        
         'screen_filosofi': 'Philosophers',
         'screen_opere': 'Works',
         'screen_concetti': 'Concepts',
@@ -271,14 +336,12 @@ window.translations = {
         'screen_mappa_concettuale': 'Conceptual Map',
         'screen_admin': 'Admin Panel',
         
-        // === SCREEN SUBTITLES ===
         'subtitle_filosofi': 'Explore philosophers through history',
         'subtitle_opere': 'Discover philosophical works',
         'subtitle_concetti': 'Analyze key philosophical concepts',
         'subtitle_mappa': 'View philosophers on the map',
         'subtitle_mappa_concettuale': 'Explore relationships between ideas',
-
-        // === SEARCH & FILTERS ===
+        
         'search_placeholder_filosofi': '🔍 Search philosophers...',
         'search_placeholder_opere': '🔍 Search works...',
         'search_placeholder_concetti': '🔍 Search concepts...',
@@ -293,8 +356,7 @@ window.translations = {
         'filter_ethics': 'Ethics',
         'filter_politics': 'Politics',
         'filter_epistemology': 'Epistemology',
-
-        // === LEGENDS ===
+        
         'legend_title': 'Legend',
         'legend_item_filosofo_classico': 'Classical Philosopher',
         'legend_item_filosofo_contemporaneo': 'Contemporary Philosopher',
@@ -303,8 +365,7 @@ window.translations = {
         'legend_item_concetto': 'Concept',
         'legend_relation_classic': 'Classical Relation',
         'legend_relation_contemporary': 'Contemporary Relation',
-
-        // === BUTTONS & ACTIONS ===
+        
         'report_btn': 'Report Error',
         'info_btn': 'Info & Credits',
         'admin_btn': 'Restricted Area',
@@ -319,7 +380,6 @@ window.translations = {
         'edit_btn': 'Edit',
         'add_btn': 'Add',
         
-        // === STATUS & PERIODS ===
         'status_classic': 'Classical',
         'status_contemporary': 'Contemporary',
         'status_medieval': 'Medieval',
@@ -331,8 +391,7 @@ window.translations = {
         'period_renaissance': 'Renaissance',
         'period_modern': 'Modern Age',
         'period_contemporary': 'Contemporary',
-
-        // === LABELS (DETAIL PAGES) ===
+        
         'label_name': 'Name',
         'label_full_name': 'Full Name',
         'label_period': 'Period',
@@ -362,8 +421,7 @@ window.translations = {
         'label_reference_work': 'Reference Work',
         'label_historical_evolution': 'Historical Evolution',
         'label_bibliography': 'Bibliography',
-
-        // === ADMIN PANEL ===
+        
         'admin_dashboard': 'Dashboard',
         'admin_filosofi': 'Philosophers',
         'admin_opere': 'Works',
@@ -385,8 +443,7 @@ window.translations = {
         'admin_other_count': 'Others',
         'admin_recent_activity': 'Recent Activity',
         'admin_clear_log': 'Clear Log',
-
-        // === ANALYTICS ===
+        
         'analytics_today_sessions': 'Today Sessions',
         'analytics_today_events': 'Today Events',
         'analytics_pageviews': 'Page Views',
@@ -420,8 +477,7 @@ window.translations = {
         'metric_page_load': 'Average page load time',
         'metric_image_load': 'Average image load time',
         'metric_data_load': 'Average data load time',
-
-        // === MAP CONTROLS ===
+        
         'map_show_classical': 'Show Classical',
         'map_show_contemporary': 'Show Contemporary',
         'map_show_all': 'Show All',
@@ -429,7 +485,6 @@ window.translations = {
         'map_zoom_in': 'Zoom In',
         'map_zoom_out': 'Zoom Out',
         
-        // === CONCEPT MAP CONTROLS ===
         'concept_map_filter_all': 'All Concepts',
         'concept_map_filter_classic': 'Classical Period',
         'concept_map_filter_contemporary': 'Contemporary Period',
@@ -437,18 +492,15 @@ window.translations = {
         'concept_map_zoom_out': 'Zoom Out',
         'concept_map_reset_view': 'Reset View',
         
-        // === QR CODE & MODALS ===
         'btn_qr': 'Share App',
         'qr_title': 'Get Aeterna Lexicon',
         'qr_subtitle': 'Scan this code with your camera to install the philosophical dataset.',
         'btn_close': 'Close',
         
-        // === SMART INSTALL BANNER ===
         'install_title': 'Install Aeterna Lexicon',
         'install_subtitle': 'For offline dataset and advanced analysis',
         'install_btn': 'Install',
         
-        // === ERROR & MESSAGES ===
         'error_loading': 'Error loading',
         'error_no_data': 'No data available',
         'error_offline': 'No connection',
@@ -463,13 +515,11 @@ window.translations = {
         'confirm_delete': 'Are you sure you want to delete?',
         'confirm_reset': 'Are you sure you want to reset?',
         
-        // === EMPTY STATES ===
         'empty_filosofi': 'No philosophers available',
         'empty_opere': 'No works available',
         'empty_concetti': 'No concepts available',
         'empty_search': 'No results for your search',
         
-        // === LOADING STATES ===
         'loading_filosofi': 'Loading philosophers...',
         'loading_opere': 'Loading works...',
         'loading_concetti': 'Loading concepts...',
@@ -477,7 +527,6 @@ window.translations = {
         'loading_concept_map': 'Loading conceptual map...',
         'loading_details': 'Loading details...',
         
-        // === CREDITS PAGE ===
         'credits_title': 'Info & Credits',
         'credits_version': 'v. 2.0.0',
         'credits_project': 'PROJECT WORK',
@@ -489,22 +538,104 @@ window.translations = {
         'credits_license': 'Academic use license',
         'credits_copyright': 'Software © 2026 Salvatore De Rosa',
         
-        // === MAINTENANCE MODE ===
         'maintenance_title': 'Maintenance in Progress',
         'maintenance_message': 'We are updating the philosophical dataset. We will be back online shortly.',
         'maintenance_admin': 'Restricted Area',
         
-        // === AUTH MODAL ===
         'auth_title': 'Admin Access',
         'auth_email': 'Email',
         'auth_password': 'Password',
         'auth_login': 'Login',
         'auth_cancel': 'Cancel',
-        'auth_error': 'Invalid credentials'
+        'auth_error': 'Invalid credentials',
+
+        // === NEW TRANSLATIONS FOR COMPARATIVE ANALYSIS (ADDED) ===
+        'analisi_comparativa': 'Comparative Analysis',
+        'analisi_in_corso': 'Analysis in progress...',
+        'timeline_evolutiva': 'Evolution Timeline',
+        'confronto_periodi': 'Historical Periods Comparison',
+        'classico_vs_contemporaneo': 'Classical vs Contemporary',
+        'evoluzione_terminologica': 'Terminological Evolution',
+        'trasformazioni_identificate': 'Identified Transformations',
+        'esporta_analisi': 'Export Analysis',
+        'avvia_analisi': 'Start Comparative Analysis',
+        'termini_correlati': 'Related Terms',
+        'frequenza_uso': 'Usage Frequency',
+        'contesto_duso': 'Usage Context',
+        'periodo_classico': 'Classical Period',
+        'periodo_contemporaneo': 'Contemporary Period',
+        
+        'modale_titolo_analisi': 'Comparative Analysis: ',
+        'modale_sottotitolo': 'Comparison between classical and contemporary interpretations',
+        'colonna_classica': 'Classical Interpretation',
+        'colonna_contemporanea': 'Contemporary Reinterpretation',
+        'timeline_linguistica': 'Linguistic Timeline',
+        'tabella_trasformazioni': 'Transformations Table',
+        
+        'badge_nuova_analisi': 'NEW ANALYSIS',
+        'badge_evoluzione': 'EVOLUTION',
+        'badge_comparativo': 'COMPARATIVE',
+        
+        'metriche_analisi': 'Analysis Metrics',
+        'metrica_occ_classiche': 'Classical Occurrences',
+        'metrica_occ_contemporanee': 'Contemporary Occurrences',
+        'metrica_variazione': 'Semantic Variation',
+        'metrica_correlazioni': 'Identified Correlations',
+        'metrica_intensita': 'Usage Intensity',
+        'metrica_contesti': 'Different Contexts',
+        
+        'testo_originale': 'Original Text',
+        'traduzione': 'Translation',
+        'anno_riferimento': 'Reference Year',
+        'autore_riferimento': 'Reference Author',
+        'opera_riferimento': 'Reference Work',
+        
+        'evoluzione_linguistica': 'Linguistic Evolution',
+        'greco_antico': 'Ancient Greek',
+        'latino': 'Latin',
+        'volgare': 'Vernacular',
+        'tedesco': 'German',
+        'francese': 'French',
+        'italiano': 'Italian',
+        
+        'dimensione_ontologica': 'Ontological Dimension',
+        'dimensione_epistemica': 'Epistemic Dimension',
+        'dimensione_etica': 'Ethical Dimension',
+        'dimensione_politica': 'Political Dimension',
+        
+        'continuita_identificate': 'Identified Continuities',
+        'rotture_identificate': 'Identified Ruptures',
+        'trasformazione_semantica': 'Semantic Transformation',
+        'trasformazione_contestuale': 'Contextual Transformation',
+        
+        'pulsante_confronta': 'Compare with another term',
+        'pulsante_espandi': 'Expand Analysis',
+        'pulsante_riduci': 'Reduce Analysis',
+        'pulsante_stampa': 'Print Analysis',
+        'pulsante_condividi': 'Share Analysis',
+        
+        'tooltip_analisi': 'Click for comparative analysis',
+        'tooltip_timeline': 'View evolutionary timeline',
+        'tooltip_metriche': 'Show quantitative metrics',
+        'tooltip_esporta': 'Export analysis data',
+        
+        'modalita_analisi_semplice': 'Simple Analysis Mode',
+        'modalita_analisi_avanzata': 'Advanced Analysis Mode',
+        'filtro_per_contesto': 'Filter by Context',
+        'filtro_per_autore': 'Filter by Author',
+        'filtro_per_secolo': 'Filter by Century',
+        
+        'nessuna_analisi_disponibile': 'No analysis available',
+        'caricamento_analisi': 'Loading analysis...',
+        'analisi_completata': 'Analysis completed',
+        'analisi_fallita': 'Analysis failed',
+        
+        'istruzioni_analisi': 'Select a term to start comparative analysis',
+        'esempio_analisi': 'Example: compare "Truth" between Plato and Foucault'
     }
 };
 
-// Funzione di utilità per la traduzione
+// Funzione di utilità per la traduzione (UNTOUCHED)
 window.i18n = function(key, lang = null) {
     const language = lang || localStorage.getItem('app_language') || 'it';
     const translation = window.translations[language];
@@ -517,7 +648,7 @@ window.i18n = function(key, lang = null) {
     return translation[key] || key;
 };
 
-// Funzione per tradurre tutta la pagina
+// Funzione per tradurre tutta la pagina (UNTOUCHED)
 window.translatePage = function(lang = null) {
     const language = lang || localStorage.getItem('app_language') || 'it';
     localStorage.setItem('app_language', language);
@@ -633,7 +764,7 @@ window.translatePage = function(lang = null) {
     console.log(`Page translated to ${language}`);
 };
 
-// Inizializza traduzioni al caricamento
+// Inizializza traduzioni al caricamento (UNTOUCHED)
 document.addEventListener('DOMContentLoaded', function() {
     // Carica lingua salvata o usa italiano di default
     const savedLang = localStorage.getItem('app_language') || 'it';
@@ -658,12 +789,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Helper per tradurre testo in tempo reale
+// Helper per tradurre testo in tempo reale (UNTOUCHED)
 window.__ = function(key) {
     return window.i18n(key);
 };
 
-// Esporta funzioni per uso globale
+// Esporta funzioni per uso globale (UNTOUCHED)
 window.toggleLanguage = function() {
     const currentLang = localStorage.getItem('app_language') || 'it';
     const newLang = currentLang === 'it' ? 'en' : 'it';

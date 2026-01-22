@@ -14,6 +14,7 @@ const COLLECTIONS = {
     OPERE: 'opere',           // ex-BEVERINI
     CONCETTI: 'concetti'      // ex-NEWS
 };
+
 // ==========================================
 // FUNZIONE LOG ACTIVITY (AGGIUNTA MANCANTE)
 // ==========================================
@@ -41,6 +42,7 @@ function logActivity(description) {
         updateActivityLog();
     }
 }
+
 // ==========================================
 
 // Funzione principale cambio lingua
@@ -1033,7 +1035,6 @@ function logPerformanceMetric(name, duration) {
     
     localStorage.setItem('performance_metrics', JSON.stringify(metrics));
 }
-
 // ============================================
 // VARIABILI GLOBALI E GESTIONE RUOLI
 // ============================================
@@ -1865,7 +1866,6 @@ function showSkeletonLoaderCompact(container, count = 6) {
     }
 }
 
-// CONTINUA NELLA PARTE 2...
 // ============================================
 // FUNZIONI DI RENDERING PER FILOSOFIA
 // ============================================
@@ -1897,6 +1897,11 @@ function renderGridItems(container, items, type) {
         let badgeHTML = '';
         if (highlights.new.includes(item.id)) badgeHTML = '<span class="badge-new">NUOVO</span>';
         else if (highlights.updated.includes(item.id)) badgeHTML = '<span class="badge-updated">AGGIORNATO</span>';
+        
+        // Aggiungi badge "Analisi" per concetti
+        if (type === 'concetto' && hasComparativeAnalysis(item.parola)) {
+            badgeHTML += '<span class="badge-analysis" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin-left: 5px;">📊 ANALISI</span>';
+        }
 
         const hasCustomImage = item.ritratto && item.ritratto.trim() !== '';
         const defaultImage = type === 'filosofo' ? './images/default-filosofo.jpg' : './images/default-opera.jpg';
@@ -2029,6 +2034,11 @@ function renderConcettiItems(container, concetti) {
         } else if (highlights.updated.includes(item.id)) {
             badgeHTML = '<span class="badge-updated" style="float: right;">AGGIORNATO</span>';
         }
+        
+        // Aggiungi badge "Analisi" se disponibile
+        if (hasComparativeAnalysis(item.parola)) {
+            badgeHTML += '<span class="badge-analysis" style="float: right; margin-left: 5px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">📊 ANALISI</span>';
+        }
 
         const concettoCard = document.createElement('div');
         concettoCard.className = 'concetto-card';
@@ -2043,6 +2053,14 @@ function renderConcettiItems(container, concetti) {
                 <span class="concetto-opera">${item.opera_riferimento || ''}</span>
             </div>
         `;
+        
+        // Aggiungi click per analisi comparativa
+        concettoCard.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('badge-analysis')) {
+                openComparativeAnalysis(item.parola, item.id);
+            }
+        });
+        
         container.appendChild(concettoCard);
     });
 }
@@ -2224,6 +2242,11 @@ function showDetail(id, type) {
                     <p>${item.evoluzione}</p>
                 </div>` : ''}
                 <div class="detail-actions">
+                    ${hasComparativeAnalysis(item.parola) ? `
+                    <button class="detail-action-btn analysis-btn" onclick="openComparativeAnalysis('${item.parola}', '${item.id}')">
+                        <i class="fas fa-chart-line"></i> ${t.view_comparative_analysis || 'Analisi Comparativa'}
+                    </button>
+                    ` : ''}
                     <button class="detail-action-btn" onclick="showConceptNetwork('${item.parola}')">
                         <i class="fas fa-project-diagram"></i> ${t.view_concept_network || 'Vedi rete concettuale'}
                     </button>
@@ -2297,6 +2320,7 @@ function initMappa() {
 
     requestUserLocation();
 }
+
 // ==========================================
 // AUTOCOMPLETE MAPPA (AGGIUNTA MANCANTE)
 // ==========================================
@@ -2354,7 +2378,7 @@ function setupSearchAutocomplete() {
         }
     });
 }
-// ==========================================
+
 function createMarker(item, type) {
     const icon = getIconForType(type, item.periodo);
     const marker = L.marker([item.coordinate.lat, item.coordinate.lng], { icon });
@@ -2498,7 +2522,7 @@ function centerOnLocation(lat, lng) {
 }
 
 // ============================================
-// MAPPA CONCETTUALE (NUOVA FUNZIONALITÀ)
+// MAPPA CONCETTUALE - VERSIONE POTENZIATA
 // ============================================
 
 function loadConcettoNetwork() {
@@ -2516,7 +2540,7 @@ function loadConcettoNetwork() {
         }
         
         try {
-            createConceptNetwork(container);
+            createConceptNetworkEnhanced(container);
         } catch (error) {
             console.error('Errore creazione rete concettuale:', error);
             container.innerHTML = '<div class="error-state">Errore nella creazione della rete concettuale</div>';
@@ -2524,108 +2548,151 @@ function loadConcettoNetwork() {
     }, 100);
 }
 
-function createConceptNetwork(container) {
+function createConceptNetworkEnhanced(container) {
     const nodes = new vis.DataSet([]);
     const edges = new vis.DataSet([]);
     
     // Aggiungi filosofi
-    appData.filosofi.forEach((filosofo, index) => {
+    appData.filosofi.forEach((filosofo) => {
+        const analysisScore = calculateAnalysisScore(filosofo);
+        const nodeSize = 25 + (analysisScore * 10);
+        
         nodes.add({
             id: `f-${filosofo.id}`,
             label: filosofo.nome,
             group: 'filosofo',
-            value: 30,
+            value: nodeSize,
             shape: 'circle',
             color: filosofo.periodo === 'contemporaneo' ? 
                 { background: '#8b5cf6', border: '#7c3aed' } : 
                 { background: '#3b82f6', border: '#1d4ed8' },
             font: { color: 'white', size: 14 },
-            title: `${filosofo.nome}<br>${filosofo.scuola}<br>${filosofo.periodo}`
+            title: generateFilosofoTooltip(filosofo, analysisScore),
+            filosofoData: filosofo,
+            metadata: {
+                type: 'filosofo',
+                periodo: filosofo.periodo,
+                concettiCount: filosofo.concetti_principali ? filosofo.concetti_principali.length : 0,
+                analysisScore: analysisScore
+            }
         });
     });
     
     // Aggiungi concetti
-    appData.concetti.forEach((concetto, index) => {
+    appData.concetti.forEach((concetto) => {
+        const hasAnalysis = hasComparativeAnalysis(concetto.parola);
+        const nodeSize = 20 + (hasAnalysis ? 10 : 0);
+        
         nodes.add({
             id: `c-${concetto.id}`,
             label: concetto.parola,
             group: 'concetto',
-            value: 25,
+            value: nodeSize,
             shape: 'box',
-            color: { background: '#10b981', border: '#059669' },
-            font: { color: 'white', size: 13 },
-            title: `${concetto.parola}<br>${concetto.definizione.substring(0, 100)}...`
+            color: hasAnalysis ? 
+                { background: '#ec4899', border: '#db2777' } : 
+                { background: '#10b981', border: '#059669' },
+            font: { 
+                color: 'white', 
+                size: 13,
+                bold: hasAnalysis ? true : false
+            },
+            title: generateConcettoTooltip(concetto, hasAnalysis),
+            concettoData: concetto,
+            metadata: {
+                type: 'concetto',
+                hasAnalysis: hasAnalysis,
+                periodo: concetto.periodo_storico
+            }
         });
     });
     
-    // Crea connessioni (esempio: collegamenti filosofo-concetto)
+    // Crea connessioni filosofo-concetto con pesi
     appData.filosofi.forEach(filosofo => {
         if (filosofo.concetti_principali) {
-            filosofo.concetti_principali.forEach(concettoNome => {
+            filosofo.concetti_principali.forEach((concettoNome, index) => {
                 const concetto = appData.concetti.find(c => c.parola === concettoNome);
                 if (concetto) {
+                    const weight = calculateConnectionWeight(filosofo, concetto, index);
+                    
                     edges.add({
                         from: `f-${filosofo.id}`,
                         to: `c-${concetto.id}`,
                         label: 'elabora',
                         color: filosofo.periodo === 'contemporaneo' ? '#f59e0b' : '#10b981',
-                        width: 2,
+                        width: 1 + (weight * 2),
                         arrows: 'to',
-                        dashes: false
+                        dashes: false,
+                        metadata: {
+                            type: 'elabora',
+                            weight: weight,
+                            importance: index === 0 ? 'alta' : 'media'
+                        }
                     });
                 }
             });
         }
     });
     
-    // Collegamenti tra filosofi (influenze)
-    // Esempio di collegamenti (dovrebbero essere nel dataset)
-    const influenze = [
-        { from: 'Platone', to: 'Aristotele', label: 'maestro' },
-        { from: 'Aristotele', to: 'Tommaso d\'Aquino', label: 'influenza' },
-        { from: 'Nietzsche', to: 'Foucault', label: 'ispirazione' },
-        { from: 'Hegel', to: 'Marx', label: 'dialettica' }
-    ];
-    
+    // Collegamenti tra filosofi (influenze con timeline)
+    const influenze = analyzeHistoricalInfluences();
     influenze.forEach(influenza => {
-        const filosofoFrom = appData.filosofi.find(f => f.nome.includes(influenza.from));
-        const filosofoTo = appData.filosofi.find(f => f.nome.includes(influenza.to));
-        
-        if (filosofoFrom && filosofoTo) {
-            edges.add({
-                from: `f-${filosofoFrom.id}`,
-                to: `f-${filosofoTo.id}`,
-                label: influenza.label,
-                color: '#6b7280',
-                width: 1,
-                arrows: 'to',
-                dashes: true
-            });
-        }
+        edges.add({
+            from: `f-${influenza.fromId}`,
+            to: `f-${influenza.toId}`,
+            label: influenza.type,
+            color: '#6b7280',
+            width: 1 + (influenza.strength * 1.5),
+            arrows: 'to',
+            dashes: true,
+            metadata: {
+                type: 'influenza',
+                strength: influenza.strength,
+                evidence: influenza.evidence
+            }
+        });
     });
     
     const data = { nodes, edges };
+    
+    // Configurazione fisica avanzata
     const options = {
         nodes: {
             shape: 'dot',
             size: 25,
             font: {
                 size: 14,
-                face: 'Inter, -apple-system, sans-serif'
+                face: 'Inter, -apple-system, sans-serif',
+                bold: {
+                    size: 15,
+                    vadjust: -1
+                }
             },
             borderWidth: 2,
-            shadow: true
+            shadow: true,
+            scaling: {
+                min: 15,
+                max: 50,
+                label: {
+                    enabled: true,
+                    min: 12,
+                    max: 20,
+                    maxVisible: 25,
+                    drawThreshold: 5
+                }
+            }
         },
         edges: {
             width: 2,
             smooth: {
-                type: 'continuous',
+                type: 'dynamic',
                 roundness: 0.5
             },
             font: {
                 size: 11,
                 align: 'middle',
-                strokeWidth: 0
+                strokeWidth: 0,
+                background: 'rgba(255,255,255,0.8)'
             },
             arrows: {
                 to: {
@@ -2637,25 +2704,34 @@ function createConceptNetwork(container) {
             color: {
                 inherit: false
             },
-            selectionWidth: 3
+            selectionWidth: 3,
+            hoverWidth: 2.5
         },
         physics: {
             enabled: true,
             solver: 'forceAtlas2Based',
             forceAtlas2Based: {
-                gravitationalConstant: -50,
-                centralGravity: 0.01,
-                springLength: 200,
-                springConstant: 0.08,
-                damping: 0.4,
-                avoidOverlap: 1
+                gravitationalConstant: -100,
+                centralGravity: 0.02,
+                springLength: 150,
+                springConstant: 0.06,
+                damping: 0.5,
+                avoidOverlap: 1.5
             },
             stabilization: {
                 enabled: true,
-                iterations: 1000,
+                iterations: 1500,
                 updateInterval: 100,
                 onlyDynamicEdges: false,
                 fit: true
+            },
+            barnesHut: {
+                gravitationalConstant: -2000,
+                centralGravity: 0.3,
+                springLength: 95,
+                springConstant: 0.04,
+                damping: 0.09,
+                avoidOverlap: 0.1
             }
         },
         interaction: {
@@ -2663,12 +2739,27 @@ function createConceptNetwork(container) {
             dragView: true,
             zoomView: true,
             hover: true,
-            tooltipDelay: 200,
-            hideEdgesOnDrag: false,
-            hideEdgesOnZoom: false
+            hoverConnectedEdges: true,
+            tooltipDelay: 150,
+            hideEdgesOnDrag: true,
+            hideEdgesOnZoom: true,
+            keyboard: {
+                enabled: true,
+                speed: { x: 10, y: 10, zoom: 0.02 },
+                bindToWindow: true
+            },
+            multiselect: true
         },
         layout: {
-            improvedLayout: true
+            randomSeed: 42,
+            improvedLayout: true,
+            hierarchical: {
+                enabled: false,
+                direction: 'UD',
+                sortMethod: 'directed',
+                nodeSpacing: 150,
+                treeSpacing: 200
+            }
         },
         groups: {
             filosofo: {
@@ -2684,7 +2775,8 @@ function createConceptNetwork(container) {
                         background: '#60a5fa',
                         border: '#3b82f6'
                     }
-                }
+                },
+                size: 30
             },
             concetto: {
                 shape: 'box',
@@ -2699,7 +2791,24 @@ function createConceptNetwork(container) {
                         background: '#34d399',
                         border: '#10b981'
                     }
-                }
+                },
+                size: 25
+            },
+            'concetto-analisi': {
+                shape: 'star',
+                color: {
+                    background: '#ec4899',
+                    border: '#db2777',
+                    highlight: {
+                        background: '#f472b6',
+                        border: '#ec4899'
+                    },
+                    hover: {
+                        background: '#f472b6',
+                        border: '#ec4899'
+                    }
+                },
+                size: 35
             }
         }
     };
@@ -2707,18 +2816,31 @@ function createConceptNetwork(container) {
     // Crea la rete
     const network = new vis.Network(container, data, options);
     
-    // Gestisci eventi
+    // Gestisci eventi avanzati
     network.on("click", function(params) {
         if (params.nodes.length > 0) {
             const nodeId = params.nodes[0];
             const node = nodes.get(nodeId);
             
-            if (nodeId.startsWith('f-')) {
-                const filosofoId = nodeId.substring(2);
-                showDetail(filosofoId, 'filosofo');
-            } else if (nodeId.startsWith('c-')) {
-                const concettoId = nodeId.substring(2);
-                showDetail(concettoId, 'concetto');
+            // Doppio click per analisi comparativa (se concetto)
+            if (params.event.detail === 2) {
+                if (nodeId.startsWith('c-')) {
+                    const concettoId = nodeId.substring(2);
+                    const concetto = appData.concetti.find(c => c.id === concettoId);
+                    if (concetto) {
+                        openComparativeAnalysis(concetto.parola, concettoId);
+                    }
+                }
+            } 
+            // Singolo click per dettagli
+            else {
+                if (nodeId.startsWith('f-')) {
+                    const filosofoId = nodeId.substring(2);
+                    showDetail(filosofoId, 'filosofo');
+                } else if (nodeId.startsWith('c-')) {
+                    const concettoId = nodeId.substring(2);
+                    showDetail(concettoId, 'concetto');
+                }
             }
         }
     });
@@ -2726,26 +2848,225 @@ function createConceptNetwork(container) {
     network.on("hoverNode", function(params) {
         const node = nodes.get(params.node);
         if (node) {
-            // Aggiungi effetto hover
+            // Mostra tooltip avanzato
+            network.canvas.body.container.style.cursor = 'pointer';
+            
+            // Highlight connessioni
+            network.selectNodes([params.node]);
+            const connectedEdges = network.getConnectedEdges(params.node);
+            network.selectEdges(connectedEdges);
         }
     });
     
-    // Aggiungi controlli UI
-    addNetworkControls(network);
+    network.on("blurNode", function(params) {
+        network.unselectAll();
+        network.canvas.body.container.style.cursor = 'default';
+    });
+    
+    network.on("zoom", function(params) {
+        // Adatta dimensione etichette allo zoom
+        const scale = params.scale;
+        network.setOptions({
+            nodes: {
+                font: {
+                    size: Math.max(10, Math.min(20, 14 / scale))
+                }
+            }
+        });
+    });
+    
+    // Aggiungi controlli UI avanzati
+    addEnhancedNetworkControls(network);
+    
+    // Fit automatico con animazione
+    setTimeout(() => {
+        network.fit({ animation: { duration: 1000, easingFunction: 'easeInOutQuad' } });
+    }, 500);
+    
+    // Salva riferimento alla rete per controlli esterni
+    window.conceptNetwork = network;
 }
 
-function addNetworkControls(network) {
+function calculateAnalysisScore(filosofo) {
+    let score = 0;
+    
+    // Punteggio basato sul numero di concetti elaborati
+    if (filosofo.concetti_principali) {
+        score += filosofo.concetti_principali.length * 0.2;
+    }
+    
+    // Punteggio basato sul periodo storico
+    const periodScores = {
+        'classico': 1.0,
+        'medioevale': 0.8,
+        'moderno': 0.9,
+        'contemporaneo': 1.2
+    };
+    score += periodScores[filosofo.periodo] || 0.5;
+    
+    // Punteggio basato sul numero di opere
+    if (filosofo.opere_principali) {
+        score += Math.min(filosofo.opere_principali.length * 0.1, 0.5);
+    }
+    
+    return Math.min(score, 2.0); // Normalizza a max 2.0
+}
+
+function generateFilosofoTooltip(filosofo, analysisScore) {
+    return `
+        <div class="advanced-tooltip">
+            <div class="tooltip-header">
+                <strong>${filosofo.nome}</strong>
+                <span class="tooltip-score">Punteggio: ${analysisScore.toFixed(1)}</span>
+            </div>
+            <div class="tooltip-content">
+                <p><strong>Scuola:</strong> ${filosofo.scuola}</p>
+                <p><strong>Periodo:</strong> ${getPeriodoText(filosofo.periodo)}</p>
+                <p><strong>Concetti elaborati:</strong> ${filosofo.concetti_principali ? filosofo.concetti_principali.length : 0}</p>
+                ${filosofo.luogo_nascita ? `<p><strong>Luogo:</strong> ${filosofo.luogo_nascita}</p>` : ''}
+                ${filosofo.anni_vita ? `<p><strong>Vita:</strong> ${filosofo.anni_vita}</p>` : ''}
+            </div>
+            <div class="tooltip-footer">
+                <em>Clicca per dettagli | Doppio click per analisi</em>
+            </div>
+        </div>
+    `;
+}
+
+function generateConcettoTooltip(concetto, hasAnalysis) {
+    const analysisBadge = hasAnalysis ? '<span class="tooltip-badge" style="background: #ec4899; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">ANALISI DISPONIBILE</span>' : '';
+    
+    return `
+        <div class="advanced-tooltip">
+            <div class="tooltip-header">
+                <strong>${concetto.parola}</strong>
+                ${analysisBadge}
+            </div>
+            <div class="tooltip-content">
+                <p><strong>Definizione:</strong> ${concetto.definizione.substring(0, 100)}...</p>
+                <p><strong>Periodo:</strong> ${concetto.periodo_storico || 'Non specificato'}</p>
+                ${concetto.autore_riferimento ? `<p><strong>Autore principale:</strong> ${concetto.autore_riferimento}</p>` : ''}
+                ${concetto.opera_riferimento ? `<p><strong>Opera:</strong> ${concetto.opera_riferimento}</p>` : ''}
+            </div>
+            <div class="tooltip-footer">
+                <em>Clicca per dettagli | Doppio click per analisi comparativa</em>
+            </div>
+        </div>
+    `;
+}
+
+function calculateConnectionWeight(filosofo, concetto, index) {
+    let weight = 0.3; // Peso base
+    
+    // Importanza nella lista (primi concetti sono più importanti)
+    weight += (1 / (index + 1)) * 0.3;
+    
+    // Concetti con analisi pesano di più
+    if (hasComparativeAnalysis(concetto.parola)) {
+        weight += 0.2;
+    }
+    
+    // Filosofi contemporanei pesano di più
+    if (filosofo.periodo === 'contemporaneo') {
+        weight += 0.1;
+    }
+    
+    return Math.min(weight, 0.8);
+}
+
+function analyzeHistoricalInfluences() {
+    const influenze = [];
+    
+    // Analizza relazioni filosofiche basate su periodo e scuola
+    appData.filosofi.forEach(filosofoFrom => {
+        appData.filosofi.forEach(filosofoTo => {
+            if (filosofoFrom.id !== filosofoTo.id) {
+                // Evita auto-influenze
+                let strength = 0;
+                let type = 'influenza';
+                let evidence = '';
+                
+                // 1. Influenza temporale (da più antico a più recente)
+                const fromPeriodOrder = getPeriodOrder(filosofoFrom.periodo);
+                const toPeriodOrder = getPeriodOrder(filosofoTo.periodo);
+                
+                if (fromPeriodOrder < toPeriodOrder) {
+                    strength += 0.3;
+                    type = 'influenza temporale';
+                    evidence = `Periodo ${filosofoFrom.periodo} → ${filosofoTo.periodo}`;
+                }
+                
+                // 2. Influenza per scuola simile
+                if (filosofoFrom.scuola && filosofoTo.scuola && 
+                    filosofoFrom.scuola.toLowerCase() === filosofoTo.scuola.toLowerCase()) {
+                    strength += 0.4;
+                    type = 'influenza di scuola';
+                    evidence = `Stessa scuola: ${filosofoFrom.scuola}`;
+                }
+                
+                // 3. Concetti in comune
+                if (filosofoFrom.concetti_principali && filosofoTo.concetti_principali) {
+                    const commonConcepts = filosofoFrom.concetti_principali.filter(
+                        concetto => filosofoTo.concetti_principali.includes(concetto)
+                    );
+                    
+                    if (commonConcepts.length > 0) {
+                        strength += commonConcepts.length * 0.2;
+                        type = 'concetti condivisi';
+                        evidence = `${commonConcepts.length} concetti condivisi`;
+                    }
+                }
+                
+                // Aggiungi solo se c'è una relazione significativa
+                if (strength > 0.3) {
+                    influenze.push({
+                        fromId: filosofoFrom.id,
+                        toId: filosofoTo.id,
+                        type: type,
+                        strength: Math.min(strength, 1.0),
+                        evidence: evidence
+                    });
+                }
+            }
+        });
+    });
+    
+    return influenze;
+}
+
+function getPeriodOrder(periodo) {
+    const order = {
+        'classico': 1,
+        'medioevale': 2,
+        'moderno': 3,
+        'contemporaneo': 4
+    };
+    return order[periodo] || 0;
+}
+
+function addEnhancedNetworkControls(network) {
     const controlsHTML = `
-        <div class="network-controls">
-            <button class="network-btn" onclick="network.fit()" title="Adatta vista">
+        <div class="network-controls enhanced">
+            <button class="network-btn" onclick="network.fit({animation: {duration: 1000}})" title="Adatta vista">
                 <i class="fas fa-expand"></i>
-            </button>
-            <button class="network-btn" onclick="network.stabilize()" title="Stabilizza rete">
-                <i class="fas fa-sync"></i>
             </button>
             <button class="network-btn" onclick="togglePhysics()" title="Attiva/Disattiva fisica">
                 <i class="fas fa-atom"></i>
             </button>
+            <button class="network-btn" onclick="stabilizeNetwork()" title="Stabilizza rete">
+                <i class="fas fa-sync"></i>
+            </button>
+            <button class="network-btn" onclick="exportNetworkImage()" title="Esporta immagine">
+                <i class="fas fa-camera"></i>
+            </button>
+            <button class="network-btn" onclick="highlightAnalyticalConcepts()" title="Evidenzia concetti con analisi">
+                <i class="fas fa-chart-line"></i>
+            </button>
+            <div class="network-legend">
+                <span class="legend-item"><div class="legend-color filosofo"></div> Filosofo</span>
+                <span class="legend-item"><div class="legend-color concetto"></div> Concetto</span>
+                <span class="legend-item"><div class="legend-color concetto-analisi"></div> Con Analisi</span>
+            </div>
         </div>
     `;
     
@@ -2756,16 +3077,779 @@ function addNetworkControls(network) {
 }
 
 function togglePhysics() {
-    // Funzione per attivare/disattivare la fisica della rete
-    console.log('Toggle physics');
+    if (window.conceptNetwork) {
+        const currentPhysics = window.conceptNetwork.getOptions().physics.enabled;
+        window.conceptNetwork.setOptions({ physics: { enabled: !currentPhysics } });
+        showToast(`Fisica ${!currentPhysics ? 'attivata' : 'disattivata'}`, 'info');
+    }
+}
+
+function stabilizeNetwork() {
+    if (window.conceptNetwork) {
+        window.conceptNetwork.stabilize(1000);
+        showToast('Rete stabilizzata', 'success');
+    }
+}
+
+function exportNetworkImage() {
+    if (window.conceptNetwork) {
+        const canvas = window.conceptNetwork.canvas.frame.canvas;
+        const link = document.createElement('a');
+        link.download = `mappa-concettuale-${new Date().toISOString().split('T')[0]}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showToast('Immagine esportata', 'success');
+    }
+}
+
+function highlightAnalyticalConcepts() {
+    if (window.conceptNetwork && window.conceptNetwork.body) {
+        const nodes = window.conceptNetwork.body.data.nodes;
+        const analyticalNodes = nodes.getIds().filter(id => 
+            id.startsWith('c-') && hasComparativeAnalysisForNode(id)
+        );
+        
+        window.conceptNetwork.selectNodes(analyticalNodes);
+        window.conceptNetwork.focus(analyticalNodes[0], {
+            scale: 1.5,
+            animation: { duration: 1000 }
+        });
+        
+        showToast(`${analyticalNodes.length} concetti con analisi evidenziati`, 'info');
+    }
+}
+
+function hasComparativeAnalysisForNode(nodeId) {
+    if (!nodeId.startsWith('c-')) return false;
+    
+    const concettoId = nodeId.substring(2);
+    const concetto = appData.concetti.find(c => c.id === concettoId);
+    
+    return concetto && hasComparativeAnalysis(concetto.parola);
 }
 
 function showConceptNetwork(conceptName) {
     showScreen('mappa-concettuale-screen');
     setTimeout(() => {
         loadConcettoNetwork();
-        // Qui potresti aggiungere logica per evidenziare il concetto specifico
+        
+        // Opzionale: evidenzia il concetto specifico
+        if (conceptName && window.conceptNetwork) {
+            setTimeout(() => {
+                const nodes = window.conceptNetwork.body.data.nodes;
+                const targetNode = nodes.getIds().find(id => {
+                    if (id.startsWith('c-')) {
+                        const node = nodes.get(id);
+                        return node && node.label === conceptName;
+                    }
+                    return false;
+                });
+                
+                if (targetNode) {
+                    window.conceptNetwork.selectNodes([targetNode]);
+                    window.conceptNetwork.focus(targetNode, {
+                        scale: 2,
+                        animation: { duration: 1500 }
+                    });
+                }
+            }, 2000);
+        }
     }, 500);
+}
+// ============================================
+// ANALISI COMPARATIVA - NUOVA FUNZIONALITÀ
+// ============================================
+
+let currentComparativeAnalysis = null;
+
+function openComparativeAnalysis(termine, concettoId = null) {
+    currentComparativeAnalysis = {
+        termine: termine,
+        concettoId: concettoId,
+        timestamp: new Date().toISOString()
+    };
+    
+    // Mostra loader
+    const modal = document.getElementById('comparative-analysis-modal');
+    const content = document.getElementById('comparative-analysis-content');
+    
+    if (!modal || !content) {
+        console.error('Modal analisi comparativa non trovata');
+        showToast('Errore: modal analisi non disponibile', 'error');
+        return;
+    }
+    
+    content.innerHTML = `
+        <div class="analysis-loading">
+            <div class="spinner large"></div>
+            <p>Analisi comparativa in corso...</p>
+            <p class="loading-subtitle">Analizzo "${termine}" attraverso i periodi storici</p>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+    
+    // Simula analisi asincrona
+    setTimeout(() => {
+        performComparativeAnalysis(termine, concettoId);
+    }, 800);
+}
+
+function performComparativeAnalysis(termine, concettoId = null) {
+    try {
+        // 1. Recupera dati del concetto (se specificato)
+        const concetto = concettoId ? 
+            appData.concetti.find(c => c.id === concettoId) :
+            appData.concetti.find(c => c.parola.toLowerCase() === termine.toLowerCase());
+        
+        // 2. Analizza occorrenze nei filosofi
+        const analisi = analyzeTermAcrossPeriods(termine, concetto);
+        
+        // 3. Mostra risultati
+        mostraAnalisiComparativa(analisi);
+        
+        // 4. Log attività
+        logActivity(`Analisi comparativa eseguita per: ${termine}`);
+        
+    } catch (error) {
+        console.error('Errore analisi comparativa:', error);
+        
+        const content = document.getElementById('comparative-analysis-content');
+        if (content) {
+            content.innerHTML = `
+                <div class="analysis-error">
+                    <div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <h3>Errore nell'analisi</h3>
+                    <p>Non è stato possibile completare l'analisi comparativa.</p>
+                    <p class="error-details">${error.message}</p>
+                    <button class="btn primary" onclick="openComparativeAnalysis('${termine}', '${concettoId}')">
+                        <i class="fas fa-redo"></i> Riprova
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+function analyzeTermAcrossPeriods(termine, concetto = null) {
+    const periodi = ['classico', 'medioevale', 'moderno', 'contemporaneo'];
+    
+    // 1. Filosofi che trattano il termine
+    const filosofiConTermine = appData.filosofi.filter(filosofo => {
+        // Controlla nei concetti principali
+        if (filosofo.concetti_principali) {
+            return filosofo.concetti_principali.some(c => 
+                c.toLowerCase().includes(termine.toLowerCase())
+            );
+        }
+        return false;
+    });
+    
+    // 2. Opere correlate
+    const opereCorrelate = appData.opere.filter(opera => {
+        if (opera.concetti) {
+            return opera.concetti.some(c => 
+                c.toLowerCase().includes(termine.toLowerCase())
+            );
+        }
+        return false;
+    });
+    
+    // 3. Analisi per periodo
+    const analisiPerPeriodo = {};
+    
+    periodi.forEach(periodo => {
+        const filosofiPeriodo = filosofiConTermine.filter(f => f.periodo === periodo);
+        const operePeriodo = opereCorrelate.filter(o => o.periodo === periodo);
+        
+        // Contesto di utilizzo (esempi)
+        const contesti = [];
+        
+        filosofiPeriodo.forEach(filosofo => {
+            if (filosofo.concetti_principali) {
+                filosofo.concetti_principali.forEach(concettoNome => {
+                    if (concettoNome.toLowerCase().includes(termine.toLowerCase())) {
+                        contesti.push({
+                            tipo: 'filosofo',
+                            autore: filosofo.nome,
+                            scuola: filosofo.scuola,
+                            concetto: concettoNome,
+                            peso: 1.0
+                        });
+                    }
+                });
+            }
+        });
+        
+        operePeriodo.forEach(opera => {
+            contesti.push({
+                tipo: 'opera',
+                autore: opera.autore_nome,
+                titolo: opera.titolo,
+                anno: opera.anno,
+                peso: 0.8
+            });
+        });
+        
+        analisiPerPeriodo[periodo] = {
+            occorrenze: filosofiPeriodo.length + operePeriodo.length,
+            filosofiCount: filosofiPeriodo.length,
+            opereCount: operePeriodo.length,
+            contesti: contesti,
+            filosofi: filosofiPeriodo.map(f => ({
+                id: f.id,
+                nome: f.nome,
+                scuola: f.scuola
+            })),
+            opere: operePeriodo.map(o => ({
+                id: o.id,
+                titolo: o.titolo,
+                autore: o.autore_nome,
+                anno: o.anno
+            }))
+        };
+    });
+    
+    // 4. Timeline evolutiva
+    const timeline = generateTimeline(termine, filosofiConTermine, opereCorrelate);
+    
+    // 5. Trasformazioni concettuali
+    const trasformazioni = analyzeConceptTransformations(termine, periodi, analisiPerPeriodo);
+    
+    // 6. Metriche comparative
+    const metriche = {
+        totalOccorrenze: Object.values(analisiPerPeriodo).reduce((sum, p) => sum + p.occorrenze, 0),
+        piccoPeriodo: Object.keys(analisiPerPeriodo).reduce((a, b) => 
+            analisiPerPeriodo[a].occorrenze > analisiPerPeriodo[b].occorrenze ? a : b
+        ),
+        diversitaScuole: calculateSchoolDiversity(filosofiConTermine),
+        evoluzioneConcettuale: calculateConceptualEvolution(analisiPerPeriodo)
+    };
+    
+    // 7. Costruisci oggetto analisi completo
+    const analisiCompleta = {
+        termine: termine,
+        definizione: concetto ? concetto.definizione : 'Definizione non disponibile',
+        definizione_en: concetto ? concetto.definizione_en : '',
+        timeline: timeline,
+        periodi: analisiPerPeriodo,
+        trasformazioni: trasformazioni,
+        metriche: metriche,
+        statistiche: {
+            totalFilosofi: filosofiConTermine.length,
+            totalOpere: opereCorrelate.length,
+            periodiCoperti: periodi.filter(p => analisiPerPeriodo[p].occorrenze > 0).length,
+            scuoleCoinvolte: [...new Set(filosofiConTermine.map(f => f.scuola))].length
+        },
+        riferimenti: {
+            filosofi: filosofiConTermine.map(f => f.id),
+            opere: opereCorrelate.map(o => o.id)
+        },
+        metadata: {
+            generatedAt: new Date().toISOString(),
+            dataPoints: filosofiConTermine.length + opereCorrelate.length,
+            confidence: calculateAnalysisConfidence(filosofiConTermine, opereCorrelate)
+        }
+    };
+    
+    return analisiCompleta;
+}
+
+function generateTimeline(termine, filosofi, opere) {
+    const timeline = [];
+    
+    // Combina filosofi e opere in timeline
+    filosofi.forEach(filosofo => {
+        // Estrai secolo approssimativo dalla vita
+        const secolo = extractCenturyFromLife(filosofo.anni_vita);
+        
+        if (secolo) {
+            timeline.push({
+                type: 'filosofo',
+                label: filosofo.nome,
+                periodo: filosofo.periodo,
+                secolo: secolo,
+                data: filosofo,
+                weight: 1.0
+            });
+        }
+    });
+    
+    opere.forEach(opera => {
+        if (opera.anno) {
+            const secolo = Math.floor(parseInt(opera.anno) / 100) + 1;
+            
+            timeline.push({
+                type: 'opera',
+                label: opera.titolo,
+                periodo: opera.periodo,
+                secolo: secolo,
+                data: opera,
+                weight: 0.7
+            });
+        }
+    });
+    
+    // Ordina per secolo
+    timeline.sort((a, b) => a.secolo - b.secolo);
+    
+    return timeline;
+}
+
+function extractCenturyFromLife(lifeString) {
+    if (!lifeString) return null;
+    
+    // Cerca anni in formato "480-524 a.C." o "427-347 a.C."
+    const match = lifeString.match(/(\d+)/);
+    if (match) {
+        let year = parseInt(match[1]);
+        
+        // Correggi per anni a.C.
+        if (lifeString.toLowerCase().includes('a.c')) {
+            year = -year;
+        }
+        
+        return Math.floor((year + 100) / 100);
+    }
+    
+    return null;
+}
+
+function analyzeConceptTransformations(termine, periodi, analisiPerPeriodo) {
+    const trasformazioni = [];
+    
+    for (let i = 0; i < periodi.length - 1; i++) {
+        const periodoFrom = periodi[i];
+        const periodoTo = periodi[i + 1];
+        
+        const analisiFrom = analisiPerPeriodo[periodoFrom];
+        const analisiTo = analisiPerPeriodo[periodoTo];
+        
+        if (analisiFrom.occorrenze > 0 && analisiTo.occorrenze > 0) {
+            const cambiamento = {
+                from: periodoFrom,
+                to: periodoTo,
+                tipo: determineTransformationType(analisiFrom, analisiTo),
+                intensita: calculateTransformationIntensity(analisiFrom, analisiTo),
+                evidenze: []
+            };
+            
+            // Analizza scuole coinvolte
+            const scuoleFrom = analisiFrom.filosofi.map(f => f.scuola);
+            const scuoleTo = analisiTo.filosofi.map(f => f.scuola);
+            
+            if (scuoleFrom.length > 0 && scuoleTo.length > 0) {
+                const scuoleComuni = scuoleFrom.filter(s => scuoleTo.includes(s));
+                const scuoleNuove = scuoleTo.filter(s => !scuoleFrom.includes(s));
+                
+                if (scuoleNuove.length > 0) {
+                    cambiamento.evidenze.push(`Nuove scuole: ${scuoleNuove.join(', ')}`);
+                }
+                
+                if (scuoleComuni.length > 0) {
+                    cambiamento.evidenze.push(`Scuole continuative: ${scuoleComuni.join(', ')}`);
+                }
+            }
+            
+            trasformazioni.push(cambiamento);
+        }
+    }
+    
+    return trasformazioni;
+}
+
+function determineTransformationType(analisiFrom, analisiTo) {
+    const delta = analisiTo.occorrenze - analisiFrom.occorrenze;
+    const percentuale = (delta / analisiFrom.occorrenze) * 100;
+    
+    if (percentuale > 50) {
+        return 'espansione';
+    } else if (percentuale < -30) {
+        return 'riduzione';
+    } else if (Math.abs(percentuale) <= 10) {
+        return 'stabilità';
+    } else {
+        return 'trasformazione';
+    }
+}
+
+function calculateTransformationIntensity(analisiFrom, analisiTo) {
+    // Intensità basata su diversi fattori
+    let intensity = 0;
+    
+    // 1. Cambiamento occorrenze
+    const deltaOccorrenze = Math.abs(analisiTo.occorrenze - analisiFrom.occorrenze);
+    intensity += deltaOccorrenze * 0.2;
+    
+    // 2. Cambiamento contesti
+    const deltaContesti = Math.abs(analisiTo.contesti.length - analisiFrom.contesti.length);
+    intensity += deltaContesti * 0.3;
+    
+    // 3. Nuove scuole
+    const scuoleFrom = analisiFrom.filosofi.map(f => f.scuola);
+    const scuoleTo = analisiTo.filosofi.map(f => f.scuola);
+    const scuoleNuove = scuoleTo.filter(s => !scuoleFrom.includes(s)).length;
+    intensity += scuoleNuove * 0.5;
+    
+    return Math.min(intensity, 5); // Scala 0-5
+}
+
+function calculateSchoolDiversity(filosofi) {
+    if (filosofi.length === 0) return 0;
+    
+    const scuole = filosofi.map(f => f.scuola);
+    const scuoleUniche = [...new Set(scuole)];
+    
+    // Diversità = numero scuole uniche / numero totale filosofi
+    return (scuoleUniche.length / filosofi.length);
+}
+
+function calculateConceptualEvolution(analisiPerPeriodo) {
+    const periodi = Object.keys(analisiPerPeriodo);
+    let evolutionScore = 0;
+    
+    for (let i = 0; i < periodi.length - 1; i++) {
+        const periodoFrom = periodi[i];
+        const periodoTo = periodi[i + 1];
+        
+        const from = analisiPerPeriodo[periodoFrom];
+        const to = analisiPerPeriodo[periodoTo];
+        
+        if (from.occorrenze > 0 && to.occorrenze > 0) {
+            // Evoluzione positiva se aumentano occorrenze
+            if (to.occorrenze > from.occorrenze) {
+                evolutionScore += 0.3;
+            }
+            
+            // Evoluzione concettuale se cambiano le scuole
+            const scuoleFrom = from.filosofi.map(f => f.scuola);
+            const scuoleTo = to.filosofi.map(f => f.scuola);
+            const scuoleNuove = scuoleTo.filter(s => !scuoleFrom.includes(s)).length;
+            
+            if (scuoleNuove > 0) {
+                evolutionScore += scuoleNuove * 0.2;
+            }
+        }
+    }
+    
+    return Math.min(evolutionScore, 3); // Scala 0-3
+}
+
+function calculateAnalysisConfidence(filosofi, opere) {
+    let confidence = 0;
+    
+    // Basato su quantità di dati
+    const totalDataPoints = filosofi.length + opere.length;
+    
+    if (totalDataPoints >= 10) confidence = 0.9;
+    else if (totalDataPoints >= 5) confidence = 0.7;
+    else if (totalDataPoints >= 2) confidence = 0.5;
+    else confidence = 0.3;
+    
+    // Aumenta se ci sono opere
+    if (opere.length > 0) confidence += 0.1;
+    
+    return Math.min(confidence, 0.95);
+}
+
+function mostraAnalisiComparativa(analisi) {
+    const content = document.getElementById('comparative-analysis-content');
+    if (!content) return;
+    
+    const t = (window.translations && window.translations[currentLanguage]) ? 
+        window.translations[currentLanguage] : {};
+    
+    // Traduzione periodi
+    const periodoLabels = {
+        'classico': t.period_classic || 'Classico',
+        'medioevale': t.period_medieval || 'Medioevale',
+        'moderno': t.period_modern || 'Moderno',
+        'contemporaneo': t.period_contemporary || 'Contemporaneo'
+    };
+    
+    // Costruisci HTML dell'analisi
+    let html = `
+        <div class="comparative-analysis">
+            <!-- Header -->
+            <div class="analysis-header">
+                <h2><i class="fas fa-chart-line"></i> ${t.analysis_title || 'Analisi Comparativa'}</h2>
+                <div class="analysis-subtitle">Termine: <strong>${analisi.termine}</strong></div>
+                <div class="analysis-meta">
+                    <span class="meta-item"><i class="fas fa-calendar"></i> ${formatDate(analisi.metadata.generatedAt)}</span>
+                    <span class="meta-item"><i class="fas fa-database"></i> ${analisi.metadata.dataPoints} fonti</span>
+                    <span class="meta-item"><i class="fas fa-check-circle"></i> ${(analisi.metadata.confidence * 100).toFixed(0)}% affidabilità</span>
+                </div>
+            </div>
+            
+            <!-- Panoramica -->
+            <div class="analysis-overview">
+                <div class="overview-card">
+                    <div class="overview-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="overview-content">
+                        <div class="overview-value">${analisi.statistiche.totalFilosofi}</div>
+                        <div class="overview-label">${t.analysis_philosophers || 'Filosofi coinvolti'}</div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="overview-content">
+                        <div class="overview-value">${analisi.statistiche.totalOpere}</div>
+                        <div class="overview-label">${t.analysis_works || 'Opere correlate'}</div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <div class="overview-content">
+                        <div class="overview-value">${analisi.statistiche.periodiCoperti}</div>
+                        <div class="overview-label">${t.analysis_periods || 'Periodi storici'}</div>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fas fa-school"></i>
+                    </div>
+                    <div class="overview-content">
+                        <div class="overview-value">${analisi.statistiche.scuoleCoinvolte}</div>
+                        <div class="overview-label">${t.analysis_schools || 'Scuole di pensiero'}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="analysis-section">
+                <h3><i class="fas fa-timeline"></i> ${t.analysis_timeline || 'Timeline Evolutiva'}</h3>
+                <div class="timeline-container">
+                    ${analisi.timeline.map((event, index) => `
+                        <div class="timeline-item">
+                            <div class="timeline-marker periodo-${event.periodo}">
+                                <i class="fas fa-${event.type === 'filosofo' ? 'user-graduate' : 'book'}"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">${event.label}</div>
+                                <div class="timeline-meta">
+                                    <span class="periodo-badge periodo-${event.periodo}">${periodoLabels[event.periodo] || event.periodo}</span>
+                                    <span class="timeline-century">Secolo ${event.secolo}</span>
+                                </div>
+                                ${event.type === 'filosofo' ? 
+                                    `<div class="timeline-desc">${event.data.scuola}</div>` :
+                                    `<div class="timeline-desc">${event.data.autore} (${event.data.anno})</div>`
+                                }
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <!-- Confronto Periodi -->
+            <div class="analysis-section">
+                <h3><i class="fas fa-balance-scale"></i> ${t.analysis_period_comparison || 'Confronto tra Periodi'}</h3>
+                <div class="period-comparison">
+                    ${Object.entries(analisi.periodi).map(([periodo, dati]) => `
+                        <div class="period-card">
+                            <div class="period-header periodo-${periodo}">
+                                <h4>${periodoLabels[periodo] || periodo}</h4>
+                                <span class="period-count">${dati.occorrenze} occorrenze</span>
+                            </div>
+                            <div class="period-stats">
+                                <div class="stat-row">
+                                    <span class="stat-label"><i class="fas fa-user-graduate"></i> Filosofi:</span>
+                                    <span class="stat-value">${dati.filosofiCount}</span>
+                                </div>
+                                <div class="stat-row">
+                                    <span class="stat-label"><i class="fas fa-book"></i> Opere:</span>
+                                    <span class="stat-value">${dati.opereCount}</span>
+                                </div>
+                            </div>
+                            ${dati.filosofi.length > 0 ? `
+                                <div class="period-filosofi">
+                                    <div class="section-subtitle">Filosofi principali:</div>
+                                    <div class="filosofi-tags">
+                                        ${dati.filosofi.slice(0, 3).map(f => `
+                                            <span class="filosofo-tag" onclick="showDetail('${f.id}', 'filosofo')">
+                                                ${f.nome}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            <!-- Trasformazioni -->
+            ${analisi.trasformazioni.length > 0 ? `
+                <div class="analysis-section">
+                    <h3><i class="fas fa-exchange-alt"></i> ${t.analysis_transformations || 'Trasformazioni Concettuali'}</h3>
+                    <div class="transformations-grid">
+                        ${analisi.trasformazioni.map(tr => `
+                            <div class="transformation-card">
+                                <div class="transformation-header">
+                                    <span class="transformation-from periodo-${tr.from}">${periodoLabels[tr.from] || tr.from}</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                    <span class="transformation-to periodo-${tr.to}">${periodoLabels[tr.to] || tr.to}</span>
+                                </div>
+                                <div class="transformation-type type-${tr.tipo}">
+                                    <i class="fas fa-${getTransformationIcon(tr.tipo)}"></i> ${getTransformationLabel(tr.tipo)}
+                                </div>
+                                <div class="transformation-intensity">
+                                    <div class="intensity-bar" style="width: ${(tr.intensita / 5) * 100}%"></div>
+                                    <span class="intensity-label">Intensità: ${tr.intensita.toFixed(1)}/5</span>
+                                </div>
+                                ${tr.evidenze.length > 0 ? `
+                                    <div class="transformation-evidence">
+                                        <div class="evidence-title">Evidenze:</div>
+                                        <ul>
+                                            ${tr.evidenze.map(e => `<li>${e}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            ` : ''}
+            
+            <!-- Azioni -->
+            <div class="analysis-actions">
+                <button class="btn primary" onclick="exportAnalysisToExcel()">
+                    <i class="fas fa-file-excel"></i> ${t.export_excel || 'Esporta in Excel'}
+                </button>
+                <button class="btn secondary" onclick="shareAnalysis()">
+                    <i class="fas fa-share"></i> ${t.share_analysis || 'Condividi Analisi'}
+                </button>
+                <button class="btn" onclick="closeComparativeAnalysis()">
+                    <i class="fas fa-times"></i> ${t.close || 'Chiudi'}
+                </button>
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML = html;
+}
+
+function getTransformationIcon(tipo) {
+    const icons = {
+        'espansione': 'expand',
+        'riduzione': 'compress',
+        'stabilità': 'pause',
+        'trasformazione': 'sync'
+    };
+    return icons[tipo] || 'exchange-alt';
+}
+
+function getTransformationLabel(tipo) {
+    const labels = {
+        'espansione': 'Espansione concettuale',
+        'riduzione': 'Riduzione d\'uso',
+        'stabilità': 'Stabilità concettuale',
+        'trasformazione': 'Trasformazione'
+    };
+    return labels[tipo] || tipo;
+}
+
+function hasComparativeAnalysis(termine) {
+    // Controlla se il termine ha abbastanza dati per un'analisi
+    const filosofiConTermine = appData.filosofi.filter(filosofo => {
+        if (filosofo.concetti_principali) {
+            return filosofo.concetti_principali.some(c => 
+                c.toLowerCase().includes(termine.toLowerCase())
+            );
+        }
+        return false;
+    });
+    
+    const opereCorrelate = appData.opere.filter(opera => {
+        if (opera.concetti) {
+            return opera.concetti.some(c => 
+                c.toLowerCase().includes(termine.toLowerCase())
+            );
+        }
+        return false;
+    });
+    
+    // Almeno 2 filosofi o opere
+    return (filosofiConTermine.length + opereCorrelate.length) >= 2;
+}
+
+function exportAnalysisToExcel() {
+    if (!currentComparativeAnalysis) {
+        showToast('Nessuna analisi corrente da esportare', 'warning');
+        return;
+    }
+    
+    try {
+        if (typeof ExcelWorker !== 'undefined' && ExcelWorker.exportAnalysisToExcel) {
+            ExcelWorker.exportAnalysisToExcel(currentComparativeAnalysis);
+        } else {
+            // Fallback manuale
+            const data = [
+                ['Analisi Comparativa', currentComparativeAnalysis.termine],
+                ['Generata il', new Date().toLocaleString()],
+                [''],
+                ['Periodo', 'Filosofi', 'Opere', 'Totale Occorrenze']
+            ];
+            
+            // Aggiungi dati periodi
+            Object.entries(currentComparativeAnalysis.periodi || {}).forEach(([periodo, dati]) => {
+                data.push([
+                    periodo,
+                    dati.filosofiCount,
+                    dati.opereCount,
+                    dati.occorrenze
+                ]);
+            });
+            
+            // Crea file Excel
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Analisi');
+            XLSX.writeFile(wb, `analisi-${currentComparativeAnalysis.termine}-${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            showToast('Analisi esportata in Excel', 'success');
+        }
+    } catch (error) {
+        console.error('Errore esportazione analisi:', error);
+        showToast('Errore nell\'esportazione', 'error');
+    }
+}
+
+function shareAnalysis() {
+    if (!currentComparativeAnalysis) {
+        showToast('Nessuna analisi da condividere', 'warning');
+        return;
+    }
+    
+    const termine = currentComparativeAnalysis.termine;
+    const text = `Analisi comparativa del termine "${termine}" su Aeterna Lexicon\n\nScopri l'evoluzione di questo concetto attraverso i periodi storici.`;
+    
+    if (navigator.share) {
+        navigator.share({
+            title: `Analisi: ${termine}`,
+            text: text,
+            url: window.location.href
+        }).catch(err => {
+            console.log('Condivisione annullata:', err);
+        });
+    } else {
+        // Fallback per browser senza Web Share API
+        navigator.clipboard.writeText(`${text}\n${window.location.href}`);
+        showToast('Link copiato negli appunti', 'success');
+    }
+}
+
+function closeComparativeAnalysis() {
+    const modal = document.getElementById('comparative-analysis-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        currentComparativeAnalysis = null;
+    }
 }
 
 // ============================================
@@ -2811,11 +3895,14 @@ async function loadAdminFilosofi() {
             ? `<input type="checkbox" class="select-item-filosofi" value="${filosofo.id}" onchange="updateDeleteButtonState('filosofi')">`
             : '';
 
+        const analysisBadge = hasComparativeAnalysisForFilosofo(filosofo) ? 
+            '<span class="analysis-indicator" title="Presente in analisi comparativa">📊</span>' : '';
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td style="text-align: center;">${checkboxHtml}</td>
             <td>${filosofo.id}</td>
-            <td>${filosofo.nome}</td>
+            <td>${filosofo.nome} ${analysisBadge}</td>
             <td>${filosofo.scuola}</td>
             <td><span class="item-period periodo-${filosofo.periodo}">${getPeriodoText(filosofo.periodo)}</span></td>
             <td class="admin-item-actions">
@@ -2827,6 +3914,14 @@ async function loadAdminFilosofi() {
     });
     
     updateDeleteButtonState('filosofi');
+}
+
+function hasComparativeAnalysisForFilosofo(filosofo) {
+    if (!filosofo.concetti_principali) return false;
+    
+    return filosofo.concetti_principali.some(concetto => 
+        hasComparativeAnalysis(concetto)
+    );
 }
 
 function editFilosofo(id) {
@@ -3001,11 +4096,14 @@ async function loadAdminOpere() {
             ? `<input type="checkbox" class="select-item-opere" value="${opera.id}" onchange="updateDeleteButtonState('opere')">`
             : '';
 
+        const analysisBadge = hasComparativeAnalysisForOpera(opera) ? 
+            '<span class="analysis-indicator" title="Correlata ad analisi">📊</span>' : '';
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td style="text-align: center;">${checkboxHtml}</td>
             <td>${opera.id}</td>
-            <td>${opera.titolo}</td>
+            <td>${opera.titolo} ${analysisBadge}</td>
             <td>${opera.autore_nome || 'Autore non specificato'}</td>
             <td>${opera.anno}</td>
             <td class="admin-item-actions">
@@ -3016,6 +4114,14 @@ async function loadAdminOpere() {
         tbody.appendChild(row);
     });
     updateDeleteButtonState('opere');
+}
+
+function hasComparativeAnalysisForOpera(opera) {
+    if (!opera.concetti) return false;
+    
+    return opera.concetti.some(concetto => 
+        hasComparativeAnalysis(concetto)
+    );
 }
 
 function editOpera(id) {
@@ -3190,11 +4296,14 @@ async function loadAdminConcetti() {
             ? `<input type="checkbox" class="select-item-concetti" value="${concetto.id}" onchange="updateDeleteButtonState('concetti')">`
             : '';
 
+        const analysisBadge = hasComparativeAnalysis(concetto.parola) ? 
+            '<span class="analysis-indicator" title="Analisi comparativa disponibile">📊</span>' : '';
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td style="text-align: center;">${checkboxHtml}</td>
             <td>${concetto.id}</td>
-            <td>${concetto.parola}</td>
+            <td>${concetto.parola} ${analysisBadge}</td>
             <td>${concetto.autore_riferimento || 'N/A'}</td>
             <td>${concetto.periodo_storico || 'N/A'}</td>
             <td class="admin-item-actions">
@@ -3340,7 +4449,6 @@ async function deleteConcetto(id) {
         showToast('Errore nell\'eliminazione del concetto', 'error');
     }
 }
-
 // ============================================
 // GESTIONE ELIMINAZIONE MULTIPLA
 // ============================================
@@ -3455,7 +4563,7 @@ async function deleteSelectedItems(type) {
 }
 
 // ============================================
-// IMPORT/EXPORT FUNCTIONS - FILOSOFIA
+// IMPORT/EXPORT FUNCTIONS - INTEGRATE CON EXCELWORKER
 // ============================================
 
 function exportDataToExcel(type) {
@@ -3465,75 +4573,81 @@ function exportDataToExcel(type) {
     }
 
     try {
-        let data, filename, sheetName;
-        let excelData = [];
+        // Usa ExcelWorker se disponibile
+        if (typeof ExcelWorker !== 'undefined' && ExcelWorker.exportDataToExcel) {
+            ExcelWorker.exportDataToExcel(type, appData[type]);
+        } else {
+            // Fallback alla vecchia implementazione
+            let data, filename, sheetName;
+            let excelData = [];
 
-        switch(type) {
-            case 'filosofi':
-                data = appData.filosofi;
-                filename = 'filosofi_export.xlsx';
-                sheetName = 'Filosofi';
-                excelData = data.map(item => ({
-                    'ID': item.id,
-                    'Nome': item.nome || '',
-                    'Nome_EN': item.nome_en || '',
-                    'Scuola': item.scuola || '',
-                    'Periodo': item.periodo || '',
-                    'Anni_Vita': item.anni_vita || '',
-                    'Luogo_Nascita': item.luogo_nascita || '',
-                    'Biografia': item.biografia || '',
-                    'Biografia_EN': item.biografia_en || '',
-                    'Coordinate_Lat': item.coordinate ? item.coordinate.lat : '',
-                    'Coordinate_Lng': item.coordinate ? item.coordinate.lng : '',
-                    'Ritratto_URL': item.ritratto || ''
-                }));
-                break;
+            switch(type) {
+                case 'filosofi':
+                    data = appData.filosofi;
+                    filename = 'filosofi_export.xlsx';
+                    sheetName = 'Filosofi';
+                    excelData = data.map(item => ({
+                        'ID': item.id,
+                        'Nome': item.nome || '',
+                        'Nome_EN': item.nome_en || '',
+                        'Scuola': item.scuola || '',
+                        'Periodo': item.periodo || '',
+                        'Anni_Vita': item.anni_vita || '',
+                        'Luogo_Nascita': item.luogo_nascita || '',
+                        'Biografia': item.biografia || '',
+                        'Biografia_EN': item.biografia_en || '',
+                        'Coordinate_Lat': item.coordinate ? item.coordinate.lat : '',
+                        'Coordinate_Lng': item.coordinate ? item.coordinate.lng : '',
+                        'Ritratto_URL': item.ritratto || ''
+                    }));
+                    break;
 
-            case 'opere':
-                data = appData.opere;
-                filename = 'opere_export.xlsx';
-                sheetName = 'Opere';
-                excelData = data.map(item => ({
-                    'ID': item.id,
-                    'Titolo': item.titolo || '',
-                    'Titolo_EN': item.titolo_en || '',
-                    'Autore_ID': item.autore_id || '',
-                    'Autore_Nome': item.autore_nome || '',
-                    'Anno': item.anno || '',
-                    'Periodo': item.periodo || '',
-                    'Lingua': item.lingua || '',
-                    'Sintesi': item.sintesi || '',
-                    'Sintesi_EN': item.sintesi_en || '',
-                    'PDF_URL': item.pdf_url || '',
-                    'Immagine_URL': item.immagine || '',
-                    'Concetti': item.concetti ? item.concetti.join('; ') : ''
-                }));
-                break;
+                case 'opere':
+                    data = appData.opere;
+                    filename = 'opere_export.xlsx';
+                    sheetName = 'Opere';
+                    excelData = data.map(item => ({
+                        'ID': item.id,
+                        'Titolo': item.titolo || '',
+                        'Titolo_EN': item.titolo_en || '',
+                        'Autore_ID': item.autore_id || '',
+                        'Autore_Nome': item.autore_nome || '',
+                        'Anno': item.anno || '',
+                        'Periodo': item.periodo || '',
+                        'Lingua': item.lingua || '',
+                        'Sintesi': item.sintesi || '',
+                        'Sintesi_EN': item.sintesi_en || '',
+                        'PDF_URL': item.pdf_url || '',
+                        'Immagine_URL': item.immagine || '',
+                        'Concetti': item.concetti ? item.concetti.join('; ') : ''
+                    }));
+                    break;
 
-            case 'concetti':
-                data = appData.concetti;
-                filename = 'concetti_export.xlsx';
-                sheetName = 'Concetti';
-                excelData = data.map(item => ({
-                    'ID': item.id,
-                    'Parola': item.parola || '',
-                    'Parola_EN': item.parola_en || '',
-                    'Definizione': item.definizione || '',
-                    'Definizione_EN': item.definizione_en || '',
-                    'Esempio_Citazione': item.esempio_citazione || '',
-                    'Autore_Riferimento': item.autore_riferimento || '',
-                    'Opera_Riferimento': item.opera_riferimento || '',
-                    'Periodo_Storico': item.periodo_storico || '',
-                    'Evoluzione': item.evoluzione || ''
-                }));
-                break;
+                case 'concetti':
+                    data = appData.concetti;
+                    filename = 'concetti_export.xlsx';
+                    sheetName = 'Concetti';
+                    excelData = data.map(item => ({
+                        'ID': item.id,
+                        'Parola': item.parola || '',
+                        'Parola_EN': item.parola_en || '',
+                        'Definizione': item.definizione || '',
+                        'Definizione_EN': item.definizione_en || '',
+                        'Esempio_Citazione': item.esempio_citazione || '',
+                        'Autore_Riferimento': item.autore_riferimento || '',
+                        'Opera_Riferimento': item.opera_riferimento || '',
+                        'Periodo_Storico': item.periodo_storico || '',
+                        'Evoluzione': item.evoluzione || ''
+                    }));
+                    break;
+            }
+
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+            XLSX.writeFile(wb, filename);
         }
-
-        const ws = XLSX.utils.json_to_sheet(excelData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, sheetName);
-
-        XLSX.writeFile(wb, filename);
 
         showToast(`Dati ${type} esportati in Excel con successo`, 'success');
         logActivity(`Dati ${type} esportati in Excel`);
@@ -3552,71 +4666,173 @@ function handleFileImport(type, files) {
     if (files.length === 0) return;
 
     const file = files[0];
-    const reader = new FileReader();
-
-    reader.onload = function(e) {
-        try {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, { type: 'array' });
-
-            if (type === 'all') {
-                let importedCount = 0;
-
-                if (workbook.SheetNames.includes('Filosofi')) {
-                    const filosofiSheet = workbook.Sheets['Filosofi'];
-                    const filosofiData = XLSX.utils.sheet_to_json(filosofiSheet);
-                    importedCount += importFilosofi(filosofiData);
-                }
-
-                if (workbook.SheetNames.includes('Opere')) {
-                    const opereSheet = workbook.Sheets['Opere'];
-                    const opereData = XLSX.utils.sheet_to_json(opereSheet);
-                    importedCount += importOpere(opereData);
-                }
-
-                if (workbook.SheetNames.includes('Concetti')) {
-                    const concettiSheet = workbook.Sheets['Concetti'];
-                    const concettiData = XLSX.utils.sheet_to_json(concettiSheet);
-                    importedCount += importConcetti(concettiData);
-                }
-
-                if (importedCount > 0) {
+    
+    // Usa ExcelWorker se disponibile
+    if (typeof ExcelWorker !== 'undefined' && ExcelWorker.handleFileImport) {
+        ExcelWorker.handleFileImport(type, file, appData)
+            .then(result => {
+                if (result.success) {
+                    // Aggiorna i dati locali
+                    if (result.data.filosofi) appData.filosofi = result.data.filosofi;
+                    if (result.data.opere) appData.opere = result.data.opere;
+                    if (result.data.concetti) appData.concetti = result.data.concetti;
+                    
                     saveLocalData();
                     loadAdminFilosofi();
                     loadAdminOpere();
                     loadAdminConcetti();
                     updateDashboardStats();
-                    showToast(`${importedCount} elementi importati con successo`, 'success');
-                    logActivity('Tutti i dati importati da Excel');
+                    
+                    showToast(`${result.importedCount} elementi importati con successo`, 'success');
+                    logActivity('Dati importati da Excel via ExcelWorker');
                 } else {
-                    showToast('Nessun dato valido trovato nel file', 'warning');
+                    showToast('Errore nell\'importazione: ' + result.error, 'error');
                 }
-            } else {
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+            })
+            .catch(error => {
+                console.error('Errore import ExcelWorker:', error);
+                showToast('Errore nell\'importazione Excel', 'error');
+            });
+    } else {
+        // Fallback alla vecchia implementazione
+        const reader = new FileReader();
 
-                switch (type) {
-                    case 'filosofi':
-                        importFilosofi(jsonData);
-                        break;
-                    case 'opere':
-                        importOpere(jsonData);
-                        break;
-                    case 'concetti':
-                        importConcetti(jsonData);
-                        break;
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+
+                if (type === 'all') {
+                    let importedCount = 0;
+
+                    if (workbook.SheetNames.includes('Filosofi')) {
+                        const filosofiSheet = workbook.Sheets['Filosofi'];
+                        const filosofiData = XLSX.utils.sheet_to_json(filosofiSheet);
+                        importedCount += importFilosofi(filosofiData);
+                    }
+
+                    if (workbook.SheetNames.includes('Opere')) {
+                        const opereSheet = workbook.Sheets['Opere'];
+                        const opereData = XLSX.utils.sheet_to_json(opereSheet);
+                        importedCount += importOpere(opereData);
+                    }
+
+                    if (workbook.SheetNames.includes('Concetti')) {
+                        const concettiSheet = workbook.Sheets['Concetti'];
+                        const concettiData = XLSX.utils.sheet_to_json(concettiSheet);
+                        importedCount += importConcetti(concettiData);
+                    }
+
+                    if (importedCount > 0) {
+                        saveLocalData();
+                        loadAdminFilosofi();
+                        loadAdminOpere();
+                        loadAdminConcetti();
+                        updateDashboardStats();
+                        showToast(`${importedCount} elementi importati con successo`, 'success');
+                        logActivity('Tutti i dati importati da Excel');
+                    } else {
+                        showToast('Nessun dato valido trovato nel file', 'warning');
+                    }
+                } else {
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+                    switch (type) {
+                        case 'filosofi':
+                            importFilosofi(jsonData);
+                            break;
+                        case 'opere':
+                            importOpere(jsonData);
+                            break;
+                        case 'concetti':
+                            importConcetti(jsonData);
+                            break;
+                    }
                 }
+
+                document.getElementById(`import-${type}-file`).value = '';
+            } catch (error) {
+                showToast('Errore nell\'importazione Excel', 'error');
             }
+        };
 
-            document.getElementById(`import-${type}-file`).value = '';
-        } catch (error) {
-            showToast('Errore nell\'importazione Excel', 'error');
-        }
-    };
-
-    reader.readAsArrayBuffer(file);
+        reader.readAsArrayBuffer(file);
+    }
 }
 
+function downloadTemplate(type) {
+    if (currentUserRole !== 'admin') {
+        showToast('Funzione riservata agli amministratori', 'error');
+        return;
+    }
+
+    // Usa ExcelWorker se disponibile
+    if (typeof ExcelWorker !== 'undefined' && ExcelWorker.downloadTemplate) {
+        ExcelWorker.downloadTemplate(type);
+    } else {
+        // Fallback alla vecchia implementazione
+        let columns = [];
+        let filename = '';
+        let sheetName = '';
+
+        switch (type) {
+            case 'filosofi':
+                columns = [
+                    'Nome', 'Nome_EN', 
+                    'Scuola', 
+                    'Periodo', 
+                    'Anni_Vita', 
+                    'Luogo_Nascita',
+                    'Biografia', 'Biografia_EN',
+                    'Coordinate_Lat', 'Coordinate_Lng',
+                    'Ritratto_URL'
+                ];
+                filename = 'template_filosofi.xlsx';
+                sheetName = 'Filosofi';
+                break;
+                
+            case 'opere':
+                columns = [
+                    'Titolo', 'Titolo_EN',
+                    'Autore_ID', 'Autore_Nome',
+                    'Anno', 
+                    'Periodo', 
+                    'Lingua',
+                    'Sintesi', 'Sintesi_EN',
+                    'PDF_URL',
+                    'Immagine_URL',
+                    'Concetti'
+                ];
+                filename = 'template_opere.xlsx';
+                sheetName = 'Opere';
+                break;
+                
+            case 'concetti':
+                columns = [
+                    'Parola', 'Parola_EN',
+                    'Definizione', 'Definizione_EN',
+                    'Esempio_Citazione', 
+                    'Autore_Riferimento', 
+                    'Opera_Riferimento',
+                    'Periodo_Storico',
+                    'Evoluzione'
+                ];
+                filename = 'template_concetti.xlsx';
+                sheetName = 'Concetti';
+                break;
+        }
+
+        const ws = XLSX.utils.aoa_to_sheet([columns]);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, filename);
+    }
+
+    showToast(`Template ${type} scaricato con successo`, 'success');
+}
+
+// Funzioni di import legacy (mantenute per compatibilità)
 function importFilosofi(data) {
     const newFilosofi = data.map((item) => ({
         nome: item.Nome || item.nome || '',
@@ -3729,66 +4945,6 @@ function importConcetti(data) {
     return newConcetti.length;
 }
 
-function downloadTemplate(type) {
-    let columns = [];
-    let filename = '';
-    let sheetName = '';
-
-    switch (type) {
-        case 'filosofi':
-            columns = [
-                'Nome', 'Nome_EN', 
-                'Scuola', 
-                'Periodo', 
-                'Anni_Vita', 
-                'Luogo_Nascita',
-                'Biografia', 'Biografia_EN',
-                'Coordinate_Lat', 'Coordinate_Lng',
-                'Ritratto_URL'
-            ];
-            filename = 'template_filosofi.xlsx';
-            sheetName = 'Filosofi';
-            break;
-            
-        case 'opere':
-            columns = [
-                'Titolo', 'Titolo_EN',
-                'Autore_ID', 'Autore_Nome',
-                'Anno', 
-                'Periodo', 
-                'Lingua',
-                'Sintesi', 'Sintesi_EN',
-                'PDF_URL',
-                'Immagine_URL',
-                'Concetti'
-            ];
-            filename = 'template_opere.xlsx';
-            sheetName = 'Opere';
-            break;
-            
-        case 'concetti':
-            columns = [
-                'Parola', 'Parola_EN',
-                'Definizione', 'Definizione_EN',
-                'Esempio_Citazione', 
-                'Autore_Riferimento', 
-                'Opera_Riferimento',
-                'Periodo_Storico',
-                'Evoluzione'
-            ];
-            filename = 'template_concetti.xlsx';
-            sheetName = 'Concetti';
-            break;
-    }
-
-    const ws = XLSX.utils.aoa_to_sheet([columns]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, sheetName);
-    XLSX.writeFile(wb, filename);
-
-    showToast(`Template ${type} scaricato con successo`, 'success');
-}
-
 // ============================================
 // GESTIONE TASTO INDIETRO ANDROID
 // ============================================
@@ -3818,6 +4974,12 @@ function handleBackNavigation() {
     const adminPanel = document.getElementById('admin-panel');
     if (adminPanel && adminPanel.style.display === 'flex') {
         closeAdminPanel();
+        return true;
+    }
+    
+    const analysisModal = document.getElementById('comparative-analysis-modal');
+    if (analysisModal && analysisModal.style.display === 'flex') {
+        closeComparativeAnalysis();
         return true;
     }
     
@@ -3996,7 +5158,7 @@ function checkOnlineStatus() {
 }
 
 // ============================================
-// 2. INIZIALIZZAZIONE APP (Sostituisce tutto il finale)
+// 2. INIZIALIZZAZIONE APP
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
@@ -4033,25 +5195,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }, 500);
     
-    // 5. *** GESTIONE SPLASH SCREEN E PROGRESS BAR ***
+    // Gestione Splash Screen
     const splash = document.getElementById('splash-screen');
     const progressBar = document.querySelector('.splash-progress-bar');
 
-    // A. Animazione Barra: La riempiamo da 0% a 100%
     if (progressBar) {
-        // Impostiamo la velocità via codice per sicurezza
         progressBar.style.transition = 'width 1.5s ease-in-out';
-        
-        // Partiamo da poco
         progressBar.style.width = '5%';
         
-        // Dopo un attimo la spingiamo al massimo
         setTimeout(() => {
             progressBar.style.width = '100%';
         }, 100);
     }
 
-    // B. Rimozione Schermata: Dopo 1.5 secondi (quando la barra è piena)
     if (splash) {
         setTimeout(() => {
             splash.style.transition = 'opacity 0.5s ease';
@@ -4059,11 +5215,19 @@ document.addEventListener('DOMContentLoaded', async function() {
             setTimeout(() => {
                 splash.style.display = 'none'; 
             }, 500);
-        }, 1500); // Aspettiamo 1.5 secondi che finisca la barra
+        }, 1500);
+    }
+    
+    // Verifica ExcelWorker
+    if (typeof ExcelWorker === 'undefined') {
+        console.warn('ExcelWorker non caricato - alcune funzionalità saranno limitate');
+    } else {
+        console.log('✅ ExcelWorker pronto all\'uso');
     }
     
     console.log('✨ Aeterna Lexicon in Motu - App pronta');
 });
+
 // ============================================
 // GESTIONE QR CODE (Versione con Libreria)
 // ============================================
@@ -4110,6 +5274,7 @@ function closeQRModal() {
         modal.style.display = 'none';
     }
 }
+
 // ============================================
 // GESTIONE INSTALLAZIONE PWA (Installa App)
 // ============================================
@@ -4170,6 +5335,7 @@ window.addEventListener('appinstalled', () => {
     if (banner) banner.style.display = 'none';
     deferredPrompt = null;
 });
+
 // ============================================
 // RICONOSCIMENTO DISPOSITIVO E ISTRUZIONI
 // ============================================
@@ -4202,435 +5368,109 @@ function detectAndShowInstallInstructions() {
 
 // Avvia il controllo quando la pagina è pronta
 document.addEventListener('DOMContentLoaded', () => {
-    // ... (altre funzioni di avvio) ...
     detectAndShowInstallInstructions();
 });
-// ==========================================
-// NUOVA FUNZIONE: COLLEGAMENTO BIDIREZIONALE (Richiesta PDF)
-// ==========================================
-async function linkConceptToPhilosopher(filosofoId, concettoData) {
-    // concettoData deve contenere: { parola, termine_originale, citazione, definizione, opera }
-    
-    const db = window.db; 
-    const batch = window.writeBatch(db); // Usiamo batch per salvare tutto insieme o niente
 
-    // 1. Riferimenti ai documenti
-    const philRef = window.doc(db, "filosofi", filosofoId);
-    // Normalizziamo l'ID del concetto (es. "Verità" -> "verita")
-    const concettoId = concettoData.parola.toLowerCase().trim().replace(/\s+/g, '_');
-    const conceptRef = window.doc(db, "concetti", concettoId);
+// ============================================
+// FUNZIONI DI SUPPORTO AGGIUNTIVE
+// ============================================
 
-    try {
-        // A. Prepara dati per il FILOSOFO (aggiorna la sua lista concetti)
-        // Nota: usiamo la notazione dot notation per aggiornare solo questo campo specifico
-        const updatePhil = {};
-        updatePhil[`concetti_trattati.${concettoId}`] = {
-            parola: concettoData.parola,
-            definizione: concettoData.definizione,
-            termine_originale: concettoData.termine_originale || "", // Es. "Aletheia"
-            citazione: concettoData.citazione || "",               // Testo per il dataset
-            opera: concettoData.opera || ""
-        };
-        batch.update(philRef, updatePhil);
-
-        // B. Prepara dati per il CONCETTO (Global)
-        // Verifichiamo prima se il concetto esiste, altrimenti lo creiamo nel batch
-        const conceptSnap = await window.getDoc(conceptRef);
+function centerMapOnFilosofo(filosofo) {
+    if (map && filosofo.coordinate) {
+        map.setView([filosofo.coordinate.lat, filosofo.coordinate.lng], 14);
         
-        const nuovaInterpretazione = {
-            autoreId: filosofoId,
-            nomeAutore: concettoData.nomeFilosofo, // Passiamo anche il nome per visualizzarlo subito
-            scuola: concettoData.scuolaFilosofo,   // Utile per i filtri (es. "Platonismo")
-            testo: concettoData.definizione,
-            citazione: concettoData.citazione || "",
-            termine_originale: concettoData.termine_originale || "",
-            opera: concettoData.opera || "",
-            data_inserimento: new Date().toISOString()
-        };
-
-        if (!conceptSnap.exists()) {
-            // Se il concetto è nuovo, crealo da zero
-            batch.set(conceptRef, {
-                parola: concettoData.parola, // Es. "Verità" (Capitalizzato)
-                filosofi_coinvolti: [filosofoId], // Array per ricerche veloci
-                interpretazioni: [nuovaInterpretazione]
-            });
-        } else {
-            // Se esiste, aggiungiamo l'interpretazione all'array esistente
-            // Nota: qui usiamo arrayUnion per aggiungere senza sovrascrivere gli altri
-            batch.update(conceptRef, {
-                filosofi_coinvolti: window.arrayUnion(filosofoId),
-                interpretazioni: window.arrayUnion(nuovaInterpretazione)
-            });
-        }
-
-        // Eseguiamo le scritture
-        await batch.commit();
-        console.log(`✅ Collegamento creato: ${filosofoId} <-> ${concettoData.parola}`);
-        return true;
-
-    } catch (e) {
-        console.error("Errore nel linking:", e);
-        return false;
-    }
-}
-// ==========================================
-// PASSO 2: GESTIONE IMPORTAZIONE EXCEL (Da incollare alla fine di app.js)
-// ==========================================
-
-// 1. Assicuriamoci che il Worker esista
-if (!window.excelWorker) {
-    console.log("Inizializzazione Excel Worker...");
-    window.excelWorker = new Worker('excel-worker.js');
-}
-
-// 2. Configura la ricezione dei messaggi dal Worker
-window.excelWorker.onmessage = async function(e) {
-    const { type, data } = e.data;
-
-    // Quando l'elaborazione è finita (PROCESSING_COMPLETE)
-    if (type === 'PROCESSING_COMPLETE') {
-        console.log('📦 Dati ricevuti dal Worker:', data.length, 'elementi');
-        
-        // Se abbiamo una funzione per mostrare messaggi (Toast), usiamola
-        if (typeof showToast === 'function') {
-            showToast('Elaborazione completata. Inizio salvataggio...', 'info');
-        }
-
-        let collegamentiFatti = 0;
-
-        // 3. Ciclo sui dati per creare i collegamenti
-        for (let item of data) {
-            // Controlliamo se la riga ha i dati necessari (Filosofo + Concetto)
-            // Supportiamo sia i nomi delle colonne "umane" che quelle in codice
-            const nomeFilosofo = item.Filosofo || item.filosofo;
-            const nomeConcetto = item.Concetto || item.concetto || item.Parola || item.parola;
-
-            if (nomeFilosofo && nomeConcetto) {
-                
-                // Prepariamo i dati per la funzione del PASSO 1
-                const linkData = {
-                    parola: nomeConcetto,
-                    definizione: item.Definizione || item.Significato || item.testo || "",
-                    termine_originale: item.Termine_Originale || item.Greco_Latino || "", // Es. Aletheia
-                    citazione: item.Citazione || item.Testo || item.Fonte || "",
-                    opera: item.Opera || item.opera || "",
-                    nomeFilosofo: nomeFilosofo,
-                    scuolaFilosofo: item.Scuola || item.scuola || ""
-                };
-                
-                // Generiamo un ID sicuro per il filosofo (es. "Martin Heidegger" -> "martin_heidegger")
-                const philId = nomeFilosofo.toLowerCase().trim().replace(/\s+/g, '_');
-                
-                // CHIAMATA ALLA FUNZIONE DEL PASSO 1
-                // (Assicurati di aver incollato prima la funzione linkConceptToPhilosopher!)
-                if (typeof linkConceptToPhilosopher === 'function') {
-                    await linkConceptToPhilosopher(philId, linkData);
-                    collegamentiFatti++;
-                }
-            }
-        }
-
-        console.log(`✅ Importazione terminata. Creati ${collegamentiFatti} collegamenti.`);
-        if (typeof showToast === 'function') {
-            showToast(`Importazione completata! Creati ${collegamentiFatti} collegamenti.`, 'success');
+        // Apri popup se il marker esiste
+        const markerId = `filosofo-${filosofo.id}`;
+        if (markers.has(markerId)) {
+            markers.get(markerId).openPopup();
         }
         
-        // Se c'è una funzione per ricaricare la vista, chiamala qui
-        // es. loadPhilosophers();
-    }
-    
-    // Gestione errori opzionale
-    if (type === 'ERROR') {
-        console.error('Errore dal Worker:', e.data.message);
-        if (typeof showToast === 'function') showToast('Errore importazione: ' + e.data.message, 'error');
-    }
-};
-// ==========================================
-// LOGICA FRONTEND ANALISI COMPARATIVA
-// ==========================================
-
-// 1. Funzione per aprire la finestra e caricare i dati
-async function openComparativeAnalysis(conceptId) {
-    const db = window.db;
-    const modal = document.getElementById('analysis-modal');
-    
-    // Mostra caricamento...
-    document.getElementById('modal-concept-title').innerText = "Caricamento...";
-    modal.style.display = 'flex'; // Mostra la finestra
-
-    try {
-        // Recupera il documento del concetto
-        const docRef = window.doc(db, "concetti", conceptId);
-        const docSnap = await window.getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            renderAnalysisData(data);
-        } else {
-            alert("Dati del concetto non trovati.");
-            closeAnalysisModal();
-        }
-    } catch (e) {
-        console.error("Errore recupero concetto:", e);
-        alert("Errore nel caricamento dell'analisi.");
+        showToast(`Mappa centrata su ${filosofo.nome}`, 'success');
     }
 }
 
-// 2. Funzione che disegna i dati nella finestra
-function renderAnalysisData(data) {
-    // Titolo e Definizione
-    document.getElementById('modal-concept-title').innerText = "Analisi: " + data.parola;
-    // Se c'è una definizione generale, prendiamo la prima o una generica
-    const defGenerale = data.interpretazioni[0]?.testo || "Definizione non disponibile";
-    document.getElementById('modal-concept-def').innerText = defGenerale;
-
-    // Svuota le colonne
-    const classicContainer = document.getElementById('classic-interpretations');
-    const modernContainer = document.getElementById('modern-interpretations');
-    const timelineContainer = document.getElementById('linguistic-timeline');
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
     
-    classicContainer.innerHTML = '';
-    modernContainer.innerHTML = '';
-    timelineContainer.innerHTML = '';
-
-    // Cicla su tutte le interpretazioni (Filosofi)
-    data.interpretazioni.forEach(item => {
-        // A. Crea la Card del Filosofo
-        const card = document.createElement('div');
-        card.className = 'interpretation-card';
-        
-        // Verifica se ci sono i campi del PDF (Termine, Citazione)
-        const termineHtml = item.termine_originale 
-            ? `<div class="original-term"><i class="fas fa-font"></i> ${item.termine_originale}</div>` 
-            : '';
-            
-        const citazioneHtml = item.citazione 
-            ? `<div class="citation-box">"${item.citazione}"</div>` 
-            : '';
-
-        const operaHtml = item.opera 
-            ? `<small>Fonte: <em>${item.opera}</em></small>` 
-            : '';
-
-        card.innerHTML = `
-            <h4>${item.nomeAutore}</h4>
-            ${termineHtml}
-            <p>${item.testo}</p>
-            ${citazioneHtml}
-            ${operaHtml}
-        `;
-
-        // B. Decide dove metterlo (Classici vs Moderni)
-        // Logica semplice: se l'anno è > 1600 è Moderno/Contemporaneo, altrimenti Classico
-        // (Puoi affinare questa logica basandoti sul campo "periodo" o "scuola")
-        const isModern = isPhilosopherModern(item); 
-        
-        if (isModern) {
-            modernContainer.appendChild(card);
-        } else {
-            classicContainer.appendChild(card);
-        }
-
-        // C. Aggiungi alla Timeline Linguistica (solo se c'è un termine originale)
-        if (item.termine_originale) {
-            const timeTag = document.createElement('div');
-            timeTag.className = 'timeline-item';
-            timeTag.innerHTML = `${item.termine_originale} <span>(${item.nomeAutore})</span>`;
-            timelineContainer.appendChild(timeTag);
-        }
-    });
+    // Esempio: ?open=concetto&id=abc123
+    const openType = urlParams.get('open');
+    const id = urlParams.get('id');
+    
+    if (openType && id) {
+        setTimeout(() => {
+            showDetail(id, openType);
+        }, 1000);
+    }
 }
 
-// Helper per decidere l'epoca (puoi personalizzarlo)
-function isPhilosopherModern(item) {
-    const period = (item.scuola || "").toLowerCase();
-    const modernKeywords = ['contemporaneo', 'moderno', 'esistenzialismo', 'fenomenologia', 'novecento', '800', '900'];
-    return modernKeywords.some(k => period.includes(k));
+// ============================================
+// INIZIALIZZAZIONE MANCANTE PER MAPPA CONCETTUALE
+// ============================================
+if (typeof vis !== 'undefined') {
+    console.log('✅ Vis.js già caricato');
+} else {
+    console.warn('⚠️ Vis.js non caricato - la mappa concettuale non funzionerà');
 }
 
-// 3. Chiudi Modale
-function closeAnalysisModal() {
-    document.getElementById('analysis-modal').style.display = 'none';
-}
-
-// Rendi la funzione globale per poterla chiamare dall'HTML
+// Esporta funzioni globalmente se necessario
 window.openComparativeAnalysis = openComparativeAnalysis;
-window.closeAnalysisModal = closeAnalysisModal;
-// ==========================================
-// 2. LOGICA FINESTRA ANALISI COMPARATIVA
-// ==========================================
+window.closeComparativeAnalysis = closeComparativeAnalysis;
+window.exportAnalysisToExcel = exportAnalysisToExcel;
+window.shareAnalysis = shareAnalysis;
+window.hasComparativeAnalysis = hasComparativeAnalysis;
+// ============================================
+// FUNZIONE DI GEOCODING PER FILOSOFI
+// ============================================
 
-async function openComparativeAnalysis(conceptId) {
-    const db = window.db; 
-    const modal = document.getElementById('analysis-modal');
+async function cercaCoordinateFilosofo() {
+    const citta = document.getElementById('filosofo-luogo').value;
+    const nome = document.getElementById('filosofo-nome').value;
     
-    if (!modal) {
-        console.error("Modale analisi non trovato nell'HTML");
+    if (!citta || !nome) {
+        showToast('Inserisci almeno il luogo di nascita e il nome', 'warning');
         return;
     }
-
-    document.getElementById('modal-concept-title').innerText = "Caricamento...";
-    modal.style.display = 'flex'; 
-
-    try {
-        const docRef = window.doc(db, "concetti", conceptId);
-        const docSnap = await window.getDoc(docRef);
-
-        if (docSnap.exists()) {
-            renderAnalysisData(docSnap.data());
-        } else {
-            alert("Dati del concetto non trovati.");
-            closeAnalysisModal();
-        }
-    } catch (e) {
-        console.error("Errore recupero concetto:", e);
-    }
-}
-
-function renderAnalysisData(data) {
-    document.getElementById('modal-concept-title').innerText = "Analisi: " + data.parola;
     
-    const defGenerale = (data.interpretazioni && data.interpretazioni[0]) ? data.interpretazioni[0].testo : "Definizione in elaborazione...";
-    document.getElementById('modal-concept-def').innerText = defGenerale;
-
-    const classicContainer = document.getElementById('classic-interpretations');
-    const modernContainer = document.getElementById('modern-interpretations');
-    const timelineContainer = document.getElementById('linguistic-timeline');
-    
-    if(classicContainer) classicContainer.innerHTML = '';
-    if(modernContainer) modernContainer.innerHTML = '';
-    if(timelineContainer) timelineContainer.innerHTML = '';
-
-    if (data.interpretazioni) {
-        data.interpretazioni.forEach(item => {
-            const card = document.createElement('div');
-            card.className = 'interpretation-card';
-            
-            const termineHtml = item.termine_originale 
-                ? `<div class="original-term"><i class="fas fa-font"></i> ${item.termine_originale}</div>` : '';
-            const citazioneHtml = item.citazione 
-                ? `<div class="citation-box">"${item.citazione}"</div>` : '';
-            const operaHtml = item.opera 
-                ? `<small>Fonte: <em>${item.opera}</em></small>` : '';
-
-            card.innerHTML = `
-                <h4>${item.nomeAutore}</h4>
-                ${termineHtml}
-                <p>${item.testo}</p>
-                ${citazioneHtml}
-                ${operaHtml}
-            `;
-
-            if (isPhilosopherModern(item)) {
-                if(modernContainer) modernContainer.appendChild(card);
-            } else {
-                if(classicContainer) classicContainer.appendChild(card);
-            }
-
-            if (item.termine_originale && timelineContainer) {
-                const timeTag = document.createElement('div');
-                timeTag.className = 'timeline-item';
-                timeTag.innerHTML = `${item.termine_originale} <span>(${item.nomeAutore})</span>`;
-                timelineContainer.appendChild(timeTag);
-            }
-        });
-    }
-}
-
-function isPhilosopherModern(item) {
-    const period = (item.scuola || "").toLowerCase();
-    const keywords = ['contemporaneo', 'moderno', 'esistenzialismo', 'fenomenologia', '900', '800', 'nietzsche', 'heidegger', 'sartre'];
-    return keywords.some(k => period.includes(k) || (item.nomeAutore && item.nomeAutore.toLowerCase().includes(k)));
-}
-
-function closeAnalysisModal() {
-    const modal = document.getElementById('analysis-modal');
-    if(modal) modal.style.display = 'none';
-}
-
-window.openComparativeAnalysis = openComparativeAnalysis;
-window.closeAnalysisModal = closeAnalysisModal;
-// =========================================================
-// ❌ FIX ERRORI DI RIFERIMENTO (Da incollare alla fine di app.js)
-// =========================================================
-
-// 1. Funzione mancante: Chiude il modale "Informazioni" (Quello dell'errore in console)
-function closeInfoModal() {
-    const modal = document.getElementById('info-modal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// 2. Funzione mancante: Chiude il modale "Navigazione"
-function closeNavigationModal() {
-    const modal = document.getElementById('navigation-modal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// 3. Funzione mancante: Chiude il modale "Analisi"
-function closeAnalysisModal() {
-    const modal = document.getElementById('analysis-modal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-}
-
-// 4. Assicura che le funzioni siano accessibili globalmente (Dall'HTML)
-window.closeInfoModal = closeInfoModal;
-window.closeNavigationModal = closeNavigationModal;
-window.closeAnalysisModal = closeAnalysisModal;
-
-// 5. Ripristino Logica Analisi (Se mancante)
-window.openComparativeAnalysis = async function(conceptId) {
-    const db = window.db; 
-    const modal = document.getElementById('analysis-modal');
-    if (!modal) return;
-
-    document.getElementById('modal-concept-title').innerText = "Caricamento...";
-    modal.style.display = 'flex'; 
-
     try {
-        const docRef = window.doc(db, "concetti", conceptId);
-        const docSnap = await window.getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            // Renderizza i dati
-            document.getElementById('modal-concept-title').innerText = "Analisi: " + data.parola;
-            document.getElementById('modal-concept-def').innerText = (data.interpretazioni && data.interpretazioni[0]) ? data.interpretazioni[0].testo : "Definizione standard...";
+        showToast('Ricerca coordinate in corso...', 'info');
+        
+        // Usa Nominatim (OpenStreetMap) API
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(citta)}&format=json&limit=1`
+        );
+        
+        const data = await response.json();
+        
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lng = parseFloat(data[0].lon);
             
-            // Pulisci container
-            const classic = document.getElementById('classic-interpretations');
-            const modern = document.getElementById('modern-interpretations');
-            const timeline = document.getElementById('linguistic-timeline');
-            if(classic) classic.innerHTML = '';
-            if(modern) modern.innerHTML = '';
-            if(timeline) timeline.innerHTML = '';
-
-            // Popola
-            if (data.interpretazioni) {
-                data.interpretazioni.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'interpretation-card';
-                    div.innerHTML = `<h4>${item.nomeAutore}</h4><p>${item.testo}</p>`;
-                    
-                    // Logica semplice per dividere le epoche
-                    const isModern = ['contemporaneo', 'moderno', '900'].some(k => (item.scuola || "").toLowerCase().includes(k));
-                    
-                    if (isModern && modern) modern.appendChild(div);
-                    else if (classic) classic.appendChild(div);
-                });
-            }
+            document.getElementById('filosofo-lat').value = lat.toFixed(6);
+            document.getElementById('filosofo-lng').value = lng.toFixed(6);
+            
+            showToast(`Coordinate trovate per ${citta}`, 'success');
         } else {
-            alert("Dati non trovati.");
-            modal.style.display = 'none';
+            showToast('Luogo non trovato, usa coordinate manuali', 'error');
         }
-    } catch (e) {
-        console.error("Errore:", e);
-        modal.style.display = 'none';
+    } catch (error) {
+        console.error('Errore geocoding:', error);
+        showToast('Errore nella ricerca coordinate', 'error');
     }
-};
+}
+
+// Funzione per aggiungere pulsante nel form
+function addGeocodingButtonToForm() {
+    const luogoField = document.getElementById('filosofo-luogo');
+    if (luogoField && !document.getElementById('geocoding-btn')) {
+        const wrapper = luogoField.parentNode;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.id = 'geocoding-btn';
+        button.className = 'geocoding-btn';
+        button.innerHTML = '<i class="fas fa-map-marker-alt"></i> Cerca Coordinate';
+        button.onclick = cercaCoordinateFilosofo;
+        
+        // Inserisci dopo il campo
+        wrapper.appendChild(button);
+    }
+}

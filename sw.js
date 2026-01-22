@@ -1,34 +1,49 @@
-const CACHE_NAME = 'aeterna-lexicon-v5.6.6-PHILOSOPHIA';
+const CACHE_NAME = 'aeterna-lexicon-v6.0.0-PHILOSOPHIA';
 const STATIC_CACHE = 'static-philosophy-v2';
 const DYNAMIC_CACHE = 'dynamic-philosophy-v2';
 
+// URL BASE GITHUB PAGES
+const BASE_URL = 'https://derolu0.github.io/aeterna/';
+
 const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './analytics.js',
-  './firebase-init.js',
-  './manifest.json',
-  './translations.js',
-  './images/logo-app.png',
-  './images/logo-comune.png',
-  './images/sfondo-home.jpg',
-  './images/sfondo-home-mobile.jpg',
-  './images/default-filosofo.jpg',
-  './images/default-opera.jpg',
-  './images/icona-avvio-144.png',
-  './images/icona-avvio-192.png',
-  './images/icona-avvio-512.png',
-  './images/icona-avvio-splash.png',
-  './images/apple-touch-icon.png',
-  './images/favicon.ico',
-  './images/favicon-16x16.png',
-  './images/favicon-32x32.png',
-  './images/marker-blue.png',
-  './images/marker-green.png',
-  './images/marker-orange.png',
-  './images/marker-red.png'
+  BASE_URL,
+  BASE_URL + 'index.html',
+  BASE_URL + 'style.css',
+  BASE_URL + 'app.js',
+  BASE_URL + 'analytics.js',
+  BASE_URL + 'firebase-init.js',
+  BASE_URL + 'manifest.json',
+  BASE_URL + 'translations.js',
+  BASE_URL + 'excel-worker.js',
+  BASE_URL + 'comparative-styles.css',
+  BASE_URL + 'geocoding-manager.js',
+  BASE_URL + 'linguistic-analysis.js',
+  BASE_URL + 'timeline-evolution.js',
+
+  // IMMAGINI GIA' PRESENTI SU GITHUB
+  BASE_URL + 'images/logo-app.png',
+  BASE_URL + 'images/logo-comune.png',
+  BASE_URL + 'images/sfondo-home.jpg',
+  BASE_URL + 'images/sfondo-home-mobile.jpg',
+  BASE_URL + 'images/default-filosofo.jpg',
+  BASE_URL + 'images/default-opera.jpg',
+  BASE_URL + 'images/icona-avvio-144.png',
+  BASE_URL + 'images/icona-avvio-192.png',
+  BASE_URL + 'images/icona-avvio-512.png',
+  BASE_URL + 'images/icona-avvio-splash.png',
+  BASE_URL + 'images/apple-touch-icon.png',
+  BASE_URL + 'images/favicon.ico',
+  BASE_URL + 'images/favicon-16x16.png',
+  BASE_URL + 'images/favicon-32x32.png',
+  BASE_URL + 'images/marker-blue.png',
+  BASE_URL + 'images/marker-green.png',
+  BASE_URL + 'images/marker-orange.png',
+  BASE_URL + 'images/marker-red.png',
+  
+  // NUOVI FILE ANALISI
+  BASE_URL + 'linguistic-analysis.js',
+  BASE_URL + 'timeline-evolution.js',
+  BASE_URL + 'comparative-styles.css'
 ];
 
 const EXTERNAL_ASSETS = [
@@ -46,12 +61,12 @@ const EXTERNAL_ASSETS = [
 
 // Install Service Worker
 self.addEventListener('install', event => {
-  console.log('[Service Worker] Installazione Aeterna Lexicon...');
+  console.log('[Service Worker] Installazione Aeterna Lexicon su GitHub Pages...');
   
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => {
-        console.log('[Service Worker] Caching asset statici filosofici');
+        console.log('[Service Worker] Caching asset statici da:', BASE_URL);
         
         const cachePromises = STATIC_ASSETS.map(url => {
           return fetch(url, { mode: 'no-cors' })
@@ -198,7 +213,7 @@ self.addEventListener('activate', event => {
           headers: { 'Content-Type': 'application/json' }
         });
         
-        return cache.put('/offline-data.json', response);
+        return cache.put(BASE_URL + 'offline-data.json', response);
       });
     })
     .then(() => {
@@ -226,223 +241,232 @@ self.addEventListener('fetch', event => {
     return;
   }
   
-  // Firebase e API - sempre network first
-  if (url.href.includes('firebase') ||
-      url.href.includes('firestore') ||
-      url.href.includes('firebasestorage') ||
-      url.href.includes('googleapis.com') ||
-      url.href.includes('nominatim') ||
-      url.href.includes('/analytics') ||
-      url.href.includes('/filosofi/') ||
-      url.href.includes('/opere/') ||
-      url.href.includes('/concetti/')) {
+  // Converti richieste relative in assolute per GitHub Pages
+  if (event.request.url.startsWith(BASE_URL) || url.href.includes('github.io/aeterna/')) {
+    // Gestione per il nostro dominio GitHub Pages
     
-    // Per dati filosofici: network con fallback offline
-    if (url.href.includes('/filosofi') || 
-        url.href.includes('/opere') || 
-        url.href.includes('/concetti')) {
+    // Firebase e API - sempre network first
+    if (url.href.includes('firebase') ||
+        url.href.includes('firestore') ||
+        url.href.includes('firebasestorage') ||
+        url.href.includes('googleapis.com') ||
+        url.href.includes('nominatim') ||
+        url.href.includes('/analytics') ||
+        url.href.includes('/filosofi/') ||
+        url.href.includes('/opere/') ||
+        url.href.includes('/concetti/')) {
       
-      event.respondWith(
-        fetch(event.request)
-          .then(response => {
-            if (response.ok) {
-              // Salva in cache per uso offline
-              const clone = response.clone();
-              caches.open(DYNAMIC_CACHE)
-                .then(cache => cache.put(event.request, clone))
-                .catch(err => console.warn('[SW] Cache put error:', err));
-            }
-            return response;
-          })
-          .catch(error => {
-            console.log('[SW] Offline per dati filosofici, usando cache:', error.message);
-            return caches.match(event.request)
-              .then(cachedResponse => {
-                if (cachedResponse) {
-                  return cachedResponse;
-                }
-                // Fallback a dati offline
-                return caches.match('/offline-data.json')
-                  .then(offlineResponse => {
-                    if (offlineResponse) {
-                      return offlineResponse;
-                    }
-                    return new Response(JSON.stringify({ 
-                      error: 'Offline mode',
-                      message: 'Dati non disponibili offline'
-                    }), {
-                      status: 503,
-                      headers: { 'Content-Type': 'application/json' }
-                    });
-                  });
-              });
-          })
-      );
-      return;
-    }
-    
-    // Altre richieste Firebase/API - solo network
-    return fetch(event.request);
-  }
-  
-  // Mappe OpenStreetMap - cache con refresh
-  if (url.href.includes('tile.openstreetmap.org') || 
-      url.href.includes('cdn.rawgit.com')) {
-    event.respondWith(
-      caches.match(event.request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            // Aggiorna cache in background
-            fetch(event.request)
-              .then(response => {
-                if (response.ok) {
-                  caches.open(DYNAMIC_CACHE)
-                    .then(cache => cache.put(event.request, response));
-                }
-              })
-              .catch(() => {});
-            return cachedResponse;
-          }
-          
-          return fetch(event.request)
+      // Per dati filosofici: network con fallback offline
+      if (url.href.includes('/filosofi') || 
+          url.href.includes('/opere') || 
+          url.href.includes('/concetti')) {
+        
+        event.respondWith(
+          fetch(event.request)
             .then(response => {
               if (response.ok) {
+                // Salva in cache per uso offline
                 const clone = response.clone();
                 caches.open(DYNAMIC_CACHE)
-                  .then(cache => cache.put(event.request, clone));
+                  .then(cache => cache.put(event.request, clone))
+                  .catch(err => console.warn('[SW] Cache put error:', err));
               }
               return response;
-            });
-        })
-    );
-    return;
-  }
-  
-  // Gestione standard - Cache First con fallback network
-  event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        if (cachedResponse) {
-          // Aggiorna cache in background per risorse non critiche
-          if (!event.request.url.includes('index.html') && 
-              !event.request.url.includes('app.js') &&
-              !event.request.url.includes('style.css')) {
-            fetch(event.request)
+            })
+            .catch(error => {
+              console.log('[SW] Offline per dati filosofici, usando cache:', error.message);
+              return caches.match(event.request)
+                .then(cachedResponse => {
+                  if (cachedResponse) {
+                    return cachedResponse;
+                  }
+                  // Fallback a dati offline
+                  return caches.match(BASE_URL + 'offline-data.json')
+                    .then(offlineResponse => {
+                      if (offlineResponse) {
+                        return offlineResponse;
+                      }
+                      return new Response(JSON.stringify({ 
+                        error: 'Offline mode',
+                        message: 'Dati non disponibili offline'
+                      }), {
+                        status: 503,
+                        headers: { 'Content-Type': 'application/json' }
+                      });
+                    });
+                });
+            })
+        );
+        return;
+      }
+      
+      // Altre richieste Firebase/API - solo network
+      return fetch(event.request);
+    }
+    
+    // Mappe OpenStreetMap - cache con refresh
+    if (url.href.includes('tile.openstreetmap.org') || 
+        url.href.includes('cdn.rawgit.com')) {
+      event.respondWith(
+        caches.match(event.request)
+          .then(cachedResponse => {
+            if (cachedResponse) {
+              // Aggiorna cache in background
+              fetch(event.request)
+                .then(response => {
+                  if (response.ok) {
+                    caches.open(DYNAMIC_CACHE)
+                      .then(cache => cache.put(event.request, response));
+                  }
+                })
+                .catch(() => {});
+              return cachedResponse;
+            }
+            
+            return fetch(event.request)
               .then(response => {
                 if (response.ok) {
                   const clone = response.clone();
                   caches.open(DYNAMIC_CACHE)
                     .then(cache => cache.put(event.request, clone));
                 }
-              })
-              .catch(() => {});
-          }
-          return cachedResponse;
-        }
-        
-        return fetch(event.request)
-          .then(response => {
-            if (!response.ok) {
-              // Fallback per HTML
-              if (event.request.url.includes('index.html') || 
-                  event.request.headers.get('accept')?.includes('text/html')) {
-                return caches.match('./index.html');
-              }
-              return response;
-            }
-            
-            const responseToCache = response.clone();
-            caches.open(DYNAMIC_CACHE)
-              .then(cache => {
-                if (event.request.url.startsWith('http')) {
-                  return cache.put(event.request, responseToCache);
-                }
-              })
-              .catch(err => console.warn('[SW] Cache put error:', err));
-            
-            return response;
-          })
-          .catch(error => {
-            console.warn('[Service Worker] Fetch fallback:', error.message);
-            
-            // Fallback intelligente basato sul tipo di risorsa
-            if (event.request.headers.get('accept')?.includes('text/html')) {
-              return caches.match('./index.html');
-            }
-            
-            if (event.request.destination === 'image') {
-              if (event.request.url.includes('filosofo')) {
-                return caches.match('./images/default-filosofo.jpg');
-              }
-              if (event.request.url.includes('opera')) {
-                return caches.match('./images/default-opera.jpg');
-              }
-              return caches.match('./images/logo-app.png');
-            }
-
-            if (event.request.destination === 'style') {
-              return caches.match('./style.css');
-            }
-            
-            if (event.request.destination === 'script') {
-              return caches.match('./app.js')
-                .then(scriptResponse => {
-                  if (scriptResponse) return scriptResponse;
-                  return new Response('console.log("Modalità offline attiva");', {
-                    headers: { 'Content-Type': 'application/javascript' }
-                  });
-                });
-            }
-            
-            if (event.request.destination === 'font') {
-              return new Response('', {
-                headers: { 'Content-Type': 'font/woff2' }
+                return response;
               });
+          })
+      );
+      return;
+    }
+    
+    // Gestione standard - Cache First con fallback network
+    event.respondWith(
+      caches.match(event.request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            // Aggiorna cache in background per risorse non critiche
+            if (!event.request.url.includes('index.html') && 
+                !event.request.url.includes('app.js') &&
+                !event.request.url.includes('style.css')) {
+              fetch(event.request)
+                .then(response => {
+                  if (response.ok) {
+                    const clone = response.clone();
+                    caches.open(DYNAMIC_CACHE)
+                      .then(cache => cache.put(event.request, clone));
+                  }
+                })
+                .catch(() => {});
             }
-            
-            // Fallback generico
-            return new Response(`
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <title>Aeterna Lexicon - Offline</title>
-                  <style>
-                    body { 
-                      font-family: 'Inter', sans-serif; 
-                      padding: 20px; 
-                      text-align: center;
-                      background: #f8fafc;
-                    }
-                    .offline-container { 
-                      max-width: 400px; 
-                      margin: 50px auto; 
-                      background: white;
-                      padding: 30px;
-                      border-radius: 20px;
-                      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                    }
-                    h1 { color: #3b82f6; }
-                    p { color: #6b7280; }
-                  </style>
-                </head>
-                <body>
-                  <div class="offline-container">
-                    <h1>📚 Modalità Offline</h1>
-                    <p>L'app Aeterna Lexicon è disponibile offline con funzionalità limitate.</p>
-                    <p>Riprova quando la connessione sarà disponibile per accedere al dataset completo.</p>
-                    <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#3b82f6;color:white;border:none;border-radius:10px;">
-                      Ricarica
-                    </button>
-                  </div>
-                </body>
-              </html>
-            `, {
-              status: 503,
-              headers: { 'Content-Type': 'text/html; charset=utf-8' }
+            return cachedResponse;
+          }
+          
+          return fetch(event.request)
+            .then(response => {
+              if (!response.ok) {
+                // Fallback per HTML
+                if (event.request.url.includes('index.html') || 
+                    event.request.headers.get('accept')?.includes('text/html')) {
+                  return caches.match(BASE_URL + 'index.html');
+                }
+                return response;
+              }
+              
+              const responseToCache = response.clone();
+              caches.open(DYNAMIC_CACHE)
+                .then(cache => {
+                  if (event.request.url.startsWith('http')) {
+                    return cache.put(event.request, responseToCache);
+                  }
+                })
+                .catch(err => console.warn('[SW] Cache put error:', err));
+              
+              return response;
+            })
+            .catch(error => {
+              console.warn('[Service Worker] Fetch fallback:', error.message);
+              
+              // Fallback intelligente basato sul tipo di risorsa
+              if (event.request.headers.get('accept')?.includes('text/html')) {
+                return caches.match(BASE_URL + 'index.html');
+              }
+              
+              if (event.request.destination === 'image') {
+                if (event.request.url.includes('filosofo')) {
+                  return caches.match(BASE_URL + 'images/default-filosofo.jpg');
+                }
+                if (event.request.url.includes('opera')) {
+                  return caches.match(BASE_URL + 'images/default-opera.jpg');
+                }
+                return caches.match(BASE_URL + 'images/logo-app.png');
+              }
+
+              if (event.request.destination === 'style') {
+                return caches.match(BASE_URL + 'style.css');
+              }
+              
+              if (event.request.destination === 'script') {
+                return caches.match(BASE_URL + 'app.js')
+                  .then(scriptResponse => {
+                    if (scriptResponse) return scriptResponse;
+                    return new Response('console.log("Modalità offline attiva");', {
+                      headers: { 'Content-Type': 'application/javascript' }
+                    });
+                  });
+              }
+              
+              if (event.request.destination === 'font') {
+                return new Response('', {
+                  headers: { 'Content-Type': 'font/woff2' }
+                });
+              }
+              
+              // Fallback generico
+              return new Response(`
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <title>Aeterna Lexicon - Offline</title>
+                    <style>
+                      body { 
+                        font-family: 'Inter', sans-serif; 
+                        padding: 20px; 
+                        text-align: center;
+                        background: #f8fafc;
+                      }
+                      .offline-container { 
+                        max-width: 400px; 
+                        margin: 50px auto; 
+                        background: white;
+                        padding: 30px;
+                        border-radius: 20px;
+                        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                      }
+                      h1 { color: #3b82f6; }
+                      p { color: #6b7280; }
+                    </style>
+                  </head>
+                  <body>
+                    <div class="offline-container">
+                      <img src="${BASE_URL}images/logo-app.png" alt="Logo" style="width: 80px; margin-bottom: 20px;">
+                      <h1>📚 Modalità Offline</h1>
+                      <p>L'app Aeterna Lexicon è disponibile offline con funzionalità limitate.</p>
+                      <p>Riprova quando la connessione sarà disponibile per accedere al dataset completo.</p>
+                      <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#3b82f6;color:white;border:none;border-radius:10px;">
+                        Ricarica
+                      </button>
+                    </div>
+                  </body>
+                </html>
+              `, {
+                status: 503,
+                headers: { 'Content-Type': 'text/html; charset=utf-8' }
+              });
             });
-          });
-      })
-  );
+        })
+    );
+  } else {
+    // Per altre richieste, passa attraverso
+    return fetch(event.request);
+  }
 });
 
 // Background Sync per dati filosofici offline
@@ -599,7 +623,7 @@ self.addEventListener('message', event => {
         
       case 'GET_OFFLINE_DATA':
         caches.open(DYNAMIC_CACHE)
-          .then(cache => cache.match('/offline-data.json'))
+          .then(cache => cache.match(BASE_URL + 'offline-data.json'))
           .then(response => {
             if (response && ports && ports[0]) {
               response.json()
@@ -655,8 +679,8 @@ self.addEventListener('push', event => {
   
   const options = {
     body: 'Nuovi dati filosofici disponibili!',
-    icon: './images/icona-avvio-192.png',
-    badge: './images/icona-avvio-72.png',
+    icon: BASE_URL + 'images/icona-avvio-192.png',
+    badge: BASE_URL + 'images/icona-avvio-72.png',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
@@ -688,12 +712,12 @@ self.addEventListener('notificationclick', event => {
     event.waitUntil(
       clients.matchAll({ type: 'window' }).then(clientList => {
         for (const client of clientList) {
-          if (client.url === '/' && 'focus' in client) {
+          if (client.url === BASE_URL && 'focus' in client) {
             return client.focus();
           }
         }
         if (clients.openWindow) {
-          return clients.openWindow('./');
+          return clients.openWindow(BASE_URL);
         }
       })
     );

@@ -1,1401 +1,1014 @@
-// ==========================================
-// EXCEL WORKER PER AETERNA LEXICON IN MOTU
-// Versione ottimizzata per dataset filosofico
-// ==========================================
+// ==============================================
+// EXCEL-WORKER.JS
+// Gestione Import/Export Excel per Dataset Filosofico
+// ==============================================
 
-self.onmessage = function(e) {
-    const { type, data, options = {} } = e.data;
+window.ExcelWorker = {
+    // ================================
+    // 1. ESPORTAZIONE DATI
+    // ================================
     
-    switch(type) {
-        case 'PROCESS_EXCEL':
-            handleProcessExcel(data, options);
-            break;
-        case 'VALIDATE_DATA':
-            handleValidateData(data, options);
-            break;
-        case 'CONVERT_TO_EXCEL':
-            handleConvertToExcel(data, options);
-            break;
-        case 'MERGE_DATASETS':
-            handleMergeDatasets(data, options);
-            break;
-        case 'GENERATE_REPORT':
-            handleGenerateReport(data, options);
-            break;
-        case 'CLEAN_DATA':
-            handleCleanData(data, options);
-            break;
-        case 'EXPORT_TEMPLATE':
-            handleExportTemplate(data, options);
-            break;
-        case 'ANALYZE_STATISTICS':
-            handleAnalyzeStatistics(data, options);
-            break;
+    /**
+     * Esporta tutti i dati in un unico file Excel
+     */
+    exportAllDataToExcel: async function() {
+        try {
+            showToast('Preparazione export dati completi...', 'info');
+            
+            const filosofi = await window.firebaseHelpers.loadFilosofi();
+            const opere = await window.firebaseHelpers.loadOpere();
+            const concetti = await window.firebaseHelpers.loadConcetti();
+            
+            // Crea workbook con multiple sheets
+            const wb = XLSX.utils.book_new();
+            
+            // Sheet Filosofi
+            const filosofiData = this.prepareFilosofiForExport(filosofi);
+            const filosofiWS = XLSX.utils.json_to_sheet(filosofiData);
+            XLSX.utils.book_append_sheet(wb, filosofiWS, "Filosofi");
+            
+            // Sheet Opere
+            const opereData = this.prepareOpereForExport(opere);
+            const opereWS = XLSX.utils.json_to_sheet(opereData);
+            XLSX.utils.book_append_sheet(wb, opereWS, "Opere");
+            
+            // Sheet Concetti
+            const concettiData = this.prepareConcettiForExport(concetti);
+            const concettiWS = XLSX.utils.json_to_sheet(concettiData);
+            XLSX.utils.book_append_sheet(wb, concettiWS, "Concetti");
+            
+            // Sheet Analisi (nuovo!)
+            const analisiData = this.generateAnalisiSheet(filosofi, opere, concetti);
+            const analisiWS = XLSX.utils.json_to_sheet(analisiData);
+            XLSX.utils.book_append_sheet(wb, analisiWS, "Analisi");
+            
+            // Genera nome file con data
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `AeternaLexicon_Export_${dateStr}.xlsx`;
+            
+            // Salva file
+            XLSX.writeFile(wb, filename);
+            
+            showToast(`Dati esportati in ${filename}`, 'success');
+            
+            // Traccia analytics
+            if (window.Analytics) {
+                window.Analytics.trackEvent('export', 'all_data', null, null, {
+                    filosofi_count: filosofi.length,
+                    opere_count: opere.length,
+                    concetti_count: concetti.length
+                });
+            }
+            
+            return filename;
+            
+        } catch (error) {
+            console.error('Errore export dati:', error);
+            showToast('Errore durante l\'export: ' + error.message, 'error');
+            return null;
+        }
+    },
+    
+    /**
+     * Esporta dati specifici per collezione
+     */
+    exportDataToExcel: async function(collectionName) {
+        try {
+            let data = [];
+            let sheetName = '';
+            
+            switch(collectionName) {
+                case 'filosofi':
+                    data = await window.firebaseHelpers.loadFilosofi();
+                    sheetName = 'Filosofi';
+                    break;
+                case 'opere':
+                    data = await window.firebaseHelpers.loadOpere();
+                    sheetName = 'Opere';
+                    break;
+                case 'concetti':
+                    data = await window.firebaseHelpers.loadConcetti();
+                    sheetName = 'Concetti';
+                    break;
+                default:
+                    throw new Error('Collezione non valida');
+            }
+            
+            if (data.length === 0) {
+                showToast('Nessun dato da esportare', 'warning');
+                return null;
+            }
+            
+            // Prepara dati per export
+            const exportData = this[`prepare${sheetName}ForExport`](data);
+            
+            // Crea workbook
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            XLSX.utils.book_append_sheet(wb, ws, sheetName);
+            
+            // Genera nome file
+            const dateStr = new Date().toISOString().split('T')[0];
+            const filename = `AeternaLexicon_${sheetName}_${dateStr}.xlsx`;
+            
+            // Salva file
+            XLSX.writeFile(wb, filename);
+            
+            showToast(`${sheetName} esportati in ${filename}`, 'success');
+            
+            // Traccia analytics
+            if (window.Analytics) {
+                window.Analytics.trackEvent('export', collectionName, null, data.length);
+            }
+            
+            return filename;
+            
+        } catch (error) {
+            console.error(`Errore export ${collectionName}:`, error);
+            showToast('Errore durante l\'export: ' + error.message, 'error');
+            return null;
+        }
+    },
+    
+    // ================================
+    // 2. IMPORT DATI
+    // ================================
+    
+    /**
+     * Gestisce import da file Excel
+     */
+    handleFileImport: async function(collectionName, files) {
+        if (!files || files.length === 0) return;
+        
+        const file = files[0];
+        const reader = new FileReader();
+        
+        reader.onload = async (e) => {
+            try {
+                showToast('Elaborazione file in corso...', 'info');
+                
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Leggi il primo sheet
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Converti in JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData.length === 0) {
+                    showToast('Il file è vuoto', 'warning');
+                    return;
+                }
+                
+                // Processa i dati in base alla collezione
+                const processedData = this.processImportData(collectionName, jsonData);
+                
+                // Salva su Firebase
+                const results = await this.saveImportedData(collectionName, processedData);
+                
+                // Mostra risultati
+                this.showImportResults(results, collectionName);
+                
+                // Traccia analytics
+                if (window.Analytics) {
+                    window.Analytics.trackEvent('import', collectionName, null, processedData.length, {
+                        success_count: results.success,
+                        error_count: results.errors.length
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Errore import:', error);
+                showToast('Errore durante l\'import: ' + error.message, 'error');
+            }
+        };
+        
+        reader.readAsArrayBuffer(file);
+    },
+    
+    /**
+     * Processa i dati importati
+     */
+    processImportData: function(collectionName, jsonData) {
+        const processors = {
+            'filosofi': this.processFilosofiImport,
+            'opere': this.processOpereImport,
+            'concetti': this.processConcettiImport
+        };
+        
+        const processor = processors[collectionName];
+        if (!processor) {
+            throw new Error(`Processore non trovato per: ${collectionName}`);
+        }
+        
+        return processor.call(this, jsonData);
+    },
+    
+    /**
+     * Salva dati importati su Firebase
+     */
+    saveImportedData: async function(collectionName, data) {
+        const results = {
+            success: 0,
+            errors: [],
+            total: data.length
+        };
+        
+        // Batch size per non sovraccaricare Firebase
+        const BATCH_SIZE = 5;
+        
+        for (let i = 0; i < data.length; i += BATCH_SIZE) {
+            const batch = data.slice(i, i + BATCH_SIZE);
+            
+            const batchPromises = batch.map(async (item, index) => {
+                try {
+                    let result;
+                    
+                    switch(collectionName) {
+                        case 'filosofi':
+                            result = await window.firebaseHelpers.saveFilosofo(item);
+                            break;
+                        case 'opere':
+                            result = await window.firebaseHelpers.saveOpera(item);
+                            break;
+                        case 'concetti':
+                            result = await window.firebaseHelpers.saveConcetto(item);
+                            break;
+                    }
+                    
+                    if (result && result.success) {
+                        results.success++;
+                        return { success: true, item: item.nome || item.titolo || item.parola };
+                    } else {
+                        throw new Error(result?.error || 'Errore sconosciuto');
+                    }
+                    
+                } catch (error) {
+                    results.errors.push({
+                        item: item.nome || item.titolo || item.parola || `Item ${i + index + 1}`,
+                        error: error.message
+                    });
+                    return { success: false, error: error.message };
+                }
+            });
+            
+            // Attendi il batch corrente
+            await Promise.all(batchPromises);
+            
+            // Aggiorna progresso
+            const progress = Math.round(((i + batch.length) / data.length) * 100);
+            showToast(`Import in corso: ${progress}%`, 'info');
+        }
+        
+        return results;
+    },
+    
+    // ================================
+    // 3. TEMPLATE DOWNLOAD
+    // ================================
+    
+    /**
+     * Scarica template Excel per collezione
+     */
+    downloadTemplate: function(collectionName) {
+        const templates = {
+            'filosofi': this.getFilosofiTemplate(),
+            'opere': this.getOpereTemplate(),
+            'concetti': this.getConcettiTemplate(),
+            'analisi': this.getAnalisiTemplate()
+        };
+        
+        const templateData = templates[collectionName];
+        if (!templateData) {
+            showToast('Template non disponibile', 'error');
+            return;
+        }
+        
+        // Crea workbook
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(templateData.data);
+        
+        // Aggiungi intestazioni
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const address = XLSX.utils.encode_col(C) + "1";
+            if (!ws[address]) continue;
+            
+            // Stile intestazione
+            ws[address].s = {
+                font: { bold: true, color: { rgb: "FFFFFF" } },
+                fill: { fgColor: { rgb: "3B82F6" } },
+                alignment: { horizontal: "center", vertical: "center" }
+            };
+        }
+        
+        // Imposta larghezza colonne
+        if (templateData.colWidths) {
+            ws['!cols'] = templateData.colWidths;
+        }
+        
+        XLSX.utils.book_append_sheet(wb, ws, templateData.sheetName);
+        
+        // Salva file
+        const filename = `Template_${templateData.sheetName}_AeternaLexicon.xlsx`;
+        XLSX.writeFile(wb, filename);
+        
+        showToast(`Template ${templateData.sheetName} scaricato`, 'success');
+        
+        // Traccia analytics
+        if (window.Analytics) {
+            window.Analytics.trackEvent('template', 'downloaded', collectionName);
+        }
+    },
+    
+    // ================================
+    // 4. ESPORTAZIONE ANALISI
+    // ================================
+    
+    /**
+     * Esporta analisi comparativa di un termine
+     */
+    exportAnalisiComparativa: async function(termine, analisiData) {
+        try {
+            if (!analisiData) {
+                showToast('Nessun dato analisi da esportare', 'warning');
+                return null;
+            }
+            
+            // Crea workbook con multiple sheets
+            const wb = XLSX.utils.book_new();
+            
+            // Sheet 1: Sintesi Analisi
+            const sintesiData = this.prepareSintesiAnalisi(termine, analisiData);
+            const sintesiWS = XLSX.utils.json_to_sheet(sintesiData);
+            XLSX.utils.book_append_sheet(wb, sintesiWS, "Sintesi");
+            
+            // Sheet 2: Timeline Evolutiva
+            if (analisiData.timeline && analisiData.timeline.length > 0) {
+                const timelineData = this.prepareTimelineForExport(analisiData.timeline);
+                const timelineWS = XLSX.utils.json_to_sheet(timelineData);
+                XLSX.utils.book_append_sheet(wb, timelineWS, "Timeline");
+            }
+            
+            // Sheet 3: Confronto Periodi
+            const confrontoData = this.prepareConfrontoForExport(analisiData);
+            const confrontoWS = XLSX.utils.json_to_sheet(confrontoData);
+            XLSX.utils.book_append_sheet(wb, confrontoWS, "Confronto");
+            
+            // Sheet 4: Trasformazioni Identificate
+            if (analisiData.trasformazioni && analisiData.trasformazioni.length > 0) {
+                const trasformazioniData = this.prepareTrasformazioniForExport(analisiData.trasformazioni);
+                const trasformazioniWS = XLSX.utils.json_to_sheet(trasformazioniData);
+                XLSX.utils.book_append_sheet(wb, trasformazioniWS, "Trasformazioni");
+            }
+            
+            // Sheet 5: Metriche Quantitative
+            const metricheData = this.prepareMetricheForExport(analisiData);
+            const metricheWS = XLSX.utils.json_to_sheet(metricheData);
+            XLSX.utils.book_append_sheet(wb, metricheWS, "Metriche");
+            
+            // Genera nome file
+            const dateStr = new Date().toISOString().split('T')[0];
+            const safeTermine = termine.replace(/[^a-z0-9]/gi, '_');
+            const filename = `Analisi_${safeTermine}_${dateStr}.xlsx`;
+            
+            // Salva file
+            XLSX.writeFile(wb, filename);
+            
+            showToast(`Analisi "${termine}" esportata in ${filename}`, 'success');
+            
+            // Traccia analytics
+            if (window.Analytics) {
+                window.Analytics.trackEvent('export', 'analisi_comparativa', termine, null, {
+                    timeline_count: analisiData.timeline?.length || 0,
+                    trasformazioni_count: analisiData.trasformazioni?.length || 0
+                });
+            }
+            
+            return filename;
+            
+        } catch (error) {
+            console.error('Errore export analisi:', error);
+            showToast('Errore durante l\'export analisi: ' + error.message, 'error');
+            return null;
+        }
+    },
+    
+    /**
+     * Esporta dati analytics
+     */
+    exportAnalyticsData: function() {
+        try {
+            if (!window.Analytics || !window.Analytics.exportAnalyticsData) {
+                showToast('Analytics non inizializzato', 'error');
+                return null;
+            }
+            
+            const filename = window.Analytics.exportAnalyticsData();
+            showToast(`Dati analytics esportati in ${filename}`, 'success');
+            return filename;
+            
+        } catch (error) {
+            console.error('Errore export analytics:', error);
+            showToast('Errore durante l\'export analytics: ' + error.message, 'error');
+            return null;
+        }
+    },
+    
+    // ================================
+    // 5. PREPARAZIONE DATI PER ESPORTAZIONE
+    // ================================
+    
+    prepareFilosofiForExport: function(filosofi) {
+        return filosofi.map(f => ({
+            'ID': f.id || '',
+            'Nome Completo': f.nome || '',
+            'Nome (Inglese)': f.nome_en || '',
+            'Periodo': f.periodo || '',
+            'Scuola/Corrente': f.scuola || '',
+            'Anni (Nascita-Morte)': f.anni || '',
+            'Biografia': f.biografia || '',
+            'Biografia (Inglese)': f.biografia_en || '',
+            'Concetti Principali': Array.isArray(f.concetti_principali) ? f.concetti_principali.join(', ') : f.concetti_principali || '',
+            'Luogo Nascita - Città': f.luogo_nascita?.citta || f.citta_nascita || '',
+            'Luogo Nascita - Paese': f.luogo_nascita?.paese || f.paese_nascita || '',
+            'Coordinate - Latitudine': f.luogo_nascita?.coordinate?.lat || f.latitudine || '',
+            'Coordinate - Longitudine': f.luogo_nascita?.coordinate?.lng || f.longitudine || '',
+            'URL Immagine': f.immagine || '',
+            'Data Creazione': f.createdAt || new Date().toISOString(),
+            'Data Aggiornamento': f.updatedAt || new Date().toISOString()
+        }));
+    },
+    
+    prepareOpereForExport: function(opere) {
+        return opere.map(o => ({
+            'ID': o.id || '',
+            'Titolo': o.titolo || '',
+            'Titolo (Inglese)': o.titolo_en || '',
+            'Autore': o.autore || '',
+            'Anno Pubblicazione': o.anno || '',
+            'Periodo Storico': o.periodo || '',
+            'Sintesi/Abstract': o.sintesi || '',
+            'Sintesi (Inglese)': o.sintesi_en || '',
+            'Concetti Trattati': Array.isArray(o.concetti) ? o.concetti.join(', ') : o.concetti || '',
+            'Lingua Originale': o.lingua || 'Italiano',
+            'URL PDF/Testo': o.pdf || '',
+            'Testo Originale (Estratto)': o.testo_originale || '',
+            'Contesto Principale': o.contesto || '',
+            'Data Creazione': o.createdAt || new Date().toISOString(),
+            'Data Aggiornamento': o.updatedAt || new Date().toISOString()
+        }));
+    },
+    
+    prepareConcettiForExport: function(concetti) {
+        return concetti.map(c => ({
+            'ID': c.id || '',
+            'Parola Chiave': c.parola || '',
+            'Parola (Inglese)': c.parola_en || '',
+            'Definizione': c.definizione || '',
+            'Definizione (Inglese)': c.definizione_en || '',
+            'Citazione/Estratto': c.esempio || '',
+            'Autore Riferimento': c.autore || '',
+            'Opera di Riferimento': c.opera || '',
+            'Periodo Storico': c.periodo || '',
+            'Evoluzione Storica': c.evoluzione || '',
+            'Definizione Periodo Classico': c.definizione_classico || '',
+            'Definizione Periodo Contemporaneo': c.definizione_contemporaneo || '',
+            'Contesti d\'Uso': Array.isArray(c.contesti) ? c.contesti.join(', ') : c.contesti || '',
+            'Termini Correlati': Array.isArray(c.correlati) ? c.correlati.join(', ') : c.correlati || '',
+            'Data Creazione': c.createdAt || new Date().toISOString(),
+            'Data Aggiornamento': c.updatedAt || new Date().toISOString()
+        }));
+    },
+    
+    generateAnalisiSheet: function(filosofi, opere, concetti) {
+        // Genera statistiche per analisi
+        const stats = {
+            'Metrica': 'Valore',
+            'Filosofi Totali': filosofi.length,
+            'Opere Totali': opere.length,
+            'Concetti Totali': concetti.length,
+            'Filosofi Classici': filosofi.filter(f => f.periodo === 'classico').length,
+            'Filosofi Contemporanei': filosofi.filter(f => f.periodo === 'contemporaneo').length,
+            'Opere Classiche': opere.filter(o => o.periodo === 'classico').length,
+            'Opere Contemporanee': opere.filter(o => o.periodo === 'contemporaneo').length,
+            'Concetti Analizzati': concetti.filter(c => c.definizione_classico && c.definizione_contemporaneo).length,
+            'Data Esportazione': new Date().toISOString(),
+            'Versione App': '2.0.0'
+        };
+        
+        return [stats];
+    },
+    
+    prepareSintesiAnalisi: function(termine, analisi) {
+        return [{
+            'Termine Analizzato': termine,
+            'Data Analisi': new Date().toISOString(),
+            'Definizione Generale': analisi.definizione || '',
+            'Periodo Dominante': analisi.periodo || '',
+            'Occorrenze Classiche': analisi.analisi?.classico?.occorrenze || 0,
+            'Occorrenze Contemporanee': analisi.analisi?.contemporaneo?.occorrenze || 0,
+            'Contesti Classici': analisi.analisi?.classico?.contesti?.join(', ') || '',
+            'Contesti Contemporanei': analisi.analisi?.contemporaneo?.contesti?.join(', ') || '',
+            'Variazione Percentuale': this.calcolaVariazionePercentuale(analisi),
+            'Trasformazioni Identificate': analisi.trasformazioni?.length || 0,
+            'Autori Principali Classici': this.estraiAutoriPrincipali(analisi.analisi?.classico),
+            'Autori Principali Contemporanei': this.estraiAutoriPrincipali(analisi.analisi?.contemporaneo)
+        }];
+    },
+    
+    prepareTimelineForExport: function(timeline) {
+        return timeline.map(item => ({
+            'Anno': item.anno || '',
+            'Periodo': item.periodo || '',
+            'Autore': item.autore || '',
+            'Opera': item.opera || '',
+            'Estratto': item.estratto || '',
+            'Contesto': item.contesto || '',
+            'Lingua Originale': item.lingua || '',
+            'Traduzione': item.traduzione || ''
+        }));
+    },
+    
+    prepareConfrontoForExport: function(analisi) {
+        return [{
+            'Dimensione': 'Comparazione',
+            'Periodo Classico': 'Valori',
+            'Periodo Contemporaneo': 'Valori',
+            'Variazione': 'Risultato'
+        }, {
+            'Dimensione': 'Frequenza d\'uso',
+            'Periodo Classico': analisi.analisi?.classico?.occorrenze || 0,
+            'Periodo Contemporaneo': analisi.analisi?.contemporaneo?.occorrenze || 0,
+            'Variazione': this.calcolaVariazione(analisi.analisi?.classico?.occorrenze, analisi.analisi?.contemporaneo?.occorrenze)
+        }, {
+            'Dimensione': 'Contesti d\'uso',
+            'Periodo Classico': analisi.analisi?.classico?.contesti?.join(', ') || '',
+            'Periodo Contemporaneo': analisi.analisi?.contemporaneo?.contesti?.join(', ') || '',
+            'Variazione': this.confrontaContesti(analisi.analisi?.classico?.contesti, analisi.analisi?.contemporaneo?.contesti)
+        }];
+    },
+    
+    prepareTrasformazioniForExport: function(trasformazioni) {
+        return trasformazioni.map(t => ({
+            'Tipo Trasformazione': t.tipo || '',
+            'Descrizione': t.descrizione || '',
+            'Periodo Transizione': t.periodo || '',
+            'Autore Chiave': t.autore || '',
+            'Opera Riferimento': t.opera || '',
+            'Evidenza Testuale': t.evidenza || '',
+            'Impatto': t.impatto || '',
+            'Continuità Identificata': t.continuita || '',
+            'Rottura Identificata': t.rottura || ''
+        }));
+    },
+    
+    prepareMetricheForExport: function(analisi) {
+        const classico = analisi.analisi?.classico || {};
+        const contemporaneo = analisi.analisi?.contemporaneo || {};
+        
+        return [{
+            'Metrica': 'Valore Classico',
+            'Valore Contemporaneo': 'Variazione'
+        }, {
+            'Metrica': 'Occorrenze',
+            'Valore Classico': classico.occorrenze || 0,
+            'Valore Contemporaneo': contemporaneo.occorrenze || 0,
+            'Variazione': this.calcolaVariazionePercentualeNumerica(classico.occorrenze, contemporaneo.occorrenze)
+        }, {
+            'Metrica': 'Contesti Unici',
+            'Valore Classico': classico.contesti?.length || 0,
+            'Valore Contemporaneo': contemporaneo.contesti?.length || 0,
+            'Variazione': this.calcolaVariazionePercentualeNumerica(classico.contesti?.length, contemporaneo.contesti?.length)
+        }, {
+            'Metrica': 'Opere Analizzate',
+            'Valore Classico': classico.opereAnalizzate || 0,
+            'Valore Contemporaneo': contemporaneo.opereAnalizzate || 0,
+            'Variazione': this.calcolaVariazionePercentualeNumerica(classico.opereAnalizzate, contemporaneo.opereAnalizzate)
+        }];
+    },
+    
+    // ================================
+    // 6. PROCESSAMENTO IMPORT
+    // ================================
+    
+    processFilosofiImport: function(jsonData) {
+        return jsonData.map(item => ({
+            id: item['ID'] || '',
+            nome: item['Nome Completo'] || '',
+            nome_en: item['Nome (Inglese)'] || '',
+            periodo: item['Periodo']?.toLowerCase() || '',
+            scuola: item['Scuola/Corrente'] || '',
+            anni: item['Anni (Nascita-Morte)'] || '',
+            biografia: item['Biografia'] || '',
+            biografia_en: item['Biografia (Inglese)'] || '',
+            concetti_principali: item['Concetti Principali'] ? 
+                item['Concetti Principali'].split(',').map(c => c.trim()) : [],
+            luogo_nascita: {
+                citta: item['Luogo Nascita - Città'] || '',
+                paese: item['Luogo Nascita - Paese'] || '',
+                coordinate: {
+                    lat: parseFloat(item['Coordinate - Latitudine']) || 0,
+                    lng: parseFloat(item['Coordinate - Longitudine']) || 0
+                }
+            },
+            immagine: item['URL Immagine'] || '',
+            createdAt: item['Data Creazione'] || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        })).filter(f => f.nome); // Filtra righe vuote
+    },
+    
+    processOpereImport: function(jsonData) {
+        return jsonData.map(item => ({
+            id: item['ID'] || '',
+            titolo: item['Titolo'] || '',
+            titolo_en: item['Titolo (Inglese)'] || '',
+            autore: item['Autore'] || '',
+            anno: item['Anno Pubblicazione'] || '',
+            periodo: item['Periodo Storico']?.toLowerCase() || '',
+            sintesi: item['Sintesi/Abstract'] || '',
+            sintesi_en: item['Sintesi (Inglese)'] || '',
+            concetti: item['Concetti Trattati'] ? 
+                item['Concetti Trattati'].split(',').map(c => c.trim()) : [],
+            lingua: item['Lingua Originale'] || 'Italiano',
+            pdf: item['URL PDF/Testo'] || '',
+            testo_originale: item['Testo Originale (Estratto)'] || '',
+            contesto: item['Contesto Principale'] || '',
+            createdAt: item['Data Creazione'] || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        })).filter(o => o.titolo); // Filtra righe vuote
+    },
+    
+    processConcettiImport: function(jsonData) {
+        return jsonData.map(item => ({
+            id: item['ID'] || '',
+            parola: item['Parola Chiave'] || '',
+            parola_en: item['Parola (Inglese)'] || '',
+            definizione: item['Definizione'] || '',
+            definizione_en: item['Definizione (Inglese)'] || '',
+            esempio: item['Citazione/Estratto'] || '',
+            autore: item['Autore Riferimento'] || '',
+            opera: item['Opera di Riferimento'] || '',
+            periodo: item['Periodo Storico']?.toLowerCase() || '',
+            evoluzione: item['Evoluzione Storica'] || '',
+            definizione_classico: item['Definizione Periodo Classico'] || '',
+            definizione_contemporaneo: item['Definizione Periodo Contemporaneo'] || '',
+            contesti: item['Contesti d\'Uso'] ? 
+                item['Contesti d\'Uso'].split(',').map(c => c.trim()) : [],
+            correlati: item['Termini Correlati'] ? 
+                item['Termini Correlati'].split(',').map(c => c.trim()) : [],
+            createdAt: item['Data Creazione'] || new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        })).filter(c => c.parola); // Filtra righe vuote
+    },
+    
+    // ================================
+    // 7. TEMPLATE DEFINITIONS
+    // ================================
+    
+    getFilosofiTemplate: function() {
+        return {
+            sheetName: 'Filosofi',
+            colWidths: [
+                { wch: 10 },  // ID
+                { wch: 25 },  // Nome Completo
+                { wch: 20 },  // Nome (Inglese)
+                { wch: 15 },  // Periodo
+                { wch: 20 },  // Scuola/Corrente
+                { wch: 20 },  // Anni
+                { wch: 40 },  // Biografia
+                { wch: 40 },  // Biografia (Inglese)
+                { wch: 30 },  // Concetti Principali
+                { wch: 20 },  // Città Nascita
+                { wch: 15 },  // Paese Nascita
+                { wch: 15 },  // Latitudine
+                { wch: 15 },  // Longitudine
+                { wch: 30 },  // URL Immagine
+                { wch: 20 },  // Data Creazione
+                { wch: 20 }   // Data Aggiornamento
+            ],
+            data: [{
+                'ID': 'F001',
+                'Nome Completo': 'Platone',
+                'Nome (Inglese)': 'Plato',
+                'Periodo': 'classico',
+                'Scuola/Corrente': 'Platonismo',
+                'Anni (Nascita-Morte)': '428/427 a.C. - 348/347 a.C.',
+                'Biografia': 'Fondatore dell\'Accademia di Atene, autore dei Dialoghi.',
+                'Biografia (Inglese)': 'Founder of the Academy in Athens, author of the Dialogues.',
+                'Concetti Principali': 'Idea, Bene, Anima, Stato',
+                'Luogo Nascita - Città': 'Atene',
+                'Luogo Nascita - Paese': 'Grecia',
+                'Coordinate - Latitudine': '37.9838',
+                'Coordinate - Longitudine': '23.7275',
+                'URL Immagine': 'https://example.com/platone.jpg',
+                'Data Creazione': new Date().toISOString(),
+                'Data Aggiornamento': new Date().toISOString()
+            }]
+        };
+    },
+    
+    getOpereTemplate: function() {
+        return {
+            sheetName: 'Opere',
+            colWidths: [
+                { wch: 10 },  // ID
+                { wch: 30 },  // Titolo
+                { wch: 25 },  // Titolo (Inglese)
+                { wch: 20 },  // Autore
+                { wch: 15 },  // Anno
+                { wch: 15 },  // Periodo
+                { wch: 40 },  // Sintesi
+                { wch: 40 },  // Sintesi (Inglese)
+                { wch: 30 },  // Concetti Trattati
+                { wch: 15 },  // Lingua
+                { wch: 30 },  // URL PDF
+                { wch: 50 },  // Testo Originale
+                { wch: 20 },  // Contesto
+                { wch: 20 },  // Data Creazione
+                { wch: 20 }   // Data Aggiornamento
+            ],
+            data: [{
+                'ID': 'O001',
+                'Titolo': 'La Repubblica',
+                'Titolo (Inglese)': 'The Republic',
+                'Autore': 'Platone',
+                'Anno Pubblicazione': '380 a.C.',
+                'Periodo Storico': 'classico',
+                'Sintesi/Abstract': 'Dialogo sull\'organizzazione dello Stato ideale.',
+                'Sintesi (Inglese)': 'Dialogue on the organization of the ideal State.',
+                'Concetti Trattati': 'Giustizia, Stato, Filosofia, Educazione',
+                'Lingua Originale': 'Greco Antico',
+                'URL PDF/Testo': 'https://example.com/repubblica.pdf',
+                'Testo Originale (Estratto)': 'τό γὰρ αὐτὸ νοεῖν ἐστίν τε καὶ εἶναι',
+                'Contesto Principale': 'Politico-Filosofico',
+                'Data Creazione': new Date().toISOString(),
+                'Data Aggiornamento': new Date().toISOString()
+            }]
+        };
+    },
+    
+    getConcettiTemplate: function() {
+        return {
+            sheetName: 'Concetti',
+            colWidths: [
+                { wch: 10 },  // ID
+                { wch: 20 },  // Parola Chiave
+                { wch: 20 },  // Parola (Inglese)
+                { wch: 40 },  // Definizione
+                { wch: 40 },  // Definizione (Inglese)
+                { wch: 40 },  // Citazione
+                { wch: 20 },  // Autore
+                { wch: 30 },  // Opera
+                { wch: 15 },  // Periodo
+                { wch: 40 },  // Evoluzione
+                { wch: 40 },  // Def. Classico
+                { wch: 40 },  // Def. Contemporaneo
+                { wch: 30 },  // Contesti
+                { wch: 30 },  // Termini Correlati
+                { wch: 20 },  // Data Creazione
+                { wch: 20 }   // Data Aggiornamento
+            ],
+            data: [{
+                'ID': 'C001',
+                'Parola Chiave': 'Verità',
+                'Parola (Inglese)': 'Truth',
+                'Definizione': 'Corrispondenza dell\'intelletto con la cosa reale.',
+                'Definizione (Inglese)': 'Correspondence of the intellect with the real thing.',
+                'Citazione/Estratto': 'La verità è adaequatio rei et intellectus.',
+                'Autore Riferimento': 'Tommaso d\'Aquino',
+                'Opera di Riferimento': 'De Veritate',
+                'Periodo Storico': 'medioevale',
+                'Evoluzione Storica': 'Da corrispondenza ontologica a costruzione discorsiva.',
+                'Definizione Periodo Classico': 'Corrispondenza tra pensiero e realtà (aletheia).',
+                'Definizione Periodo Contemporaneo': 'Costruzione discorsiva prodotta da regimi di verità.',
+                'Contesti d\'Uso': 'Ontologico, Epistemico, Politico',
+                'Termini Correlati': 'Realtà, Conoscenza, Potere, Disciplina',
+                'Data Creazione': new Date().toISOString(),
+                'Data Aggiornamento': new Date().toISOString()
+            }]
+        };
+    },
+    
+    getAnalisiTemplate: function() {
+        return {
+            sheetName: 'Analisi',
+            colWidths: [
+                { wch: 25 },  // Termine Analizzato
+                { wch: 20 },  // Data Analisi
+                { wch: 40 },  // Definizione
+                { wch: 15 },  // Periodo
+                { wch: 15 },  // Occ. Classiche
+                { wch: 15 },  // Occ. Contemp.
+                { wch: 25 },  // Contesti Classici
+                { wch: 25 },  // Contesti Contemp.
+                { wch: 15 },  // Variazione %
+                { wch: 15 },  // Trasformazioni
+                { wch: 25 },  // Autori Classici
+                { wch: 25 }   // Autori Contemp.
+            ],
+            data: [{
+                'Termine Analizzato': 'Verità',
+                'Data Analisi': new Date().toISOString(),
+                'Definizione Generale': 'Concetto centrale della filosofia.',
+                'Periodo Dominante': 'entrambi',
+                'Occorrenze Classiche': 45,
+                'Occorrenze Contemporanee': 32,
+                'Contesti Classici': 'Ontologico, Epistemico',
+                'Contesti Contemporanei': 'Politico, Discorsivo',
+                'Variazione Percentuale': '-29%',
+                'Trasformazioni Identificate': 3,
+                'Autori Principali Classici': 'Aristotele, Tommaso',
+                'Autori Principali Contemporanei': 'Foucault, Nietzsche'
+            }]
+        };
+    },
+    
+    // ================================
+    // 8. UTILITY FUNCTIONS
+    // ================================
+    
+    showImportResults: function(results, collectionName) {
+        const successMsg = `${results.success} ${collectionName} importati con successo`;
+        let errorMsg = '';
+        
+        if (results.errors.length > 0) {
+            errorMsg = `, ${results.errors.length} errori: `;
+            results.errors.forEach((err, index) => {
+                if (index < 3) { // Mostra solo primi 3 errori
+                    errorMsg += `${err.item} (${err.error}); `;
+                }
+            });
+            if (results.errors.length > 3) {
+                errorMsg += `... e altri ${results.errors.length - 3} errori`;
+            }
+        }
+        
+        showToast(successMsg + errorMsg, results.errors.length > 0 ? 'warning' : 'success');
+        
+        // Log dettagliato in console
+        console.log(`Import ${collectionName}:`, results);
+    },
+    
+    calcolaVariazionePercentuale: function(analisi) {
+        const classico = analisi.analisi?.classico?.occorrenze || 0;
+        const contemporaneo = analisi.analisi?.contemporaneo?.occorrenze || 0;
+        
+        if (classico === 0) return 'N/A';
+        
+        const variazione = ((contemporaneo - classico) / classico) * 100;
+        return `${variazione > 0 ? '+' : ''}${variazione.toFixed(1)}%`;
+    },
+    
+    calcolaVariazionePercentualeNumerica: function(val1, val2) {
+        if (!val1 || val1 === 0) return 'N/A';
+        const variazione = ((val2 - val1) / val1) * 100;
+        return `${variazione > 0 ? '+' : ''}${variazione.toFixed(1)}%`;
+    },
+    
+    calcolaVariazione: function(val1, val2) {
+        if (val1 === val2) return 'Stabile';
+        return val2 > val1 ? `+${val2 - val1}` : `-${val1 - val2}`;
+    },
+    
+    confrontaContesti: function(contesti1, contesti2) {
+        if (!contesti1 || !contesti2) return 'N/A';
+        
+        const set1 = new Set(contesti1);
+        const set2 = new Set(contesti2);
+        
+        const comuni = [...set1].filter(x => set2.has(x)).length;
+        const unici1 = set1.size - comuni;
+        const unici2 = set2.size - comuni;
+        
+        return `${comuni} comuni, ${unici1}→${unici2} unici`;
+    },
+    
+    estraiAutoriPrincipali: function(analisiPeriodo) {
+        if (!analisiPeriodo || !analisiPeriodo.autori) return '';
+        return Array.isArray(analisiPeriodo.autori) ? 
+            analisiPeriodo.autori.slice(0, 3).join(', ') : 
+            analisiPeriodo.autori;
+    },
+    
+    // ================================
+    // 9. FUNZIONI DI BACKUP
+    // ================================
+    
+    /**
+     * Crea backup completo del database locale
+     */
+    createLocalBackup: function() {
+        try {
+            const backup = {
+                timestamp: new Date().toISOString(),
+                version: '2.0.0',
+                data: {
+                    filosofi: JSON.parse(localStorage.getItem('local_filosofi') || '[]'),
+                    opere: JSON.parse(localStorage.getItem('local_opere') || '[]'),
+                    concetti: JSON.parse(localStorage.getItem('local_concetti') || '[]'),
+                    analytics: JSON.parse(localStorage.getItem('analytics_events') || '[]').slice(-100) // Ultimi 100 eventi
+                }
+            };
+            
+            const backupStr = JSON.stringify(backup, null, 2);
+            const blob = new Blob([backupStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_aeterna_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast('Backup creato con successo', 'success');
+            return true;
+            
+        } catch (error) {
+            console.error('Errore backup:', error);
+            showToast('Errore durante il backup', 'error');
+            return false;
+        }
+    },
+    
+    /**
+     * Ripristina da backup
+     */
+    restoreFromBackup: function(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    
+                    // Verifica struttura backup
+                    if (!backup.data || !backup.timestamp) {
+                        throw new Error('Formato backup non valido');
+                    }
+                    
+                    // Ripristina dati
+                    if (backup.data.filosofi) {
+                        localStorage.setItem('local_filosofi', JSON.stringify(backup.data.filosofi));
+                    }
+                    
+                    if (backup.data.opere) {
+                        localStorage.setItem('local_opere', JSON.stringify(backup.data.opere));
+                    }
+                    
+                    if (backup.data.concetti) {
+                        localStorage.setItem('local_concetti', JSON.stringify(backup.data.concetti));
+                    }
+                    
+                    showToast(`Backup ripristinato (${backup.timestamp})`, 'success');
+                    resolve(true);
+                    
+                } catch (error) {
+                    console.error('Errore ripristino:', error);
+                    showToast('Errore durante il ripristino: ' + error.message, 'error');
+                    reject(error);
+                }
+            };
+            
+            reader.onerror = () => {
+                reject(new Error('Errore lettura file'));
+            };
+            
+            reader.readAsText(file);
+        });
     }
 };
 
-// ==========================================
-// 1. ELABORAZIONE EXCEL PRINCIPALE
-// ==========================================
+// ================================
+// 10. INIZIALIZZAZIONE
+// ================================
 
-async function handleProcessExcel(data, options) {
-    const { fileType, dataType, rawData } = data;
-// ============================================================
-    // MODIFICA LINKER (Per Dataset PDF e Collegamenti)
-    // ============================================================
+// Assicurati che XLSX sia disponibile
+if (typeof XLSX === 'undefined') {
+    console.warn('XLSX library non caricata. Caricala tramite CDN.');
     
-    // Se ci sono dati grezzi (dall'Excel), li normalizziamo subito
-    if (rawData && Array.isArray(rawData)) {
-        // Usiamo la funzione che hai messo in fondo al file
-        const dataNormalizzati = rawData.map(row => normalizePhilosophicalHeaders(row));
-
-        // Inviamo subito i dati puliti ad app.js (che aspetta 'PROCESSING_COMPLETE')
-        self.postMessage({
-            type: 'PROCESSING_COMPLETE',
-            data: dataNormalizzati,
-            stats: { total: dataNormalizzati.length }
-        });
-    }
-    // ============================================================
-    
-    try {
-        // Mostra progresso iniziale
-        self.postMessage({
-            type: 'PROCESSING_STARTED',
-            progress: 0,
-            message: 'Inizio elaborazione file...'
-        });
-        
-        let processedData;
-        
-        if (fileType === 'excel' || fileType === 'csv') {
-            // Processa dati Excel/CSV
-            processedData = await processExcelData(rawData, dataType, options);
-        } else if (fileType === 'json') {
-            // Processa dati JSON
-            processedData = processJsonData(rawData, dataType, options);
-        }
-        
-        // Valida i dati processati
-        const validationResult = validateProcessedData(processedData, dataType);
-        
-        // Genera statistiche
-        const statistics = generateDataStatistics(processedData, dataType);
-        
-        self.postMessage({
-            type: 'EXCEL_PROCESSED',
-            success: true,
-            data: {
-                processedData,
-                validation: validationResult,
-                statistics,
-                originalCount: rawData.length,
-                processedCount: processedData.length,
-                dataType,
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-    } catch (error) {
-        console.error('Excel processing error:', error);
-        
-        self.postMessage({
-            type: 'EXCEL_ERROR',
-            success: false,
-            error: {
-                message: error.message,
-                stack: error.stack,
-                phase: 'processing'
-            },
-            data: {
-                dataType,
-                timestamp: new Date().toISOString()
-            }
-        });
-    }
-}
-
-// ==========================================
-// 2. PROCESSING DATI FILOSOFICI
-// ==========================================
-
-async function processExcelData(rawData, dataType, options) {
-    return new Promise((resolve, reject) => {
-        try {
-            // Progresso: 10%
-            self.postMessage({
-                type: 'PROCESSING_PROGRESS',
-                progress: 10,
-                message: `Analizzando struttura dati per ${dataType}...`
-            });
-            
-            // Mappatura colonne in base al tipo di dati
-            const columnMapping = getColumnMapping(dataType);
-            
-            // Progresso: 30%
-            self.postMessage({
-                type: 'PROCESSING_PROGRESS',
-                progress: 30,
-                message: 'Mappatura colonne completata'
-            });
-            
-            const processedData = rawData.map((item, index) => {
-                // Progresso per ogni 10 elementi
-                if (index % 10 === 0 && index > 0) {
-                    const progress = 30 + Math.floor((index / rawData.length) * 50);
-                    self.postMessage({
-                        type: 'PROCESSING_PROGRESS',
-                        progress,
-                        message: `Processati ${index} di ${rawData.length} elementi`
-                    });
-                }
-                
-                return processDataItem(item, dataType, columnMapping, options);
-            });
-            
-            // Progresso: 90%
-            self.postMessage({
-                type: 'PROCESSING_PROGRESS',
-                progress: 90,
-                message: 'Pulizia dati finali...'
-            });
-            
-            // Applica pulizia finale
-            const cleanedData = applyFinalCleaning(processedData, dataType);
-            
-            resolve(cleanedData);
-            
-        } catch (error) {
-            reject(error);
-        }
-    });
-}
-
-function processJsonData(rawData, dataType, options) {
-    // Progresso iniziale
-    self.postMessage({
-        type: 'PROCESSING_PROGRESS',
-        progress: 10,
-        message: 'Processamento dati JSON...'
-    });
-    
-    // Per JSON, i dati potrebbero già essere nel formato corretto
-    // ma applichiamo comunque validazione e pulizia
-    const processedData = rawData.map((item, index) => {
-        if (index % 20 === 0 && index > 0) {
-            const progress = 10 + Math.floor((index / rawData.length) * 80);
-            self.postMessage({
-                type: 'PROCESSING_PROGRESS',
-                progress,
-                message: `Processati ${index} elementi JSON`
-            });
-        }
-        
-        return processJsonItem(item, dataType, options);
-    });
-    
-    return processedData;
-}
-
-function processDataItem(item, dataType, columnMapping, options) {
-    const processedItem = {
-        id: generateId(dataType),
-        last_modified: new Date().toISOString(),
-        import_timestamp: new Date().toISOString(),
-        source: 'excel_import'
-    };
-    
-    // Processa in base al tipo di dati
-    switch(dataType) {
-        case 'filosofi':
-            processFilosofoItem(item, processedItem, columnMapping, options);
-            break;
-        case 'opere':
-            processOperaItem(item, processedItem, columnMapping, options);
-            break;
-        case 'concetti':
-            processConcettoItem(item, processedItem, columnMapping, options);
-            break;
-        default:
-            processGenericItem(item, processedItem, columnMapping);
-    }
-    
-    // Applica trasformazioni comuni
-    applyCommonTransformations(processedItem, options);
-    
-    return processedItem;
-}
-
-function processFilosofoItem(rawItem, processedItem, columnMapping, options) {
-    // Mappatura diretta delle colonne
-    processedItem.nome = mapColumn(rawItem, 'Nome', 'nome');
-    processedItem.nome_en = mapColumn(rawItem, 'Nome_EN', 'nome_en');
-    processedItem.scuola = mapColumn(rawItem, 'Scuola', 'scuola');
-    processedItem.periodo = mapColumn(rawItem, 'Periodo', 'periodo');
-    processedItem.anni_vita = mapColumn(rawItem, 'Anni_Vita', 'anni_vita');
-    processedItem.luogo_nascita = mapColumn(rawItem, 'Luogo_Nascita', 'luogo_nascita');
-    processedItem.biografia = mapColumn(rawItem, 'Biografia', 'biografia');
-    processedItem.biografia_en = mapColumn(rawItem, 'Biografia_EN', 'biografia_en');
-    processedItem.ritratto = mapColumn(rawItem, 'Ritratto_URL', 'ritratto');
-    
-    // Processa coordinate se presenti
-    const lat = mapColumn(rawItem, 'Coordinate_Lat', 'coordinate_lat');
-    const lng = mapColumn(rawItem, 'Coordinate_Lng', 'coordinate_lng');
-    
-    if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
-        processedItem.coordinate = {
-            lat: parseFloat(lat),
-            lng: parseFloat(lng)
-        };
-    }
-    
-    // Genera ID se non presente
-    if (!processedItem.id || processedItem.id.startsWith('gen_')) {
-        processedItem.id = `filosofo_${generateSlug(processedItem.nome)}_${Date.now()}`;
-    }
-    
-    // Normalizza periodo
-    if (processedItem.periodo) {
-        processedItem.periodo = normalizePeriodo(processedItem.periodo);
-    }
-    
-    return processedItem;
-}
-
-function processOperaItem(rawItem, processedItem, columnMapping, options) {
-    processedItem.titolo = mapColumn(rawItem, 'Titolo', 'titolo');
-    processedItem.titolo_en = mapColumn(rawItem, 'Titolo_EN', 'titolo_en');
-    processedItem.autore_id = mapColumn(rawItem, 'Autore_ID', 'autore_id');
-    processedItem.autore_nome = mapColumn(rawItem, 'Autore_Nome', 'autore_nome');
-    processedItem.anno = mapColumn(rawItem, 'Anno', 'anno');
-    processedItem.periodo = mapColumn(rawItem, 'Periodo', 'periodo');
-    processedItem.lingua = mapColumn(rawItem, 'Lingua', 'lingua');
-    processedItem.sintesi = mapColumn(rawItem, 'Sintesi', 'sintesi');
-    processedItem.sintesi_en = mapColumn(rawItem, 'Sintesi_EN', 'sintesi_en');
-    processedItem.pdf_url = mapColumn(rawItem, 'PDF_URL', 'pdf_url');
-    processedItem.immagine = mapColumn(rawItem, 'Immagine_URL', 'immagine');
-    
-    // Processa lista di concetti
-    const concettiRaw = mapColumn(rawItem, 'Concetti', 'concetti');
-    if (concettiRaw) {
-        processedItem.concetti = parseConcettiList(concettiRaw);
-    }
-    
-    // Normalizza anno
-    if (processedItem.anno) {
-        processedItem.anno = normalizeAnno(processedItem.anno);
-    }
-    
-    // Genera ID per opera
-    processedItem.id = `opera_${generateSlug(processedItem.titolo)}_${processedItem.anno || 'nd'}`;
-    
-    return processedItem;
-}
-
-function processConcettoItem(rawItem, processedItem, columnMapping, options) {
-    processedItem.parola = mapColumn(rawItem, 'Parola', 'parola');
-    processedItem.parola_en = mapColumn(rawItem, 'Parola_EN', 'parola_en');
-    processedItem.definizione = mapColumn(rawItem, 'Definizione', 'definizione');
-    processedItem.definizione_en = mapColumn(rawItem, 'Definizione_EN', 'definizione_en');
-    processedItem.esempio_citazione = mapColumn(rawItem, 'Esempio_Citazione', 'esempio_citazione');
-    processedItem.autore_riferimento = mapColumn(rawItem, 'Autore_Riferimento', 'autore_riferimento');
-    processedItem.opera_riferimento = mapColumn(rawItem, 'Opera_Riferimento', 'opera_riferimento');
-    processedItem.periodo_storico = mapColumn(rawItem, 'Periodo_Storico', 'periodo_storico');
-    processedItem.evoluzione = mapColumn(rawItem, 'Evoluzione', 'evoluzione');
-    
-    // Categoria automatica in base alla parola
-    if (processedItem.parola) {
-        processedItem.categoria = inferCategoriaFromParola(processedItem.parola);
-    }
-    
-    // Genera ID per concetto
-    processedItem.id = `concetto_${generateSlug(processedItem.parola)}`;
-    
-    return processedItem;
-}
-
-// ==========================================
-// 3. VALIDAZIONE DATI
-// ==========================================
-
-function handleValidateData(data, options) {
-    const { dataType, items } = data;
-    
-    try {
-        const validationResults = validateDataItems(items, dataType, options);
-        const summary = generateValidationSummary(validationResults);
-        
-        self.postMessage({
-            type: 'VALIDATION_COMPLETE',
-            success: true,
-            data: {
-                validationResults,
-                summary,
-                dataType,
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-    } catch (error) {
-        self.postMessage({
-            type: 'VALIDATION_ERROR',
-            success: false,
-            error: error.message
-        });
-    }
-}
-
-function validateDataItems(items, dataType, options) {
-    return items.map((item, index) => {
-        const errors = [];
-        const warnings = [];
-        
-        // Validazioni comuni
-        validateRequiredFields(item, dataType, errors);
-        validateFieldLengths(item, dataType, warnings);
-        validateDataTypes(item, dataType, errors);
-        
-        // Validazioni specifiche per tipo
-        switch(dataType) {
-            case 'filosofi':
-                validateFilosofoItem(item, errors, warnings);
-                break;
-            case 'opere':
-                validateOperaItem(item, errors, warnings);
-                break;
-            case 'concetti':
-                validateConcettoItem(item, errors, warnings);
-                break;
-        }
-        
-        // Validazioni coordinate
-        if (item.coordinate) {
-            validateCoordinates(item.coordinate, errors, warnings);
-        }
-        
-        return {
-            index,
-            id: item.id,
-            isValid: errors.length === 0,
-            hasWarnings: warnings.length > 0,
-            errors,
-            warnings,
-            itemPreview: generateItemPreview(item, dataType)
-        };
-    });
-}
-
-function validateFilosofoItem(item, errors, warnings) {
-    // Nome obbligatorio
-    if (!item.nome || item.nome.trim().length < 2) {
-        errors.push('Nome troppo breve (min 2 caratteri)');
-    }
-    
-    // Scuola obbligatoria
-    if (!item.scuola || item.scuola.trim().length < 3) {
-        errors.push('Scuola di pensiero richiesta');
-    }
-    
-    // Periodo valido
-    const validPeriodi = ['classico', 'contemporaneo', 'medioevale', 'moderno'];
-    if (item.periodo && !validPeriodi.includes(item.periodo.toLowerCase())) {
-        warnings.push(`Periodo "${item.periodo}" non standard. Usare: ${validPeriodi.join(', ')}`);
-    }
-    
-    // Biografia lunghezza minima
-    if (item.biografia && item.biografia.length < 50) {
-        warnings.push('Biografia molto breve (consigliati almeno 50 caratteri)');
-    }
-}
-
-function validateOperaItem(item, errors, warnings) {
-    // Titolo obbligatorio
-    if (!item.titolo || item.titolo.trim().length < 2) {
-        errors.push('Titolo opera troppo breve');
-    }
-    
-    // Autore obbligatorio
-    if (!item.autore_nome && !item.autore_id) {
-        errors.push('Autore non specificato');
-    }
-    
-    // Anno valido
-    if (item.anno) {
-        const year = parseInt(item.anno);
-        if (isNaN(year) || year < -1000 || year > new Date().getFullYear() + 10) {
-            warnings.push(`Anno "${item.anno}" potrebbe non essere valido`);
-        }
-    }
-    
-    // Periodo valido
-    if (item.periodo && !['classico', 'contemporaneo', 'medioevale', 'moderno'].includes(item.periodo.toLowerCase())) {
-        warnings.push(`Periodo opera non standard: ${item.periodo}`);
-    }
-}
-
-function validateConcettoItem(item, errors, warnings) {
-    // Parola obbligatoria
-    if (!item.parola || item.parola.trim().length < 2) {
-        errors.push('Parola chiave troppo breve');
-    }
-    
-    // Definizione obbligatoria
-    if (!item.definizione || item.definizione.trim().length < 10) {
-        errors.push('Definizione troppo breve (min 10 caratteri)');
-    }
-    
-    // Autore riferimento se presente citazione
-    if (item.esempio_citazione && !item.autore_riferimento) {
-        warnings.push('Citazione presente ma autore riferimento mancante');
-    }
-    
-    // Categoria automatica se non specificata
-    if (!item.categoria) {
-        item.categoria = inferCategoriaFromParola(item.parola);
-        if (item.categoria) {
-            warnings.push(`Categoria inferita automaticamente: ${item.categoria}`);
-        }
-    }
-}
-
-function validateCoordinates(coords, errors, warnings) {
-    if (!coords.lat || !coords.lng) {
-        errors.push('Coordinate incomplete');
-        return;
-    }
-    
-    const lat = parseFloat(coords.lat);
-    const lng = parseFloat(coords.lng);
-    
-    if (isNaN(lat) || isNaN(lng)) {
-        errors.push('Coordinate non numeriche');
-        return;
-    }
-    
-    if (lat < -90 || lat > 90) {
-        errors.push(`Latitudine ${lat} fuori range (-90 a 90)`);
-    }
-    
-    if (lng < -180 || lng > 180) {
-        errors.push(`Longitudine ${lng} fuori range (-180 a 180)`);
-    }
-    
-    // Coordinate 0,0 sospette
-    if (lat === 0 && lng === 0) {
-        warnings.push('Coordinate impostate su 0,0 (oceano Atlantico)');
-    }
-}
-
-function generateValidationSummary(results) {
-    const total = results.length;
-    const valid = results.filter(r => r.isValid).length;
-    const invalid = total - valid;
-    const withWarnings = results.filter(r => r.hasWarnings).length;
-    
-    const errorCount = results.reduce((sum, r) => sum + r.errors.length, 0);
-    const warningCount = results.reduce((sum, r) => sum + r.warnings.length, 0);
-    
-    const mostCommonErrors = getMostCommonErrors(results);
-    const mostCommonWarnings = getMostCommonWarnings(results);
-    
-    return {
-        total,
-        valid,
-        invalid,
-        withWarnings,
-        errorCount,
-        warningCount,
-        validityRate: total > 0 ? Math.round((valid / total) * 100) : 0,
-        mostCommonErrors,
-        mostCommonWarnings,
-        timestamp: new Date().toISOString()
-    };
-}
-
-// ==========================================
-// 4. CONVERSIONE PER ESPORTAZIONE
-// ==========================================
-
-function handleConvertToExcel(data, options) {
-    const { dataType, items, exportFormat = 'excel' } = data;
-    
-    try {
-        self.postMessage({
-            type: 'CONVERSION_STARTED',
-            progress: 0,
-            message: 'Preparazione dati per esportazione...'
-        });
-        
-        // Converti dati nel formato Excel
-        const excelData = convertToExcelFormat(items, dataType, options);
-        
-        self.postMessage({
-            type: 'CONVERSION_PROGRESS',
-            progress: 50,
-            message: 'Dati convertiti, generando file...'
-        });
-        
-        // Genera il file Excel/CSV
-        const fileData = generateExcelFile(excelData, dataType, exportFormat);
-        
-        self.postMessage({
-            type: 'CONVERSION_COMPLETE',
-            success: true,
-            data: {
-                fileData,
-                dataType,
-                itemCount: items.length,
-                exportFormat,
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-    } catch (error) {
-        self.postMessage({
-            type: 'CONVERSION_ERROR',
-            success: false,
-            error: error.message
-        });
-    }
-}
-
-function convertToExcelFormat(items, dataType, options) {
-    const columnHeaders = getExportColumnHeaders(dataType);
-    
-    const excelRows = items.map((item, index) => {
-        // Progresso ogni 50 elementi
-        if (index % 50 === 0 && index > 0) {
-            const progress = Math.min(90, Math.floor((index / items.length) * 100));
-            self.postMessage({
-                type: 'CONVERSION_PROGRESS',
-                progress,
-                message: `Convertiti ${index} di ${items.length} elementi`
-            });
-        }
-        
-        return convertItemToExcelRow(item, dataType, columnHeaders);
-    });
-    
-    return {
-        headers: columnHeaders,
-        rows: excelRows,
-        metadata: {
-            exportedAt: new Date().toISOString(),
-            dataType,
-            itemCount: items.length,
-            appVersion: 'Aeterna Lexicon 1.0'
+    // Carica dinamicamente se non presente
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = () => {
+        console.log('✅ XLSX library caricata dinamicamente');
+        // Inizializza funzioni che dipendono da XLSX
+        if (typeof window.ExcelWorkerInit === 'function') {
+            window.ExcelWorkerInit();
         }
     };
+    document.head.appendChild(script);
 }
 
-function getExportColumnHeaders(dataType) {
-    switch(dataType) {
-        case 'filosofi':
-            return [
-                'ID', 'Nome', 'Nome_EN', 'Scuola', 'Periodo', 'Anni_Vita',
-                'Luogo_Nascita', 'Biografia', 'Biografia_EN',
-                'Coordinate_Lat', 'Coordinate_Lng', 'Ritratto_URL',
-                'Import_Timestamp'
-            ];
-            
-        case 'opere':
-            return [
-                'ID', 'Titolo', 'Titolo_EN', 'Autore_ID', 'Autore_Nome',
-                'Anno', 'Periodo', 'Lingua', 'Sintesi', 'Sintesi_EN',
-                'PDF_URL', 'Immagine_URL', 'Concetti', 'Import_Timestamp'
-            ];
-            
-        case 'concetti':
-            return [
-                'ID', 
-                'Parola', 
-                'Filosofo',          // NUOVO: Chi lo dice?
-                'Definizione', 
-                'Termine_Originale', // NUOVO: Aletheia, Adaequatio (Richiesta PDF)
-                'Citazione',         // NUOVO: Testo esatto (Richiesta PDF)
-                'Opera',             // NUOVO: Fonte
-                'Scuola',            // Per i marker colorati
-                'Categoria', 
-                'Import_Timestamp'
-            ];
-            
-        default:
-            return ['ID', 'Dati', 'Import_Timestamp'];
-    }
-}
+// Esponi funzioni globali
+window.exportAllDataToExcel = () => window.ExcelWorker.exportAllDataToExcel();
+window.exportDataToExcel = (collection) => window.ExcelWorker.exportDataToExcel(collection);
+window.handleFileImport = (collection, files) => window.ExcelWorker.handleFileImport(collection, files);
+window.downloadTemplate = (collection) => window.ExcelWorker.downloadTemplate(collection);
+window.exportAnalisiComparativa = (termine, analisi) => window.ExcelWorker.exportAnalisiComparativa(termine, analisi);
 
-function convertItemToExcelRow(item, dataType, headers) {
-    const row = {};
-    
-    headers.forEach(header => {
-        switch(header) {
-            case 'ID':
-                row[header] = item.id || '';
-                break;
-            case 'Import_Timestamp':
-                row[header] = item.import_timestamp || new Date().toISOString();
-                break;
-            case 'Coordinate_Lat':
-                row[header] = item.coordinate ? item.coordinate.lat : '';
-                break;
-            case 'Coordinate_Lng':
-                row[header] = item.coordinate ? item.coordinate.lng : '';
-                break;
-            case 'Concetti':
-                row[header] = item.concetti ? item.concetti.join('; ') : '';
-                break;
-            default:
-                // Mappa header camelCase a proprietà
-                const propName = header.toLowerCase().replace(/_/g, '');
-                row[header] = item[propName] || item[header] || '';
-        }
-    });
-    
-    return row;
-}
-
-// ==========================================
-// 5. FUSIONE DATASET
-// ==========================================
-
-function handleMergeDatasets(data, options) {
-    const { datasets, mergeType = 'union' } = data;
-    
-    try {
-        self.postMessage({
-            type: 'MERGE_STARTED',
-            progress: 0,
-            message: 'Analizzando dataset da fondere...'
-        });
-        
-        const mergedData = mergeDatasets(datasets, mergeType, options);
-        
-        // Valida il risultato della fusione
-        const validation = validateMergedData(mergedData, datasets, mergeType);
-        
-        self.postMessage({
-            type: 'MERGE_COMPLETE',
-            success: true,
-            data: {
-                mergedData,
-                validation,
-                inputCount: datasets.length,
-                outputCount: mergedData.length,
-                mergeType,
-                duplicatesRemoved: calculateDuplicatesRemoved(datasets, mergedData),
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-    } catch (error) {
-        self.postMessage({
-            type: 'MERGE_ERROR',
-            success: false,
-            error: error.message
-        });
-    }
-}
-
-function mergeDatasets(datasets, mergeType, options) {
-    let merged = [];
-    
-    switch(mergeType) {
-        case 'union':
-            // Unione di tutti i dataset, rimuove duplicati
-            datasets.forEach((dataset, index) => {
-                self.postMessage({
-                    type: 'MERGE_PROGRESS',
-                    progress: Math.floor((index / datasets.length) * 80),
-                    message: `Unendo dataset ${index + 1} di ${datasets.length}`
-                });
-                
-                dataset.forEach(item => {
-                    if (!itemExistsInArray(merged, item)) {
-                        merged.push(item);
-                    }
-                });
-            });
-            break;
-            
-        case 'intersection':
-            // Solo elementi presenti in tutti i dataset
-            if (datasets.length > 0) {
-                merged = [...datasets[0]];
-                
-                for (let i = 1; i < datasets.length; i++) {
-                    merged = merged.filter(item => 
-                        itemExistsInArray(datasets[i], item)
-                    );
-                    
-                    self.postMessage({
-                        type: 'MERGE_PROGRESS',
-                        progress: Math.floor((i / datasets.length) * 80),
-                        message: `Intersecando con dataset ${i + 1}`
-                    });
-                }
-            }
-            break;
-            
-        case 'complement':
-            // Elementi presenti nel primo ma non negli altri
-            if (datasets.length > 1) {
-                merged = datasets[0].filter(item => {
-                    for (let i = 1; i < datasets.length; i++) {
-                        if (itemExistsInArray(datasets[i], item)) {
-                            return false;
-                        }
-                    }
-                    return true;
-                });
-            }
-            break;
-    }
-    
-    return merged;
-}
-
-// ==========================================
-// 6. GENERAZIONE REPORT
-// ==========================================
-
-function handleGenerateReport(data, options) {
-    const { dataType, items, reportType = 'summary' } = data;
-    
-    try {
-        const report = generateReport(items, dataType, reportType);
-        
-        self.postMessage({
-            type: 'REPORT_GENERATED',
-            success: true,
-            data: {
-                report,
-                dataType,
-                reportType,
-                itemCount: items.length,
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-    } catch (error) {
-        self.postMessage({
-            type: 'REPORT_ERROR',
-            success: false,
-            error: error.message
-        });
-    }
-}
-
-function generateReport(items, dataType, reportType) {
-    switch(reportType) {
-        case 'summary':
-            return generateSummaryReport(items, dataType);
-        case 'statistics':
-            return generateStatisticsReport(items, dataType);
-        case 'validation':
-            return generateValidationReport(items, dataType);
-        case 'timeline':
-            return generateTimelineReport(items, dataType);
-        case 'connections':
-            return generateConnectionsReport(items, dataType);
-        default:
-            return generateSummaryReport(items, dataType);
-    }
-}
-
-function generateSummaryReport(items, dataType) {
-    const total = items.length;
-    
-    // Statistiche di base
-    const stats = {
-        total,
-        byPeriod: {},
-        byCategory: {},
-        completeness: calculateCompleteness(items)
-    };
-    
-    items.forEach(item => {
-        // Conta per periodo
-        if (item.periodo) {
-            stats.byPeriod[item.periodo] = (stats.byPeriod[item.periodo] || 0) + 1;
-        }
-        
-        // Conta per categoria (se concetti)
-        if (item.categoria) {
-            stats.byCategory[item.categoria] = (stats.byCategory[item.categoria] || 0) + 1;
-        }
-    });
-    
-    // Top elementi
-    const topItems = getTopItems(items, dataType);
-    
-    return {
-        metadata: {
-            reportType: 'summary',
-            dataType,
-            generatedAt: new Date().toISOString(),
-            itemCount: total
-        },
-        statistics: stats,
-        topItems,
-        recommendations: generateRecommendations(items, dataType)
-    };
-}
-
-// ==========================================
-// 7. PULIZIA DATI
-// ==========================================
-
-function handleCleanData(data, options) {
-    const { dataType, items, cleaningRules = {} } = data;
-    
-    try {
-        self.postMessage({
-            type: 'CLEANING_STARTED',
-            progress: 0,
-            message: 'Inizio pulizia dati...'
-        });
-        
-        const cleanedData = cleanDataItems(items, dataType, cleaningRules);
-        
-        // Confronta con originali
-        const changes = analyzeChanges(items, cleanedData);
-        
-        self.postMessage({
-            type: 'CLEANING_COMPLETE',
-            success: true,
-            data: {
-                cleanedData,
-                changes,
-                originalCount: items.length,
-                cleanedCount: cleanedData.length,
-                dataType,
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-    } catch (error) {
-        self.postMessage({
-            type: 'CLEANING_ERROR',
-            success: false,
-            error: error.message
-        });
-    }
-}
-
-function cleanDataItems(items, dataType, rules) {
-    return items.map((item, index) => {
-        if (index % 20 === 0) {
-            self.postMessage({
-                type: 'CLEANING_PROGRESS',
-                progress: Math.floor((index / items.length) * 90),
-                message: `Puliti ${index} di ${items.length} elementi`
-            });
-        }
-        
-        const cleanedItem = { ...item };
-        
-        // Applica regole di pulizia
-        Object.keys(rules).forEach(field => {
-            if (cleanedItem[field] !== undefined) {
-                cleanedItem[field] = applyCleaningRule(
-                    cleanedItem[field], 
-                    rules[field], 
-                    dataType
-                );
-            }
-        });
-        
-        // Pulizia automatica in base al tipo
-        applyAutomaticCleaning(cleanedItem, dataType);
-        
-        return cleanedItem;
-    });
-}
-
-// ==========================================
-// 8. ESPORTAZIONE TEMPLATE
-// ==========================================
-
-function handleExportTemplate(data, options) {
-    const { dataType, templateType = 'empty' } = data;
-    
-    try {
-        const template = generateTemplate(dataType, templateType);
-        
-        self.postMessage({
-            type: 'TEMPLATE_GENERATED',
-            success: true,
-            data: {
-                template,
-                dataType,
-                templateType,
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-    } catch (error) {
-        self.postMessage({
-            type: 'TEMPLATE_ERROR',
-            success: false,
-            error: error.message
-        });
-    }
-}
-
-function generateTemplate(dataType, templateType) {
-    const headers = getExportColumnHeaders(dataType);
-    
-    let rows = [];
-    
-    if (templateType === 'example') {
-        // Aggiungi righe di esempio
-        rows = getExampleRows(dataType);
-    }
-    
-    return {
-        metadata: {
-            templateType,
-            dataType,
-            generatedAt: new Date().toISOString(),
-            app: 'Aeterna Lexicon in Motu'
-        },
-        headers,
-        rows,
-        instructions: getTemplateInstructions(dataType)
-    };
-}
-
-// ==========================================
-// 9. ANALISI STATISTICHE
-// ==========================================
-
-function handleAnalyzeStatistics(data, options) {
-    const { dataType, items, analysisType = 'comprehensive' } = data;
-    
-    try {
-        const statistics = analyzeDataStatistics(items, dataType, analysisType);
-        
-        self.postMessage({
-            type: 'STATISTICS_GENERATED',
-            success: true,
-            data: {
-                statistics,
-                dataType,
-                analysisType,
-                itemCount: items.length,
-                timestamp: new Date().toISOString()
-            }
-        });
-        
-    } catch (error) {
-        self.postMessage({
-            type: 'STATISTICS_ERROR',
-            success: false,
-            error: error.message
-        });
-    }
-}
-
-// ==========================================
-// FUNZIONI DI SUPPORTO
-// ==========================================
-
-function mapColumn(item, columnName, alternativeName) {
-    return item[columnName] || item[alternativeName] || 
-           item[columnName.toLowerCase()] || item[alternativeName.toLowerCase()] || '';
-}
-
-function getColumnMapping(dataType) {
-    // Mappatura flessibile per colonne Excel
-    const mappings = {
-        filosofi: {
-            'nome': ['Nome', 'nome', 'Filosofo', 'filosofo'],
-            'scuola': ['Scuola', 'scuola', 'Corrente', 'corrente'],
-            'periodo': ['Periodo', 'periodo', 'Epoca', 'epoca'],
-            'luogo_nascita': ['Luogo_Nascita', 'luogo_nascita', 'Nato_a', 'nato_a']
-        },
-        opere: {
-            'titolo': ['Titolo', 'titolo', 'Opera', 'opera'],
-            'autore_nome': ['Autore_Nome', 'autore_nome', 'Autore', 'autore']
-        },
-        concetti: {
-            'parola': ['Parola', 'parola', 'Concetto', 'concetto'],
-            'definizione': ['Definizione', 'definizione', 'Significato', 'significato']
-        }
-    };
-    
-    return mappings[dataType] || {};
-}
-
-function generateId(dataType) {
-    const prefix = {
-        'filosofi': 'fil',
-        'opere': 'op',
-        'concetti': 'conc'
-    }[dataType] || 'item';
-    
-    return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-function generateSlug(text) {
-    if (!text) return 'unknown';
-    
-    return text
-        .toString()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-        .substring(0, 50);
-}
-
-function normalizePeriodo(periodo) {
-    const periodoLower = periodo.toLowerCase().trim();
-    
-    const mappings = {
-        'classic': 'classico',
-        'classical': 'classico',
-        'antico': 'classico',
-        'ancient': 'classico',
-        
-        'contemporary': 'contemporaneo',
-        'moderno': 'contemporaneo',
-        'modern': 'contemporaneo',
-        
-        'medieval': 'medioevale',
-        'middle ages': 'medioevale',
-        'medioevo': 'medioevale'
-    };
-    
-    return mappings[periodoLower] || periodoLower;
-}
-
-function normalizeAnno(anno) {
-    if (typeof anno === 'number') {
-        return anno.toString();
-    }
-    
-    // Rimuovi caratteri non numerici
-    const cleanAnno = anno.toString().replace(/[^0-9\-]/g, '');
-    
-    // Se è un range (es: 1844-1900)
-    if (cleanAnno.includes('-')) {
-        return cleanAnno;
-    }
-    
-    // Se è un numero solo
-    const yearNum = parseInt(cleanAnno);
-    if (!isNaN(yearNum)) {
-        // Controlla se è avanti Cristo
-        if (anno.toString().toLowerCase().includes('a.c') || 
-            anno.toString().toLowerCase().includes('bc')) {
-            return `-${Math.abs(yearNum)}`;
-        }
-        return yearNum.toString();
-    }
-    
-    return anno;
-}
-
-function parseConcettiList(concettiString) {
-    if (!concettiString) return [];
-    
-    // Supporta separatori: ; , | /
-    return concettiString
-        .split(/[;,|/\n]/)
-        .map(c => c.trim())
-        .filter(c => c.length > 0);
-}
-
-function inferCategoriaFromParola(parola) {
-    const parolaLower = parola.toLowerCase();
-    
-    const categorizzazioni = {
-        'ontologia': ['essere', 'essenza', 'esistenza', 'realtà', 'sostanza', 'divenire'],
-        'etica': ['bene', 'male', 'virtù', 'morale', 'dovere', 'felicità', 'giustizia'],
-        'epistemologia': ['verità', 'conoscenza', 'scienza', 'certezza', 'dubbio', 'ragione'],
-        'estetica': ['bello', 'arte', 'gusto', 'creazione', 'immaginazione', 'genio'],
-        'politica': ['potere', 'stato', 'società', 'libertà', 'uguaglianza', 'giustizia sociale'],
-        'metafisica': ['dio', 'anima', 'spirito', 'assoluto', 'infinito', 'trascendente']
-    };
-    
-    for (const [categoria, parole] of Object.entries(categorizzazioni)) {
-        if (parole.some(p => parolaLower.includes(p))) {
-            return categoria;
-        }
-    }
-    
-    return 'generale';
-}
-
-function applyCommonTransformations(item, options) {
-    // Trim tutti i campi stringa
-    Object.keys(item).forEach(key => {
-        if (typeof item[key] === 'string') {
-            item[key] = item[key].trim();
-        }
-    });
-    
-    // Rimuovi campi vuoti se richiesto
-    if (options.removeEmptyFields) {
-        Object.keys(item).forEach(key => {
-            if (item[key] === '' || item[key] === null || item[key] === undefined) {
-                delete item[key];
-            }
-        });
-    }
-}
-
-function itemExistsInArray(array, item) {
-    // Cerca per ID se presente
-    if (item.id) {
-        return array.some(existing => existing.id === item.id);
-    }
-    
-    // Altrimenti cerca per nome/titolo
-    const identifier = item.nome || item.titolo || item.parola;
-    if (identifier) {
-        return array.some(existing => 
-            (existing.nome || existing.titolo || existing.parola) === identifier
-        );
-    }
-    
-    return false;
-}
-
-// ==========================================
-// FUNZIONI DI UTILITY
-// ==========================================
-
-function calculateCompleteness(items) {
-    const totalFields = Object.keys(items[0] || {}).length;
-    let filledFields = 0;
-    let totalPossible = 0;
-    
-    items.forEach(item => {
-        Object.keys(item).forEach(key => {
-            totalPossible++;
-            if (item[key] && item[key].toString().trim().length > 0) {
-                filledFields++;
-            }
-        });
-    });
-    
-    return totalPossible > 0 ? Math.round((filledFields / totalPossible) * 100) : 0;
-}
-
-function getTopItems(items, dataType, limit = 5) {
-    // Per ora restituisce i primi elementi
-    return items.slice(0, limit).map(item => {
-        const preview = generateItemPreview(item, dataType);
-        return { ...preview, id: item.id };
-    });
-}
-
-function generateItemPreview(item, dataType) {
-    switch(dataType) {
-        case 'filosofi':
-            return {
-                nome: item.nome,
-                scuola: item.scuola,
-                periodo: item.periodo
-            };
-        case 'opere':
-            return {
-                titolo: item.titolo,
-                autore: item.autore_nome,
-                anno: item.anno
-            };
-        case 'concetti':
-            return {
-                parola: item.parola,
-                categoria: item.categoria,
-                autore: item.autore_riferimento
-            };
-        default:
-            return { id: item.id };
-    }
-}
-
-function getMostCommonErrors(validationResults) {
-    const errorCounts = {};
-    
-    validationResults.forEach(result => {
-        result.errors.forEach(error => {
-            errorCounts[error] = (errorCounts[error] || 0) + 1;
-        });
-    });
-    
-    return Object.entries(errorCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([error, count]) => ({ error, count }));
-}
-
-function getMostCommonWarnings(validationResults) {
-    const warningCounts = {};
-    
-    validationResults.forEach(result => {
-        result.warnings.forEach(warning => {
-            warningCounts[warning] = (warningCounts[warning] || 0) + 1;
-        });
-    });
-    
-    return Object.entries(warningCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([warning, count]) => ({ warning, count }));
-}
-
-function getExampleRows(dataType) {
-    const examples = {
-        filosofi: [
-            {
-                Nome: 'Platone',
-                Nome_EN: 'Plato',
-                Scuola: 'Platonismo',
-                Periodo: 'classico',
-                Anni_Vita: '428/427 a.C. - 348/347 a.C.',
-                Luogo_Nascita: 'Atene, Grecia',
-                Biografia: 'Filosofo greco antico, allievo di Socrate e maestro di Aristotele...',
-                Coordinate_Lat: '37.9842',
-                Coordinate_Lng: '23.7275'
-            },
-            {
-                Nome: 'Friedrich Nietzsche',
-                Nome_EN: 'Friedrich Nietzsche',
-                Scuola: 'Filosofia continentale',
-                Periodo: 'contemporaneo',
-                Anni_Vita: '1844-1900',
-                Luogo_Nascita: 'Röcken, Germania',
-                Biografia: 'Filosofo, poeta e filologo tedesco...',
-                Coordinate_Lat: '51.2372',
-                Coordinate_Lng: '12.0914'
-            }
-        ],
-        opere: [
-            {
-                Titolo: 'La Repubblica',
-                Titolo_EN: 'The Republic',
-                Autore_Nome: 'Platone',
-                Anno: '380 a.C.',
-                Periodo: 'classico',
-                Lingua: 'greco antico',
-                Sintesi: 'Dialogo sulla giustizia e l\'organizzazione dello stato ideale...',
-                Concetti: 'Giustizia; Stato ideale; Bene; Conoscenza'
-            }
-        ],
-        concetti: [
-            {
-                Parola: 'Verità',
-                Filosofo: 'Platone',
-                Definizione: 'Visione intellettuale delle idee',
-                Termine_Originale: 'Aletheia',
-                Citazione: 'La verità dimora nella pianura della verità...',
-                Opera: 'Fedro',
-                Scuola: 'Platonismo',
-                Categoria: 'Epistemologia'
-            }
-        ]
-    };
-    
-    return examples[dataType] || [];
-}
-
-function getTemplateInstructions(dataType) {
-    const instructions = {
-        filosofi: [
-            'Compila tutti i campi obbligatori (Nome, Scuola, Periodo)',
-            'Per le coordinate, usa formato decimale (es: 40.8518, 14.2681)',
-            'Il periodo deve essere: classico, contemporaneo, medioevale o moderno',
-            'Le date di vita possono essere in formato "1844-1900" o "428 a.C. - 348 a.C."'
-        ],
-        opere: [
-            'Il titolo è obbligatorio',
-            'Specifica almeno Autore_Nome o Autore_ID',
-            'I concetti vanno separati da punto e virgola (;)',
-            'Per opere antiche, usa il formato anno con "a.C." se necessario'
-        ],
-        concetti: [
-            'La parola chiave e la definizione sono obbligatorie',
-            'La categoria verrà inferita automaticamente se non specificata',
-            'Inserisci almeno un autore riferimento per contestualizzare',
-            'L\'evoluzione storica aiuta a tracciare il cambiamento del concetto'
-        ]
-    };
-    
-    return instructions[dataType] || ['Compila tutte le colonne obbligatorie'];
-}
-
-// ==========================================
-// MESSAGGIO DI INIZIALIZZAZIONE
-// ==========================================
-
-self.postMessage({
-    type: 'WORKER_READY',
-    message: 'Excel Worker per Aeterna Lexicon inizializzato',
-    version: '1.0',
-    features: [
-        'Excel/CSV Processing',
-        'Data Validation',
-        'Excel Export',
-        'Dataset Merging',
-        'Report Generation',
-        'Data Cleaning',
-        'Template Generation',
-        'Statistical Analysis'
-    ],
-    supportedDataTypes: ['filosofi', 'opere', 'concetti']
-});
-
-console.log('✅ Excel Worker per Aeterna Lexicon caricato correttamente');
-// ==========================================
-// FUNZIONE DI NORMALIZZAZIONE HEADER (Per il PDF)
-// ==========================================
-function normalizePhilosophicalHeaders(row) {
-    const normalized = {};
-    
-    Object.keys(row).forEach(key => {
-        const val = row[key];
-        const lowerKey = key.toLowerCase().trim();
-
-        // MAPPATURA INTELLIGENTE DELLE COLONNE
-        
-        // 1. Identificazione Filosofo
-        if (['filosofo', 'autore', 'nome', 'pensatore'].some(k => lowerKey.includes(k))) {
-            normalized.Filosofo = val;
-        }
-        // 2. Identificazione Concetto
-        else if (['concetto', 'parola', 'termine', 'keyword'].some(k => lowerKey === k)) {
-            normalized.Concetto = val;
-        }
-        // 3. Termine Originale (Richiesta PDF: Aletheia, Veritas...)
-        else if (['originale', 'greco', 'latino', 'termine originale', 'etimologia'].some(k => lowerKey.includes(k))) {
-            normalized.Termine_Originale = val;
-        }
-        // 4. Citazione Testuale (Richiesta PDF: Dataset testi)
-        else if (['citazione', 'testo', 'fonte', 'estratto', 'brano'].some(k => lowerKey.includes(k))) {
-            normalized.Citazione = val;
-        }
-        // 5. Definizione/Interpretazione
-        else if (['definizione', 'significato', 'interpretazione', 'pensiero'].some(k => lowerKey.includes(k))) {
-            normalized.Definizione = val;
-        }
-        // 6. Opera di riferimento
-        else if (['opera', 'libro', 'trattato', 'riferimento'].some(k => lowerKey.includes(k))) {
-            normalized.Opera = val;
-        }
-        // 7. Scuola (per i marker colorati)
-        else if (['scuola', 'corrente', 'periodo', 'gruppo'].some(k => lowerKey.includes(k))) {
-            normalized.Scuola = val;
-        }
-        // Mantieni tutto il resto (es. date, luoghi)
-        else {
-            normalized[key] = val;
-        }
-    });
-
-    return normalized;
-}
+console.log('✅ ExcelWorker inizializzato');
