@@ -2799,14 +2799,16 @@ textarea[id$="-en"]:focus {
 /* --- 2. PULSANTI MENU (Invariati) --- */
 .modal-btn.btn-admin, 
 .modal-btn.btn-report, 
+.modal-btn.btn-admin, 
+.modal-btn.btn-report, 
 .modal-btn.btn-qr, 
 .modal-btn.btn-info {
     margin-bottom: 10px;
     font-weight: 500;
     border-width: 1px;
     border-style: solid;
-    justify-content: flex-start;
-    padding-left: 20px;
+    justify-content: center; /* Allinea icone e testo al centro */
+    padding-left: 0;         /* Rimuove il blocco a sinistra */
 }
 
 .modal-btn.btn-admin {
