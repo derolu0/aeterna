@@ -1814,17 +1814,20 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-    <script src="./translations.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+
     <script src="./firebase-init.js"></script>
 
+    <script src="./translations.js"></script>
+    <script src="./excel-worker.js"></script>
     <script src="./geocoding-manager.js"></script>
     <script src="./linguistic-analysis.js"></script>
     <script src="./timeline-evolution.js"></script>
-    <script src="./excel-worker.js"></script>
     <script src="./analytics.js"></script>
 
     <script src="./app.js"></script>
@@ -1833,26 +1836,30 @@
         // SERVICE WORKER REGISTRATION
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                const swUrl = 'https://derolu0.github.io/aeterna/sw.js';
-                fetch(swUrl, { mode: 'no-cors' })
-                  .then(response => {
-                      return navigator.serviceWorker.register(swUrl)
-                          .then(registration => {
-                              console.log('✅ Service Worker registrato:', registration.scope);
-                              registration.addEventListener('updatefound', () => {
-                                  const newWorker = registration.installing;
-                                  newWorker.addEventListener('statechange', () => {
-                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
-                                      }
-                                  });
-                              });
-                              return registration;
-                          });
-                  })
-                  .catch(error => {
-                      console.warn('⚠️ Registrazione SW fallita:', error.message);
-                  });
+                const swUrl = 'https://derolu0.github.io/aeterna/sw.js'; // Assicurati che il percorso sia giusto
+                // Se sei in locale usa './sw.js', se sei su GitHub usa il path completo o relativo
+                const path = window.location.hostname === 'localhost' ? './sw.js' : './sw.js';
+                
+                navigator.serviceWorker.register(path)
+                    .then(registration => {
+                        console.log('✅ Service Worker registrato:', registration.scope);
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // Usa showToast se disponibile, altrimenti alert
+                                    if(typeof showToast === 'function') {
+                                        showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
+                                    } else {
+                                        console.log('Nuova versione disponibile');
+                                    }
+                                }
+                            });
+                        });
+                    })
+                    .catch(error => {
+                        console.warn('⚠️ Registrazione SW fallita:', error.message);
+                    });
             });
         }
         
@@ -1861,7 +1868,7 @@
             window.deferredPrompt = e;
         });
 
-        // INIZIALIZZAZIONE ANALYTICS E DASHBOARD
+        // INIZIALIZZAZIONE ANALYTICS
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {

@@ -1,100 +1,55 @@
 /**
- * FIREBASE CONFIGURATION - PERSONAL BUILD
+ * FIREBASE CONFIGURATION - COMPAT FIX
  * ---------------------------------------------
- * Author: De Rosa Salvatore
- * Project Work: Realizzazione di un dataset per l'interpretazione dei testi filosofici
- * Project ID: aeterna-lexicon-in-motu
- * ---------------------------------------------
- * DATASET FILOSOFICO: Analisi comparativa Classico vs Contemporaneo
- * Struttura:
- * - Filosofi (collezione: filosofi)
- * - Opere (collezione: opere) 
- * - Concetti (collezione: concetti)
- * - Analytics (collezione: analytics)
- * - Analisi (collezione: analisi) - NUOVA
+ * Aggiornato per compatibilità con app.js esistente
+ * Mantiene le funzioni helper originali
  * ---------------------------------------------
  */
 
-// Check if firebase is already initialized
-if (!window.firebaseInitialized) {
-    console.log('Initializing Firebase for Aeterna Lexicon in Motu...');
+console.log('Initializing Firebase (Compat Mode)...');
+
+// 1. LA TUA CONFIGURAZIONE (Presa dal tuo file)
+const firebaseConfig = {
+    apiKey: "AIzaSyBo-Fz2fb8KHlvuZmb23psKDT6QvrJowB8",
+    authDomain: "aeterna-lexicon-in-motu.firebaseapp.com",
+    projectId: "aeterna-lexicon-in-motu",
+    storageBucket: "aeterna-lexicon-in-motu.firebasestorage.app",
+    messagingSenderId: "928786632423",
+    appId: "1:928786632423:web:578d45e7d6961a298d5c42", // Ho rimesso il tuo ID originale (finale 42)
+    measurementId: "G-E70D7TDDV7" // Ho rimesso il tuo ID originale (finale V7)
+};
+
+// 2. INIZIALIZZAZIONE SICURA (QUESTO È IL FIX)
+// Controlla se firebase è caricato
+if (typeof firebase === 'undefined') {
+    console.error("ERRORE CRITICO: Librerie Firebase non caricate. Controlla index.html");
+} else {
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    } else {
+        firebase.app(); // Usa l'istanza esistente
+    }
+}
+
+// 3. ASSEGNAZIONE VARIABILI GLOBALI (Fondamentale per window.db.collection)
+// Questo crea il ponte tra il nuovo Firebase e il tuo vecchio codice
+if (typeof firebase !== 'undefined') {
+    window.db = firebase.firestore(); 
+    window.auth = firebase.auth();
     
-    // Configurazione per il progetto "Aeterna Lexicon in Motu"
-    const firebaseConfig = {
-        apiKey: "AIzaSyBo-Fz2fb8KHlvuZmb23psKDT6QvrJowB8",
-        authDomain: "aeterna-lexicon-in-motu.firebaseapp.com",
-        projectId: "aeterna-lexicon-in-motu",
-        storageBucket: "aeterna-lexicon-in-motu.firebasestorage.app",
-        messagingSenderId: "928786632423",
-        appId: "1:928786632423:web:578d45e7d6961a298d5c42",
-        measurementId: "G-E70D7TDDV7"
-    };
-    
-    // Initialize Firebase (Standard method if library is loaded via script tag)
-    if (typeof firebase !== 'undefined') {
-        try {
-            // Inizializza l'app Firebase
-            firebase.initializeApp(firebaseConfig);
-            
-            // Inizializza Firestore
-            if (firebase.firestore) {
-                window.db = firebase.firestore();
-                console.log('Firestore inizializzato');
-                
-                // Abilita la persistenza offline
-                window.db.enablePersistence()
-                    .then(() => {
-                        console.log('Firestore persistence abilitata');
-                    })
-                    .catch((err) => {
-                        if (err.code === 'failed-precondition') {
-                            console.warn('Persistence fallita: multiple tabs aperte');
-                        } else if (err.code === 'unimplemented') {
-                            console.warn('Persistence non supportata dal browser');
-                        }
-                    });
-            }
-            
-            // Inizializza Analytics se disponibile
-            if (firebase.analytics) {
-                window.firebaseAnalytics = firebase.analytics();
-                console.log('Firebase Analytics inizializzato');
-                
-                // Traccia avvio app
-                window.firebaseAnalytics.logEvent('app_launch', {
-                    project: 'Aeterna Lexicon in Motu',
-                    version: '2.0.0',
-                    platform: navigator.platform,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            // Inizializza Authentication
-            if (firebase.auth) {
-                window.auth = firebase.auth();
-                console.log('Firebase Auth inizializzato');
-            }
-            
-            // Inizializza Storage se necessario
-            if (firebase.storage) {
-                window.storage = firebase.storage();
-                console.log('Firebase Storage inizializzato');
-            }
-            
-        } catch (error) {
-            console.error('Errore inizializzazione Firebase:', error);
-        }
+    // Init Analytics
+    if (firebase.analytics) {
+        window.firebaseAnalytics = firebase.analytics();
+        window.firebaseAnalytics.logEvent('app_launch_compat', { version: '2.1.0' });
     }
 
-    // Set flag to prevent double initialization
+    // Abilita persistenza
+    window.db.enablePersistence({ synchronizeTabs: true })
+        .catch((err) => console.warn('Persistenza offline info:', err.code));
+        
     window.firebaseInitialized = true;
-    
-    console.log('Firebase configuration loaded for Project Work: Dataset Filosofico');
-    console.log('Progetto: Aeterna Lexicon in Motu');
-    console.log('Database: Firestore con collezioni [filosofi, opere, concetti, analytics, analisi]');
-    
-    // Funzioni helper per il database (TUTTE ESISTENTI + NUOVE)
-    window.firebaseHelpers = {
+    console.log("✅ Firebase DB Connesso (Compat Mode) - Helpers pronti");
+}
         // ==============================================
         // FUNZIONI ESISTENTI (INTATTE)
         // ==============================================
