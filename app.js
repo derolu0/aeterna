@@ -1173,27 +1173,34 @@ function sendSystemNotification(title, body) {
 // ============================================
 
 async function loadFirebaseData(type) {
+    // 1. PROTEZIONE: Se il DB non è pronto, evita il crash e usa i dati locali
+    if (!window.db) {
+        console.warn(`[Firebase] DB non pronto per ${type}, uso dati locali.`);
+        return loadLocalData(type);
+    }
+
     try {
-        const { collection, getDocs } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        
         const collectionMap = {
             'filosofi': 'filosofi',
             'opere': 'opere',
             'concetti': 'concetti'
         };
-        
-        const collectionName = collectionMap[type];
-        const dataRef = collection(window.db, collectionName);
-        const snapshot = await safeFirebaseOperation(getDocs, `getDocs_${type}`, dataRef);
+        const collectionName = collectionMap[type] || type;
+
+        // 2. CORREZIONE: Uso diretto di window.db (Sintassi Compat)
+        // Nessun import, nessuna funzione esterna.
+        const snapshot = await window.db.collection(collectionName).get();
         
         const data = [];
         snapshot.forEach(doc => {
             const docData = doc.data();
+            
+            // 3. MAPPING DATI (La tua logica originale, mantenuta intatta)
             let itemData = { 
                 id: doc.id, 
                 last_modified: docData.last_modified || new Date().toISOString()
             };
-            
+
             if (type === 'filosofi') {
                 itemData = {
                     ...itemData,
@@ -1243,17 +1250,24 @@ async function loadFirebaseData(type) {
             data.push(itemData);
         });
         
-        checkAndNotifyUpdates(data, type);
+        // 4. Aggiornamento UI e salvataggio locale
+        if (typeof checkAndNotifyUpdates === 'function') {
+            checkAndNotifyUpdates(data, type);
+        }
 
         appData[type] = data;
         saveLocalData();
         
-        showToast(`${data.length} ${type} caricati da Firebase`, 'success');
-        logActivity(`${data.length} ${type} caricati da Firebase`);
+        // showToast(`${data.length} ${type} caricati da Firebase`, 'success');
+        if (typeof logActivity === 'function') {
+            logActivity(`${data.length} ${type} caricati da Firebase`);
+        }
         
         return data;
+
     } catch (error) {
-        await handleError(`loadFirebaseData_${type}`, error, `Utilizzo dati locali per ${type}`);
+        console.error(`Errore loadFirebaseData_${type}:`, error);
+        // Fallback ai dati locali in caso di errore
         loadLocalData(type);
         return appData[type];
     }
@@ -3957,25 +3971,36 @@ function editFilosofo(id) {
 
 async function saveFilosofo(e) {
     e.preventDefault();
-    
+
+    // Helper interno per evitare crash se un campo input non esiste nell'HTML
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
+    };
+
     try {
-        const id = document.getElementById('filosofo-id').value;
-        const nome = document.getElementById('filosofo-nome').value.trim();
-        const scuola = document.getElementById('filosofo-scuola').value.trim();
-        const periodo = document.getElementById('filosofo-periodo').value;
-        const anni = document.getElementById('filosofo-anni').value.trim();
-        const luogo = document.getElementById('filosofo-luogo').value.trim();
-        const biografia = document.getElementById('filosofo-biografia').value.trim();
-        const lat = document.getElementById('filosofo-lat').value;
-        const lng = document.getElementById('filosofo-lng').value;
-        const ritratto = document.getElementById('filosofo-ritratto').value.trim();
+        // Lettura sicura dei valori dal form
+        const id = getVal('filosofo-id');
+        const nome = getVal('filosofo-nome');
+        const scuola = getVal('filosofo-scuola');
+        const periodo = document.getElementById('filosofo-periodo') ? document.getElementById('filosofo-periodo').value : 'classico'; // Select ha logica diversa
+        const anni = getVal('filosofo-anni');
+        const luogo = getVal('filosofo-luogo');
+        const biografia = getVal('filosofo-biografia');
+        const lat = getVal('filosofo-lat');
+        const lng = getVal('filosofo-lng');
+        const ritratto = getVal('filosofo-ritratto');
         
-        // Campi inglesi
-        const nome_en = document.getElementById('filosofo-nome-en') ? 
-            document.getElementById('filosofo-nome-en').value.trim() : '';
-        const biografia_en = document.getElementById('filosofo-biografia-en') ? 
-            document.getElementById('filosofo-biografia-en').value.trim() : '';
-        
+        // Campi inglesi (opzionali)
+        const nome_en = getVal('filosofo-nome-en');
+        const biografia_en = getVal('filosofo-biografia-en');
+
+        // Validazione minima essenziale
+        if (!nome) {
+            showToast("Il nome è obbligatorio", "error");
+            return;
+        }
+
         const filosofoData = {
             nome,
             nome_en,
@@ -3988,89 +4013,78 @@ async function saveFilosofo(e) {
             ritratto,
             last_modified: new Date().toISOString()
         };
-        
-        // Aggiungi coordinate se disponibili
+
+        // Aggiungi coordinate solo se valide
         if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
             filosofoData.coordinate = {
                 lat: parseFloat(lat),
                 lng: parseFloat(lng)
             };
         }
-        
-        const validationErrors = validateFilosofoData(filosofoData);
-        if (validationErrors.length > 0) throw validationErrors[0];
-        
+
+        // --- INIZIO LOGICA SALVATAGGIO (Firebase + Locale) ---
         let savedId;
         const operation = id ? 'UPDATE' : 'CREATE';
-        
-        if (navigator.onLine) {
+
+        if (navigator.onLine && window.db) { // Controllo extra su window.db
             if (id && id.trim() !== '') {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_filosofo', 'filosofi', filosofoData, id);
+                // Update esistente
+                await saveFirebaseData('filosofi', filosofoData, id);
+                savedId = id;
+                
+                // Aggiorna array locale in memoria
                 const index = appData.filosofi.findIndex(f => f.id == id);
                 if (index !== -1) appData.filosofi[index] = { id, ...filosofoData };
+                
                 showToast('Filosofo modificato con successo', 'success');
             } else {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_filosofo', 'filosofi', filosofoData);
+                // Crea nuovo
+                savedId = await saveFirebaseData('filosofi', filosofoData); // saveFirebaseData gestisce l'add
+                
+                // Aggiungi a memoria locale
                 appData.filosofi.push({ id: savedId, ...filosofoData });
-                showToast(`Filosofo aggiunto con successo (ID: ${savedId})`, 'success');
+                
+                showToast(`Filosofo aggiunto (ID: ${savedId})`, 'success');
             }
         } else {
+            // Offline Mode
             savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await addToSyncQueue(operation, 'filosofi', filosofoData, savedId);
+            
+            // Se esiste la funzione addToSyncQueue usala, altrimenti salva solo localmente
+            if (typeof addToSyncQueue === 'function') {
+                await addToSyncQueue(operation, 'filosofi', filosofoData, savedId);
+            }
+
             if (operation === 'UPDATE') {
                 const index = appData.filosofi.findIndex(f => f.id == id);
                 if (index !== -1) appData.filosofi[index] = { id: savedId, ...filosofoData };
             } else {
                 appData.filosofi.push({ id: savedId, ...filosofoData });
             }
-            showToast('Filosofo salvato localmente.', 'info');
+            showToast('Filosofo salvato localmente (Offline).', 'info');
         }
-        
+
+        // Aggiorna UI e Storage
         saveLocalData();
-        loadAdminFilosofi();
-        resetFilosofoForm();
-        loadFilosofi();
-        updateDashboardStats();
+        loadAdminFilosofi(); // Ricarica tabella admin
+        loadFilosofi();      // Ricarica griglia pubblica
         
+        // Reset del form
+        const form = document.getElementById('filosofo-form');
+        if (form) form.reset();
+        const idField = document.getElementById('filosofo-id');
+        if (idField) idField.value = '';
+
+        if (typeof updateDashboardStats === 'function') updateDashboardStats();
+
     } catch (error) {
-        await handleError('saveFilosofo', error, 'Errore nel salvataggio del filosofo');
-    }
-}
-
-function resetFilosofoForm() {
-    document.getElementById('filosofo-form').reset();
-    document.getElementById('filosofo-id').value = '';
-}
-
-async function deleteFilosofo(id) {
-    if (currentUserRole !== 'admin') {
-        showToast('Non hai i permessi per eliminare', 'error');
-        return;
-    }
-
-    if (!confirm('Sei sicuro di voler eliminare questo filosofo?')) return;
-    
-    try {
-        if (navigator.onLine) {
-            await deleteFirebaseData('filosofi', id);
+        console.error("Errore salvataggio:", error);
+        // Usa handleError solo se esiste, altrimenti fallback su console/toast
+        if (typeof handleError === 'function') {
+            await handleError('saveFilosofo', error, 'Errore nel salvataggio');
         } else {
-            const filosofo = appData.filosofi.find(f => f.id == id);
-            if (filosofo) {
-                await addToSyncQueue('DELETE', 'filosofi', filosofo, id);
-            }
+            showToast('Errore nel salvataggio: ' + error.message, 'error');
         }
-        
-        appData.filosofi = appData.filosofi.filter(f => f.id != id);
-        
-        saveLocalData();
-        loadAdminFilosofi();
-        loadFilosofi();
-        updateDashboardStats();
-        
-        showToast('Filosofo eliminato con successo', 'success');
-        logActivity('Filosofo eliminato');
-    } catch (error) {
-        showToast('Errore nell\'eliminazione del filosofo', 'error');
     }
 }
 
@@ -4161,79 +4175,119 @@ function editOpera(id) {
 
 async function saveOpera(e) {
     e.preventDefault();
-    
-    const id = document.getElementById('opera-id').value;
-    const titolo = document.getElementById('opera-titolo').value.trim();
-    const autore_id = document.getElementById('opera-autore').value;
-    const autore_nome = document.getElementById('opera-autore').options[document.getElementById('opera-autore').selectedIndex].text;
-    const anno = document.getElementById('opera-anno').value;
-    const periodo = document.getElementById('opera-periodo').value;
-    const lingua = document.getElementById('opera-lingua').value;
-    const sintesi = document.getElementById('opera-sintesi').value.trim();
-    const pdf_url = document.getElementById('opera-pdf').value.trim();
-    const immagine = document.getElementById('opera-immagine').value.trim();
-    const concettiInput = document.getElementById('opera-concetti').value;
-    
-    // Campi inglesi
-    const titolo_en = document.getElementById('opera-titolo-en') ? 
-        document.getElementById('opera-titolo-en').value.trim() : '';
-    const sintesi_en = document.getElementById('opera-sintesi-en') ? 
-        document.getElementById('opera-sintesi-en').value.trim() : '';
-    
-    const operaData = {
-        titolo,
-        titolo_en,
-        autore_id,
-        autore_nome,
-        anno,
-        periodo,
-        lingua,
-        sintesi,
-        sintesi_en,
-        pdf_url,
-        immagine,
-        concetti: concettiInput.split(',').map(c => c.trim()).filter(c => c !== ''),
-        last_modified: new Date().toISOString()
+
+    // 1. Helper di sicurezza: legge il valore solo se l'elemento esiste
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
     };
-    
+
     try {
-        const validationErrors = validateOperaData(operaData);
-        if (validationErrors.length > 0) throw validationErrors[0];
+        // 2. Recupero dati sicuro
+        const id = getVal('opera-id');
+        const titolo = getVal('opera-titolo');
+        const autore_id = getVal('opera-autore');
         
+        // Gestione sicura del nome autore dalla select (evita crash se vuota)
+        let autore_nome = '';
+        const autoreSelect = document.getElementById('opera-autore');
+        if (autoreSelect && autoreSelect.selectedIndex >= 0) {
+            autore_nome = autoreSelect.options[autoreSelect.selectedIndex].text;
+        } else {
+            autore_nome = 'Autore non specificato'; 
+        }
+
+        const anno = getVal('opera-anno');
+        const periodo = getVal('opera-periodo');
+        const lingua = getVal('opera-lingua');
+        const sintesi = getVal('opera-sintesi');
+        const pdf_url = getVal('opera-pdf');
+        const immagine = getVal('opera-immagine');
+        const concettiInput = getVal('opera-concetti');
+        
+        // Campi inglesi (opzionali)
+        const titolo_en = getVal('opera-titolo-en');
+        const sintesi_en = getVal('opera-sintesi-en');
+        
+        // Validazione minima
+        if (!titolo) {
+            showToast("Il titolo è obbligatorio", "error");
+            return;
+        }
+
+        const operaData = {
+            titolo,
+            titolo_en,
+            autore_id,
+            autore_nome,
+            anno,
+            periodo,
+            lingua,
+            sintesi,
+            sintesi_en,
+            pdf_url,
+            immagine,
+            // Converte stringa "a, b, c" in array sicuro
+            concetti: concettiInput ? concettiInput.split(',').map(c => c.trim()).filter(c => c !== '') : [],
+            last_modified: new Date().toISOString()
+        };
+        
+        // Validazione avanzata (se la funzione esiste)
+        if (typeof validateOperaData === 'function') {
+            const validationErrors = validateOperaData(operaData);
+            if (validationErrors.length > 0) throw validationErrors[0];
+        }
+        
+        // 3. Logica Salvataggio (Allineata con Firebase fix)
         let savedId;
         const operation = id ? 'UPDATE' : 'CREATE';
 
-        if (navigator.onLine) {
+        if (navigator.onLine && window.db) {
             if (id && id.trim() !== '') {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_opera', 'opere', operaData, id);
+                // Modifica
+                await saveFirebaseData('opere', operaData, id);
+                savedId = id;
                 const index = appData.opere.findIndex(o => o.id == id);
                 if (index !== -1) appData.opere[index] = { id, ...operaData };
                 showToast('Opera modificata con successo', 'success');
             } else {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_opera', 'opere', operaData);
+                // Nuova
+                savedId = await saveFirebaseData('opere', operaData);
                 appData.opere.push({ id: savedId, ...operaData });
-                showToast(`Opera aggiunta con successo (ID: ${savedId})`, 'success');
+                showToast(`Opera aggiunta (ID: ${savedId})`, 'success');
             }
         } else {
+            // Offline
             savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await addToSyncQueue(operation, 'opere', operaData, savedId);
+            if (typeof addToSyncQueue === 'function') {
+                await addToSyncQueue(operation, 'opere', operaData, savedId);
+            }
+            
             if (operation === 'UPDATE') {
                 const index = appData.opere.findIndex(o => o.id == id);
                 if (index !== -1) appData.opere[index] = { id: savedId, ...operaData };
             } else {
                 appData.opere.push({ id: savedId, ...operaData });
             }
-            showToast('Opera salvata localmente.', 'info');
+            showToast('Opera salvata localmente (Offline).', 'info');
         }
         
+        // 4. Aggiornamento Interfaccia
         saveLocalData();
-        loadAdminOpere();
-        resetOperaForm();
-        loadOpere();
-        updateDashboardStats();
+        if (typeof loadAdminOpere === 'function') loadAdminOpere();
+        
+        // Reset form sicuro
+        const form = document.getElementById('opera-form');
+        if (form) form.reset();
+        const idInput = document.getElementById('opera-id');
+        if (idInput) idInput.value = ''; // Pulisce ID nascosto
+
+        if (typeof loadOpere === 'function') loadOpere();
+        if (typeof updateDashboardStats === 'function') updateDashboardStats();
         
     } catch (error) {
-        await handleError('saveOpera', error, 'Errore nel salvataggio dell\'opera');
+        console.error("Errore salvataggio opera:", error);
+        showToast(error.message || 'Errore durante il salvataggio', 'error');
     }
 }
 
@@ -4341,75 +4395,104 @@ function editConcetto(id) {
 async function saveConcetto(e) {
     e.preventDefault();
     
-    const id = document.getElementById('concetto-id').value;
-    const parola = document.getElementById('concetto-parola').value;
-    const definizione = document.getElementById('concetto-definizione').value;
-    const citazione = document.getElementById('concetto-citazione').value;
-    const autore = document.getElementById('concetto-autore').value;
-    const opera = document.getElementById('concetto-opera').value;
-    const periodo = document.getElementById('concetto-periodo').value;
-    const evoluzione = document.getElementById('concetto-evoluzione').value;
-    
-    // Campi inglesi
-    const parola_en = document.getElementById('concetto-parola-en') ? 
-        document.getElementById('concetto-parola-en').value : '';
-    const definizione_en = document.getElementById('concetto-definizione-en') ? 
-        document.getElementById('concetto-definizione-en').value : '';
-    
-    const concettoData = {
-        parola,
-        parola_en,
-        definizione,
-        definizione_en,
-        esempio_citazione: citazione,
-        autore_riferimento: autore,
-        opera_riferimento: opera,
-        periodo_storico: periodo,
-        evoluzione,
-        last_modified: new Date().toISOString()
+    // 1. Helper di sicurezza: evita il crash se l'input non esiste
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
     };
     
     try {
-        const validationErrors = validateConcettoData(concettoData);
-        if (validationErrors.length > 0) throw validationErrors[0];
+        // 2. Recupero dati sicuro
+        const id = getVal('concetto-id');
+        const parola = getVal('concetto-parola');
+        const definizione = getVal('concetto-definizione');
+        const citazione = getVal('concetto-citazione');
+        const autore = getVal('concetto-autore');
+        const opera = getVal('concetto-opera');
+        const periodo = getVal('concetto-periodo');
+        const evoluzione = getVal('concetto-evoluzione');
         
+        // Campi inglesi
+        const parola_en = getVal('concetto-parola-en');
+        const definizione_en = getVal('concetto-definizione-en');
+        
+        // Validazione minima
+        if (!parola) {
+            showToast("La parola/concetto è obbligatoria", "error");
+            return;
+        }
+        
+        const concettoData = {
+            parola,
+            parola_en,
+            definizione,
+            definizione_en,
+            esempio_citazione: citazione,
+            autore_riferimento: autore,
+            opera_riferimento: opera,
+            periodo_storico: periodo,
+            evoluzione,
+            last_modified: new Date().toISOString()
+        };
+        
+        // Validazione avanzata (se presente)
+        if (typeof validateConcettoData === 'function') {
+            const validationErrors = validateConcettoData(concettoData);
+            if (validationErrors.length > 0) throw validationErrors[0];
+        }
+        
+        // 3. Logica Salvataggio (Allineata con i fix precedenti)
         let savedId;
         const operation = id ? 'UPDATE' : 'CREATE';
 
-        if (navigator.onLine) {
+        if (navigator.onLine && window.db) {
             if (id && id.trim() !== '') {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'update_concetto', 'concetti', concettoData, id);
+                // Update
+                await saveFirebaseData('concetti', concettoData, id);
+                savedId = id;
                 const index = appData.concetti.findIndex(c => c.id == id);
-                if (index !== -1) {
-                    appData.concetti[index] = { id, ...concettoData };
-                }
+                if (index !== -1) appData.concetti[index] = { id, ...concettoData };
                 showToast('Concetto modificato con successo', 'success');
             } else {
-                savedId = await safeFirebaseOperation(saveFirebaseData, 'create_concetto', 'concetti', concettoData);
+                // Create
+                savedId = await saveFirebaseData('concetti', concettoData);
                 appData.concetti.push({ id: savedId, ...concettoData });
-                showToast(`Concetto aggiunto con successo (ID: ${savedId})`, 'success');
+                showToast(`Concetto aggiunto (ID: ${savedId})`, 'success');
             }
         } else {
+            // Offline Mode
             savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            await addToSyncQueue(operation, 'concetti', concettoData, savedId);
-            
-            if (id) {
+            if (typeof addToSyncQueue === 'function') {
+                await addToSyncQueue(operation, 'concetti', concettoData, savedId);
+            }
+
+            if (operation === 'UPDATE') {
                 const index = appData.concetti.findIndex(c => c.id == id);
                 if (index !== -1) appData.concetti[index] = { id: savedId, ...concettoData };
             } else {
                 appData.concetti.push({ id: savedId, ...concettoData });
             }
-            showToast('Concetto salvato localmente.', 'info');
+            showToast('Concetto salvato localmente (Offline).', 'info');
         }
         
+        // 4. Aggiornamento Interfaccia
         saveLocalData();
-        loadAdminConcetti();
-        resetConcettoForm();
-        loadConcetti();
-        updateDashboardStats();
+        
+        // Aggiorna le viste admin se le funzioni esistono
+        if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
+        
+        // Reset form sicuro
+        const form = document.getElementById('concetto-form');
+        if (form) form.reset();
+        const idInput = document.getElementById('concetto-id');
+        if (idInput) idInput.value = '';
+
+        if (typeof loadConcetti === 'function') loadConcetti();
+        if (typeof updateDashboardStats === 'function') updateDashboardStats();
         
     } catch (error) {
-        await handleError('saveConcetto', error, 'Errore nel salvataggio del concetto');
+        console.error("Errore salvataggio concetto:", error);
+        showToast(error.message || 'Errore durante il salvataggio', 'error');
     }
 }
 
@@ -5473,4 +5556,35 @@ function addGeocodingButtonToForm() {
         // Inserisci dopo il campo
         wrapper.appendChild(button);
     }
+}
+// ==========================================
+// FUNZIONI DI VALIDAZIONE E UTILITÀ
+// (Incolla questo alla fine di app.js)
+// ==========================================
+
+function validateFilosofoData(data) {
+    const errors = [];
+    if (!data.nome || data.nome.length < 2) errors.push("Il nome deve essere di almeno 2 caratteri");
+    return errors;
+}
+
+function validateOperaData(data) {
+    const errors = [];
+    if (!data.titolo || data.titolo.length < 2) errors.push("Il titolo è obbligatorio");
+    if (!data.autore_id) errors.push("Devi selezionare un autore");
+    return errors;
+}
+
+function validateConcettoData(data) {
+    const errors = [];
+    if (!data.parola || data.parola.length < 2) errors.push("La parola chiave è obbligatoria");
+    return errors;
+}
+
+// Fallback per la sincronizzazione offline se non implementata
+if (typeof addToSyncQueue === 'undefined') {
+    window.addToSyncQueue = async function(op, type, data, id) {
+        console.warn("Sincronizzazione offline non completa, salvataggio solo locale.");
+        return true;
+    };
 }
