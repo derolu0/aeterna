@@ -544,59 +544,49 @@
                 <form id="opera-form" onsubmit="saveOpera(event)">
                     <input type="hidden" id="opera-id">
                     <div class="form-group">
-                        <label for="opera-titolo">Titolo:</label>
-                        <input type="text" id="opera-titolo" required>
+                        <label>Titolo Opera</label>
+                        <input type="text" id="opera-titolo" placeholder="Es: La Repubblica" required>
                     </div>
                     <div class="form-group">
-                        <label for="opera-titolo-en" style="color: #3b82f6; font-style: italic;">Titolo (Inglese)</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="text" id="opera-titolo-en" placeholder="Title in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('opera-titolo', 'opera-titolo-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
+                        <label>Titolo (Inglese)</label>
+                        <input type="text" id="opera-titolo-en" placeholder="Es: The Republic">
                     </div>
+
                     <div class="form-group">
-                        <label for="opera-autore">Autore:</label>
-                        <select id="opera-autore" required>
-                            <option value="">Seleziona un filosofo...</option>
+                        <label>Autore</label>
+                        <select id="opera-autore-select" class="full-width-select" required>
+                            <option value="">Caricamento autori...</option>
                         </select>
+                     </div>
+
+                     <div class="row-2-col">
+                         <div class="form-group">
+                             <label>Anno Pubblicazione</label>
+                             <input type="text" id="opera-anno" placeholder="Es: -375">
+                         </div>
+                         <div class="form-group">
+                             <label>Periodo Storico</label>
+                             <select id="opera-periodo">
+                                 <option value="Classico">Classico/Antico</option>
+                                 <option value="Medioevale">Medioevale</option>
+                                 <option value="Rinascimentale">Rinascimentale</option>
+                                 <option value="Moderno">Moderno</option>
+                                 <option value="Contemporaneo">Contemporaneo</option>
+                             </select>
+                         </div>
+                     </div>
+
+                     <div class="form-group">
+                         <label>Sintesi/Abstract</label>
+                         <textarea id="opera-abstract" rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="opera-anno">Anno Pubblicazione:</label>
-                        <input type="text" id="opera-anno" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-periodo">Periodo Storico:</label>
-                        <select id="opera-periodo" required>
-                            <option value="classico">Classico/Antico</option>
-                            <option value="medioevale">Medioevale</option>
-                            <option value="rinascimentale">Rinascimentale</option>
-                            <option value="moderno">Moderno</option>
-                            <option value="contemporaneo">Contemporaneo</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="opera-sintesi">Sintesi/Abstract:</label>
-                        <textarea id="opera-sintesi" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-sintesi-en" style="color: #3b82f6; font-style: italic;">Sintesi (Inglese)</label>
-                        <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="opera-sintesi-en" rows="3" placeholder="Summary in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('opera-sintesi', 'opera-sintesi-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-concetti">Concetti Trattati:</label>
-                        <textarea id="opera-concetti" rows="3" placeholder="Separati da virgola"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-lingua">Lingua Originale:</label>
-                        <input type="text" id="opera-lingua" value="Italiano">
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-pdf">URL PDF/Testo Completo:</label>
-                        <input type="text" id="opera-pdf" placeholder="https://...">
+                       <label>Lingua Originale</label>
+                       <input type="text" id="opera-lingua" placeholder="Es: Greco Antico">
+                   </div>
+                   <div class="form-group">
+                       <label>URL PDF/Testo</label>
+                       <input type="url" id="opera-pdf" placeholder="https://...">
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="admin-btn primary">Salva</button>
@@ -651,58 +641,59 @@
                 <h3>Aggiungi/Modifica Concetto</h3>
                 <form id="concetto-form" onsubmit="saveConcetto(event)">
                     <input type="hidden" id="concetto-id">
-                    <div class="form-group">
-                        <label for="concetto-parola">Parola Chiave:</label>
-                        <input type="text" id="concetto-parola" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="concetto-parola-en" style="color: #3b82f6; font-style: italic;">Parola (Inglese)</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="text" id="concetto-parola-en" placeholder="Keyword in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('concetto-parola', 'concetto-parola-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
+                    <div class="row-2-col">
+                        <div class="form-group">
+                            <label>Parola Chiave</label>
+                            <input type="text" id="concetto-parola" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Parola (Inglese)</label>
+                            <input type="text" id="concetto-parola-en">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="concetto-definizione">Definizione:</label>
-                        <textarea id="concetto-definizione" rows="4" required></textarea>
+                        <label>Definizione</label>
+                        <textarea id="concetto-def" rows="2" required></textarea>
                     </div>
-                    <div class="form-group">
-                        <label for="concetto-definizione-en" style="color: #3b82f6; font-style: italic;">Definizione (Inglese)</label>
-                        <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="concetto-definizione-en" rows="5" placeholder="Definition in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('concetto-definizione', 'concetto-definizione-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
+
+                    <div class="form-group" style="background: #f8f9fa; padding: 10px; border-radius: 8px;">
+                        <label style="color: #2563eb;">🔗 Collegamento Fonte (Opzionale)</label>
+    
+                        <div style="margin-top:5px;">
+                            <label><small>1. Seleziona Filosofo:</small></label>
+                            <select id="concetto-filosofo-select" class="full-width-select">
+                                <option value="">Tutti i filosofi...</option>
+                            </select>
+                        </div>
+    
+                        <div style="margin-top:10px;">
+                            <label><small>2. Seleziona Opera (Filtra in base al filosofo):</small></label>
+                            <select id="concetto-opera-select" class="full-width-select" disabled>
+                                   <option value="">Prima seleziona un filosofo...</option>
+                            </select>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="concetto-esempio">Citazione/Estratto (Esempio):</label>
-                        <textarea id="concetto-esempio" rows="3"></textarea>
+                        <label>Citazione/Estratto</label>
+                        <textarea id="concetto-citazione" rows="2"></textarea>
                     </div>
-                    <div class="form-group">
-                        <label for="concetto-autore">Autore Riferimento:</label>
-                        <select id="concetto-autore">
-                            <option value="">Seleziona un filosofo...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="concetto-opera">Opera di Riferimento:</label>
-                        <select id="concetto-opera">
-                            <option value="">Seleziona un'opera...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="concetto-periodo">Periodo Storico:</label>
-                        <select id="concetto-periodo" required>
-                            <option value="classico">Classico</option>
-                            <option value="contemporaneo">Contemporaneo</option>
-                            <option value="entrambi">Entrambi</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="concetto-evoluzione">Evoluzione Storica:</label>
-                        <textarea id="concetto-evoluzione" rows="3" placeholder="Come il concetto è cambiato nel tempo..."></textarea>
-                    </div>
+
+                    <div class="row-2-col">
+                        <div class="form-group">
+                            <label>Periodo Storico</label>
+                            <select id="concetto-periodo">
+                                <option value="Classico">Classico</option>
+                                <option value="Contemporaneo">Contemporaneo</option>
+                                <option value="Entrambi">Entrambi (Confronto)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Evoluzione Storica</label>
+                            <textarea id="concetto-evoluzione" placeholder="Come cambia il significato?"></textarea>
+                       </div>
+                   </div>
                     <div class="form-actions">
                         <button type="submit" class="admin-btn primary">Salva</button>
                         <button type="button" class="admin-btn secondary" onclick="resetConcettoForm()">Annulla</button>
@@ -1816,17 +1807,16 @@
     
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script> <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <script src="./translations.js"></script>
-    <script src="./firebase-init.js"></script>
-
-    <script src="./geocoding-manager.js"></script>
-    <script src="./linguistic-analysis.js"></script>
-    <script src="./timeline-evolution.js"></script>
-    <script src="./excel-worker.js"></script>
+    <script src="./firebase-init.js"></script>       <script src="./geocoding-manager.js"></script>
     <script src="./analytics.js"></script>
-
+    <script src="./timeline-evolution.js"></script>
+    <script src="./linguistic-analysis.js"></script>
+    <script src="./excel-worker.js"></script>
+    
     <script src="./app.js"></script>
 
     <script>
@@ -1843,7 +1833,7 @@
                                   const newWorker = registration.installing;
                                   newWorker.addEventListener('statechange', () => {
                                       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
+                                          if(window.showToast) showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
                                       }
                                   });
                               });

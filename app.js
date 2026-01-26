@@ -4173,121 +4173,90 @@ function editOpera(id) {
     showAdminTab('opere-admin');
 }
 
-async function saveOpera(e) {
-    e.preventDefault();
+async function saveOpera(event) {
+    event.preventDefault(); // Impedisce il ricaricamento della pagina
 
-    // 1. Helper di sicurezza: legge il valore solo se l'elemento esiste
+    // Helper rapido per leggere i valori senza errori
     const getVal = (id) => {
         const el = document.getElementById(id);
         return el ? el.value.trim() : '';
     };
 
     try {
-        // 2. Recupero dati sicuro
-        const id = getVal('opera-id');
-        const titolo = getVal('opera-titolo');
-        const autore_id = getVal('opera-autore');
+        const id = getVal('opera-id'); // Se c'è, stiamo modificando
         
-        // Gestione sicura del nome autore dalla select (evita crash se vuota)
-        let autore_nome = '';
-        const autoreSelect = document.getElementById('opera-autore');
-        if (autoreSelect && autoreSelect.selectedIndex >= 0) {
-            autore_nome = autoreSelect.options[autoreSelect.selectedIndex].text;
-        } else {
-            autore_nome = 'Autore non specificato'; 
+        // 1. GESTIONE AUTORE (Il cuore della tua richiesta)
+        const authorSelect = document.getElementById('opera-autore');
+        const autoreId = authorSelect.value;
+        
+        // Recuperiamo il NOME dell'autore dal testo della select (per visualizzarlo nelle liste)
+        let autoreNome = 'Sconosciuto';
+        if (authorSelect.selectedIndex >= 0) {
+            autoreNome = authorSelect.options[authorSelect.selectedIndex].text;
         }
 
-        const anno = getVal('opera-anno');
-        const periodo = getVal('opera-periodo');
-        const lingua = getVal('opera-lingua');
-        const sintesi = getVal('opera-sintesi');
-        const pdf_url = getVal('opera-pdf');
-        const immagine = getVal('opera-immagine');
-        const concettiInput = getVal('opera-concetti');
-        
-        // Campi inglesi (opzionali)
-        const titolo_en = getVal('opera-titolo-en');
-        const sintesi_en = getVal('opera-sintesi-en');
-        
-        // Validazione minima
-        if (!titolo) {
+        // Validazione
+        if (!getVal('opera-titolo')) {
             showToast("Il titolo è obbligatorio", "error");
             return;
         }
+        if (!autoreId) {
+            showToast("Devi selezionare un autore dalla lista", "error");
+            return;
+        }
 
+        // 2. PREPARAZIONE DATI (Include i nuovi campi Inglese)
         const operaData = {
-            titolo,
-            titolo_en,
-            autore_id,
-            autore_nome,
-            anno,
-            periodo,
-            lingua,
-            sintesi,
-            sintesi_en,
-            pdf_url,
-            immagine,
-            // Converte stringa "a, b, c" in array sicuro
-            concetti: concettiInput ? concettiInput.split(',').map(c => c.trim()).filter(c => c !== '') : [],
-            last_modified: new Date().toISOString()
-        };
-        
-        // Validazione avanzata (se la funzione esiste)
-        if (typeof validateOperaData === 'function') {
-            const validationErrors = validateOperaData(operaData);
-            if (validationErrors.length > 0) throw validationErrors[0];
-        }
-        
-        // 3. Logica Salvataggio (Allineata con Firebase fix)
-        let savedId;
-        const operation = id ? 'UPDATE' : 'CREATE';
-
-        if (navigator.onLine && window.db) {
-            if (id && id.trim() !== '') {
-                // Modifica
-                await saveFirebaseData('opere', operaData, id);
-                savedId = id;
-                const index = appData.opere.findIndex(o => o.id == id);
-                if (index !== -1) appData.opere[index] = { id, ...operaData };
-                showToast('Opera modificata con successo', 'success');
-            } else {
-                // Nuova
-                savedId = await saveFirebaseData('opere', operaData);
-                appData.opere.push({ id: savedId, ...operaData });
-                showToast(`Opera aggiunta (ID: ${savedId})`, 'success');
-            }
-        } else {
-            // Offline
-            savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            if (typeof addToSyncQueue === 'function') {
-                await addToSyncQueue(operation, 'opere', operaData, savedId);
-            }
+            titolo: getVal('opera-titolo'),
+            titolo_en: getVal('opera-titolo-en'), // Nuovo
             
-            if (operation === 'UPDATE') {
-                const index = appData.opere.findIndex(o => o.id == id);
-                if (index !== -1) appData.opere[index] = { id: savedId, ...operaData };
-            } else {
-                appData.opere.push({ id: savedId, ...operaData });
-            }
-            showToast('Opera salvata localmente (Offline).', 'info');
-        }
-        
-        // 4. Aggiornamento Interfaccia
-        saveLocalData();
-        if (typeof loadAdminOpere === 'function') loadAdminOpere();
-        
-        // Reset form sicuro
-        const form = document.getElementById('opera-form');
-        if (form) form.reset();
-        const idInput = document.getElementById('opera-id');
-        if (idInput) idInput.value = ''; // Pulisce ID nascosto
+            autore_id: autoreId,     // ID per i link
+            autore_nome: autoreNome, // Nome per la lettura
+            
+            anno: getVal('opera-anno'),
+            periodo: getVal('opera-periodo'),
+            
+            abstract: getVal('opera-sintesi'),
+            abstract_en: getVal('opera-sintesi-en'), // Nuovo
+            
+            lingua_originale: getVal('opera-lingua'),
+            url_pdf: getVal('opera-pdf'),
+            
+            // Salviamo i concetti come stringa semplice per ora
+            concetti_text: getVal('opera-concetti'),
+            
+            // Aggiorna data modifica
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
 
-        if (typeof loadOpere === 'function') loadOpere();
-        if (typeof updateDashboardStats === 'function') updateDashboardStats();
+        // 3. SALVATAGGIO SU FIREBASE
+        const database = window.db || db; // Compatibilità garantita
+
+        if (id) {
+            // MODIFICA
+            await database.collection('opere').doc(id).update(operaData);
+            showToast('Opera aggiornata con successo!', 'success');
+        } else {
+            // NUOVO INSERIMENTO
+            await database.collection('opere').add(operaData);
+            showToast('Nuova opera aggiunta!', 'success');
+        }
+
+        // 4. RESET E AGGIORNAMENTO GRAFICA
+        document.getElementById('opera-form').reset();
+        document.getElementById('opera-id').value = ''; // Pulisci ID
         
+        // Chiude il modale se la funzione esiste
+        if(typeof closeModal === 'function') closeModal('add-opera-modal');
+        
+        // Ricarica la lista delle opere (prova tutte le varianti possibili del tuo codice)
+        if (typeof loadOpereList === 'function') loadOpereList();
+        else if (typeof loadAdminOpere === 'function') loadAdminOpere();
+        else if (typeof loadOpere === 'function') loadOpere();
+
     } catch (error) {
         console.error("Errore salvataggio opera:", error);
-        showToast(error.message || 'Errore durante il salvataggio', 'error');
+        showToast("Errore: " + error.message, "error");
     }
 }
 
@@ -4392,107 +4361,98 @@ function editConcetto(id) {
     showAdminTab('concetti-admin');
 }
 
-async function saveConcetto(e) {
-    e.preventDefault();
-    
-    // 1. Helper di sicurezza: evita il crash se l'input non esiste
+async function saveConcetto(event) {
+    event.preventDefault(); // Blocca il ricaricamento della pagina
+
+    // Helper per leggere valori velocemente
     const getVal = (id) => {
         const el = document.getElementById(id);
         return el ? el.value.trim() : '';
     };
-    
+
     try {
-        // 2. Recupero dati sicuro
-        const id = getVal('concetto-id');
-        const parola = getVal('concetto-parola');
-        const definizione = getVal('concetto-definizione');
-        const citazione = getVal('concetto-citazione');
-        const autore = getVal('concetto-autore');
-        const opera = getVal('concetto-opera');
-        const periodo = getVal('concetto-periodo');
-        const evoluzione = getVal('concetto-evoluzione');
+        const id = getVal('concetto-id'); // Se c'è un ID, è una modifica
+
+        // 1. RECUPERO DATI RELAZIONALI (La parte più importante)
+        // Dobbiamo prendere sia l'ID (per il link) che il NOME (per mostrarlo)
         
-        // Campi inglesi
-        const parola_en = getVal('concetto-parola-en');
-        const definizione_en = getVal('concetto-definizione-en');
-        
-        // Validazione minima
-        if (!parola) {
-            showToast("La parola/concetto è obbligatoria", "error");
+        // Autore
+        const selAutore = document.getElementById('concetto-autore');
+        const autoreId = selAutore ? selAutore.value : '';
+        let autoreNome = '';
+        if (selAutore && selAutore.selectedIndex >= 0) {
+            autoreNome = selAutore.options[selAutore.selectedIndex].text;
+            if (autoreNome === 'Seleziona un filosofo...') autoreNome = '';
+        }
+
+        // Opera
+        const selOpera = document.getElementById('concetto-opera');
+        const operaId = selOpera ? selOpera.value : '';
+        let operaTitolo = '';
+        if (selOpera && selOpera.selectedIndex >= 0) {
+            operaTitolo = selOpera.options[selOpera.selectedIndex].text;
+            if (operaTitolo.startsWith('Seleziona')) operaTitolo = '';
+        }
+
+        // Validazione
+        if (!getVal('concetto-parola')) {
+            showToast("La parola chiave è obbligatoria", "error");
             return;
         }
-        
+
+        // 2. COSTRUZIONE OGGETTO DATI
         const concettoData = {
-            parola,
-            parola_en,
-            definizione,
-            definizione_en,
-            esempio_citazione: citazione,
-            autore_riferimento: autore,
-            opera_riferimento: opera,
-            periodo_storico: periodo,
-            evoluzione,
-            last_modified: new Date().toISOString()
+            parola: getVal('concetto-parola'),
+            parola_en: getVal('concetto-parola-en'), // Campo nuovo
+            
+            definizione: getVal('concetto-definizione'),
+            definizione_en: getVal('concetto-definizione-en'), // Campo nuovo
+            
+            citazione: getVal('concetto-citazione') || getVal('concetto-esempio'), // Supporta entrambi gli ID vecchi/nuovi
+            
+            // Relazioni Forti (ID per il codice)
+            autore_riferimento_id: autoreId,
+            opera_riferimento_id: operaId,
+            
+            // Relazioni Deboli (Nomi per la lettura umana nelle liste)
+            autore_riferimento_nome: autoreNome,
+            opera_riferimento_titolo: operaTitolo,
+            
+            periodo_storico: getVal('concetto-periodo'),
+            evoluzione_storica: getVal('concetto-evoluzione'),
+            
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         };
-        
-        // Validazione avanzata (se presente)
-        if (typeof validateConcettoData === 'function') {
-            const validationErrors = validateConcettoData(concettoData);
-            if (validationErrors.length > 0) throw validationErrors[0];
-        }
-        
-        // 3. Logica Salvataggio (Allineata con i fix precedenti)
-        let savedId;
-        const operation = id ? 'UPDATE' : 'CREATE';
 
-        if (navigator.onLine && window.db) {
-            if (id && id.trim() !== '') {
-                // Update
-                await saveFirebaseData('concetti', concettoData, id);
-                savedId = id;
-                const index = appData.concetti.findIndex(c => c.id == id);
-                if (index !== -1) appData.concetti[index] = { id, ...concettoData };
-                showToast('Concetto modificato con successo', 'success');
-            } else {
-                // Create
-                savedId = await saveFirebaseData('concetti', concettoData);
-                appData.concetti.push({ id: savedId, ...concettoData });
-                showToast(`Concetto aggiunto (ID: ${savedId})`, 'success');
-            }
+        // 3. SALVATAGGIO (Metodo diretto e sicuro)
+        const database = window.db || db; 
+
+        if (id && id.trim() !== '') {
+            // MODIFICA
+            await database.collection('concetti').doc(id).update(concettoData);
+            showToast('Concetto aggiornato con successo', 'success');
         } else {
-            // Offline Mode
-            savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            if (typeof addToSyncQueue === 'function') {
-                await addToSyncQueue(operation, 'concetti', concettoData, savedId);
-            }
-
-            if (operation === 'UPDATE') {
-                const index = appData.concetti.findIndex(c => c.id == id);
-                if (index !== -1) appData.concetti[index] = { id: savedId, ...concettoData };
-            } else {
-                appData.concetti.push({ id: savedId, ...concettoData });
-            }
-            showToast('Concetto salvato localmente (Offline).', 'info');
+            // NUOVO
+            await database.collection('concetti').add(concettoData);
+            showToast('Nuovo concetto salvato!', 'success');
         }
-        
-        // 4. Aggiornamento Interfaccia
-        saveLocalData();
-        
-        // Aggiorna le viste admin se le funzioni esistono
-        if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
-        
-        // Reset form sicuro
+
+        // 4. PULIZIA E AGGIORNAMENTO UI
         const form = document.getElementById('concetto-form');
         if (form) form.reset();
-        const idInput = document.getElementById('concetto-id');
-        if (idInput) idInput.value = '';
+        document.getElementById('concetto-id').value = '';
 
-        if (typeof loadConcetti === 'function') loadConcetti();
-        if (typeof updateDashboardStats === 'function') updateDashboardStats();
-        
+        // Chiudi modale (se la funzione esiste)
+        if (typeof closeModal === 'function') closeModal('add-concetto-modal');
+
+        // Ricarica la lista (prova tutte le varianti possibili del tuo codice)
+        if (typeof loadConcettiList === 'function') loadConcettiList();
+        else if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
+        else if (typeof loadConcetti === 'function') loadConcetti();
+
     } catch (error) {
         console.error("Errore salvataggio concetto:", error);
-        showToast(error.message || 'Errore durante il salvataggio', 'error');
+        showToast("Errore: " + error.message, "error");
     }
 }
 
@@ -5984,3 +5944,146 @@ if (typeof addToSyncQueue === 'undefined') {
         return true;
     };
 }
+// =========================================================
+// NUOVE FUNZIONI AGGIUNTE (PER MODULI AVANZATI)
+// Incolla questo blocco alla fine di app.js
+// =========================================================
+
+// 1. Funzione per popolare la Select dei Filosofi (usata in Opere e Concetti)
+async function popolaSelectFilosofi(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
+    // Salva la selezione attuale se c'è
+    const currentVal = select.value;
+    
+    select.innerHTML = '<option value="">Caricamento...</option>';
+    
+    try {
+        // Usa window.db se definito globalmente, altrimenti db
+        const database = window.db || db; 
+        const snapshot = await database.collection('filosofi').orderBy('nome').get();
+        
+        select.innerHTML = '<option value="">Seleziona un filosofo...</option>';
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const option = document.createElement('option');
+            option.value = doc.id; // L'ID è fondamentale per il collegamento
+            option.textContent = data.nome;
+            select.appendChild(option);
+        });
+
+        // Ripristina valore se esisteva
+        if (currentVal) select.value = currentVal;
+        
+    } catch (error) {
+        console.error("Errore caricamento filosofi:", error);
+        select.innerHTML = '<option value="">Errore caricamento</option>';
+    }
+}
+
+// 2. Funzione per preparare il Form CONCETTI (Cascata Autore -> Opera)
+async function prepareConcettoForm() {
+    // Prima carica gli autori
+    await popolaSelectFilosofi('concetto-autore');
+    
+    const selAutore = document.getElementById('concetto-autore');
+    const selOpera = document.getElementById('concetto-opera');
+    
+    if (!selAutore || !selOpera) return;
+
+    // Quando cambio l'autore...
+    selAutore.onchange = async function() {
+        const autoreId = this.value;
+        selOpera.innerHTML = '<option value="">Caricamento...</option>';
+        selOpera.disabled = true;
+
+        if (!autoreId) {
+            selOpera.innerHTML = '<option value="">Prima seleziona un filosofo</option>';
+            return;
+        }
+
+        try {
+            const database = window.db || db;
+            // Prendo solo le opere di QUEL filosofo
+            const snapshot = await database.collection('opere')
+                                     .where('autore_id', '==', autoreId)
+                                     .get();
+            
+            selOpera.innerHTML = '<option value="">Seleziona un\'opera...</option>';
+            
+            if (snapshot.empty) {
+                 selOpera.innerHTML += '<option value="">Nessuna opera trovata per questo autore</option>';
+            } else {
+                snapshot.forEach(doc => {
+                    const option = document.createElement('option');
+                    option.value = doc.id;
+                    option.textContent = doc.data().titolo;
+                    selOpera.appendChild(option);
+                });
+            }
+            selOpera.disabled = false;
+        } catch (e) {
+            console.error(e);
+            selOpera.innerHTML = '<option value="">Errore caricamento opere</option>';
+        }
+    };
+}
+
+// 3. Funzione per il tasto "Traduci" ✨
+function autoTranslate(sourceId, targetId) {
+    const sourceVal = document.getElementById(sourceId).value;
+    if (sourceVal) {
+        document.getElementById(targetId).value = sourceVal + " [TRADURRE]";
+        if(window.showToast) showToast('Testo copiato. Traducilo in inglese!', 'info');
+    }
+}
+
+// 4. Funzione Helper per aprire i modali e CARICARE I DATI
+// (Chiamala quando clicchi "Aggiungi Opera" o "Aggiungi Concetto")
+window.initFormOpere = function() {
+    popolaSelectFilosofi('opera-autore');
+}
+
+window.initFormConcetti = function() {
+    prepareConcettoForm();
+}
+// ============================================================
+// AUTOMAZIONE APERTURA MODALI (Incolla alla fine di app.js)
+// Questo codice sostituisce la modifica manuale dei pulsanti HTML
+// ============================================================
+
+// 1. Salviamo la funzione originale di apertura modale
+const originalOpenModal = window.openModal || function(){};
+
+// 2. Creiamo una versione "potenziata" che carica i dati automaticamente
+window.openModal = function(modalId) {
+    console.log("Apertura modale rilevata:", modalId);
+    
+    // Eseguiamo la funzione originale (così la finestra si apre)
+    if (typeof originalOpenModal === 'function') {
+        originalOpenModal(modalId);
+    } else {
+        // Fallback se openModal non era definita globalmente
+        const modal = document.getElementById(modalId);
+        if (modal) modal.style.display = 'flex';
+    }
+
+    // 3. Controlliamo quale finestra è stata aperta e carichiamo i dati
+    if (modalId === 'add-opera-modal') {
+        console.log("Caricamento lista filosofi per Opere...");
+        if (typeof popolaSelectFilosofi === 'function') {
+            popolaSelectFilosofi('opera-autore');
+        }
+    }
+
+    if (modalId === 'add-concetto-modal') {
+        console.log("Preparazione form Concetti...");
+        if (typeof prepareConcettoForm === 'function') {
+            prepareConcettoForm();
+        }
+    }
+};
+
+console.log("✅ Sistema di automazione modali attivato.");
