@@ -1691,45 +1691,177 @@ function initializeScreenContent(screenId) {
     }
 }
 
-// Data Loading Functions
-async function loadFilosofi() {
-    const filosofiList = document.getElementById('filosofi-list');
-    if (!filosofiList) return;
+Sì, devi sostituire assolutamente tutto quel blocco.
+
+Il codice che mi hai appena incollato (quello con showSkeletonLoader e renderGridItems) è la versione "vecchia" e generica. Quella versione ha due grossi problemi:
+
+Ricarica i dati inutilmente: Usa await loadFirebaseData, che rallenta tutto perché li abbiamo già scaricati all'avvio.
+
+È "stupida": Non sa collegare i dati. Per questo nelle Opere non vedevi i nomi degli autori (ma solo codici strani) e nei Filosofi non vedevi il pulsante Mappa.
+
+Sostituisci quelle tre funzioni con questo blocco unico definitivo. Questo codice contiene la "Logica Intelligente" che collega ID agli Autori, controlla le coordinate per la mappa e rende le schede cliccabili.
+
+Copia e incolla questo al loro posto:
+
+JavaScript
+// ==========================================
+// FUNZIONI DI VISUALIZZAZIONE (VERSIONE INTELLIGENTE)
+// ==========================================
+
+// 1. FILOSOFI (Gestisce Foto + Bottone Mappa + Click Scheda)
+function loadFilosofi() {
+    const container = document.getElementById('filosofi-list');
+    if (!container) return;
     
-    showSkeletonLoader(filosofiList);
-    
-    try {
-        await loadFirebaseData('filosofi');
-        renderGridItems(filosofiList, getFilteredItems('filosofi'), 'filosofo');
-    } catch (error) {
-        showToast('Errore nel caricamento filosofi', 'error');
+    // Controllo se i dati ci sono (usiamo appData che è già carico)
+    if (!appData.filosofi || appData.filosofi.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nessun filosofo caricato.</div>';
+        return;
     }
+    
+    container.innerHTML = '';
+    
+    // Ordina A-Z
+    const sortedList = [...appData.filosofi].sort((a, b) => a.nome.localeCompare(b.nome));
+
+    sortedList.forEach(f => {
+        // Controllo coordinate per decidere se mostrare il tasto mappa
+        let hasCoords = (f.coordinate && f.coordinate.lat) || (f.lat && f.lng);
+        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
+        
+        const div = document.createElement('div');
+        div.className = 'grid-item animate-in';
+        
+        // RENDIAMO TUTTA LA CARD CLICCABILE
+        div.onclick = () => showDetail(f.id, 'filosofo');
+        div.style.cursor = 'pointer'; 
+
+        div.innerHTML = `
+            <div class="item-header" style="background-image: url('${imgUrl}');">
+                <span class="item-period-badge ${f.periodo || 'classico'}">
+                    ${f.periodo || ''}
+                </span>
+            </div>
+            <div class="item-content">
+                <h3 class="item-name">${f.nome}</h3>
+                <div class="item-scuola">🏛️ ${f.scuola || 'Scuola non definita'}</div>
+                <div class="item-details">
+                    <span>📅 ${f.anni_vita || ''}</span>
+                </div>
+                
+                <div class="item-actions" style="margin-top: 10px;">
+                    <button class="btn-detail" style="width: 100%; margin-bottom: 5px;">Scheda</button>
+                    ${hasCoords ? `
+                        <button onclick="event.stopPropagation(); goToMap('${f.id}')" class="btn-map" style="width:100%; display:flex; align-items:center; justify-content:center; gap:5px;">
+                            🗺️ Mappa
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
 }
 
-async function loadOpere() {
-    const opereList = document.getElementById('opere-list');
-    if (!opereList) return;
+// 2. OPERE (Gestisce il collegamento ID Autore -> Nome Autore)
+function loadOpere() {
+    const container = document.getElementById('opere-list');
+    if (!container) return;
     
-    showSkeletonLoaderCompact(opereList);
-    
-    try {
-        await loadFirebaseData('opere');
-        renderCompactItems(opereList, getFilteredItems('opere'), 'opera');
-    } catch (error) {
-        showToast('Errore nel caricamento opere', 'error');
+    if (!appData.opere || appData.opere.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nessuna opera caricata.</div>';
+        return;
     }
+
+    container.innerHTML = '';
+
+    const sortedList = [...appData.opere].sort((a, b) => a.titolo.localeCompare(b.titolo));
+
+    sortedList.forEach(o => {
+        // LOGICA INTELLIGENTE: Trova il nome dell'autore dall'ID
+        let nomeAutore = o.autore_nome;
+        
+        // Se manca il nome ma c'è l'ID, lo cerchiamo nella lista filosofi caricata in memoria
+        if (!nomeAutore && o.autore_id && appData.filosofi) {
+            const autore = appData.filosofi.find(f => f.id === o.autore_id);
+            if (autore) nomeAutore = autore.nome;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'grid-item animate-in';
+        div.onclick = () => showDetail(o.id, 'opera');
+        div.style.cursor = 'pointer';
+
+        const hasPdf = o.pdf_url && o.pdf_url.length > 5;
+
+        div.innerHTML = `
+            <div class="item-content" style="padding: 20px; border-left: 5px solid var(--primary-green);">
+                <h3 class="item-name" style="color: var(--primary-green);">${o.titolo}</h3>
+                <div class="item-scuola" style="font-weight:bold; margin-bottom:5px;">
+                    ✍️ ${nomeAutore || 'Autore sconosciuto'}
+                </div>
+                <div class="item-details">
+                    <span>📅 ${o.anno || 'Anno n.d.'}</span>
+                    <span style="float:right">${o.lingua || ''}</span>
+                </div>
+                <p style="font-size:0.9rem; color:#666; margin-top:10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                    ${o.sintesi || 'Nessuna sintesi disponibile.'}
+                </p>
+                ${hasPdf ? '<div style="margin-top:10px; font-size:0.8rem; color:#ef4444;"><i class="fas fa-file-pdf"></i> PDF Disponibile</div>' : ''}
+            </div>
+        `;
+        container.appendChild(div);
+    });
 }
 
-async function loadConcetti() {
-    const concettiList = document.getElementById('concetti-list');
-    if (!concettiList) return;
+// 3. CONCETTI (Gestisce collegamenti dinamici)
+function loadConcetti() {
+    const container = document.getElementById('concetti-list');
+    if (!container) return;
     
-    try {
-        await loadFirebaseData('concetti');
-        renderConcettiItems(concettiList, appData.concetti);
-    } catch (error) {
-        showToast('Errore nel caricamento concetti', 'error');
+    if (!appData.concetti || appData.concetti.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nessun concetto caricato.</div>';
+        return;
     }
+
+    container.innerHTML = '';
+
+    const sortedList = [...appData.concetti].sort((a, b) => a.parola.localeCompare(b.parola));
+
+    sortedList.forEach(c => {
+        // LOGICA INTELLIGENTE: Se l'autore è un ID, trova il nome corrispondente
+        let refAutore = c.autore_riferimento;
+        if (refAutore && !refAutore.includes(' ') && appData.filosofi) {
+            const f = appData.filosofi.find(x => x.id === refAutore);
+            if(f) refAutore = f.nome;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'grid-item animate-in';
+        div.onclick = () => showDetail(c.id, 'concetto');
+        div.style.cursor = 'pointer';
+
+        div.innerHTML = `
+            <div class="item-content" style="padding: 20px; border-left: 5px solid var(--primary-purple);">
+                <h3 class="item-name" style="color: var(--primary-purple); font-size: 1.4rem;">${c.parola}</h3>
+                
+                ${c.parola_en ? `<div style="font-style:italic; color:#888; margin-bottom:10px;">🇬🇧 ${c.parola_en}</div>` : ''}
+                
+                <div class="item-details" style="margin-bottom: 10px;">
+                    ${refAutore ? `<span>👤 ${refAutore}</span>` : ''}
+                </div>
+                
+                <p style="font-size:0.95rem; line-height:1.5;">
+                    ${c.definizione ? c.definizione.substring(0, 100) + '...' : 'Nessuna definizione.'}
+                </p>
+                
+                <div style="margin-top:15px; text-align:right; font-size:0.85rem; color:var(--primary-purple); font-weight:bold;">
+                    Leggi tutto →
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
 }
 
 function getFilteredItems(type) {
