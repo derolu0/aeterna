@@ -1173,7 +1173,6 @@ function sendSystemNotification(title, body) {
 // ============================================
 
 async function loadFirebaseData(type) {
-    // 1. PROTEZIONE: Se il DB non è pronto, evita il crash e usa i dati locali
     if (!window.db) {
         console.warn(`[Firebase] DB non pronto per ${type}, uso dati locali.`);
         return loadLocalData(type);
@@ -1187,89 +1186,67 @@ async function loadFirebaseData(type) {
         };
         const collectionName = collectionMap[type] || type;
 
-        // 2. CORREZIONE: Uso diretto di window.db (Sintassi Compat)
-        // Nessun import, nessuna funzione esterna.
         const snapshot = await window.db.collection(collectionName).get();
         
         const data = [];
         snapshot.forEach(doc => {
             const docData = doc.data();
-            
-            // 3. MAPPING DATI (La tua logica originale, mantenuta intatta)
-            let itemData = { 
+            const itemData = { 
                 id: doc.id, 
-                last_modified: docData.last_modified || new Date().toISOString()
+                ...docData  // Questo è cruciale: copia TUTTI i campi dal documento
             };
-
+            
+            // Assicurati che i campi standard esistano
             if (type === 'filosofi') {
-                itemData = {
-                    ...itemData,
-                    nome: docData.nome || '',
-                    nome_en: docData.nome_en || '',
-                    scuola: docData.scuola || '',
-                    periodo: docData.periodo || 'classico',
-                    anni_vita: docData.anni_vita || '',
-                    luogo_nascita: docData.luogo_nascita || '',
-                    biografia: docData.biografia || '',
-                    biografia_en: docData.biografia_en || '',
-                    ritratto: docData.ritratto || '',
-                    opere_principali: docData.opere_principali || [],
-                    concetti_principali: docData.concetti_principali || [],
-                    coordinate: docData.coordinate || null
-                };
+                itemData.nome = docData.nome || '';
+                itemData.scuola = docData.scuola || '';
+                itemData.periodo = docData.periodo || 'classico';
+                itemData.anni_vita = docData.anni_vita || '';
+                itemData.luogo_nascita = docData.luogo_nascita || '';
+                itemData.biografia = docData.biografia || '';
+                itemData.coordinate = docData.coordinate || null;
+                itemData.ritratto = docData.ritratto || '';
+                itemData.opere_principali = docData.opere_principali || [];
+                itemData.concetti_principali = docData.concetti_principali || [];
             } else if (type === 'opere') {
-                itemData = {
-                    ...itemData,
-                    titolo: docData.titolo || '',
-                    titolo_en: docData.titolo_en || '',
-                    autore_id: docData.autore_id || '',
-                    autore_nome: docData.autore_nome || '',
-                    anno: docData.anno || '',
-                    periodo: docData.periodo || '',
-                    lingua: docData.lingua || '',
-                    sintesi: docData.sintesi || '',
-                    sintesi_en: docData.sintesi_en || '',
-                    pdf_url: docData.pdf_url || '',
-                    concetti: docData.concetti || []
-                };
+                itemData.titolo = docData.titolo || '';
+                itemData.autore_id = docData.autore_id || '';
+                itemData.autore_nome = docData.autore_nome || '';
+                itemData.anno = docData.anno || '';
+                itemData.periodo = docData.periodo || '';
+                itemData.sintesi = docData.sintesi || '';
+                itemData.lingua = docData.lingua || '';
+                itemData.pdf_url = docData.pdf_url || '';
+                itemData.concetti = docData.concetti || [];
+                itemData.immagine = docData.immagine || '';
             } else if (type === 'concetti') {
-                itemData = {
-                    ...itemData,
-                    parola: docData.parola || '',
-                    parola_en: docData.parola_en || '',
-                    definizione: docData.definizione || '',
-                    definizione_en: docData.definizione_en || '',
-                    esempio_citazione: docData.esempio_citazione || '',
-                    autore_riferimento: docData.autore_riferimento || '',
-                    opera_riferimento: docData.opera_riferimento || '',
-                    periodo_storico: docData.periodo_storico || '',
-                    evoluzione: docData.evoluzione || ''
-                };
+                itemData.parola = docData.parola || '';
+                itemData.definizione = docData.definizione || '';
+                itemData.esempio_citazione = docData.esempio_citazione || '';
+                itemData.autore_riferimento = docData.autore_riferimento || '';
+                itemData.opera_riferimento = docData.opera_riferimento || '';
+                itemData.periodo_storico = docData.periodo_storico || '';
+                itemData.evoluzione = docData.evoluzione || '';
             }
             
             data.push(itemData);
         });
         
-        // 4. Aggiornamento UI e salvataggio locale
-        if (typeof checkAndNotifyUpdates === 'function') {
-            checkAndNotifyUpdates(data, type);
-        }
-
         appData[type] = data;
         saveLocalData();
         
-        // showToast(`${data.length} ${type} caricati da Firebase`, 'success');
-        if (typeof logActivity === 'function') {
-            logActivity(`${data.length} ${type} caricati da Firebase`);
+        console.log(`✅ ${data.length} ${type} caricati da Firebase`);
+        
+        // AGGIUNGI QUESTA RIGA: Aggiorna immediatamente i menu a tendina
+        if (type === 'filosofi') {
+            updateAllSelects();
         }
         
         return data;
 
     } catch (error) {
         console.error(`Errore loadFirebaseData_${type}:`, error);
-        // Fallback ai dati locali in caso di errore
-        loadLocalData(type);
-        return appData[type];
+        return loadLocalData(type);
     }
 }
 
@@ -1549,31 +1526,52 @@ function showAdminPanel() {
             section.style.display = 'none';
         }
     });
-
+    
+    // Inizializza i form con controllo
+    if (typeof initAdminForms === 'function') {
+        // Piccolo delay per assicurare che il DOM sia pronto
+        setTimeout(initAdminForms, 100);
+    } else {
+        console.warn("initAdminForms function not found");
+    }
+    
+    // Carica i dati nelle tabelle
     loadAdminFilosofi();
     loadAdminOpere();
     loadAdminConcetti();
+    
+    // Aggiorna statistiche dashboard
     updateDashboardStats();
     
-    // --- PUNTO 4: SOSTITUISCI QUESTE RIGHE ---
+    // Carica analytics e performance
     if (typeof refreshAnalyticsDashboard === 'function') {
         refreshAnalyticsDashboard();
     }
     if (typeof updatePerformanceMetrics === 'function') {
         updatePerformanceMetrics();
     }
-    // -----------------------------------------
     
+    // Carica activity log con gestione sicura
     const savedLog = localStorage.getItem('activityLog');
     if (savedLog) {
-        // Usa window.activityLog per sicurezza
-        if (typeof activityLog !== 'undefined') {
-            activityLog = JSON.parse(savedLog);
-        } else {
-            window.activityLog = JSON.parse(savedLog);
+        try {
+            if (typeof activityLog !== 'undefined') {
+                activityLog = JSON.parse(savedLog);
+            } else if (typeof window.activityLog !== 'undefined') {
+                window.activityLog = JSON.parse(savedLog);
+            } else {
+                activityLog = JSON.parse(savedLog);
+            }
+            
+            if (typeof updateActivityLog === 'function') {
+                updateActivityLog();
+            }
+        } catch (error) {
+            console.error('Errore nel parsing dell\'activity log:', error);
         }
-        if (typeof updateActivityLog === 'function') updateActivityLog();
     }
+    
+    console.log("✅ Pannello admin inizializzato per ruolo:", currentUserRole);
 }
 
 function closeAdminPanel() {
@@ -1590,13 +1588,13 @@ function logoutAdmin() {
         clearTimeout(adminAuthTimeout);
         adminAuthTimeout = null;
     }
+    
     closeAdminPanel();
     showToast('Logout amministratore effettuato', 'success');
     logActivity('Logout amministratore');
 
     setTimeout(() => window.location.reload(), 1000);
 }
-
 // Navigation and Screen Management
 function showScreen(screenId) {
     const currentScreen = screenHistory[screenHistory.length - 1];
@@ -4174,86 +4172,103 @@ function editOpera(id) {
 }
 
 async function saveOpera(event) {
-    event.preventDefault(); // Impedisce il ricaricamento della pagina
-
-    // Helper rapido per leggere i valori senza errori
+    event.preventDefault();
+    
+    // Helper per leggere valori
     const getVal = (id) => {
         const el = document.getElementById(id);
         return el ? el.value.trim() : '';
     };
 
     try {
-        const id = getVal('opera-id'); // Se c'è, stiamo modificando
+        const id = getVal('opera-id');
+        const titolo = getVal('opera-titolo');
+        const titolo_en = getVal('opera-titolo-en');
+        const autoreSelect = document.getElementById('opera-autore');
+        const autoreId = autoreSelect ? autoreSelect.value : '';
         
-        // 1. GESTIONE AUTORE (Il cuore della tua richiesta)
-        const authorSelect = document.getElementById('opera-autore');
-        const autoreId = authorSelect.value;
-        
-        // Recuperiamo il NOME dell'autore dal testo della select (per visualizzarlo nelle liste)
-        let autoreNome = 'Sconosciuto';
-        if (authorSelect.selectedIndex >= 0) {
-            autoreNome = authorSelect.options[authorSelect.selectedIndex].text;
-        }
-
-        // Validazione
-        if (!getVal('opera-titolo')) {
+        // VALIDAZIONI
+        if (!titolo) {
             showToast("Il titolo è obbligatorio", "error");
             return;
         }
+        
         if (!autoreId) {
-            showToast("Devi selezionare un autore dalla lista", "error");
+            showToast("Devi selezionare un autore", "error");
             return;
         }
-
-        // 2. PREPARAZIONE DATI (Include i nuovi campi Inglese)
-        const operaData = {
-            titolo: getVal('opera-titolo'),
-            titolo_en: getVal('opera-titolo-en'), // Nuovo
-            
-            autore_id: autoreId,     // ID per i link
-            autore_nome: autoreNome, // Nome per la lettura
-            
-            anno: getVal('opera-anno'),
-            periodo: getVal('opera-periodo'),
-            
-            abstract: getVal('opera-sintesi'),
-            abstract_en: getVal('opera-sintesi-en'), // Nuovo
-            
-            lingua_originale: getVal('opera-lingua'),
-            url_pdf: getVal('opera-pdf'),
-            
-            // Salviamo i concetti come stringa semplice per ora
-            concetti_text: getVal('opera-concetti'),
-            
-            // Aggiorna data modifica
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        // 3. SALVATAGGIO SU FIREBASE
-        const database = window.db || db; // Compatibilità garantita
-
-        if (id) {
-            // MODIFICA
-            await database.collection('opere').doc(id).update(operaData);
-            showToast('Opera aggiornata con successo!', 'success');
-        } else {
-            // NUOVO INSERIMENTO
-            await database.collection('opere').add(operaData);
-            showToast('Nuova opera aggiunta!', 'success');
+        
+        // Trova il nome dell'autore
+        let autoreNome = '';
+        if (autoreSelect && autoreSelect.selectedIndex >= 0) {
+            autoreNome = autoreSelect.options[autoreSelect.selectedIndex].text;
+        }
+        
+        // Se non troviamo il nome dal menu, cercalo nei dati
+        if (!autoreNome && autoreId) {
+            const filosofo = appData.filosofi.find(f => f.id === autoreId);
+            autoreNome = filosofo ? filosofo.nome : 'Autore sconosciuto';
         }
 
-        // 4. RESET E AGGIORNAMENTO GRAFICA
-        document.getElementById('opera-form').reset();
-        document.getElementById('opera-id').value = ''; // Pulisci ID
-        
-        // Chiude il modale se la funzione esiste
-        if(typeof closeModal === 'function') closeModal('add-opera-modal');
-        
-        // Ricarica la lista delle opere (prova tutte le varianti possibili del tuo codice)
-        if (typeof loadOpereList === 'function') loadOpereList();
-        else if (typeof loadAdminOpere === 'function') loadAdminOpere();
-        else if (typeof loadOpere === 'function') loadOpere();
+        // Costruisci i dati dell'opera
+        const operaData = {
+            titolo: titolo,
+            titolo_en: titolo_en || '',
+            autore_id: autoreId,
+            autore_nome: autoreNome,
+            anno: getVal('opera-anno'),
+            periodo: getVal('opera-periodo'),
+            sintesi: getVal('opera-sintesi'),
+            sintesi_en: getVal('opera-sintesi-en') || '',
+            lingua: getVal('opera-lingua'),
+            pdf_url: getVal('opera-pdf'),
+            immagine: getVal('opera-immagine'),
+            concetti: getVal('opera-concetti') ? 
+                getVal('opera-concetti').split(',').map(c => c.trim()).filter(c => c !== '') : [],
+            last_modified: new Date().toISOString()
+        };
 
+        let savedId;
+        
+        if (navigator.onLine && window.db) {
+            if (id) {
+                // Modifica esistente
+                await saveFirebaseData('opere', operaData, id);
+                savedId = id;
+                
+                // Aggiorna localmente
+                const index = appData.opere.findIndex(o => o.id === id);
+                if (index !== -1) {
+                    appData.opere[index] = { id, ...operaData };
+                }
+            } else {
+                // Crea nuovo
+                savedId = await saveFirebaseData('opere', operaData);
+                appData.opere.push({ id: savedId, ...operaData });
+            }
+            
+            showToast('Opera salvata con successo!', 'success');
+        } else {
+            // Modalità offline
+            savedId = id || `local_${Date.now()}`;
+            if (typeof addToSyncQueue === 'function') {
+                await addToSyncQueue(id ? 'UPDATE' : 'CREATE', 'opere', operaData, savedId);
+            }
+            showToast('Opera salvata localmente (offline)', 'info');
+        }
+        
+        // Aggiorna UI
+        saveLocalData();
+        loadAdminOpere();
+        if (typeof loadOpere === 'function') loadOpere();
+        
+        // Reset form
+        document.getElementById('opera-form').reset();
+        document.getElementById('opera-id').value = '';
+        
+        // Ricarica i menu se necessario
+        updateAllSelects();
+        
     } catch (error) {
         console.error("Errore salvataggio opera:", error);
         showToast("Errore: " + error.message, "error");
@@ -5463,52 +5478,79 @@ function detectAndShowInstallInstructions() {
 // FUNZIONE PER POPOLARE I MENU A TENDINA (NUOVA)
 // ==========================================
 function updateAllSelects() {
-    console.log("Aggiornamento menu a tendina in corso...");
+    console.log("🔄 Aggiornamento menu a tendina...");
 
-    // 1. POPOLA SELECT AUTORI (Nel form Opere e Concetti)
+    // 1. POPOLA SELECT AUTORI (Opere e Concetti)
     const authorSelects = ['opera-autore', 'concetto-autore'];
     
     authorSelects.forEach(selectId => {
         const select = document.getElementById(selectId);
-        if (!select) return;
+        if (!select) {
+            console.warn(`Select ${selectId} non trovata`);
+            return;
+        }
 
-        // Salva la selezione attuale se c'è
+        // Salva selezione attuale
         const currentVal = select.value;
-
-        // Pulisce tutto tranne la prima option (placeholder)
-        select.innerHTML = '<option value="">Seleziona un autore...</option>';
-
+        
+        // Pulisci tutte le opzioni
+        select.innerHTML = '<option value="">Seleziona un filosofo...</option>';
+        
+        // Se non ci sono filosofi, esci
+        if (!appData.filosofi || appData.filosofi.length === 0) {
+            console.warn("Nessun filosofo caricato per popolare il menu");
+            return;
+        }
+        
         // Ordina filosofi alfabeticamente
-        const sortedFilosofi = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
-
+        const sortedFilosofi = [...appData.filosofi].sort((a, b) => 
+            (a.nome || '').localeCompare(b.nome || '')
+        );
+        
         sortedFilosofi.forEach(f => {
-            const option = document.createElement('option');
-            option.value = f.id; 
-            option.textContent = f.nome;
-            select.appendChild(option);
+            if (f.nome) { // Solo se ha un nome
+                const option = document.createElement('option');
+                option.value = f.id; 
+                option.textContent = f.nome;
+                select.appendChild(option);
+            }
         });
-
-        // Ripristina selezione se possibile
-        if (currentVal) select.value = currentVal;
+        
+        // Ripristina selezione
+        if (currentVal) {
+            select.value = currentVal;
+        }
+        
+        console.log(`✅ Select ${selectId} popolata con ${sortedFilosofi.length} filosofi`);
     });
 
-    // 2. POPOLA SELECT OPERE (Nel form Concetti)
+    // 2. POPOLA SELECT OPERE (Solo per Concetti)
     const workSelect = document.getElementById('concetto-opera');
     if (workSelect) {
         const currentVal = workSelect.value;
         workSelect.innerHTML = '<option value="">Seleziona un\'opera (opzionale)...</option>';
-
+        
+        if (!appData.opere || appData.opere.length === 0) {
+            console.warn("Nessuna opera caricata per popolare il menu");
+            return;
+        }
+        
         // Ordina opere
-        const sortedOpere = [...(appData.opere || [])].sort((a, b) => a.titolo.localeCompare(b.titolo));
-
+        const sortedOpere = [...appData.opere].sort((a, b) => 
+            (a.titolo || '').localeCompare(b.titolo || '')
+        );
+        
         sortedOpere.forEach(o => {
-            const option = document.createElement('option');
-            option.value = o.id;
-            option.textContent = `${o.titolo} ${o.autore_nome ? '(' + o.autore_nome + ')' : ''}`;
-            workSelect.appendChild(option);
+            if (o.titolo) {
+                const option = document.createElement('option');
+                option.value = o.id;
+                option.textContent = `${o.titolo} ${o.autore_nome ? '(' + o.autore_nome + ')' : ''}`;
+                workSelect.appendChild(option);
+            }
         });
-
+        
         if (currentVal) workSelect.value = currentVal;
+        console.log(`✅ Select opere popolata con ${sortedOpere.length} opere`);
     }
 }
 // ==========================================
@@ -6085,5 +6127,63 @@ window.openModal = function(modalId) {
         }
     }
 };
+// ============================================
+// INIZIALIZZAZIONE AUTOMATICA FORM ADMIN
+// ============================================
 
-console.log("✅ Sistema di automazione modali attivato.");
+function initAdminForms() {
+    console.log("🎯 Inizializzazione form admin...");
+    
+    // Popola immediatamente i menu a tendina
+    updateAllSelects();
+    
+    // Setup per la select delle opere nel form concetti
+    const concettoAutoreSelect = document.getElementById('concetto-autore');
+    const concettoOperaSelect = document.getElementById('concetto-opera');
+    
+    if (concettoAutoreSelect && concettoOperaSelect) {
+        concettoAutoreSelect.onchange = function() {
+            const autoreId = this.value;
+            concettoOperaSelect.innerHTML = '<option value="">Caricamento opere...</option>';
+            concettoOperaSelect.disabled = true;
+            
+            if (!autoreId) {
+                concettoOperaSelect.innerHTML = '<option value="">Seleziona prima un filosofo</option>';
+                return;
+            }
+            
+            // Filtra opere per autore
+            const opereAutore = appData.opere.filter(opera => 
+                opera.autore_id === autoreId
+            );
+            
+            concettoOperaSelect.innerHTML = '<option value="">Seleziona un\'opera...</option>';
+            
+            if (opereAutore.length === 0) {
+                concettoOperaSelect.innerHTML += '<option value="">Nessuna opera trovata</option>';
+            } else {
+                opereAutore.forEach(opera => {
+                    const option = document.createElement('option');
+                    option.value = opera.id;
+                    option.textContent = opera.titolo;
+                    concettoOperaSelect.appendChild(option);
+                });
+            }
+            
+            concettoOperaSelect.disabled = false;
+        };
+    }
+}
+
+// Assicurati che la funzione venga chiamata quando si apre il pannello admin
+document.addEventListener('DOMContentLoaded', function() {
+    // Sovrascrivi la funzione showAdminPanel per includere initAdminForms
+    const originalShowAdminPanel = window.showAdminPanel;
+    if (originalShowAdminPanel) {
+        window.showAdminPanel = function() {
+            originalShowAdminPanel();
+            // Chiama l'inizializzazione dei form dopo un breve ritardo
+            setTimeout(initAdminForms, 300);
+        };
+    }
+});
