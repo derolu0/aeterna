@@ -5241,74 +5241,124 @@ function checkOnlineStatus() {
 }
 
 // ============================================
-// 2. INIZIALIZZAZIONE APP
+// 2. INIZIALIZZAZIONE APP (MERGED & FIXED)
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
 
-    // Init dati
+    // 1. SETUP UI BASE (Tuo codice originale)
     try {
         if (typeof loadLocalData === 'function') loadLocalData();
         if (typeof applyTranslations === 'function') applyTranslations();
         if (typeof updateLangButton === 'function') updateLangButton();
-    } catch (e) { console.warn("Errore init locale:", e); }
+        if (typeof showScreen === 'function') showScreen('home-screen');
+        if (typeof handleUrlParameters === 'function') handleUrlParameters();
+        if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
+        if (typeof checkOnlineStatus === 'function') checkOnlineStatus();
+    } catch (e) { console.warn("Errore init UI:", e); }
 
-    // Init UI
-    if (typeof showScreen === 'function') showScreen('home-screen');
-    if (typeof handleUrlParameters === 'function') handleUrlParameters();
-    if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
-    
-    // Check connessione
-    checkOnlineStatus();
-
-    // Caricamento remoto (ritardato per non bloccare)
-    setTimeout(async () => {
-        if (typeof initRemoteControl === 'function') initRemoteControl();
-        if (typeof registerServiceWorker === 'function') registerServiceWorker();
-
-        if (typeof loadFirebaseData === 'function') {
-            try {
-                await loadFirebaseData('filosofi');
-                if(document.getElementById('filosofi-list') && typeof loadFilosofi === 'function') loadFilosofi();
-                loadFirebaseData('opere');
-                loadFirebaseData('concetti');
-            } catch (error) {
-                console.warn("Dati remoti non disponibili:", error);
-            }
-        }
-    }, 500);
-    
-    // Gestione Splash Screen
+    // 2. GESTIONE SPLASH SCREEN (Tuo codice originale - Mantenuto)
     const splash = document.getElementById('splash-screen');
     const progressBar = document.querySelector('.splash-progress-bar');
 
     if (progressBar) {
         progressBar.style.transition = 'width 1.5s ease-in-out';
         progressBar.style.width = '5%';
-        
-        setTimeout(() => {
-            progressBar.style.width = '100%';
-        }, 100);
+        // Simula avanzamento
+        setTimeout(() => { progressBar.style.width = '100%'; }, 100);
     }
 
+    // Nascondi splash dopo 1.5 secondi
     if (splash) {
         setTimeout(() => {
             splash.style.transition = 'opacity 0.5s ease';
             splash.style.opacity = '0'; 
-            setTimeout(() => {
-                splash.style.display = 'none'; 
-            }, 500);
+            setTimeout(() => { splash.style.display = 'none'; }, 500);
         }, 1500);
     }
+
+    // 3. CARICAMENTO DATI SEQUENZIALE (Il FIX Importante)
+    // Usiamo setTimeout piccolo per non bloccare il rendering iniziale dello splash
+    setTimeout(async () => {
+        
+        // Init controlli remoti
+        if (typeof initRemoteControl === 'function') initRemoteControl();
+        if (typeof registerServiceWorker === 'function') registerServiceWorker();
+
+        if (window.firebaseInitialized || window.db) {
+            try {
+                console.log("📥 Inizio download dati...");
+                
+                // A. Carica PRIMA i filosofi (Cruciale per i menu)
+                await loadFirebaseData('filosofi');
+                
+                // B. Carica POI il resto
+                await Promise.all([
+                    loadFirebaseData('opere'),
+                    loadFirebaseData('concetti')
+                ]);
+                
+                console.log("✅ Dati scaricati. Aggiornamento UI...");
+
+                // C. Popola i menu a tendina (FIX Menu Vuoti)
+                if (typeof updateAllSelects === 'function') updateAllSelects();
+                
+                // D. Inizializza Mappa e Marker (FIX Mappa)
+                if (typeof initMap === 'function') initMap();
+                if (typeof loadMapMarkers === 'function') loadMapMarkers();
+
+                // E. Aggiorna le griglie visive
+                if (typeof loadFilosofi === 'function') loadFilosofi();
+                if (typeof loadOpere === 'function') loadOpere();
+                if (typeof loadConcetti === 'function') loadConcetti();
+                
+                // F. Aggiorna Admin Panel
+                if(document.getElementById('admin-panel') && document.getElementById('admin-panel').style.display !== 'none') {
+                    if (typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
+                    if (typeof loadAdminOpere === 'function') loadAdminOpere();
+                    if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
+                }
+
+            } catch (error) {
+                console.warn("⚠️ Errore caricamento dati remoti:", error);
+            }
+        }
+    }, 100);
+
+    // 4. RIATTACCO LISTENER EVENTI (Form e Bottoni)
+    const fForm = document.getElementById('filosofo-form');
+    if(fForm) fForm.onsubmit = saveFilosofo;
     
-    // Verifica ExcelWorker
-    if (typeof ExcelWorker === 'undefined') {
-        console.warn('ExcelWorker non caricato - alcune funzionalità saranno limitate');
-    } else {
-        console.log('✅ ExcelWorker pronto all\'uso');
+    const oForm = document.getElementById('opera-form');
+    if(oForm) oForm.onsubmit = saveOpera;
+    
+    const cForm = document.getElementById('concetto-form');
+    if(cForm) cForm.onsubmit = saveConcetto;
+
+    const geoBtn = document.getElementById('geocoding-btn');
+    if(geoBtn && typeof cercaCoordinateFilosofo === 'function') {
+        geoBtn.onclick = cercaCoordinateFilosofo;
     }
-    
-    console.log('✨ Aeterna Lexicon in Motu - App pronta');
+
+    // 5. FIX MAPPA GRIGIA (Al cambio tab)
+    const navMap = document.getElementById('nav-map');
+    if (navMap) {
+        navMap.addEventListener('click', function() {
+            setTimeout(() => {
+                if (window.map) {
+                    window.map.invalidateSize();
+                }
+            }, 200);
+        });
+    }
+
+    // 6. LOG FINALI
+    if (typeof ExcelWorker === 'undefined') {
+        console.warn('ExcelWorker non caricato - import limitato');
+    } else {
+        console.log('✅ ExcelWorker pronto');
+    }
+    console.log('✨ Aeterna Lexicon in Motu - Avvio completato');
 });
 
 // ============================================
@@ -5501,6 +5551,69 @@ function updateAllSelects() {
         if (currentVal) workSelect.value = currentVal;
     }
 }
+// ==========================================
+// VISUALIZZAZIONE FILOSOFI (Card complete + Navigazione)
+// ==========================================
+function loadFilosofi() {
+    const container = document.getElementById('filosofi-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Ordina alfabeticamente per nome
+    const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
+
+    if (sortedList.length === 0) {
+        container.innerHTML = '<p style="text-align:center; width:100%; color:#666;">Nessun filosofo presente. Inseriscine uno dal pannello Admin.</p>';
+        return;
+    }
+
+    sortedList.forEach(f => {
+        // Controlla se il filosofo ha coordinate valide (nuovo o vecchio formato)
+        let hasCoords = false;
+        if (f.coordinate && f.coordinate.lat) hasCoords = true;
+        else if (f.lat && f.lng) hasCoords = true;
+
+        const div = document.createElement('div');
+        div.className = 'grid-item animate-in'; 
+        
+        // Immagine: usa quella del DB o una di default
+        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
+        
+        div.innerHTML = `
+            <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
+                <span class="item-period-badge ${f.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.9); font-size: 0.8rem; font-weight: bold;">
+                    ${f.periodo || ''}
+                </span>
+            </div>
+            <div class="item-content" style="padding: 15px;">
+                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">${f.nome}</h3>
+                
+                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 1.1rem;">🏛️</span> ${f.scuola || 'Scuola non definita'}
+                </div>
+                
+                <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
+                    <div style="margin-bottom: 3px;">📅 ${f.anni_vita || 'Anni sconosciuti'}</div>
+                    <div>📍 ${f.luogo_nascita || 'Luogo sconosciuto'}</div>
+                </div>
+                
+                <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
+                    <button onclick="showDetail('${f.id}', 'filosofo')" class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; transition: background 0.2s;">
+                        Scheda
+                    </button>
+                    
+                    ${hasCoords ? `
+                        <button onclick="goToMap('${f.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <span>🗺️</span> Mappa
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
 
 // ==========================================
 // INIZIALIZZAZIONE MAIN (Modificata)
@@ -5624,7 +5737,116 @@ function loadMapMarkers() {
         });
     }
 }
+// ==========================================
+// 1. VISUALIZZAZIONE FILOSOFI (Card complete)
+// ==========================================
+function loadFilosofi() {
+    const container = document.getElementById('filosofi-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Ordina alfabeticamente
+    const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
 
+    if (sortedList.length === 0) {
+        container.innerHTML = '<p style="text-align:center; width:100%; color:#666;">Nessun filosofo presente. Inseriscine uno dal pannello Admin.</p>';
+        return;
+    }
+
+    sortedList.forEach(f => {
+        // Controlla se ha coordinate per mostrare il tasto mappa
+        let hasCoords = false;
+        if (f.coordinate && f.coordinate.lat) hasCoords = true;
+        else if (f.lat && f.lng) hasCoords = true;
+
+        const div = document.createElement('div');
+        div.className = 'grid-item animate-in'; 
+        
+        // Immagine
+        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
+        
+        div.innerHTML = `
+            <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
+                <span class="item-period-badge ${f.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.9); font-size: 0.8rem; font-weight: bold;">
+                    ${f.periodo || ''}
+                </span>
+            </div>
+            <div class="item-content" style="padding: 15px;">
+                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">${f.nome}</h3>
+                
+                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
+                    🏛️ ${f.scuola || 'Scuola non definita'}
+                </div>
+                
+                <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
+                    <div>📅 ${f.anni_vita || 'Anni sconosciuti'}</div>
+                    <div>📍 ${f.luogo_nascita || 'Luogo sconosciuto'}</div>
+                </div>
+                
+                <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
+                    <button onclick="showDetail('${f.id}', 'filosofo')" class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
+                        Scheda
+                    </button>
+                    
+                    ${hasCoords ? `
+                        <button onclick="goToMap('${f.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            🗺️ Mappa
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ==========================================
+// 2. GESTIONE MAPPA (Init + Navigazione)
+// ==========================================
+
+let mapInitialized = false;
+
+function initMap() {
+    // Se non c'è il div o è già init, esci
+    if (!document.getElementById('map') || window.map) return;
+
+    console.log("Inizializzazione Mappa Leaflet...");
+
+    // Crea mappa
+    window.map = L.map('map').setView([41.9028, 12.4964], 5); 
+
+    // Tiles
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(window.map);
+
+    // Init markers
+    window.markers = new Map(); 
+
+    mapInitialized = true;
+    
+    // Carica i punti
+    if (typeof loadMapMarkers === 'function') loadMapMarkers();
+}
+
+function goToMap(id) {
+    // 1. Simula click sul tab Mappa
+    const mapTabBtn = document.getElementById('nav-map');
+    if (mapTabBtn) mapTabBtn.click();
+
+    // 2. Trova dati
+    const filosofo = appData.filosofi.find(f => f.id === id);
+    if (!filosofo) return;
+
+    // 3. Centra dopo breve delay (per render)
+    setTimeout(() => {
+        if(window.map) window.map.invalidateSize();
+        centerMapOnFilosofo(filosofo);
+    }, 300);
+}
 // --- 2. FUNZIONE ESISTENTE: Centra la mappa su un filosofo ---
 function centerMapOnFilosofo(filosofo) {
     if (map && filosofo.coordinate) {
