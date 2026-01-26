@@ -50,6 +50,7 @@ if (typeof firebase !== 'undefined') {
     window.firebaseInitialized = true;
     console.log("✅ Firebase DB Connesso (Compat Mode) - Helpers pronti");
 }
+window.firebaseHelpers = {
         // ==============================================
         // FUNZIONI ESISTENTI (INTATTE)
         // ==============================================

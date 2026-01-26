@@ -1691,19 +1691,6 @@ function initializeScreenContent(screenId) {
     }
 }
 
-Sì, devi sostituire assolutamente tutto quel blocco.
-
-Il codice che mi hai appena incollato (quello con showSkeletonLoader e renderGridItems) è la versione "vecchia" e generica. Quella versione ha due grossi problemi:
-
-Ricarica i dati inutilmente: Usa await loadFirebaseData, che rallenta tutto perché li abbiamo già scaricati all'avvio.
-
-È "stupida": Non sa collegare i dati. Per questo nelle Opere non vedevi i nomi degli autori (ma solo codici strani) e nei Filosofi non vedevi il pulsante Mappa.
-
-Sostituisci quelle tre funzioni con questo blocco unico definitivo. Questo codice contiene la "Logica Intelligente" che collega ID agli Autori, controlla le coordinate per la mappa e rende le schede cliccabili.
-
-Copia e incolla questo al loro posto:
-
-JavaScript
 // ==========================================
 // FUNZIONI DI VISUALIZZAZIONE (VERSIONE INTELLIGENTE)
 // ==========================================
