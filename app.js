@@ -5449,29 +5449,203 @@ function detectAndShowInstallInstructions() {
     }
 }
 
-// Avvia il controllo quando la pagina è pronta
-document.addEventListener('DOMContentLoaded', () => {
-    detectAndShowInstallInstructions();
+// ==========================================
+// FUNZIONE PER POPOLARE I MENU A TENDINA (NUOVA)
+// ==========================================
+function updateAllSelects() {
+    console.log("Aggiornamento menu a tendina in corso...");
+
+    // 1. POPOLA SELECT AUTORI (Nel form Opere e Concetti)
+    const authorSelects = ['opera-autore', 'concetto-autore'];
+    
+    authorSelects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+
+        // Salva la selezione attuale se c'è
+        const currentVal = select.value;
+
+        // Pulisce tutto tranne la prima option (placeholder)
+        select.innerHTML = '<option value="">Seleziona un autore...</option>';
+
+        // Ordina filosofi alfabeticamente
+        const sortedFilosofi = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
+
+        sortedFilosofi.forEach(f => {
+            const option = document.createElement('option');
+            option.value = f.id; 
+            option.textContent = f.nome;
+            select.appendChild(option);
+        });
+
+        // Ripristina selezione se possibile
+        if (currentVal) select.value = currentVal;
+    });
+
+    // 2. POPOLA SELECT OPERE (Nel form Concetti)
+    const workSelect = document.getElementById('concetto-opera');
+    if (workSelect) {
+        const currentVal = workSelect.value;
+        workSelect.innerHTML = '<option value="">Seleziona un\'opera (opzionale)...</option>';
+
+        // Ordina opere
+        const sortedOpere = [...(appData.opere || [])].sort((a, b) => a.titolo.localeCompare(b.titolo));
+
+        sortedOpere.forEach(o => {
+            const option = document.createElement('option');
+            option.value = o.id;
+            option.textContent = `${o.titolo} ${o.autore_nome ? '(' + o.autore_nome + ')' : ''}`;
+            workSelect.appendChild(option);
+        });
+
+        if (currentVal) workSelect.value = currentVal;
+    }
+}
+
+// ==========================================
+// INIZIALIZZAZIONE MAIN (Modificata)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    
+    // 1. MANTENIAMO IL TUO CONTROLLO ANDROID
+    if (typeof detectAndShowInstallInstructions === 'function') {
+        detectAndShowInstallInstructions();
+    }
+
+    // 2. Setup Base
+    loadLocalData();
+    if (typeof applyTranslations === 'function') applyTranslations();
+
+    // 3. Caricamento Dati Firebase (SEQUENZA CORRETTA)
+    if (window.firebaseInitialized || window.db) {
+        try {
+            console.log("Inizio caricamento dati Firebase...");
+            
+            // A. Carica PRIMA i filosofi (essenziali per i menu)
+            await loadFirebaseData('filosofi');
+            
+            // B. Carica POI opere e concetti
+            await Promise.all([
+                loadFirebaseData('opere'),
+                loadFirebaseData('concetti')
+            ]);
+            
+            // C. ORA popola i menu a tendina (FIX CRUCIALE)
+            updateAllSelects(); 
+            
+            // D. Aggiorna le liste visive
+            if (typeof loadFilosofi === 'function') loadFilosofi(); 
+            if (typeof loadOpere === 'function') loadOpere();
+            if (typeof loadConcetti === 'function') loadConcetti();
+            
+            // E. Aggiorna Admin Panel se visibile
+            const adminPanel = document.getElementById('admin-panel');
+            if(adminPanel && adminPanel.style.display !== 'none') {
+                if (typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
+                if (typeof loadAdminOpere === 'function') loadAdminOpere();
+                if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
+            }
+
+        } catch (e) {
+            console.error("Errore sequenza caricamento:", e);
+        }
+    }
+
+    // 4. Riattacco gli Event Listeners dei Form
+    const fForm = document.getElementById('filosofo-form');
+    if(fForm) fForm.onsubmit = saveFilosofo;
+    
+    const oForm = document.getElementById('opera-form');
+    if(oForm) oForm.onsubmit = saveOpera;
+    
+    const cForm = document.getElementById('concetto-form');
+    if(cForm) cForm.onsubmit = saveConcetto;
+
+    // 5. Listener per bottone Geocoding
+    const geoBtn = document.getElementById('geocoding-btn');
+    if(geoBtn && typeof cercaCoordinateFilosofo === 'function') {
+        geoBtn.onclick = cercaCoordinateFilosofo;
+    }
 });
 
 // ============================================
 // FUNZIONI DI SUPPORTO AGGIUNTIVE
 // ============================================
 
+// --- 1. NUOVA FUNZIONE: Carica i punti (marker) sulla mappa ---
+function loadMapMarkers() {
+    // Verifica che la mappa e Leaflet (L) esistano
+    if (typeof map === 'undefined' || typeof L === 'undefined') return;
+
+    console.log("Generazione marker sulla mappa...");
+
+    // Se esiste la mappa globale dei marker, puliscila per evitare duplicati
+    if (typeof markers !== 'undefined' && markers instanceof Map) {
+        markers.forEach(marker => map.removeLayer(marker));
+        markers.clear();
+    }
+
+    // Itera su tutti i filosofi
+    if (appData.filosofi) {
+        appData.filosofi.forEach(f => {
+            let lat, lng;
+
+            // CASO A: Coordinate nel nuovo formato oggetto {lat: ..., lng: ...}
+            if (f.coordinate && typeof f.coordinate === 'object') {
+                lat = parseFloat(f.coordinate.lat);
+                lng = parseFloat(f.coordinate.lng);
+            } 
+            // CASO B: Coordinate nel vecchio formato "piatto"
+            else if (f.lat && f.lng) {
+                lat = parseFloat(f.lat);
+                lng = parseFloat(f.lng);
+            }
+
+            // Se abbiamo coordinate valide, crea il marker
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const marker = L.marker([lat, lng])
+                    .bindPopup(`
+                        <div style="text-align:center">
+                            <b>${f.nome}</b><br>
+                            <i>${f.luogo_nascita || ''}</i><br>
+                            <button onclick="showDetail('${f.id}', 'filosofo')" style="margin-top:5px; padding:4px 8px; cursor:pointer;">
+                                Dettagli
+                            </button>
+                        </div>
+                    `);
+                
+                marker.addTo(map);
+
+                // IMPORTANTE: Salva il marker nella memoria globale così centerMapOnFilosofo funziona
+                if (typeof markers !== 'undefined' && markers instanceof Map) {
+                    markers.set(`filosofo-${f.id}`, marker);
+                }
+            }
+        });
+    }
+}
+
+// --- 2. FUNZIONE ESISTENTE: Centra la mappa su un filosofo ---
 function centerMapOnFilosofo(filosofo) {
     if (map && filosofo.coordinate) {
+        // Centra la vista
         map.setView([filosofo.coordinate.lat, filosofo.coordinate.lng], 14);
         
-        // Apri popup se il marker esiste
+        // Cerca e apri il popup corrispondente
         const markerId = `filosofo-${filosofo.id}`;
-        if (markers.has(markerId)) {
+        
+        // Controlla se il marker esiste nella mappa globale
+        if (typeof markers !== 'undefined' && markers.has(markerId)) {
             markers.get(markerId).openPopup();
         }
         
         showToast(`Mappa centrata su ${filosofo.nome}`, 'success');
+    } else {
+        showToast('Coordinate non disponibili per questo filosofo', 'warning');
     }
 }
 
+// --- 3. FUNZIONE ESISTENTE: Gestione parametri URL ---
 function handleUrlParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     
