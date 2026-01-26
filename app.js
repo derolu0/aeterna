@@ -1274,14 +1274,11 @@ async function loadFirebaseData(type) {
 }
 
 async function saveFirebaseData(type, item, id = null) {
-    if (!window.db) throw new Error("Database non connesso");
+    if (!window.db) return null; // Protezione se il DB non è pronto
 
     try {
-        const collectionName = {
-            'filosofi': 'filosofi',
-            'opere': 'opere',
-            'concetti': 'concetti'
-        }[type] || type;
+        // Mappa i nomi delle collezioni se necessario
+        const collectionName = type; 
         
         let savedId;
         
@@ -1302,17 +1299,12 @@ async function saveFirebaseData(type, item, id = null) {
     }
 }
 
+// VERSIONE CORRETTA (Senza import) - Sostituisci la tua deleteFirebaseData con questa
 async function deleteFirebaseData(type, id) {
-    if (!window.db) throw new Error("Database non connesso");
+    if (!window.db) return false;
 
     try {
-        const collectionName = {
-            'filosofi': 'filosofi',
-            'opere': 'opere',
-            'concetti': 'concetti'
-        }[type] || type;
-
-        await window.db.collection(collectionName).doc(id).delete();
+        await window.db.collection(type).doc(id).delete();
         return true;
     } catch (error) {
         console.error(`Errore eliminazione ${type}:`, error);
@@ -1702,159 +1694,169 @@ function initializeScreenContent(screenId) {
 }
 
 // ==========================================
-// FUNZIONI DI VISUALIZZAZIONE (VERSIONE INTELLIGENTE)
+// 1. CARICAMENTO DATI (Logica Smart)
 // ==========================================
 
-// 1. FILOSOFI (Gestisce Foto + Bottone Mappa + Click Scheda)
 function loadFilosofi() {
     const container = document.getElementById('filosofi-list');
     if (!container) return;
-    
-    // Controllo se i dati ci sono (usiamo appData che è già carico)
-    if (!appData.filosofi || appData.filosofi.length === 0) {
-        container.innerHTML = '<div class="empty-state">Nessun filosofo caricato.</div>';
+    // Passa i dati al motore di rendering
+    renderGridItems(container, appData.filosofi || [], 'filosofo');
+}
+
+function loadOpere() {
+    const container = document.getElementById('opere-list');
+    if (!container) return;
+    renderCompactItems(container, appData.opere || [], 'opera');
+}
+
+function loadConcetti() {
+    const container = document.getElementById('concetti-list');
+    if (!container) return;
+    renderConcettiItems(container, appData.concetti || []);
+}
+
+// ==========================================
+// 2. MOTORE DI RENDERING GRAFICO (PREMIUM)
+// ==========================================
+
+function renderGridItems(container, items, type) {
+    if (!items || items.length === 0) {
+        container.innerHTML = `<div class="empty-state">Nessun elemento trovato.</div>`;
         return;
     }
     
+    // Ordina A-Z
+    const sortedList = [...items].sort((a, b) => (a.nome || a.titolo).localeCompare(b.nome || b.titolo));
     container.innerHTML = '';
     
-    // Ordina A-Z
-    const sortedList = [...appData.filosofi].sort((a, b) => a.nome.localeCompare(b.nome));
+    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
 
-    sortedList.forEach(f => {
-        // Controllo coordinate per decidere se mostrare il tasto mappa
-        let hasCoords = (f.coordinate && f.coordinate.lat) || (f.lat && f.lng);
-        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
-        
-        const div = document.createElement('div');
-        div.className = 'grid-item animate-in';
-        
-        // RENDIAMO TUTTA LA CARD CLICCABILE
-        div.onclick = () => showDetail(f.id, 'filosofo');
-        div.style.cursor = 'pointer'; 
+    sortedList.forEach(item => {
+        // LOGICA MAPPA: Controlla se ha coordinate per mostrare il bottone
+        let hasCoords = false;
+        if (type === 'filosofo') {
+            if ((item.coordinate && item.coordinate.lat) || (item.lat && item.lng)) hasCoords = true;
+        }
 
-        div.innerHTML = `
-            <div class="item-header" style="background-image: url('${imgUrl}');">
-                <span class="item-period-badge ${f.periodo || 'classico'}">
-                    ${f.periodo || ''}
+        const gridItem = document.createElement('div');
+        gridItem.className = 'grid-item animate-in';
+        // CLICK CARD: Apre la scheda dettaglio
+        gridItem.onclick = () => showDetail(item.id, type);
+        gridItem.style.cursor = 'pointer';
+        
+        // Badge Nuovo
+        let badgeHTML = '';
+        if (highlights.new.includes(item.id)) badgeHTML = '<span class="badge-new" style="margin-left:5px; font-size:0.7em; background:#ef4444; color:white; padding:2px 6px; border-radius:4px;">NUOVO</span>';
+        
+        // Immagine
+        const defaultImage = type === 'filosofo' ? 'images/default-filosofo.jpg' : 'images/default-opera.jpg';
+        const imgUrl = (item.ritratto || item.immagine) ? (item.ritratto || item.immagine) : defaultImage;
+
+        // HTML CARD (Grafica Premium)
+        gridItem.innerHTML = `
+            <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
+                <span class="item-period-badge ${item.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.95); font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    ${item.periodo || ''}
                 </span>
             </div>
-            <div class="item-content">
-                <h3 class="item-name">${f.nome}</h3>
-                <div class="item-scuola">🏛️ ${f.scuola || 'Scuola non definita'}</div>
-                <div class="item-details">
-                    <span>📅 ${f.anni_vita || ''}</span>
+            <div class="item-content" style="padding: 15px;">
+                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">
+                    ${item.nome || item.titolo} ${badgeHTML}
+                </h3>
+                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
+                    ${type === 'filosofo' ? `🏛️ ${item.scuola || 'Scuola non definita'}` : `✍️ ${item.autore_nome || 'Autore sconosciuto'}`}
                 </div>
-                
-                <div class="item-actions" style="margin-top: 10px;">
-                    <button class="btn-detail" style="width: 100%; margin-bottom: 5px;">Scheda</button>
+                <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
+                    <div>📅 ${item.anni_vita || item.anno || 'Anno n.d.'}</div>
+                    ${item.luogo_nascita ? `<div>📍 ${item.luogo_nascita}</div>` : ''}
+                </div>
+                <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
+                    <button class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
+                        Scheda
+                    </button>
                     ${hasCoords ? `
-                        <button onclick="event.stopPropagation(); goToMap('${f.id}')" class="btn-map" style="width:100%; display:flex; align-items:center; justify-content:center; gap:5px;">
+                        <button onclick="event.stopPropagation(); goToMap('${item.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight:600;">
                             🗺️ Mappa
                         </button>
                     ` : ''}
                 </div>
             </div>
         `;
-        container.appendChild(div);
+        container.appendChild(gridItem);
     });
 }
 
-// 2. OPERE (Gestisce il collegamento ID Autore -> Nome Autore)
-function loadOpere() {
-    const container = document.getElementById('opere-list');
-    if (!container) return;
-    
-    if (!appData.opere || appData.opere.length === 0) {
-        container.innerHTML = '<div class="empty-state">Nessuna opera caricata.</div>';
+function renderCompactItems(container, items, type) {
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nessun elemento trovato</div>';
         return;
     }
 
+    const sortedList = [...items].sort((a, b) => a.titolo.localeCompare(b.titolo));
     container.innerHTML = '';
 
-    const sortedList = [...appData.opere].sort((a, b) => a.titolo.localeCompare(b.titolo));
-
-    sortedList.forEach(o => {
-        // LOGICA INTELLIGENTE: Trova il nome dell'autore dall'ID
-        let nomeAutore = o.autore_nome;
-        
-        // Se manca il nome ma c'è l'ID, lo cerchiamo nella lista filosofi caricata in memoria
-        if (!nomeAutore && o.autore_id && appData.filosofi) {
-            const autore = appData.filosofi.find(f => f.id === o.autore_id);
+    sortedList.forEach(item => {
+        let nomeAutore = item.autore_nome;
+        if (!nomeAutore && item.autore_id && appData.filosofi) {
+            const autore = appData.filosofi.find(f => f.id === item.autore_id);
             if (autore) nomeAutore = autore.nome;
         }
 
         const div = document.createElement('div');
-        div.className = 'grid-item animate-in';
-        div.onclick = () => showDetail(o.id, 'opera');
-        div.style.cursor = 'pointer';
-
-        const hasPdf = o.pdf_url && o.pdf_url.length > 5;
+        div.className = 'compact-item animate-in';
+        div.onclick = () => showDetail(item.id, type);
+        div.style.cssText = "display: flex; align-items: center; padding: 15px; background: white; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s;";
+        
+        const hasPdf = item.pdf_url && item.pdf_url.length > 5;
+        const imgUrl = item.immagine || 'images/default-opera.jpg';
 
         div.innerHTML = `
-            <div class="item-content" style="padding: 20px; border-left: 5px solid var(--primary-green);">
-                <h3 class="item-name" style="color: var(--primary-green);">${o.titolo}</h3>
-                <div class="item-scuola" style="font-weight:bold; margin-bottom:5px;">
-                    ✍️ ${nomeAutore || 'Autore sconosciuto'}
-                </div>
-                <div class="item-details">
-                    <span>📅 ${o.anno || 'Anno n.d.'}</span>
-                    <span style="float:right">${o.lingua || ''}</span>
-                </div>
-                <p style="font-size:0.9rem; color:#666; margin-top:10px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
-                    ${o.sintesi || 'Nessuna sintesi disponibile.'}
-                </p>
-                ${hasPdf ? '<div style="margin-top:10px; font-size:0.8rem; color:#ef4444;"><i class="fas fa-file-pdf"></i> PDF Disponibile</div>' : ''}
+            <div class="compact-image" style="width: 60px; height: 60px; border-radius: 8px; background-image: url('${imgUrl}'); background-size: cover; margin-right: 15px; flex-shrink: 0;"></div>
+            <div class="compact-content" style="flex: 1;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">${item.titolo}</h4>
+                <div style="font-size: 0.9rem; color: #666; margin-top: 3px;">✍️ ${nomeAutore || 'Autore sconosciuto'}</div>
             </div>
+            ${hasPdf ? '<div style="color: #ef4444; font-size: 1.2rem; padding: 0 10px;"><i class="fas fa-file-pdf"></i></div>' : '<div style="color: #ddd; font-size: 1.2rem; padding: 0 10px;">›</div>'}
         `;
         container.appendChild(div);
     });
 }
 
-// 3. CONCETTI (Gestisce collegamenti dinamici)
-function loadConcetti() {
-    const container = document.getElementById('concetti-list');
-    if (!container) return;
-    
-    if (!appData.concetti || appData.concetti.length === 0) {
-        container.innerHTML = '<div class="empty-state">Nessun concetto caricato.</div>';
+function renderConcettiItems(container, items) {
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nessun concetto trovato</div>';
         return;
     }
-
+    const sortedList = [...items].sort((a, b) => a.parola.localeCompare(b.parola));
     container.innerHTML = '';
 
-    const sortedList = [...appData.concetti].sort((a, b) => a.parola.localeCompare(b.parola));
-
-    sortedList.forEach(c => {
-        // LOGICA INTELLIGENTE: Se l'autore è un ID, trova il nome corrispondente
-        let refAutore = c.autore_riferimento;
+    sortedList.forEach(item => {
+        let refAutore = item.autore_riferimento;
         if (refAutore && !refAutore.includes(' ') && appData.filosofi) {
             const f = appData.filosofi.find(x => x.id === refAutore);
             if(f) refAutore = f.nome;
         }
 
         const div = document.createElement('div');
-        div.className = 'grid-item animate-in';
-        div.onclick = () => showDetail(c.id, 'concetto');
-        div.style.cursor = 'pointer';
+        div.className = 'concetto-card animate-in';
+        div.onclick = () => showDetail(item.id, 'concetto');
+        div.style.cssText = "background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid var(--primary-purple, #8b5cf6); cursor: pointer;";
+
+        const hasAnalysis = typeof hasComparativeAnalysis === 'function' && hasComparativeAnalysis(item.parola);
 
         div.innerHTML = `
-            <div class="item-content" style="padding: 20px; border-left: 5px solid var(--primary-purple);">
-                <h3 class="item-name" style="color: var(--primary-purple); font-size: 1.4rem;">${c.parola}</h3>
-                
-                ${c.parola_en ? `<div style="font-style:italic; color:#888; margin-bottom:10px;">🇬🇧 ${c.parola_en}</div>` : ''}
-                
-                <div class="item-details" style="margin-bottom: 10px;">
-                    ${refAutore ? `<span>👤 ${refAutore}</span>` : ''}
-                </div>
-                
-                <p style="font-size:0.95rem; line-height:1.5;">
-                    ${c.definizione ? c.definizione.substring(0, 100) + '...' : 'Nessuna definizione.'}
-                </p>
-                
-                <div style="margin-top:15px; text-align:right; font-size:0.85rem; color:var(--primary-purple); font-weight:bold;">
-                    Leggi tutto →
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <h3 style="margin: 0; color: var(--primary-purple, #8b5cf6); font-size: 1.3rem;">${item.parola}</h3>
+                ${hasAnalysis ? '<span style="font-size: 0.7rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 3px 8px; border-radius: 10px;">📊 ANALISI</span>' : ''}
+            </div>
+            ${item.parola_en ? `<div style="font-style: italic; color: #999; margin-bottom: 10px; font-size: 0.9rem;">🇬🇧 ${item.parola_en}</div>` : ''}
+            <p style="color: #4b5563; line-height: 1.5; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                ${item.definizione || 'Nessuna definizione disponibile.'}
+            </p>
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; font-size: 0.85rem; color: #6b7280;">
+                <span>👤 ${refAutore || 'Generico'}</span>
+                <span>${item.periodo_storico || ''}</span>
             </div>
         `;
         container.appendChild(div);
