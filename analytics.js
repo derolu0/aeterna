@@ -1,3 +1,5 @@
+[file name]: analytics.js
+[file content begin]
 // Analytics Manager - Versione Filosofica Avanzata
 // Integrazione completa con sistema Aeterna Lexicon in Motu
 class AnalyticsManager {
