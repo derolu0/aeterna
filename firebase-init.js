@@ -1,59 +1,57 @@
 /**
  * FIREBASE CONFIGURATION - COMPAT FIX
  * ---------------------------------------------
- * Aggiornato per compatibilità con app.js esistente
- * Mantiene le funzioni helper originali
- * ---------------------------------------------
  */
 
 console.log('Initializing Firebase (Compat Mode)...');
 
-// 1. LA TUA CONFIGURAZIONE (Presa dal tuo file)
+// 1. CONFIGURAZIONE
 const firebaseConfig = {
     apiKey: "AIzaSyBo-Fz2fb8KHlvuZmb23psKDT6QvrJowB8",
     authDomain: "aeterna-lexicon-in-motu.firebaseapp.com",
     projectId: "aeterna-lexicon-in-motu",
     storageBucket: "aeterna-lexicon-in-motu.firebasestorage.app",
     messagingSenderId: "928786632423",
-    appId: "1:928786632423:web:578d45e7d6961a298d5c42", // Ho rimesso il tuo ID originale (finale 42)
-    measurementId: "G-E70D7TDDV7" // Ho rimesso il tuo ID originale (finale V7)
+    appId: "1:928786632423:web:578d45e7d6961a298d5c42",
+    measurementId: "G-E70D7TDDV7"
 };
 
-// 2. INIZIALIZZAZIONE SICURA (QUESTO È IL FIX)
-// Controlla se firebase è caricato
+// 2. INIZIALIZZAZIONE
 if (typeof firebase === 'undefined') {
-    console.error("ERRORE CRITICO: Librerie Firebase non caricate. Controlla index.html");
+    console.error("ERRORE: Firebase non caricato in index.html");
 } else {
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     } else {
-        firebase.app(); // Usa l'istanza esistente
+        firebase.app();
     }
 }
 
-// 3. ASSEGNAZIONE VARIABILI GLOBALI (Fondamentale per window.db.collection)
-// Questo crea il ponte tra il nuovo Firebase e il tuo vecchio codice
+// 3. VARIABILI GLOBALI
 if (typeof firebase !== 'undefined') {
-    window.db = firebase.firestore(); 
+    window.db = firebase.firestore();
     window.auth = firebase.auth();
     
-    // Init Analytics
     if (firebase.analytics) {
         window.firebaseAnalytics = firebase.analytics();
-        window.firebaseAnalytics.logEvent('app_launch_compat', { version: '2.1.0' });
     }
 
-    // Abilita persistenza
     window.db.enablePersistence({ synchronizeTabs: true })
-        .catch((err) => console.warn('Persistenza offline info:', err.code));
+        .catch(err => console.warn('Offline persistence:', err.code));
         
     window.firebaseInitialized = true;
-    console.log("✅ Firebase DB Connesso (Compat Mode) - Helpers pronti");
+    console.log("✅ Firebase DB Connesso (Compat Mode)");
 }
-window.firebaseHelpers = {
-        // ==============================================
-        // FUNZIONI ESISTENTI (INTATTE)
-        // ==============================================
+
+// ======================================================
+// PUNTO CRITICO: QUI INIZIANO GLI HELPER
+// ======================================================
+window.firebaseHelpers = {  // <--- QUESTA APERTURA È FONDAMENTALE
+
+    // --------------------------------------------------
+    // QUI SOTTO DEVONO ESSERCI LE TUE FUNZIONI VECCHIE
+    // Esempio: getCounts: async function() { ... },
+    // --------------------------------------------------
         
         // Carica dati filosofi
         loadFilosofi: async function() {

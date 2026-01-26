@@ -1274,38 +1274,48 @@ async function loadFirebaseData(type) {
 }
 
 async function saveFirebaseData(type, item, id = null) {
+    if (!window.db) throw new Error("Database non connesso");
+
     try {
-        const { doc, setDoc, updateDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        const collectionName = {
+            'filosofi': 'filosofi',
+            'opere': 'opere',
+            'concetti': 'concetti'
+        }[type] || type;
         
         let savedId;
-        const collectionName = COLLECTIONS[type.toUpperCase()];
         
         if (id) {
-            const docRef = doc(window.db, collectionName, id);
-            await updateDoc(docRef, item);
+            // Modifica esistente
+            await window.db.collection(collectionName).doc(id).set(item, { merge: true });
             savedId = id;
         } else {
-            const dataRef = collection(window.db, collectionName);
-            const newDoc = await addDoc(dataRef, item);
-            savedId = newDoc.id;
+            // Crea nuovo
+            const docRef = await window.db.collection(collectionName).add(item);
+            savedId = docRef.id;
         }
         
         return savedId;
     } catch (error) {
-        console.error(`Errore nel salvataggio ${type}:`, error);
+        console.error(`Errore salvataggio ${type}:`, error);
         throw error;
     }
 }
 
 async function deleteFirebaseData(type, id) {
+    if (!window.db) throw new Error("Database non connesso");
+
     try {
-        const { doc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        const collectionName = COLLECTIONS[type.toUpperCase()];
-        const docRef = doc(window.db, collectionName, id);
-        await deleteDoc(docRef);
+        const collectionName = {
+            'filosofi': 'filosofi',
+            'opere': 'opere',
+            'concetti': 'concetti'
+        }[type] || type;
+
+        await window.db.collection(collectionName).doc(id).delete();
         return true;
     } catch (error) {
-        console.error(`Errore nell'eliminazione ${type}:`, error);
+        console.error(`Errore eliminazione ${type}:`, error);
         throw error;
     }
 }
@@ -5359,126 +5369,6 @@ function checkOnlineStatus() {
     }
 }
 
-// ============================================
-// 2. INIZIALIZZAZIONE APP (MERGED & FIXED)
-// ============================================
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log("🚀 Avvio Aeterna Lexicon...");
-
-    // 1. SETUP UI BASE (Tuo codice originale)
-    try {
-        if (typeof loadLocalData === 'function') loadLocalData();
-        if (typeof applyTranslations === 'function') applyTranslations();
-        if (typeof updateLangButton === 'function') updateLangButton();
-        if (typeof showScreen === 'function') showScreen('home-screen');
-        if (typeof handleUrlParameters === 'function') handleUrlParameters();
-        if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
-        if (typeof checkOnlineStatus === 'function') checkOnlineStatus();
-    } catch (e) { console.warn("Errore init UI:", e); }
-
-    // 2. GESTIONE SPLASH SCREEN (Tuo codice originale - Mantenuto)
-    const splash = document.getElementById('splash-screen');
-    const progressBar = document.querySelector('.splash-progress-bar');
-
-    if (progressBar) {
-        progressBar.style.transition = 'width 1.5s ease-in-out';
-        progressBar.style.width = '5%';
-        // Simula avanzamento
-        setTimeout(() => { progressBar.style.width = '100%'; }, 100);
-    }
-
-    // Nascondi splash dopo 1.5 secondi
-    if (splash) {
-        setTimeout(() => {
-            splash.style.transition = 'opacity 0.5s ease';
-            splash.style.opacity = '0'; 
-            setTimeout(() => { splash.style.display = 'none'; }, 500);
-        }, 1500);
-    }
-
-    // 3. CARICAMENTO DATI SEQUENZIALE (Il FIX Importante)
-    // Usiamo setTimeout piccolo per non bloccare il rendering iniziale dello splash
-    setTimeout(async () => {
-        
-        // Init controlli remoti
-        if (typeof initRemoteControl === 'function') initRemoteControl();
-        if (typeof registerServiceWorker === 'function') registerServiceWorker();
-
-        if (window.firebaseInitialized || window.db) {
-            try {
-                console.log("📥 Inizio download dati...");
-                
-                // A. Carica PRIMA i filosofi (Cruciale per i menu)
-                await loadFirebaseData('filosofi');
-                
-                // B. Carica POI il resto
-                await Promise.all([
-                    loadFirebaseData('opere'),
-                    loadFirebaseData('concetti')
-                ]);
-                
-                console.log("✅ Dati scaricati. Aggiornamento UI...");
-
-                // C. Popola i menu a tendina (FIX Menu Vuoti)
-                if (typeof updateAllSelects === 'function') updateAllSelects();
-                
-                // D. Inizializza Mappa e Marker (FIX Mappa)
-                if (typeof initMap === 'function') initMap();
-                if (typeof loadMapMarkers === 'function') loadMapMarkers();
-
-                // E. Aggiorna le griglie visive
-                if (typeof loadFilosofi === 'function') loadFilosofi();
-                if (typeof loadOpere === 'function') loadOpere();
-                if (typeof loadConcetti === 'function') loadConcetti();
-                
-                // F. Aggiorna Admin Panel
-                if(document.getElementById('admin-panel') && document.getElementById('admin-panel').style.display !== 'none') {
-                    if (typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
-                    if (typeof loadAdminOpere === 'function') loadAdminOpere();
-                    if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
-                }
-
-            } catch (error) {
-                console.warn("⚠️ Errore caricamento dati remoti:", error);
-            }
-        }
-    }, 100);
-
-    // 4. RIATTACCO LISTENER EVENTI (Form e Bottoni)
-    const fForm = document.getElementById('filosofo-form');
-    if(fForm) fForm.onsubmit = saveFilosofo;
-    
-    const oForm = document.getElementById('opera-form');
-    if(oForm) oForm.onsubmit = saveOpera;
-    
-    const cForm = document.getElementById('concetto-form');
-    if(cForm) cForm.onsubmit = saveConcetto;
-
-    const geoBtn = document.getElementById('geocoding-btn');
-    if(geoBtn && typeof cercaCoordinateFilosofo === 'function') {
-        geoBtn.onclick = cercaCoordinateFilosofo;
-    }
-
-    // 5. FIX MAPPA GRIGIA (Al cambio tab)
-    const navMap = document.getElementById('nav-map');
-    if (navMap) {
-        navMap.addEventListener('click', function() {
-            setTimeout(() => {
-                if (window.map) {
-                    window.map.invalidateSize();
-                }
-            }, 200);
-        });
-    }
-
-    // 6. LOG FINALI
-    if (typeof ExcelWorker === 'undefined') {
-        console.warn('ExcelWorker non caricato - import limitato');
-    } else {
-        console.log('✅ ExcelWorker pronto');
-    }
-    console.log('✨ Aeterna Lexicon in Motu - Avvio completato');
-});
 
 // ============================================
 // GESTIONE QR CODE (Versione con Libreria)
@@ -5671,67 +5561,314 @@ function updateAllSelects() {
     }
 }
 // ==========================================
-// VISUALIZZAZIONE FILOSOFI (Card complete + Navigazione)
+// 1. FUNZIONI DI CARICAMENTO DATI (SMART)
 // ==========================================
+
 function loadFilosofi() {
     const container = document.getElementById('filosofi-list');
     if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // Ordina alfabeticamente per nome
-    const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
+    // Passa i dati al motore di rendering
+    renderGridItems(container, appData.filosofi || [], 'filosofo');
+}
 
-    if (sortedList.length === 0) {
-        container.innerHTML = '<p style="text-align:center; width:100%; color:#666;">Nessun filosofo presente. Inseriscine uno dal pannello Admin.</p>';
+function loadOpere() {
+    const container = document.getElementById('opere-list');
+    if (!container) return;
+    renderCompactItems(container, appData.opere || [], 'opera');
+}
+
+function loadConcetti() {
+    const container = document.getElementById('concetti-list');
+    if (!container) return;
+    renderConcettiItems(container, appData.concetti || []);
+}
+
+// ==========================================
+// 2. MOTORE DI RENDERING GRAFICO (PREMIUM)
+// ==========================================
+
+function renderGridItems(container, items, type) {
+    if (!items || items.length === 0) {
+        container.innerHTML = `<div class="empty-state">Nessun elemento trovato.</div>`;
         return;
     }
+    
+    // Ordina A-Z
+    const sortedList = [...items].sort((a, b) => (a.nome || a.titolo).localeCompare(b.nome || b.titolo));
+    container.innerHTML = '';
+    
+    const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
 
-    sortedList.forEach(f => {
-        // Controlla se il filosofo ha coordinate valide (nuovo o vecchio formato)
+    sortedList.forEach(item => {
+        // LOGICA MAPPA: Controlla se ha coordinate
         let hasCoords = false;
-        if (f.coordinate && f.coordinate.lat) hasCoords = true;
-        else if (f.lat && f.lng) hasCoords = true;
+        if (type === 'filosofo') {
+            if ((item.coordinate && item.coordinate.lat) || (item.lat && item.lng)) hasCoords = true;
+        }
 
-        const div = document.createElement('div');
-        div.className = 'grid-item animate-in'; 
+        const gridItem = document.createElement('div');
+        gridItem.className = 'grid-item animate-in';
+        // CLICK CARD: Apre la scheda dettaglio
+        gridItem.onclick = () => showDetail(item.id, type);
+        gridItem.style.cursor = 'pointer';
         
-        // Immagine: usa quella del DB o una di default
-        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
+        // Badge Nuovo
+        let badgeHTML = '';
+        if (highlights.new.includes(item.id)) badgeHTML = '<span class="badge-new" style="margin-left:5px; font-size:0.7em; background:#ef4444; color:white; padding:2px 6px; border-radius:4px;">NUOVO</span>';
         
-        div.innerHTML = `
+        // Immagine
+        const defaultImage = type === 'filosofo' ? 'images/default-filosofo.jpg' : 'images/default-opera.jpg';
+        const imgUrl = (item.ritratto || item.immagine) ? (item.ritratto || item.immagine) : defaultImage;
+
+        // HTML CARD
+        gridItem.innerHTML = `
             <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
-                <span class="item-period-badge ${f.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.9); font-size: 0.8rem; font-weight: bold;">
-                    ${f.periodo || ''}
+                <span class="item-period-badge ${item.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.95); font-size: 0.8rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                    ${item.periodo || ''}
                 </span>
             </div>
             <div class="item-content" style="padding: 15px;">
-                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">${f.nome}</h3>
-                
-                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-                    <span style="font-size: 1.1rem;">🏛️</span> ${f.scuola || 'Scuola non definita'}
+                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">
+                    ${item.nome || item.titolo} ${badgeHTML}
+                </h3>
+                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
+                    ${type === 'filosofo' ? `🏛️ ${item.scuola || 'Scuola non definita'}` : `✍️ ${item.autore_nome || 'Autore sconosciuto'}`}
                 </div>
-                
                 <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
-                    <div style="margin-bottom: 3px;">📅 ${f.anni_vita || 'Anni sconosciuti'}</div>
-                    <div>📍 ${f.luogo_nascita || 'Luogo sconosciuto'}</div>
+                    <div>📅 ${item.anni_vita || item.anno || 'Anno n.d.'}</div>
+                    ${item.luogo_nascita ? `<div>📍 ${item.luogo_nascita}</div>` : ''}
                 </div>
-                
                 <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
-                    <button onclick="showDetail('${f.id}', 'filosofo')" class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; transition: background 0.2s;">
+                    <button class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
                         Scheda
                     </button>
-                    
                     ${hasCoords ? `
-                        <button onclick="goToMap('${f.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                            <span>🗺️</span> Mappa
+                        <button onclick="event.stopPropagation(); goToMap('${item.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight:600;">
+                            🗺️ Mappa
                         </button>
                     ` : ''}
                 </div>
             </div>
         `;
+        container.appendChild(gridItem);
+    });
+}
+
+function renderCompactItems(container, items, type) {
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nessun elemento trovato</div>';
+        return;
+    }
+
+    const sortedList = [...items].sort((a, b) => a.titolo.localeCompare(b.titolo));
+    container.innerHTML = '';
+
+    sortedList.forEach(item => {
+        let nomeAutore = item.autore_nome;
+        if (!nomeAutore && item.autore_id && appData.filosofi) {
+            const autore = appData.filosofi.find(f => f.id === item.autore_id);
+            if (autore) nomeAutore = autore.nome;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'compact-item animate-in';
+        div.onclick = () => showDetail(item.id, type);
+        div.style.cssText = "display: flex; align-items: center; padding: 15px; background: white; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer;";
+        
+        const hasPdf = item.pdf_url && item.pdf_url.length > 5;
+        const imgUrl = item.immagine || 'images/default-opera.jpg';
+
+        div.innerHTML = `
+            <div class="compact-image" style="width: 60px; height: 60px; border-radius: 8px; background-image: url('${imgUrl}'); background-size: cover; margin-right: 15px; flex-shrink: 0;"></div>
+            <div class="compact-content" style="flex: 1;">
+                <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-dark);">${item.titolo}</h4>
+                <div style="font-size: 0.9rem; color: #666; margin-top: 3px;">✍️ ${nomeAutore || 'Autore sconosciuto'}</div>
+            </div>
+            ${hasPdf ? '<div style="color: #ef4444; font-size: 1.2rem; padding: 0 10px;"><i class="fas fa-file-pdf"></i></div>' : '<div style="color: #ddd; font-size: 1.2rem; padding: 0 10px;">›</div>'}
+        `;
         container.appendChild(div);
     });
+}
+
+function renderConcettiItems(container, items) {
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div class="empty-state">Nessun concetto trovato</div>';
+        return;
+    }
+    const sortedList = [...items].sort((a, b) => a.parola.localeCompare(b.parola));
+    container.innerHTML = '';
+
+    sortedList.forEach(item => {
+        let refAutore = item.autore_riferimento;
+        if (refAutore && !refAutore.includes(' ') && appData.filosofi) {
+            const f = appData.filosofi.find(x => x.id === refAutore);
+            if(f) refAutore = f.nome;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'concetto-card animate-in';
+        div.onclick = () => showDetail(item.id, 'concetto');
+        div.style.cssText = "background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid var(--primary-purple, #8b5cf6); cursor: pointer;";
+
+        const hasAnalysis = typeof hasComparativeAnalysis === 'function' && hasComparativeAnalysis(item.parola);
+
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <h3 style="margin: 0; color: var(--primary-purple, #8b5cf6); font-size: 1.3rem;">${item.parola}</h3>
+                ${hasAnalysis ? '<span style="font-size: 0.7rem; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 3px 8px; border-radius: 10px;">📊 ANALISI</span>' : ''}
+            </div>
+            ${item.parola_en ? `<div style="font-style: italic; color: #999; margin-bottom: 10px; font-size: 0.9rem;">🇬🇧 ${item.parola_en}</div>` : ''}
+            <p style="color: #4b5563; line-height: 1.5; font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                ${item.definizione || 'Nessuna definizione disponibile.'}
+            </p>
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #f3f4f6; display: flex; justify-content: space-between; font-size: 0.85rem; color: #6b7280;">
+                <span>👤 ${refAutore || 'Generico'}</span>
+                <span>${item.periodo_storico || ''}</span>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ==========================================
+// 3. GESTIONE MAPPA (Init + Navigazione)
+// ==========================================
+
+let mapInitialized = false;
+
+function initMap() {
+    // Se non c'è il div o è già init, esci
+    if (!document.getElementById('map') || window.map) return;
+    console.log("Inizializzazione Mappa Leaflet...");
+
+    window.map = L.map('map').setView([41.9028, 12.4964], 5); 
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+    }).addTo(window.map);
+
+    window.markers = new Map(); 
+    mapInitialized = true;
+    
+    // Carica i punti (Se la funzione esiste)
+    if (typeof loadMapMarkers === 'function') loadMapMarkers();
+}
+
+function goToMap(id) {
+    const mapTabBtn = document.getElementById('nav-map');
+    if (mapTabBtn) mapTabBtn.click();
+    const filosofo = appData.filosofi.find(f => f.id === id);
+    if (!filosofo) return;
+
+    setTimeout(() => {
+        if(window.map) window.map.invalidateSize();
+        centerMapOnFilosofo(filosofo);
+    }, 300);
+}
+
+function centerMapOnFilosofo(filosofo) {
+    if (map && filosofo.coordinate) {
+        map.setView([filosofo.coordinate.lat, filosofo.coordinate.lng], 14);
+        const markerId = `filosofo-${filosofo.id}`;
+        if (typeof markers !== 'undefined' && markers.has(markerId)) {
+            markers.get(markerId).openPopup();
+        }
+        showToast(`Mappa centrata su ${filosofo.nome}`, 'success');
+    } else {
+        showToast('Coordinate non disponibili', 'warning');
+    }
+}
+
+// ==========================================
+// 4. UTILITY VARIE (URL, Geocoding, Validation)
+// ==========================================
+
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const openType = urlParams.get('open');
+    const id = urlParams.get('id');
+    if (openType && id) {
+        setTimeout(() => showDetail(id, openType), 1000);
+    }
+}
+
+// Verifica Vis.js
+if (typeof vis !== 'undefined') {
+    console.log('✅ Vis.js già caricato');
+} else {
+    console.warn('⚠️ Vis.js non caricato');
+}
+
+// Export globali
+window.openComparativeAnalysis = openComparativeAnalysis;
+window.closeComparativeAnalysis = closeComparativeAnalysis;
+window.exportAnalysisToExcel = exportAnalysisToExcel;
+window.shareAnalysis = shareAnalysis;
+window.hasComparativeAnalysis = hasComparativeAnalysis;
+
+// Geocoding
+async function cercaCoordinateFilosofo() {
+    const citta = document.getElementById('filosofo-luogo').value;
+    const nome = document.getElementById('filosofo-nome').value;
+    
+    if (!citta || !nome) {
+        showToast('Inserisci luogo e nome', 'warning');
+        return;
+    }
+    try {
+        showToast('Ricerca coordinate...', 'info');
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(citta)}&format=json&limit=1`);
+        const data = await response.json();
+        if (data && data.length > 0) {
+            document.getElementById('filosofo-lat').value = parseFloat(data[0].lat).toFixed(6);
+            document.getElementById('filosofo-lng').value = parseFloat(data[0].lon).toFixed(6);
+            showToast(`Coordinate trovate!`, 'success');
+        } else {
+            showToast('Luogo non trovato', 'error');
+        }
+    } catch (error) {
+        console.error(error);
+        showToast('Errore ricerca', 'error');
+    }
+}
+
+function addGeocodingButtonToForm() {
+    const luogoField = document.getElementById('filosofo-luogo');
+    if (luogoField && !document.getElementById('geocoding-btn')) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'geocoding-btn';
+        btn.className = 'geocoding-btn';
+        btn.innerHTML = '<i class="fas fa-map-marker-alt"></i> Cerca Coordinate';
+        btn.onclick = cercaCoordinateFilosofo;
+        luogoField.parentNode.appendChild(btn);
+    }
+}
+
+// Validazione
+function validateFilosofoData(data) {
+    const errors = [];
+    if (!data.nome || data.nome.length < 2) errors.push("Nome troppo corto");
+    return errors;
+}
+
+function validateOperaData(data) {
+    const errors = [];
+    if (!data.titolo || data.titolo.length < 2) errors.push("Titolo obbligatorio");
+    if (!data.autore_id) errors.push("Autore obbligatorio");
+    return errors;
+}
+
+function validateConcettoData(data) {
+    const errors = [];
+    if (!data.parola || data.parola.length < 2) errors.push("Parola obbligatoria");
+    return errors;
+}
+
+// Fallback Sync
+if (typeof addToSyncQueue === 'undefined') {
+    window.addToSyncQueue = async function() { return true; };
 }
 
 // ==========================================
@@ -5855,251 +5992,4 @@ function loadMapMarkers() {
             }
         });
     }
-}
-// ==========================================
-// 1. VISUALIZZAZIONE FILOSOFI (Card complete)
-// ==========================================
-function loadFilosofi() {
-    const container = document.getElementById('filosofi-list');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // Ordina alfabeticamente
-    const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
-
-    if (sortedList.length === 0) {
-        container.innerHTML = '<p style="text-align:center; width:100%; color:#666;">Nessun filosofo presente. Inseriscine uno dal pannello Admin.</p>';
-        return;
-    }
-
-    sortedList.forEach(f => {
-        // Controlla se ha coordinate per mostrare il tasto mappa
-        let hasCoords = false;
-        if (f.coordinate && f.coordinate.lat) hasCoords = true;
-        else if (f.lat && f.lng) hasCoords = true;
-
-        const div = document.createElement('div');
-        div.className = 'grid-item animate-in'; 
-        
-        // Immagine
-        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
-        
-        div.innerHTML = `
-            <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
-                <span class="item-period-badge ${f.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.9); font-size: 0.8rem; font-weight: bold;">
-                    ${f.periodo || ''}
-                </span>
-            </div>
-            <div class="item-content" style="padding: 15px;">
-                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">${f.nome}</h3>
-                
-                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
-                    🏛️ ${f.scuola || 'Scuola non definita'}
-                </div>
-                
-                <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
-                    <div>📅 ${f.anni_vita || 'Anni sconosciuti'}</div>
-                    <div>📍 ${f.luogo_nascita || 'Luogo sconosciuto'}</div>
-                </div>
-                
-                <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
-                    <button onclick="showDetail('${f.id}', 'filosofo')" class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
-                        Scheda
-                    </button>
-                    
-                    ${hasCoords ? `
-                        <button onclick="goToMap('${f.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                            🗺️ Mappa
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
-
-// ==========================================
-// 2. GESTIONE MAPPA (Init + Navigazione)
-// ==========================================
-
-let mapInitialized = false;
-
-function initMap() {
-    // Se non c'è il div o è già init, esci
-    if (!document.getElementById('map') || window.map) return;
-
-    console.log("Inizializzazione Mappa Leaflet...");
-
-    // Crea mappa
-    window.map = L.map('map').setView([41.9028, 12.4964], 5); 
-
-    // Tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(window.map);
-
-    // Init markers
-    window.markers = new Map(); 
-
-    mapInitialized = true;
-    
-    // Carica i punti
-    if (typeof loadMapMarkers === 'function') loadMapMarkers();
-}
-
-function goToMap(id) {
-    // 1. Simula click sul tab Mappa
-    const mapTabBtn = document.getElementById('nav-map');
-    if (mapTabBtn) mapTabBtn.click();
-
-    // 2. Trova dati
-    const filosofo = appData.filosofi.find(f => f.id === id);
-    if (!filosofo) return;
-
-    // 3. Centra dopo breve delay (per render)
-    setTimeout(() => {
-        if(window.map) window.map.invalidateSize();
-        centerMapOnFilosofo(filosofo);
-    }, 300);
-}
-// --- 2. FUNZIONE ESISTENTE: Centra la mappa su un filosofo ---
-function centerMapOnFilosofo(filosofo) {
-    if (map && filosofo.coordinate) {
-        // Centra la vista
-        map.setView([filosofo.coordinate.lat, filosofo.coordinate.lng], 14);
-        
-        // Cerca e apri il popup corrispondente
-        const markerId = `filosofo-${filosofo.id}`;
-        
-        // Controlla se il marker esiste nella mappa globale
-        if (typeof markers !== 'undefined' && markers.has(markerId)) {
-            markers.get(markerId).openPopup();
-        }
-        
-        showToast(`Mappa centrata su ${filosofo.nome}`, 'success');
-    } else {
-        showToast('Coordinate non disponibili per questo filosofo', 'warning');
-    }
-}
-
-// --- 3. FUNZIONE ESISTENTE: Gestione parametri URL ---
-function handleUrlParameters() {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Esempio: ?open=concetto&id=abc123
-    const openType = urlParams.get('open');
-    const id = urlParams.get('id');
-    
-    if (openType && id) {
-        setTimeout(() => {
-            showDetail(id, openType);
-        }, 1000);
-    }
-}
-
-// ============================================
-// INIZIALIZZAZIONE MANCANTE PER MAPPA CONCETTUALE
-// ============================================
-if (typeof vis !== 'undefined') {
-    console.log('✅ Vis.js già caricato');
-} else {
-    console.warn('⚠️ Vis.js non caricato - la mappa concettuale non funzionerà');
-}
-
-// Esporta funzioni globalmente se necessario
-window.openComparativeAnalysis = openComparativeAnalysis;
-window.closeComparativeAnalysis = closeComparativeAnalysis;
-window.exportAnalysisToExcel = exportAnalysisToExcel;
-window.shareAnalysis = shareAnalysis;
-window.hasComparativeAnalysis = hasComparativeAnalysis;
-// ============================================
-// FUNZIONE DI GEOCODING PER FILOSOFI
-// ============================================
-
-async function cercaCoordinateFilosofo() {
-    const citta = document.getElementById('filosofo-luogo').value;
-    const nome = document.getElementById('filosofo-nome').value;
-    
-    if (!citta || !nome) {
-        showToast('Inserisci almeno il luogo di nascita e il nome', 'warning');
-        return;
-    }
-    
-    try {
-        showToast('Ricerca coordinate in corso...', 'info');
-        
-        // Usa Nominatim (OpenStreetMap) API
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(citta)}&format=json&limit=1`
-        );
-        
-        const data = await response.json();
-        
-        if (data && data.length > 0) {
-            const lat = parseFloat(data[0].lat);
-            const lng = parseFloat(data[0].lon);
-            
-            document.getElementById('filosofo-lat').value = lat.toFixed(6);
-            document.getElementById('filosofo-lng').value = lng.toFixed(6);
-            
-            showToast(`Coordinate trovate per ${citta}`, 'success');
-        } else {
-            showToast('Luogo non trovato, usa coordinate manuali', 'error');
-        }
-    } catch (error) {
-        console.error('Errore geocoding:', error);
-        showToast('Errore nella ricerca coordinate', 'error');
-    }
-}
-
-// Funzione per aggiungere pulsante nel form
-function addGeocodingButtonToForm() {
-    const luogoField = document.getElementById('filosofo-luogo');
-    if (luogoField && !document.getElementById('geocoding-btn')) {
-        const wrapper = luogoField.parentNode;
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.id = 'geocoding-btn';
-        button.className = 'geocoding-btn';
-        button.innerHTML = '<i class="fas fa-map-marker-alt"></i> Cerca Coordinate';
-        button.onclick = cercaCoordinateFilosofo;
-        
-        // Inserisci dopo il campo
-        wrapper.appendChild(button);
-    }
-}
-// ==========================================
-// FUNZIONI DI VALIDAZIONE E UTILITÀ
-// (Incolla questo alla fine di app.js)
-// ==========================================
-
-function validateFilosofoData(data) {
-    const errors = [];
-    if (!data.nome || data.nome.length < 2) errors.push("Il nome deve essere di almeno 2 caratteri");
-    return errors;
-}
-
-function validateOperaData(data) {
-    const errors = [];
-    if (!data.titolo || data.titolo.length < 2) errors.push("Il titolo è obbligatorio");
-    if (!data.autore_id) errors.push("Devi selezionare un autore");
-    return errors;
-}
-
-function validateConcettoData(data) {
-    const errors = [];
-    if (!data.parola || data.parola.length < 2) errors.push("La parola chiave è obbligatoria");
-    return errors;
-}
-
-// Fallback per la sincronizzazione offline se non implementata
-if (typeof addToSyncQueue === 'undefined') {
-    window.addToSyncQueue = async function(op, type, data, id) {
-        console.warn("Sincronizzazione offline non completa, salvataggio solo locale.");
-        return true;
-    };
 }
