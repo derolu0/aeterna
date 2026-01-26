@@ -1173,6 +1173,7 @@ function sendSystemNotification(title, body) {
 // ============================================
 
 async function loadFirebaseData(type) {
+    // 1. PROTEZIONE: Se il DB non è pronto, evita il crash e usa i dati locali
     if (!window.db) {
         console.warn(`[Firebase] DB non pronto per ${type}, uso dati locali.`);
         return loadLocalData(type);
@@ -1186,67 +1187,89 @@ async function loadFirebaseData(type) {
         };
         const collectionName = collectionMap[type] || type;
 
+        // 2. CORREZIONE: Uso diretto di window.db (Sintassi Compat)
+        // Nessun import, nessuna funzione esterna.
         const snapshot = await window.db.collection(collectionName).get();
         
         const data = [];
         snapshot.forEach(doc => {
             const docData = doc.data();
-            const itemData = { 
-                id: doc.id, 
-                ...docData  // Questo è cruciale: copia TUTTI i campi dal documento
-            };
             
-            // Assicurati che i campi standard esistano
+            // 3. MAPPING DATI (La tua logica originale, mantenuta intatta)
+            let itemData = { 
+                id: doc.id, 
+                last_modified: docData.last_modified || new Date().toISOString()
+            };
+
             if (type === 'filosofi') {
-                itemData.nome = docData.nome || '';
-                itemData.scuola = docData.scuola || '';
-                itemData.periodo = docData.periodo || 'classico';
-                itemData.anni_vita = docData.anni_vita || '';
-                itemData.luogo_nascita = docData.luogo_nascita || '';
-                itemData.biografia = docData.biografia || '';
-                itemData.coordinate = docData.coordinate || null;
-                itemData.ritratto = docData.ritratto || '';
-                itemData.opere_principali = docData.opere_principali || [];
-                itemData.concetti_principali = docData.concetti_principali || [];
+                itemData = {
+                    ...itemData,
+                    nome: docData.nome || '',
+                    nome_en: docData.nome_en || '',
+                    scuola: docData.scuola || '',
+                    periodo: docData.periodo || 'classico',
+                    anni_vita: docData.anni_vita || '',
+                    luogo_nascita: docData.luogo_nascita || '',
+                    biografia: docData.biografia || '',
+                    biografia_en: docData.biografia_en || '',
+                    ritratto: docData.ritratto || '',
+                    opere_principali: docData.opere_principali || [],
+                    concetti_principali: docData.concetti_principali || [],
+                    coordinate: docData.coordinate || null
+                };
             } else if (type === 'opere') {
-                itemData.titolo = docData.titolo || '';
-                itemData.autore_id = docData.autore_id || '';
-                itemData.autore_nome = docData.autore_nome || '';
-                itemData.anno = docData.anno || '';
-                itemData.periodo = docData.periodo || '';
-                itemData.sintesi = docData.sintesi || '';
-                itemData.lingua = docData.lingua || '';
-                itemData.pdf_url = docData.pdf_url || '';
-                itemData.concetti = docData.concetti || [];
-                itemData.immagine = docData.immagine || '';
+                itemData = {
+                    ...itemData,
+                    titolo: docData.titolo || '',
+                    titolo_en: docData.titolo_en || '',
+                    autore_id: docData.autore_id || '',
+                    autore_nome: docData.autore_nome || '',
+                    anno: docData.anno || '',
+                    periodo: docData.periodo || '',
+                    lingua: docData.lingua || '',
+                    sintesi: docData.sintesi || '',
+                    sintesi_en: docData.sintesi_en || '',
+                    pdf_url: docData.pdf_url || '',
+                    concetti: docData.concetti || []
+                };
             } else if (type === 'concetti') {
-                itemData.parola = docData.parola || '';
-                itemData.definizione = docData.definizione || '';
-                itemData.esempio_citazione = docData.esempio_citazione || '';
-                itemData.autore_riferimento = docData.autore_riferimento || '';
-                itemData.opera_riferimento = docData.opera_riferimento || '';
-                itemData.periodo_storico = docData.periodo_storico || '';
-                itemData.evoluzione = docData.evoluzione || '';
+                itemData = {
+                    ...itemData,
+                    parola: docData.parola || '',
+                    parola_en: docData.parola_en || '',
+                    definizione: docData.definizione || '',
+                    definizione_en: docData.definizione_en || '',
+                    esempio_citazione: docData.esempio_citazione || '',
+                    autore_riferimento: docData.autore_riferimento || '',
+                    opera_riferimento: docData.opera_riferimento || '',
+                    periodo_storico: docData.periodo_storico || '',
+                    evoluzione: docData.evoluzione || ''
+                };
             }
             
             data.push(itemData);
         });
         
+        // 4. Aggiornamento UI e salvataggio locale
+        if (typeof checkAndNotifyUpdates === 'function') {
+            checkAndNotifyUpdates(data, type);
+        }
+
         appData[type] = data;
         saveLocalData();
         
-        console.log(`✅ ${data.length} ${type} caricati da Firebase`);
-        
-        // AGGIUNGI QUESTA RIGA: Aggiorna immediatamente i menu a tendina
-        if (type === 'filosofi') {
-            updateAllSelects();
+        // showToast(`${data.length} ${type} caricati da Firebase`, 'success');
+        if (typeof logActivity === 'function') {
+            logActivity(`${data.length} ${type} caricati da Firebase`);
         }
         
         return data;
 
     } catch (error) {
         console.error(`Errore loadFirebaseData_${type}:`, error);
-        return loadLocalData(type);
+        // Fallback ai dati locali in caso di errore
+        loadLocalData(type);
+        return appData[type];
     }
 }
 
@@ -1526,52 +1549,31 @@ function showAdminPanel() {
             section.style.display = 'none';
         }
     });
-    
-    // Inizializza i form con controllo
-    if (typeof initAdminForms === 'function') {
-        // Piccolo delay per assicurare che il DOM sia pronto
-        setTimeout(initAdminForms, 100);
-    } else {
-        console.warn("initAdminForms function not found");
-    }
-    
-    // Carica i dati nelle tabelle
+
     loadAdminFilosofi();
     loadAdminOpere();
     loadAdminConcetti();
-    
-    // Aggiorna statistiche dashboard
     updateDashboardStats();
     
-    // Carica analytics e performance
+    // --- PUNTO 4: SOSTITUISCI QUESTE RIGHE ---
     if (typeof refreshAnalyticsDashboard === 'function') {
         refreshAnalyticsDashboard();
     }
     if (typeof updatePerformanceMetrics === 'function') {
         updatePerformanceMetrics();
     }
+    // -----------------------------------------
     
-    // Carica activity log con gestione sicura
     const savedLog = localStorage.getItem('activityLog');
     if (savedLog) {
-        try {
-            if (typeof activityLog !== 'undefined') {
-                activityLog = JSON.parse(savedLog);
-            } else if (typeof window.activityLog !== 'undefined') {
-                window.activityLog = JSON.parse(savedLog);
-            } else {
-                activityLog = JSON.parse(savedLog);
-            }
-            
-            if (typeof updateActivityLog === 'function') {
-                updateActivityLog();
-            }
-        } catch (error) {
-            console.error('Errore nel parsing dell\'activity log:', error);
+        // Usa window.activityLog per sicurezza
+        if (typeof activityLog !== 'undefined') {
+            activityLog = JSON.parse(savedLog);
+        } else {
+            window.activityLog = JSON.parse(savedLog);
         }
+        if (typeof updateActivityLog === 'function') updateActivityLog();
     }
-    
-    console.log("✅ Pannello admin inizializzato per ruolo:", currentUserRole);
 }
 
 function closeAdminPanel() {
@@ -1588,13 +1590,13 @@ function logoutAdmin() {
         clearTimeout(adminAuthTimeout);
         adminAuthTimeout = null;
     }
-    
     closeAdminPanel();
     showToast('Logout amministratore effettuato', 'success');
     logActivity('Logout amministratore');
 
     setTimeout(() => window.location.reload(), 1000);
 }
+
 // Navigation and Screen Management
 function showScreen(screenId) {
     const currentScreen = screenHistory[screenHistory.length - 1];
@@ -4171,107 +4173,121 @@ function editOpera(id) {
     showAdminTab('opere-admin');
 }
 
-async function saveOpera(event) {
-    event.preventDefault();
-    
-    // Helper per leggere valori
+async function saveOpera(e) {
+    e.preventDefault();
+
+    // 1. Helper di sicurezza: legge il valore solo se l'elemento esiste
     const getVal = (id) => {
         const el = document.getElementById(id);
         return el ? el.value.trim() : '';
     };
 
     try {
+        // 2. Recupero dati sicuro
         const id = getVal('opera-id');
         const titolo = getVal('opera-titolo');
-        const titolo_en = getVal('opera-titolo-en');
-        const autoreSelect = document.getElementById('opera-autore');
-        const autoreId = autoreSelect ? autoreSelect.value : '';
+        const autore_id = getVal('opera-autore');
         
-        // VALIDAZIONI
+        // Gestione sicura del nome autore dalla select (evita crash se vuota)
+        let autore_nome = '';
+        const autoreSelect = document.getElementById('opera-autore');
+        if (autoreSelect && autoreSelect.selectedIndex >= 0) {
+            autore_nome = autoreSelect.options[autoreSelect.selectedIndex].text;
+        } else {
+            autore_nome = 'Autore non specificato'; 
+        }
+
+        const anno = getVal('opera-anno');
+        const periodo = getVal('opera-periodo');
+        const lingua = getVal('opera-lingua');
+        const sintesi = getVal('opera-sintesi');
+        const pdf_url = getVal('opera-pdf');
+        const immagine = getVal('opera-immagine');
+        const concettiInput = getVal('opera-concetti');
+        
+        // Campi inglesi (opzionali)
+        const titolo_en = getVal('opera-titolo-en');
+        const sintesi_en = getVal('opera-sintesi-en');
+        
+        // Validazione minima
         if (!titolo) {
             showToast("Il titolo è obbligatorio", "error");
             return;
         }
-        
-        if (!autoreId) {
-            showToast("Devi selezionare un autore", "error");
-            return;
-        }
-        
-        // Trova il nome dell'autore
-        let autoreNome = '';
-        if (autoreSelect && autoreSelect.selectedIndex >= 0) {
-            autoreNome = autoreSelect.options[autoreSelect.selectedIndex].text;
-        }
-        
-        // Se non troviamo il nome dal menu, cercalo nei dati
-        if (!autoreNome && autoreId) {
-            const filosofo = appData.filosofi.find(f => f.id === autoreId);
-            autoreNome = filosofo ? filosofo.nome : 'Autore sconosciuto';
-        }
 
-        // Costruisci i dati dell'opera
         const operaData = {
-            titolo: titolo,
-            titolo_en: titolo_en || '',
-            autore_id: autoreId,
-            autore_nome: autoreNome,
-            anno: getVal('opera-anno'),
-            periodo: getVal('opera-periodo'),
-            sintesi: getVal('opera-sintesi'),
-            sintesi_en: getVal('opera-sintesi-en') || '',
-            lingua: getVal('opera-lingua'),
-            pdf_url: getVal('opera-pdf'),
-            immagine: getVal('opera-immagine'),
-            concetti: getVal('opera-concetti') ? 
-                getVal('opera-concetti').split(',').map(c => c.trim()).filter(c => c !== '') : [],
+            titolo,
+            titolo_en,
+            autore_id,
+            autore_nome,
+            anno,
+            periodo,
+            lingua,
+            sintesi,
+            sintesi_en,
+            pdf_url,
+            immagine,
+            // Converte stringa "a, b, c" in array sicuro
+            concetti: concettiInput ? concettiInput.split(',').map(c => c.trim()).filter(c => c !== '') : [],
             last_modified: new Date().toISOString()
         };
-
-        let savedId;
         
-        if (navigator.onLine && window.db) {
-            if (id) {
-                // Modifica esistente
-                await saveFirebaseData('opere', operaData, id);
-                savedId = id;
-                
-                // Aggiorna localmente
-                const index = appData.opere.findIndex(o => o.id === id);
-                if (index !== -1) {
-                    appData.opere[index] = { id, ...operaData };
-                }
-            } else {
-                // Crea nuovo
-                savedId = await saveFirebaseData('opere', operaData);
-                appData.opere.push({ id: savedId, ...operaData });
-            }
-            
-            showToast('Opera salvata con successo!', 'success');
-        } else {
-            // Modalità offline
-            savedId = id || `local_${Date.now()}`;
-            if (typeof addToSyncQueue === 'function') {
-                await addToSyncQueue(id ? 'UPDATE' : 'CREATE', 'opere', operaData, savedId);
-            }
-            showToast('Opera salvata localmente (offline)', 'info');
+        // Validazione avanzata (se la funzione esiste)
+        if (typeof validateOperaData === 'function') {
+            const validationErrors = validateOperaData(operaData);
+            if (validationErrors.length > 0) throw validationErrors[0];
         }
         
-        // Aggiorna UI
+        // 3. Logica Salvataggio (Allineata con Firebase fix)
+        let savedId;
+        const operation = id ? 'UPDATE' : 'CREATE';
+
+        if (navigator.onLine && window.db) {
+            if (id && id.trim() !== '') {
+                // Modifica
+                await saveFirebaseData('opere', operaData, id);
+                savedId = id;
+                const index = appData.opere.findIndex(o => o.id == id);
+                if (index !== -1) appData.opere[index] = { id, ...operaData };
+                showToast('Opera modificata con successo', 'success');
+            } else {
+                // Nuova
+                savedId = await saveFirebaseData('opere', operaData);
+                appData.opere.push({ id: savedId, ...operaData });
+                showToast(`Opera aggiunta (ID: ${savedId})`, 'success');
+            }
+        } else {
+            // Offline
+            savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            if (typeof addToSyncQueue === 'function') {
+                await addToSyncQueue(operation, 'opere', operaData, savedId);
+            }
+            
+            if (operation === 'UPDATE') {
+                const index = appData.opere.findIndex(o => o.id == id);
+                if (index !== -1) appData.opere[index] = { id: savedId, ...operaData };
+            } else {
+                appData.opere.push({ id: savedId, ...operaData });
+            }
+            showToast('Opera salvata localmente (Offline).', 'info');
+        }
+        
+        // 4. Aggiornamento Interfaccia
         saveLocalData();
-        loadAdminOpere();
+        if (typeof loadAdminOpere === 'function') loadAdminOpere();
+        
+        // Reset form sicuro
+        const form = document.getElementById('opera-form');
+        if (form) form.reset();
+        const idInput = document.getElementById('opera-id');
+        if (idInput) idInput.value = ''; // Pulisce ID nascosto
+
         if (typeof loadOpere === 'function') loadOpere();
-        
-        // Reset form
-        document.getElementById('opera-form').reset();
-        document.getElementById('opera-id').value = '';
-        
-        // Ricarica i menu se necessario
-        updateAllSelects();
+        if (typeof updateDashboardStats === 'function') updateDashboardStats();
         
     } catch (error) {
         console.error("Errore salvataggio opera:", error);
-        showToast("Errore: " + error.message, "error");
+        showToast(error.message || 'Errore durante il salvataggio', 'error');
     }
 }
 
@@ -4376,98 +4392,107 @@ function editConcetto(id) {
     showAdminTab('concetti-admin');
 }
 
-async function saveConcetto(event) {
-    event.preventDefault(); // Blocca il ricaricamento della pagina
-
-    // Helper per leggere valori velocemente
+async function saveConcetto(e) {
+    e.preventDefault();
+    
+    // 1. Helper di sicurezza: evita il crash se l'input non esiste
     const getVal = (id) => {
         const el = document.getElementById(id);
         return el ? el.value.trim() : '';
     };
-
+    
     try {
-        const id = getVal('concetto-id'); // Se c'è un ID, è una modifica
-
-        // 1. RECUPERO DATI RELAZIONALI (La parte più importante)
-        // Dobbiamo prendere sia l'ID (per il link) che il NOME (per mostrarlo)
+        // 2. Recupero dati sicuro
+        const id = getVal('concetto-id');
+        const parola = getVal('concetto-parola');
+        const definizione = getVal('concetto-definizione');
+        const citazione = getVal('concetto-citazione');
+        const autore = getVal('concetto-autore');
+        const opera = getVal('concetto-opera');
+        const periodo = getVal('concetto-periodo');
+        const evoluzione = getVal('concetto-evoluzione');
         
-        // Autore
-        const selAutore = document.getElementById('concetto-autore');
-        const autoreId = selAutore ? selAutore.value : '';
-        let autoreNome = '';
-        if (selAutore && selAutore.selectedIndex >= 0) {
-            autoreNome = selAutore.options[selAutore.selectedIndex].text;
-            if (autoreNome === 'Seleziona un filosofo...') autoreNome = '';
-        }
-
-        // Opera
-        const selOpera = document.getElementById('concetto-opera');
-        const operaId = selOpera ? selOpera.value : '';
-        let operaTitolo = '';
-        if (selOpera && selOpera.selectedIndex >= 0) {
-            operaTitolo = selOpera.options[selOpera.selectedIndex].text;
-            if (operaTitolo.startsWith('Seleziona')) operaTitolo = '';
-        }
-
-        // Validazione
-        if (!getVal('concetto-parola')) {
-            showToast("La parola chiave è obbligatoria", "error");
+        // Campi inglesi
+        const parola_en = getVal('concetto-parola-en');
+        const definizione_en = getVal('concetto-definizione-en');
+        
+        // Validazione minima
+        if (!parola) {
+            showToast("La parola/concetto è obbligatoria", "error");
             return;
         }
-
-        // 2. COSTRUZIONE OGGETTO DATI
+        
         const concettoData = {
-            parola: getVal('concetto-parola'),
-            parola_en: getVal('concetto-parola-en'), // Campo nuovo
-            
-            definizione: getVal('concetto-definizione'),
-            definizione_en: getVal('concetto-definizione-en'), // Campo nuovo
-            
-            citazione: getVal('concetto-citazione') || getVal('concetto-esempio'), // Supporta entrambi gli ID vecchi/nuovi
-            
-            // Relazioni Forti (ID per il codice)
-            autore_riferimento_id: autoreId,
-            opera_riferimento_id: operaId,
-            
-            // Relazioni Deboli (Nomi per la lettura umana nelle liste)
-            autore_riferimento_nome: autoreNome,
-            opera_riferimento_titolo: operaTitolo,
-            
-            periodo_storico: getVal('concetto-periodo'),
-            evoluzione_storica: getVal('concetto-evoluzione'),
-            
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            parola,
+            parola_en,
+            definizione,
+            definizione_en,
+            esempio_citazione: citazione,
+            autore_riferimento: autore,
+            opera_riferimento: opera,
+            periodo_storico: periodo,
+            evoluzione,
+            last_modified: new Date().toISOString()
         };
-
-        // 3. SALVATAGGIO (Metodo diretto e sicuro)
-        const database = window.db || db; 
-
-        if (id && id.trim() !== '') {
-            // MODIFICA
-            await database.collection('concetti').doc(id).update(concettoData);
-            showToast('Concetto aggiornato con successo', 'success');
-        } else {
-            // NUOVO
-            await database.collection('concetti').add(concettoData);
-            showToast('Nuovo concetto salvato!', 'success');
+        
+        // Validazione avanzata (se presente)
+        if (typeof validateConcettoData === 'function') {
+            const validationErrors = validateConcettoData(concettoData);
+            if (validationErrors.length > 0) throw validationErrors[0];
         }
+        
+        // 3. Logica Salvataggio (Allineata con i fix precedenti)
+        let savedId;
+        const operation = id ? 'UPDATE' : 'CREATE';
 
-        // 4. PULIZIA E AGGIORNAMENTO UI
+        if (navigator.onLine && window.db) {
+            if (id && id.trim() !== '') {
+                // Update
+                await saveFirebaseData('concetti', concettoData, id);
+                savedId = id;
+                const index = appData.concetti.findIndex(c => c.id == id);
+                if (index !== -1) appData.concetti[index] = { id, ...concettoData };
+                showToast('Concetto modificato con successo', 'success');
+            } else {
+                // Create
+                savedId = await saveFirebaseData('concetti', concettoData);
+                appData.concetti.push({ id: savedId, ...concettoData });
+                showToast(`Concetto aggiunto (ID: ${savedId})`, 'success');
+            }
+        } else {
+            // Offline Mode
+            savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            if (typeof addToSyncQueue === 'function') {
+                await addToSyncQueue(operation, 'concetti', concettoData, savedId);
+            }
+
+            if (operation === 'UPDATE') {
+                const index = appData.concetti.findIndex(c => c.id == id);
+                if (index !== -1) appData.concetti[index] = { id: savedId, ...concettoData };
+            } else {
+                appData.concetti.push({ id: savedId, ...concettoData });
+            }
+            showToast('Concetto salvato localmente (Offline).', 'info');
+        }
+        
+        // 4. Aggiornamento Interfaccia
+        saveLocalData();
+        
+        // Aggiorna le viste admin se le funzioni esistono
+        if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
+        
+        // Reset form sicuro
         const form = document.getElementById('concetto-form');
         if (form) form.reset();
-        document.getElementById('concetto-id').value = '';
+        const idInput = document.getElementById('concetto-id');
+        if (idInput) idInput.value = '';
 
-        // Chiudi modale (se la funzione esiste)
-        if (typeof closeModal === 'function') closeModal('add-concetto-modal');
-
-        // Ricarica la lista (prova tutte le varianti possibili del tuo codice)
-        if (typeof loadConcettiList === 'function') loadConcettiList();
-        else if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
-        else if (typeof loadConcetti === 'function') loadConcetti();
-
+        if (typeof loadConcetti === 'function') loadConcetti();
+        if (typeof updateDashboardStats === 'function') updateDashboardStats();
+        
     } catch (error) {
         console.error("Errore salvataggio concetto:", error);
-        showToast("Errore: " + error.message, "error");
+        showToast(error.message || 'Errore durante il salvataggio', 'error');
     }
 }
 
@@ -5216,124 +5241,74 @@ function checkOnlineStatus() {
 }
 
 // ============================================
-// 2. INIZIALIZZAZIONE APP (MERGED & FIXED)
+// 2. INIZIALIZZAZIONE APP
 // ============================================
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
 
-    // 1. SETUP UI BASE (Tuo codice originale)
+    // Init dati
     try {
         if (typeof loadLocalData === 'function') loadLocalData();
         if (typeof applyTranslations === 'function') applyTranslations();
         if (typeof updateLangButton === 'function') updateLangButton();
-        if (typeof showScreen === 'function') showScreen('home-screen');
-        if (typeof handleUrlParameters === 'function') handleUrlParameters();
-        if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
-        if (typeof checkOnlineStatus === 'function') checkOnlineStatus();
-    } catch (e) { console.warn("Errore init UI:", e); }
+    } catch (e) { console.warn("Errore init locale:", e); }
 
-    // 2. GESTIONE SPLASH SCREEN (Tuo codice originale - Mantenuto)
+    // Init UI
+    if (typeof showScreen === 'function') showScreen('home-screen');
+    if (typeof handleUrlParameters === 'function') handleUrlParameters();
+    if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
+    
+    // Check connessione
+    checkOnlineStatus();
+
+    // Caricamento remoto (ritardato per non bloccare)
+    setTimeout(async () => {
+        if (typeof initRemoteControl === 'function') initRemoteControl();
+        if (typeof registerServiceWorker === 'function') registerServiceWorker();
+
+        if (typeof loadFirebaseData === 'function') {
+            try {
+                await loadFirebaseData('filosofi');
+                if(document.getElementById('filosofi-list') && typeof loadFilosofi === 'function') loadFilosofi();
+                loadFirebaseData('opere');
+                loadFirebaseData('concetti');
+            } catch (error) {
+                console.warn("Dati remoti non disponibili:", error);
+            }
+        }
+    }, 500);
+    
+    // Gestione Splash Screen
     const splash = document.getElementById('splash-screen');
     const progressBar = document.querySelector('.splash-progress-bar');
 
     if (progressBar) {
         progressBar.style.transition = 'width 1.5s ease-in-out';
         progressBar.style.width = '5%';
-        // Simula avanzamento
-        setTimeout(() => { progressBar.style.width = '100%'; }, 100);
+        
+        setTimeout(() => {
+            progressBar.style.width = '100%';
+        }, 100);
     }
 
-    // Nascondi splash dopo 1.5 secondi
     if (splash) {
         setTimeout(() => {
             splash.style.transition = 'opacity 0.5s ease';
             splash.style.opacity = '0'; 
-            setTimeout(() => { splash.style.display = 'none'; }, 500);
+            setTimeout(() => {
+                splash.style.display = 'none'; 
+            }, 500);
         }, 1500);
     }
-
-    // 3. CARICAMENTO DATI SEQUENZIALE (Il FIX Importante)
-    // Usiamo setTimeout piccolo per non bloccare il rendering iniziale dello splash
-    setTimeout(async () => {
-        
-        // Init controlli remoti
-        if (typeof initRemoteControl === 'function') initRemoteControl();
-        if (typeof registerServiceWorker === 'function') registerServiceWorker();
-
-        if (window.firebaseInitialized || window.db) {
-            try {
-                console.log("📥 Inizio download dati...");
-                
-                // A. Carica PRIMA i filosofi (Cruciale per i menu)
-                await loadFirebaseData('filosofi');
-                
-                // B. Carica POI il resto
-                await Promise.all([
-                    loadFirebaseData('opere'),
-                    loadFirebaseData('concetti')
-                ]);
-                
-                console.log("✅ Dati scaricati. Aggiornamento UI...");
-
-                // C. Popola i menu a tendina (FIX Menu Vuoti)
-                if (typeof updateAllSelects === 'function') updateAllSelects();
-                
-                // D. Inizializza Mappa e Marker (FIX Mappa)
-                if (typeof initMap === 'function') initMap();
-                if (typeof loadMapMarkers === 'function') loadMapMarkers();
-
-                // E. Aggiorna le griglie visive
-                if (typeof loadFilosofi === 'function') loadFilosofi();
-                if (typeof loadOpere === 'function') loadOpere();
-                if (typeof loadConcetti === 'function') loadConcetti();
-                
-                // F. Aggiorna Admin Panel
-                if(document.getElementById('admin-panel') && document.getElementById('admin-panel').style.display !== 'none') {
-                    if (typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
-                    if (typeof loadAdminOpere === 'function') loadAdminOpere();
-                    if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
-                }
-
-            } catch (error) {
-                console.warn("⚠️ Errore caricamento dati remoti:", error);
-            }
-        }
-    }, 100);
-
-    // 4. RIATTACCO LISTENER EVENTI (Form e Bottoni)
-    const fForm = document.getElementById('filosofo-form');
-    if(fForm) fForm.onsubmit = saveFilosofo;
     
-    const oForm = document.getElementById('opera-form');
-    if(oForm) oForm.onsubmit = saveOpera;
-    
-    const cForm = document.getElementById('concetto-form');
-    if(cForm) cForm.onsubmit = saveConcetto;
-
-    const geoBtn = document.getElementById('geocoding-btn');
-    if(geoBtn && typeof cercaCoordinateFilosofo === 'function') {
-        geoBtn.onclick = cercaCoordinateFilosofo;
-    }
-
-    // 5. FIX MAPPA GRIGIA (Al cambio tab)
-    const navMap = document.getElementById('nav-map');
-    if (navMap) {
-        navMap.addEventListener('click', function() {
-            setTimeout(() => {
-                if (window.map) {
-                    window.map.invalidateSize();
-                }
-            }, 200);
-        });
-    }
-
-    // 6. LOG FINALI
+    // Verifica ExcelWorker
     if (typeof ExcelWorker === 'undefined') {
-        console.warn('ExcelWorker non caricato - import limitato');
+        console.warn('ExcelWorker non caricato - alcune funzionalità saranno limitate');
     } else {
-        console.log('✅ ExcelWorker pronto');
+        console.log('✅ ExcelWorker pronto all\'uso');
     }
-    console.log('✨ Aeterna Lexicon in Motu - Avvio completato');
+    
+    console.log('✨ Aeterna Lexicon in Motu - App pronta');
 });
 
 // ============================================
@@ -5474,402 +5449,29 @@ function detectAndShowInstallInstructions() {
     }
 }
 
-// ==========================================
-// FUNZIONE PER POPOLARE I MENU A TENDINA (NUOVA)
-// ==========================================
-function updateAllSelects() {
-    console.log("🔄 Aggiornamento menu a tendina...");
-
-    // 1. POPOLA SELECT AUTORI (Opere e Concetti)
-    const authorSelects = ['opera-autore', 'concetto-autore'];
-    
-    authorSelects.forEach(selectId => {
-        const select = document.getElementById(selectId);
-        if (!select) {
-            console.warn(`Select ${selectId} non trovata`);
-            return;
-        }
-
-        // Salva selezione attuale
-        const currentVal = select.value;
-        
-        // Pulisci tutte le opzioni
-        select.innerHTML = '<option value="">Seleziona un filosofo...</option>';
-        
-        // Se non ci sono filosofi, esci
-        if (!appData.filosofi || appData.filosofi.length === 0) {
-            console.warn("Nessun filosofo caricato per popolare il menu");
-            return;
-        }
-        
-        // Ordina filosofi alfabeticamente
-        const sortedFilosofi = [...appData.filosofi].sort((a, b) => 
-            (a.nome || '').localeCompare(b.nome || '')
-        );
-        
-        sortedFilosofi.forEach(f => {
-            if (f.nome) { // Solo se ha un nome
-                const option = document.createElement('option');
-                option.value = f.id; 
-                option.textContent = f.nome;
-                select.appendChild(option);
-            }
-        });
-        
-        // Ripristina selezione
-        if (currentVal) {
-            select.value = currentVal;
-        }
-        
-        console.log(`✅ Select ${selectId} popolata con ${sortedFilosofi.length} filosofi`);
-    });
-
-    // 2. POPOLA SELECT OPERE (Solo per Concetti)
-    const workSelect = document.getElementById('concetto-opera');
-    if (workSelect) {
-        const currentVal = workSelect.value;
-        workSelect.innerHTML = '<option value="">Seleziona un\'opera (opzionale)...</option>';
-        
-        if (!appData.opere || appData.opere.length === 0) {
-            console.warn("Nessuna opera caricata per popolare il menu");
-            return;
-        }
-        
-        // Ordina opere
-        const sortedOpere = [...appData.opere].sort((a, b) => 
-            (a.titolo || '').localeCompare(b.titolo || '')
-        );
-        
-        sortedOpere.forEach(o => {
-            if (o.titolo) {
-                const option = document.createElement('option');
-                option.value = o.id;
-                option.textContent = `${o.titolo} ${o.autore_nome ? '(' + o.autore_nome + ')' : ''}`;
-                workSelect.appendChild(option);
-            }
-        });
-        
-        if (currentVal) workSelect.value = currentVal;
-        console.log(`✅ Select opere popolata con ${sortedOpere.length} opere`);
-    }
-}
-// ==========================================
-// VISUALIZZAZIONE FILOSOFI (Card complete + Navigazione)
-// ==========================================
-function loadFilosofi() {
-    const container = document.getElementById('filosofi-list');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // Ordina alfabeticamente per nome
-    const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
-
-    if (sortedList.length === 0) {
-        container.innerHTML = '<p style="text-align:center; width:100%; color:#666;">Nessun filosofo presente. Inseriscine uno dal pannello Admin.</p>';
-        return;
-    }
-
-    sortedList.forEach(f => {
-        // Controlla se il filosofo ha coordinate valide (nuovo o vecchio formato)
-        let hasCoords = false;
-        if (f.coordinate && f.coordinate.lat) hasCoords = true;
-        else if (f.lat && f.lng) hasCoords = true;
-
-        const div = document.createElement('div');
-        div.className = 'grid-item animate-in'; 
-        
-        // Immagine: usa quella del DB o una di default
-        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
-        
-        div.innerHTML = `
-            <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
-                <span class="item-period-badge ${f.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.9); font-size: 0.8rem; font-weight: bold;">
-                    ${f.periodo || ''}
-                </span>
-            </div>
-            <div class="item-content" style="padding: 15px;">
-                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">${f.nome}</h3>
-                
-                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-                    <span style="font-size: 1.1rem;">🏛️</span> ${f.scuola || 'Scuola non definita'}
-                </div>
-                
-                <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
-                    <div style="margin-bottom: 3px;">📅 ${f.anni_vita || 'Anni sconosciuti'}</div>
-                    <div>📍 ${f.luogo_nascita || 'Luogo sconosciuto'}</div>
-                </div>
-                
-                <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
-                    <button onclick="showDetail('${f.id}', 'filosofo')" class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; transition: background 0.2s;">
-                        Scheda
-                    </button>
-                    
-                    ${hasCoords ? `
-                        <button onclick="goToMap('${f.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                            <span>🗺️</span> Mappa
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
-
-// ==========================================
-// INIZIALIZZAZIONE MAIN (Modificata)
-// ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-    
-    // 1. MANTENIAMO IL TUO CONTROLLO ANDROID
-    if (typeof detectAndShowInstallInstructions === 'function') {
-        detectAndShowInstallInstructions();
-    }
-
-    // 2. Setup Base
-    loadLocalData();
-    if (typeof applyTranslations === 'function') applyTranslations();
-
-    // 3. Caricamento Dati Firebase (SEQUENZA CORRETTA)
-    if (window.firebaseInitialized || window.db) {
-        try {
-            console.log("Inizio caricamento dati Firebase...");
-            
-            // A. Carica PRIMA i filosofi (essenziali per i menu)
-            await loadFirebaseData('filosofi');
-            
-            // B. Carica POI opere e concetti
-            await Promise.all([
-                loadFirebaseData('opere'),
-                loadFirebaseData('concetti')
-            ]);
-            
-            // C. ORA popola i menu a tendina (FIX CRUCIALE)
-            updateAllSelects(); 
-            
-            // D. Aggiorna le liste visive
-            if (typeof loadFilosofi === 'function') loadFilosofi(); 
-            if (typeof loadOpere === 'function') loadOpere();
-            if (typeof loadConcetti === 'function') loadConcetti();
-            
-            // E. Aggiorna Admin Panel se visibile
-            const adminPanel = document.getElementById('admin-panel');
-            if(adminPanel && adminPanel.style.display !== 'none') {
-                if (typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
-                if (typeof loadAdminOpere === 'function') loadAdminOpere();
-                if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
-            }
-
-        } catch (e) {
-            console.error("Errore sequenza caricamento:", e);
-        }
-    }
-
-    // 4. Riattacco gli Event Listeners dei Form
-    const fForm = document.getElementById('filosofo-form');
-    if(fForm) fForm.onsubmit = saveFilosofo;
-    
-    const oForm = document.getElementById('opera-form');
-    if(oForm) oForm.onsubmit = saveOpera;
-    
-    const cForm = document.getElementById('concetto-form');
-    if(cForm) cForm.onsubmit = saveConcetto;
-
-    // 5. Listener per bottone Geocoding
-    const geoBtn = document.getElementById('geocoding-btn');
-    if(geoBtn && typeof cercaCoordinateFilosofo === 'function') {
-        geoBtn.onclick = cercaCoordinateFilosofo;
-    }
+// Avvia il controllo quando la pagina è pronta
+document.addEventListener('DOMContentLoaded', () => {
+    detectAndShowInstallInstructions();
 });
 
 // ============================================
 // FUNZIONI DI SUPPORTO AGGIUNTIVE
 // ============================================
 
-// --- 1. NUOVA FUNZIONE: Carica i punti (marker) sulla mappa ---
-function loadMapMarkers() {
-    // Verifica che la mappa e Leaflet (L) esistano
-    if (typeof map === 'undefined' || typeof L === 'undefined') return;
-
-    console.log("Generazione marker sulla mappa...");
-
-    // Se esiste la mappa globale dei marker, puliscila per evitare duplicati
-    if (typeof markers !== 'undefined' && markers instanceof Map) {
-        markers.forEach(marker => map.removeLayer(marker));
-        markers.clear();
-    }
-
-    // Itera su tutti i filosofi
-    if (appData.filosofi) {
-        appData.filosofi.forEach(f => {
-            let lat, lng;
-
-            // CASO A: Coordinate nel nuovo formato oggetto {lat: ..., lng: ...}
-            if (f.coordinate && typeof f.coordinate === 'object') {
-                lat = parseFloat(f.coordinate.lat);
-                lng = parseFloat(f.coordinate.lng);
-            } 
-            // CASO B: Coordinate nel vecchio formato "piatto"
-            else if (f.lat && f.lng) {
-                lat = parseFloat(f.lat);
-                lng = parseFloat(f.lng);
-            }
-
-            // Se abbiamo coordinate valide, crea il marker
-            if (!isNaN(lat) && !isNaN(lng)) {
-                const marker = L.marker([lat, lng])
-                    .bindPopup(`
-                        <div style="text-align:center">
-                            <b>${f.nome}</b><br>
-                            <i>${f.luogo_nascita || ''}</i><br>
-                            <button onclick="showDetail('${f.id}', 'filosofo')" style="margin-top:5px; padding:4px 8px; cursor:pointer;">
-                                Dettagli
-                            </button>
-                        </div>
-                    `);
-                
-                marker.addTo(map);
-
-                // IMPORTANTE: Salva il marker nella memoria globale così centerMapOnFilosofo funziona
-                if (typeof markers !== 'undefined' && markers instanceof Map) {
-                    markers.set(`filosofo-${f.id}`, marker);
-                }
-            }
-        });
-    }
-}
-// ==========================================
-// 1. VISUALIZZAZIONE FILOSOFI (Card complete)
-// ==========================================
-function loadFilosofi() {
-    const container = document.getElementById('filosofi-list');
-    if (!container) return;
-    
-    container.innerHTML = '';
-    
-    // Ordina alfabeticamente
-    const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
-
-    if (sortedList.length === 0) {
-        container.innerHTML = '<p style="text-align:center; width:100%; color:#666;">Nessun filosofo presente. Inseriscine uno dal pannello Admin.</p>';
-        return;
-    }
-
-    sortedList.forEach(f => {
-        // Controlla se ha coordinate per mostrare il tasto mappa
-        let hasCoords = false;
-        if (f.coordinate && f.coordinate.lat) hasCoords = true;
-        else if (f.lat && f.lng) hasCoords = true;
-
-        const div = document.createElement('div');
-        div.className = 'grid-item animate-in'; 
-        
-        // Immagine
-        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
-        
-        div.innerHTML = `
-            <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
-                <span class="item-period-badge ${f.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.9); font-size: 0.8rem; font-weight: bold;">
-                    ${f.periodo || ''}
-                </span>
-            </div>
-            <div class="item-content" style="padding: 15px;">
-                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">${f.nome}</h3>
-                
-                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
-                    🏛️ ${f.scuola || 'Scuola non definita'}
-                </div>
-                
-                <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
-                    <div>📅 ${f.anni_vita || 'Anni sconosciuti'}</div>
-                    <div>📍 ${f.luogo_nascita || 'Luogo sconosciuto'}</div>
-                </div>
-                
-                <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
-                    <button onclick="showDetail('${f.id}', 'filosofo')" class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
-                        Scheda
-                    </button>
-                    
-                    ${hasCoords ? `
-                        <button onclick="goToMap('${f.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                            🗺️ Mappa
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-        container.appendChild(div);
-    });
-}
-
-// ==========================================
-// 2. GESTIONE MAPPA (Init + Navigazione)
-// ==========================================
-
-let mapInitialized = false;
-
-function initMap() {
-    // Se non c'è il div o è già init, esci
-    if (!document.getElementById('map') || window.map) return;
-
-    console.log("Inizializzazione Mappa Leaflet...");
-
-    // Crea mappa
-    window.map = L.map('map').setView([41.9028, 12.4964], 5); 
-
-    // Tiles
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19
-    }).addTo(window.map);
-
-    // Init markers
-    window.markers = new Map(); 
-
-    mapInitialized = true;
-    
-    // Carica i punti
-    if (typeof loadMapMarkers === 'function') loadMapMarkers();
-}
-
-function goToMap(id) {
-    // 1. Simula click sul tab Mappa
-    const mapTabBtn = document.getElementById('nav-map');
-    if (mapTabBtn) mapTabBtn.click();
-
-    // 2. Trova dati
-    const filosofo = appData.filosofi.find(f => f.id === id);
-    if (!filosofo) return;
-
-    // 3. Centra dopo breve delay (per render)
-    setTimeout(() => {
-        if(window.map) window.map.invalidateSize();
-        centerMapOnFilosofo(filosofo);
-    }, 300);
-}
-// --- 2. FUNZIONE ESISTENTE: Centra la mappa su un filosofo ---
 function centerMapOnFilosofo(filosofo) {
     if (map && filosofo.coordinate) {
-        // Centra la vista
         map.setView([filosofo.coordinate.lat, filosofo.coordinate.lng], 14);
         
-        // Cerca e apri il popup corrispondente
+        // Apri popup se il marker esiste
         const markerId = `filosofo-${filosofo.id}`;
-        
-        // Controlla se il marker esiste nella mappa globale
-        if (typeof markers !== 'undefined' && markers.has(markerId)) {
+        if (markers.has(markerId)) {
             markers.get(markerId).openPopup();
         }
         
         showToast(`Mappa centrata su ${filosofo.nome}`, 'success');
-    } else {
-        showToast('Coordinate non disponibili per questo filosofo', 'warning');
     }
 }
 
-// --- 3. FUNZIONE ESISTENTE: Gestione parametri URL ---
 function handleUrlParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     
@@ -5986,204 +5588,3 @@ if (typeof addToSyncQueue === 'undefined') {
         return true;
     };
 }
-// =========================================================
-// NUOVE FUNZIONI AGGIUNTE (PER MODULI AVANZATI)
-// Incolla questo blocco alla fine di app.js
-// =========================================================
-
-// 1. Funzione per popolare la Select dei Filosofi (usata in Opere e Concetti)
-async function popolaSelectFilosofi(selectId) {
-    const select = document.getElementById(selectId);
-    if (!select) return;
-
-    // Salva la selezione attuale se c'è
-    const currentVal = select.value;
-    
-    select.innerHTML = '<option value="">Caricamento...</option>';
-    
-    try {
-        // Usa window.db se definito globalmente, altrimenti db
-        const database = window.db || db; 
-        const snapshot = await database.collection('filosofi').orderBy('nome').get();
-        
-        select.innerHTML = '<option value="">Seleziona un filosofo...</option>';
-        
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const option = document.createElement('option');
-            option.value = doc.id; // L'ID è fondamentale per il collegamento
-            option.textContent = data.nome;
-            select.appendChild(option);
-        });
-
-        // Ripristina valore se esisteva
-        if (currentVal) select.value = currentVal;
-        
-    } catch (error) {
-        console.error("Errore caricamento filosofi:", error);
-        select.innerHTML = '<option value="">Errore caricamento</option>';
-    }
-}
-
-// 2. Funzione per preparare il Form CONCETTI (Cascata Autore -> Opera)
-async function prepareConcettoForm() {
-    // Prima carica gli autori
-    await popolaSelectFilosofi('concetto-autore');
-    
-    const selAutore = document.getElementById('concetto-autore');
-    const selOpera = document.getElementById('concetto-opera');
-    
-    if (!selAutore || !selOpera) return;
-
-    // Quando cambio l'autore...
-    selAutore.onchange = async function() {
-        const autoreId = this.value;
-        selOpera.innerHTML = '<option value="">Caricamento...</option>';
-        selOpera.disabled = true;
-
-        if (!autoreId) {
-            selOpera.innerHTML = '<option value="">Prima seleziona un filosofo</option>';
-            return;
-        }
-
-        try {
-            const database = window.db || db;
-            // Prendo solo le opere di QUEL filosofo
-            const snapshot = await database.collection('opere')
-                                     .where('autore_id', '==', autoreId)
-                                     .get();
-            
-            selOpera.innerHTML = '<option value="">Seleziona un\'opera...</option>';
-            
-            if (snapshot.empty) {
-                 selOpera.innerHTML += '<option value="">Nessuna opera trovata per questo autore</option>';
-            } else {
-                snapshot.forEach(doc => {
-                    const option = document.createElement('option');
-                    option.value = doc.id;
-                    option.textContent = doc.data().titolo;
-                    selOpera.appendChild(option);
-                });
-            }
-            selOpera.disabled = false;
-        } catch (e) {
-            console.error(e);
-            selOpera.innerHTML = '<option value="">Errore caricamento opere</option>';
-        }
-    };
-}
-
-// 3. Funzione per il tasto "Traduci" ✨
-function autoTranslate(sourceId, targetId) {
-    const sourceVal = document.getElementById(sourceId).value;
-    if (sourceVal) {
-        document.getElementById(targetId).value = sourceVal + " [TRADURRE]";
-        if(window.showToast) showToast('Testo copiato. Traducilo in inglese!', 'info');
-    }
-}
-
-// 4. Funzione Helper per aprire i modali e CARICARE I DATI
-// (Chiamala quando clicchi "Aggiungi Opera" o "Aggiungi Concetto")
-window.initFormOpere = function() {
-    popolaSelectFilosofi('opera-autore');
-}
-
-window.initFormConcetti = function() {
-    prepareConcettoForm();
-}
-// ============================================================
-// AUTOMAZIONE APERTURA MODALI (Incolla alla fine di app.js)
-// Questo codice sostituisce la modifica manuale dei pulsanti HTML
-// ============================================================
-
-// 1. Salviamo la funzione originale di apertura modale
-const originalOpenModal = window.openModal || function(){};
-
-// 2. Creiamo una versione "potenziata" che carica i dati automaticamente
-window.openModal = function(modalId) {
-    console.log("Apertura modale rilevata:", modalId);
-    
-    // Eseguiamo la funzione originale (così la finestra si apre)
-    if (typeof originalOpenModal === 'function') {
-        originalOpenModal(modalId);
-    } else {
-        // Fallback se openModal non era definita globalmente
-        const modal = document.getElementById(modalId);
-        if (modal) modal.style.display = 'flex';
-    }
-
-    // 3. Controlliamo quale finestra è stata aperta e carichiamo i dati
-    if (modalId === 'add-opera-modal') {
-        console.log("Caricamento lista filosofi per Opere...");
-        if (typeof popolaSelectFilosofi === 'function') {
-            popolaSelectFilosofi('opera-autore');
-        }
-    }
-
-    if (modalId === 'add-concetto-modal') {
-        console.log("Preparazione form Concetti...");
-        if (typeof prepareConcettoForm === 'function') {
-            prepareConcettoForm();
-        }
-    }
-};
-// ============================================
-// INIZIALIZZAZIONE AUTOMATICA FORM ADMIN
-// ============================================
-
-function initAdminForms() {
-    console.log("🎯 Inizializzazione form admin...");
-    
-    // Popola immediatamente i menu a tendina
-    updateAllSelects();
-    
-    // Setup per la select delle opere nel form concetti
-    const concettoAutoreSelect = document.getElementById('concetto-autore');
-    const concettoOperaSelect = document.getElementById('concetto-opera');
-    
-    if (concettoAutoreSelect && concettoOperaSelect) {
-        concettoAutoreSelect.onchange = function() {
-            const autoreId = this.value;
-            concettoOperaSelect.innerHTML = '<option value="">Caricamento opere...</option>';
-            concettoOperaSelect.disabled = true;
-            
-            if (!autoreId) {
-                concettoOperaSelect.innerHTML = '<option value="">Seleziona prima un filosofo</option>';
-                return;
-            }
-            
-            // Filtra opere per autore
-            const opereAutore = appData.opere.filter(opera => 
-                opera.autore_id === autoreId
-            );
-            
-            concettoOperaSelect.innerHTML = '<option value="">Seleziona un\'opera...</option>';
-            
-            if (opereAutore.length === 0) {
-                concettoOperaSelect.innerHTML += '<option value="">Nessuna opera trovata</option>';
-            } else {
-                opereAutore.forEach(opera => {
-                    const option = document.createElement('option');
-                    option.value = opera.id;
-                    option.textContent = opera.titolo;
-                    concettoOperaSelect.appendChild(option);
-                });
-            }
-            
-            concettoOperaSelect.disabled = false;
-        };
-    }
-}
-
-// Assicurati che la funzione venga chiamata quando si apre il pannello admin
-document.addEventListener('DOMContentLoaded', function() {
-    // Sovrascrivi la funzione showAdminPanel per includere initAdminForms
-    const originalShowAdminPanel = window.showAdminPanel;
-    if (originalShowAdminPanel) {
-        window.showAdminPanel = function() {
-            originalShowAdminPanel();
-            // Chiama l'inizializzazione dei form dopo un breve ritardo
-            setTimeout(initAdminForms, 300);
-        };
-    }
-});
