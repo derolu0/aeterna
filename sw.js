@@ -38,12 +38,7 @@ const STATIC_ASSETS = [
   BASE_URL + 'images/marker-blue.png',
   BASE_URL + 'images/marker-green.png',
   BASE_URL + 'images/marker-orange.png',
-  BASE_URL + 'images/marker-red.png',
-  
-  // NUOVI FILE ANALISI
-  BASE_URL + 'linguistic-analysis.js',
-  BASE_URL + 'timeline-evolution.js',
-  BASE_URL + 'comparative-styles.css'
+  BASE_URL + 'images/marker-red.png'
 ];
 
 const EXTERNAL_ASSETS = [
@@ -68,11 +63,12 @@ self.addEventListener('install', event => {
       .then(cache => {
         console.log('[Service Worker] Caching asset statici da:', BASE_URL);
         
+        // Cache per asset statici (locali)
         const cachePromises = STATIC_ASSETS.map(url => {
-          return fetch(url, { mode: 'no-cors' })
+          return fetch(url)
             .then(response => {
-              if (response.ok || response.type === 'opaque') {
-                return cache.put(url, response.clone());
+              if (response.ok) {
+                return cache.put(url, response);
               }
               console.warn(`[Service Worker] Asset non trovato: ${url}`);
               return Promise.resolve();
@@ -83,12 +79,14 @@ self.addEventListener('install', event => {
             });
         });
         
+        // Cache per asset esterni
         const externalPromises = EXTERNAL_ASSETS.map(url => {
           return fetch(url)
             .then(response => {
               if (response.ok) {
                 return cache.put(url, response);
               }
+              console.warn(`[Service Worker] Asset esterno non trovato: ${url}`);
               return Promise.resolve();
             })
             .catch(error => {
@@ -118,13 +116,12 @@ self.addEventListener('activate', event => {
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
-          // Pulisce le vecchie versioni (incluse quelle vecchie dell'app fontane)
-          if (!cacheName.includes('philosophy') && 
-              cacheName !== STATIC_CACHE && 
-              cacheName !== DYNAMIC_CACHE) {
+          // Pulisce le vecchie versioni
+          if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
             console.log('[Service Worker] Cancellazione vecchia cache:', cacheName);
             return caches.delete(cacheName);
           }
+          return Promise.resolve();
         })
       );
     })
@@ -231,30 +228,20 @@ self.addEventListener('fetch', event => {
   
   const url = new URL(event.request.url);
   
-  // Skip chrome-extension, data:, blob:, etc.
-  if (url.protocol === 'chrome-extension:' || 
-      url.protocol === 'chrome:' || 
-      url.protocol === 'about:' ||
-      url.protocol === 'data:' ||
-      url.protocol === 'blob:' ||
-      url.protocol === 'file:') {
+  // Skip protocolli non supportati
+  if (['chrome-extension:', 'chrome:', 'about:', 'data:', 'blob:', 'file:'].includes(url.protocol)) {
     return;
   }
   
-  // Converti richieste relative in assolute per GitHub Pages
-  if (event.request.url.startsWith(BASE_URL) || url.href.includes('github.io/aeterna/')) {
-    // Gestione per il nostro dominio GitHub Pages
-    
-    // Firebase e API - sempre network first
+  // Gestisci solo richieste per il nostro dominio
+  if (url.href.includes('github.io/aeterna/')) {
+    // Firebase e API - network first
     if (url.href.includes('firebase') ||
         url.href.includes('firestore') ||
         url.href.includes('firebasestorage') ||
         url.href.includes('googleapis.com') ||
         url.href.includes('nominatim') ||
-        url.href.includes('/analytics') ||
-        url.href.includes('/filosofi/') ||
-        url.href.includes('/opere/') ||
-        url.href.includes('/concetti/')) {
+        url.href.includes('/analytics')) {
       
       // Per dati filosofici: network con fallback offline
       if (url.href.includes('/filosofi') || 
@@ -337,7 +324,7 @@ self.addEventListener('fetch', event => {
       return;
     }
     
-    // Gestione standard - Cache First con fallback network
+    // Gestione standard - Cache First per asset locali
     event.respondWith(
       caches.match(event.request)
         .then(cachedResponse => {
@@ -362,21 +349,12 @@ self.addEventListener('fetch', event => {
           return fetch(event.request)
             .then(response => {
               if (!response.ok) {
-                // Fallback per HTML
-                if (event.request.url.includes('index.html') || 
-                    event.request.headers.get('accept')?.includes('text/html')) {
-                  return caches.match(BASE_URL + 'index.html');
-                }
-                return response;
+                throw new Error('Network response was not ok');
               }
               
               const responseToCache = response.clone();
               caches.open(DYNAMIC_CACHE)
-                .then(cache => {
-                  if (event.request.url.startsWith('http')) {
-                    return cache.put(event.request, responseToCache);
-                  }
-                })
+                .then(cache => cache.put(event.request, responseToCache))
                 .catch(err => console.warn('[SW] Cache put error:', err));
               
               return response;
@@ -385,7 +363,8 @@ self.addEventListener('fetch', event => {
               console.warn('[Service Worker] Fetch fallback:', error.message);
               
               // Fallback intelligente basato sul tipo di risorsa
-              if (event.request.headers.get('accept')?.includes('text/html')) {
+              if (event.request.headers.get('accept')?.includes('text/html') ||
+                  event.request.destination === 'document') {
                 return caches.match(BASE_URL + 'index.html');
               }
               
@@ -411,12 +390,6 @@ self.addEventListener('fetch', event => {
                       headers: { 'Content-Type': 'application/javascript' }
                     });
                   });
-              }
-              
-              if (event.request.destination === 'font') {
-                return new Response('', {
-                  headers: { 'Content-Type': 'font/woff2' }
-                });
               }
               
               // Fallback generico
@@ -446,7 +419,6 @@ self.addEventListener('fetch', event => {
                   </head>
                   <body>
                     <div class="offline-container">
-                      <img src="${BASE_URL}images/logo-app.png" alt="Logo" style="width: 80px; margin-bottom: 20px;">
                       <h1>📚 Modalità Offline</h1>
                       <p>L'app Aeterna Lexicon è disponibile offline con funzionalità limitate.</p>
                       <p>Riprova quando la connessione sarà disponibile per accedere al dataset completo.</p>
@@ -463,9 +435,6 @@ self.addEventListener('fetch', event => {
             });
         })
     );
-  } else {
-    // Per altre richieste, passa attraverso
-    return fetch(event.request);
   }
 });
 
@@ -481,15 +450,6 @@ self.addEventListener('sync', event => {
       })
     );
   }
-  
-  if (event.tag === 'sync-analytics') {
-    event.waitUntil(
-      syncAnalyticsData().catch(error => {
-        console.error('[Service Worker] Analytics sync error:', error);
-        return Promise.resolve();
-      })
-    );
-  }
 });
 
 // Sincronizza dati filosofici offline
@@ -500,7 +460,6 @@ async function syncPhilosophyData() {
     const cache = await caches.open(DYNAMIC_CACHE);
     const requests = await cache.keys();
     
-    // Trova richieste di dati filosofici in cache
     const philosophyRequests = requests.filter(req => 
       req.url.includes('/filosofi') || 
       req.url.includes('/opere') || 
@@ -527,43 +486,9 @@ async function syncPhilosophyData() {
     await Promise.all(syncPromises);
     console.log(`[Service Worker] Sincronizzati ${philosophyRequests.length} elementi filosofici`);
     
-    // Notifica ai client
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'DATA_SYNC_COMPLETE',
-        count: philosophyRequests.length,
-        timestamp: new Date().toISOString()
-      });
-    });
-    
     return Promise.resolve();
   } catch (error) {
     console.error('[Service Worker] Errore sincronizzazione:', error);
-    return Promise.resolve();
-  }
-}
-
-// Sincronizza analytics offline
-async function syncAnalyticsData() {
-  console.log('[Service Worker] Sincronizzazione analytics...');
-  
-  try {
-    const clients = await self.clients.matchAll();
-    if (clients.length === 0) {
-      return Promise.resolve();
-    }
-    
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'SYNC_ANALYTICS',
-        timestamp: new Date().toISOString()
-      });
-    });
-    
-    return Promise.resolve();
-  } catch (error) {
-    console.error('[Service Worker] Errore sync analytics:', error);
     return Promise.resolve();
   }
 }
@@ -595,26 +520,6 @@ self.addEventListener('message', event => {
             if (ports && ports[0]) {
               ports[0].postMessage({ 
                 success: false, 
-                error: error.message 
-              });
-            }
-          });
-        break;
-        
-      case 'CHECK_UPDATE':
-        self.registration.update()
-          .then(() => {
-            if (ports && ports[0]) {
-              ports[0].postMessage({ 
-                updateAvailable: true,
-                version: '5.2.0'
-              });
-            }
-          })
-          .catch(error => {
-            if (ports && ports[0]) {
-              ports[0].postMessage({ 
-                updateAvailable: false, 
                 error: error.message 
               });
             }
@@ -672,67 +577,6 @@ self.addEventListener('message', event => {
     }
   }
 });
-
-// Gestione push notifications (per future estensioni)
-self.addEventListener('push', event => {
-  console.log('[Service Worker] Push notification ricevuta');
-  
-  const options = {
-    body: 'Nuovi dati filosofici disponibili!',
-    icon: BASE_URL + 'images/icona-avvio-192.png',
-    badge: BASE_URL + 'images/icona-avvio-72.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 'philosophy-update'
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'Esplora'
-      },
-      {
-        action: 'close',
-        title: 'Chiudi'
-      }
-    ]
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification('Aeterna Lexicon', options)
-  );
-});
-
-self.addEventListener('notificationclick', event => {
-  console.log('[Service Worker] Notification click:', event.action);
-  
-  event.notification.close();
-  
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then(clientList => {
-        for (const client of clientList) {
-          if (client.url === BASE_URL && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        if (clients.openWindow) {
-          return clients.openWindow(BASE_URL);
-        }
-      })
-    );
-  }
-});
-
-// Periodic sync per aggiornamenti in background (se supportato)
-if ('periodicSync' in self.registration) {
-  self.addEventListener('periodicsync', event => {
-    if (event.tag === 'update-philosophy-data') {
-      console.log('[Service Worker] Periodic sync per dati filosofici');
-      event.waitUntil(syncPhilosophyData());
-    }
-  });
-}
 
 // Gestione errori globale
 self.addEventListener('error', event => {

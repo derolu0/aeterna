@@ -39,6 +39,7 @@ window.TimelineEvolution = {
   // STATO
   currentTimeline: null,
   currentContainer: null,
+  stylesInjected: false,
   
   // 1. INIZIALIZZAZIONE
   init: function(containerId, dati, options = {}) {
@@ -50,6 +51,9 @@ window.TimelineEvolution = {
       console.error(`[TimelineEvolution] Container ${containerId} non trovato`);
       return this;
     }
+    
+    // Inietta stili se necessario
+    this.injectStyles();
     
     // Merge configurazione
     if (options.colors) {
@@ -213,6 +217,11 @@ window.TimelineEvolution = {
             </div>
           `;
         }).join('')}
+        <div class="legend-item" data-periodo="tutti">
+          <div class="legend-color" style="background: #9ca3af;"></div>
+          <i class="fas fa-eye legend-icon"></i>
+          <span class="legend-label">Mostra tutti</span>
+        </div>
       </div>
     `;
   },
@@ -386,10 +395,18 @@ window.TimelineEvolution = {
     // Aggiorna legenda
     const legendItems = this.currentContainer.querySelectorAll('.legend-item');
     legendItems.forEach(legendItem => {
-      if (legendItem.getAttribute('data-periodo') === periodo) {
-        legendItem.classList.add('legend-item-active');
+      if (periodo === 'tutti') {
+        if (legendItem.getAttribute('data-periodo') === 'tutti') {
+          legendItem.classList.add('legend-item-active');
+        } else {
+          legendItem.classList.remove('legend-item-active');
+        }
       } else {
-        legendItem.classList.remove('legend-item-active');
+        if (legendItem.getAttribute('data-periodo') === periodo) {
+          legendItem.classList.add('legend-item-active');
+        } else {
+          legendItem.classList.remove('legend-item-active');
+        }
       }
     });
   },
@@ -561,18 +578,22 @@ window.TimelineEvolution = {
       .join('\n');
   },
   
-  // 11. INIZIALIZZAZIONE
-  initStyles: function() {
-    // Inietta stili se non presenti
-    if (!document.getElementById('timeline-styles')) {
-      const style = document.createElement('style');
-      style.id = 'timeline-styles';
-      style.textContent = this.getDefaultStyles();
-      document.head.appendChild(style);
+  // 11. INIEZIONE STILI
+  injectStyles: function() {
+    // Inietta stili solo se non sono già stati iniettati
+    if (this.stylesInjected || document.getElementById('timeline-evolution-styles')) {
+      return;
     }
+    
+    const style = document.createElement('style');
+    style.id = 'timeline-evolution-styles';
+    style.textContent = this.getStyles();
+    document.head.appendChild(style);
+    
+    this.stylesInjected = true;
   },
   
-  getDefaultStyles: function() {
+  getStyles: function() {
     return `
       .timeline-container {
         width: 100%;
@@ -580,6 +601,7 @@ window.TimelineEvolution = {
         background: #f8fafc;
         border-radius: 15px;
         border: 1px solid #e5e7eb;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       }
       
       .timeline-header {
@@ -589,9 +611,10 @@ window.TimelineEvolution = {
       }
       
       .timeline-term {
-        color: var(--primary-purple);
+        color: #7c3aed;
         font-size: 1.4rem;
         margin-bottom: 10px;
+        font-weight: 700;
       }
       
       .timeline-stats {
@@ -605,13 +628,27 @@ window.TimelineEvolution = {
         align-items: center;
         gap: 8px;
         font-size: 0.9rem;
-        color: var(--light-text);
+        color: #6b7280;
       }
       
       .timeline-track-container {
         overflow-x: auto;
         padding: 20px 0;
         scrollbar-width: thin;
+      }
+      
+      .timeline-track-container::-webkit-scrollbar {
+        height: 8px;
+      }
+      
+      .timeline-track-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      
+      .timeline-track-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
       }
       
       .timeline-track {
@@ -687,7 +724,7 @@ window.TimelineEvolution = {
       }
       
       .timeline-author {
-        color: var(--primary-blue);
+        color: #1d4ed8;
         font-weight: 600;
         margin-bottom: 8px;
         display: flex;
@@ -697,7 +734,7 @@ window.TimelineEvolution = {
       
       .timeline-work, .timeline-context, .timeline-location {
         font-size: 0.85rem;
-        color: var(--light-text);
+        color: #6b7280;
         margin-bottom: 6px;
         display: flex;
         align-items: center;
@@ -705,7 +742,7 @@ window.TimelineEvolution = {
       }
       
       .timeline-excerpt {
-        color: var(--light-text);
+        color: #4b5563;
         font-size: 0.9rem;
         line-height: 1.4;
         margin: 10px 0;
@@ -733,23 +770,35 @@ window.TimelineEvolution = {
       }
       
       .analyze-btn {
-        background: var(--primary-green);
+        background: #10b981;
         color: white;
       }
       
+      .analyze-btn:hover {
+        background: #059669;
+      }
+      
       .compare-btn {
-        background: var(--primary-purple);
+        background: #7c3aed;
         color: white;
+      }
+      
+      .compare-btn:hover {
+        background: #6d28d9;
       }
       
       .location-btn {
         background: none;
         border: none;
-        color: var(--primary-blue);
+        color: #1d4ed8;
         font-size: 0.8rem;
         cursor: pointer;
         padding: 0;
         text-decoration: underline;
+      }
+      
+      .location-btn:hover {
+        color: #1e40af;
       }
       
       .timeline-legend {
@@ -761,7 +810,7 @@ window.TimelineEvolution = {
       .legend-title {
         font-weight: 600;
         margin-bottom: 10px;
-        color: var(--dark-text);
+        color: #1f2937;
       }
       
       .legend-items {
@@ -796,17 +845,17 @@ window.TimelineEvolution = {
       
       .legend-icon {
         font-size: 0.8rem;
-        color: var(--light-text);
+        color: #6b7280;
       }
       
       .legend-label {
         font-size: 0.85rem;
-        color: var(--dark-text);
+        color: #1f2937;
       }
       
       .legend-count {
         font-size: 0.75rem;
-        color: var(--light-text);
+        color: #6b7280;
       }
       
       .timeline-controls {
@@ -842,14 +891,17 @@ window.TimelineEvolution = {
           flex-direction: column;
           gap: 10px;
         }
+        
+        .legend-items {
+          gap: 10px;
+        }
       }
     `;
   }
 };
 
-// Auto-inizializzazione
+// Auto-inizializzazione stili
 document.addEventListener('DOMContentLoaded', function() {
-  if (window.TimelineEvolution) {
-    window.TimelineEvolution.initStyles();
-  }
+  // Non auto-iniettiamo stili qui per evitare conflitti
+  // Gli stili verranno iniettati solo quando si inizializza una timeline
 });

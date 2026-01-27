@@ -38,8 +38,7 @@ body {
     -webkit-tap-highlight-color: transparent;
 }
 
-/* ===== SPLASH SCREEN STYLES ===== */
-
+/* ===== SPLASH SCREEN ===== */
 #splash-screen {
     position: fixed;
     top: 0;
@@ -108,14 +107,8 @@ body {
 }
 
 @keyframes fadeInScale {
-    0% {
-        opacity: 0;
-        transform: scale(0.9);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
 }
 
 @keyframes fadeIn {
@@ -124,7 +117,6 @@ body {
 }
 
 /* ===== LAYOUT PRINCIPALE ===== */
-
 .app-container {
     max-width: 100%;
     margin: 0 auto;
@@ -142,16 +134,15 @@ body {
     min-height: calc(100vh - 120px);
     opacity: 0;
     transition: opacity 0.3s ease;
+    flex-direction: column;
 }
 
 .screen.active {
     display: flex !important;
-    flex-direction: column;
     opacity: 1;
 }
 
 /* ===== HOME SCREEN ===== */
-
 #home-screen {
     background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)),
                 url('https://derolu0.github.io/aeterna/images/sfondo-home-mobile.jpg');
@@ -160,26 +151,21 @@ body {
     background-attachment: fixed;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    padding: 60px 20px 30px 20px;
+    justify-content: center;
+    padding: 20px;
     align-items: center;
     flex: 1;
     min-height: calc(100vh - 60px - env(safe-area-inset-bottom, 0px));
 }
 
 .logo-container {
-    margin-bottom: 5px !important;
-    text-align: left;
-    position: relative;
+    margin-bottom: 20px;
+    text-align: center;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     gap: 20px;
-    width: 100%;
-    max-width: 380px;
-    align-self: flex-start;
-    margin-left: 20px;
-    flex-shrink: 0;
+    flex-wrap: wrap;
 }
 
 .app-logo {
@@ -191,16 +177,12 @@ body {
     box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     background: white;
     padding: 6px;
-    mask: radial-gradient(circle, white 100%, transparent 100%);
-    -webkit-mask: radial-gradient(circle, white 100%, transparent 100%);
 }
 
 .logo-with-image {
     background: url('https://derolu0.github.io/aeterna/images/logo-app.png') center/contain no-repeat;
     background-size: 85%;
-    background-position: center;
     background-color: white;
-    position: relative;
 }
 
 .comune-logo {
@@ -208,15 +190,11 @@ body {
     height: 96px;
     border-radius: 50%;
     object-fit: contain;
-    background-image: url('https://derolu0.github.io/aeterna/images/logo-comune.png');
+    background: url('https://derolu0.github.io/aeterna/images/logo-comune.png') center/contain no-repeat;
     background-size: 85%;
-    background-position: center;
-    background-repeat: no-repeat;
+    background-color: transparent;
     opacity: 0.7;
     transition: all 0.3s ease;
-    border: none;
-    box-shadow: none;
-    background-color: transparent;
 }
 
 .comune-logo:hover {
@@ -229,26 +207,14 @@ body {
     font-size: 2.2rem;
     font-weight: 700;
     text-align: center;
-    margin: 10px 0 10px !important;
-    padding: 0;
-    line-height: 1;
+    margin: 10px 0;
     text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    opacity: 0;
-    transform: translateY(0);
     animation: FadeInZoomBlur 1s ease-out forwards;
 }
 
 @keyframes FadeInZoomBlur {
-    0% {
-        opacity: 0;
-        transform: scale(1.1);
-        filter: blur(5px);
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1);
-        filter: blur(0);
-    }
+    0% { opacity: 0; transform: scale(1.1); filter: blur(5px); }
+    100% { opacity: 1; transform: scale(1); filter: blur(0); }
 }
 
 .home-title {
@@ -256,21 +222,18 @@ body {
     font-size: 1.8rem;
     font-weight: 700;
     text-align: center;
-    margin-top: 0 !important;
-    margin-bottom: 10px !important;
+    margin-bottom: 10px;
     text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-    width: 100%;
 }
 
 .home-subtitle {
     color: rgba(255, 255, 255, 0.9);
     font-size: 0.9rem;
     text-align: center;
-    line-height: 1.5 !important;
+    line-height: 1.5;
     max-width: 90%;
-    margin: 0 auto 20px auto !important;
+    margin: 0 auto 20px;
     text-shadow: 0 1px 5px rgba(0,0,0,0.3);
-    display: block;
 }
 
 .home-buttons {
@@ -280,18 +243,12 @@ body {
     flex-direction: column;
     gap: 16px;
     margin-top: 20px;
-    margin-bottom: 0;
 }
 
 .button-row {
     display: flex;
     gap: 16px;
     width: 100%;
-}
-
-.button-row .home-btn {
-    flex: 1;
-    min-width: 0;
 }
 
 .home-btn {
@@ -316,6 +273,7 @@ body {
     overflow: hidden;
     touch-action: manipulation;
     min-height: 85px;
+    flex: 1;
 }
 
 .home-btn::before {
@@ -348,25 +306,8 @@ body {
     justify-content: center;
     background: rgba(255, 255, 255, 0.25);
     border-radius: 14px;
-    flex-shrink: 0;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    position: relative;
-    overflow: hidden;
-}
-
-.btn-icon::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
-    border-radius: 14px;
-    z-index: -1;
 }
 
 /* Colori specifici per ogni tipo di bottone */
@@ -432,7 +373,6 @@ body {
 }
 
 /* ===== ADMIN ICON BUTTON ===== */
-
 .admin-icon-btn-container {
     position: absolute;
     top: 20px;
@@ -489,7 +429,6 @@ body {
 }
 
 /* ===== LIST SCREENS ===== */
-
 .list-screen {
     background: var(--background);
     flex: 1;
@@ -559,7 +498,6 @@ body {
 }
 
 /* ===== CONTENT AREA ===== */
-
 .content-area {
     padding: 20px;
     flex: 1;
@@ -586,7 +524,6 @@ body {
 }
 
 /* ===== TAB BAR ===== */
-
 .tab-bar {
     position: fixed;
     bottom: 0;
@@ -647,12 +584,10 @@ body {
 .tab-icon {
     font-size: 1.1rem;
     transition: all 0.3s ease;
-    filter: grayscale(0.7);
     opacity: 0.8;
 }
 
 .tab-btn.active .tab-icon {
-    filter: grayscale(0);
     opacity: 1;
     transform: scale(1.1);
 }
@@ -679,7 +614,6 @@ body {
 }
 
 /* ===== GRID ITEMS (FILOSOFI) ===== */
-
 .items-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -747,7 +681,6 @@ body {
     justify-content: center;
     color: #9ca3af;
     font-size: 3rem;
-    animation: fadeIn 0.3s ease;
 }
 
 .item-content {
@@ -804,7 +737,6 @@ body {
 }
 
 /* ===== COMPACT ITEMS (OPERE) ===== */
-
 .compact-items-list {
     display: flex;
     flex-direction: column;
@@ -823,7 +755,6 @@ body {
     min-height: 80px;
     border: 1px solid #e5e7eb;
     touch-action: manipulation;
-    position: relative;
 }
 
 .compact-item:active {
@@ -861,7 +792,6 @@ body {
     justify-content: center;
     color: #9ca3af;
     font-size: 1.8rem;
-    animation: fadeIn 0.3s ease;
 }
 
 .compact-item-content {
@@ -888,7 +818,6 @@ body {
     margin-bottom: 4px;
     flex: 1;
     word-wrap: break-word;
-    overflow-wrap: break-word;
 }
 
 .compact-item-autore {
@@ -896,7 +825,6 @@ body {
     color: var(--light-text);
     line-height: 1.3;
     word-wrap: break-word;
-    overflow-wrap: break-word;
 }
 
 .compact-item-footer {
@@ -918,7 +846,6 @@ body {
 }
 
 /* ===== DETAIL SCREENS ===== */
-
 .detail-screen {
     background: var(--background);
     flex: 1;
@@ -980,7 +907,6 @@ body {
 }
 
 /* ===== CONCETTI SCREEN ===== */
-
 .concetti-container {
     display: flex;
     flex-direction: column;
@@ -1054,7 +980,6 @@ body {
 }
 
 /* ===== MAPPA GEOGRAFICA ===== */
-
 #mappa-screen {
     background: var(--background);
     flex: 1;
@@ -1070,32 +995,29 @@ body {
 }
 
 /* Icone personalizzate per la mappa */
-.leaflet-marker-icon.filosofo-marker {
-    background-image: url('https://derolu0.github.io/aeterna/images/marker-blue.png');
+.leaflet-marker-icon.filosofo-marker,
+.leaflet-marker-icon.filosofo-classico-marker,
+.leaflet-marker-icon.filosofo-contemporaneo-marker,
+.leaflet-marker-icon.user-marker {
     background-size: contain;
     width: 25px;
     height: 41px;
+}
+
+.leaflet-marker-icon.filosofo-marker {
+    background-image: url('https://derolu0.github.io/aeterna/images/marker-blue.png');
 }
 
 .leaflet-marker-icon.filosofo-classico-marker {
     background-image: url('https://derolu0.github.io/aeterna/images/marker-green.png');
-    background-size: contain;
-    width: 25px;
-    height: 41px;
 }
 
 .leaflet-marker-icon.filosofo-contemporaneo-marker {
     background-image: url('https://derolu0.github.io/aeterna/images/marker-orange.png');
-    background-size: contain;
-    width: 25px;
-    height: 41px;
 }
 
 .leaflet-marker-icon.user-marker {
     background-image: url('https://derolu0.github.io/aeterna/images/marker-red.png');
-    background-size: contain;
-    width: 25px;
-    height: 41px;
 }
 
 /* Legenda mappa */
@@ -1221,7 +1143,6 @@ body {
 }
 
 /* ===== MAPPA CONCETTUALE ===== */
-
 #mappa-concettuale-screen {
     background: var(--background);
     flex: 1;
@@ -1297,7 +1218,6 @@ body {
 }
 
 /* ===== FILTER BUTTONS ===== */
-
 .filter-buttons {
     display: flex;
     gap: 10px;
@@ -1344,7 +1264,6 @@ body {
 }
 
 /* ===== SEARCH CONTAINER ===== */
-
 .search-container {
     padding: 20px;
     background: var(--card-bg);
@@ -1368,7 +1287,6 @@ body {
 }
 
 /* ===== LOADING STATES ===== */
-
 .loading {
     display: flex;
     justify-content: center;
@@ -1392,7 +1310,6 @@ body {
 }
 
 /* ===== TOAST & NOTIFICATIONS ===== */
-
 .toast {
     position: fixed;
     bottom: 160px;
@@ -1431,7 +1348,6 @@ body {
 }
 
 /* ===== MODALS ===== */
-
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -1530,7 +1446,6 @@ body {
 }
 
 /* ===== ADMIN PANEL ===== */
-
 .admin-panel-overlay {
     position: fixed;
     top: 0;
@@ -1984,22 +1899,6 @@ body {
     border-radius: 10px;
 }
 
-.info-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-}
-
-.info-item span:first-child {
-    font-weight: 600;
-    color: var(--dark-text);
-}
-
-.info-item span:last-child {
-    color: var(--light-text);
-}
-
 /* Status colors */
 .status-active {
     color: var(--primary-green) !important;
@@ -2014,7 +1913,6 @@ body {
 }
 
 /* ===== FIXED NAVIGATE BUTTON ===== */
-
 .fixed-navigate-btn {
     position: fixed;
     bottom: 90px;
@@ -2046,7 +1944,6 @@ body {
 }
 
 /* ===== IMPORT/EXPORT SECTIONS ===== */
-
 .import-export-section {
     margin-top: 20px;
     padding: 15px;
@@ -2069,7 +1966,6 @@ body {
 }
 
 /* ===== LOCATION BUTTONS ===== */
-
 .location-buttons {
     display: flex;
     gap: 10px;
@@ -2110,7 +2006,6 @@ body {
 }
 
 /* ===== AUTH OVERLAY ===== */
-
 .auth-overlay {
     position: fixed;
     top: 0;
@@ -2184,7 +2079,6 @@ body {
 }
 
 /* ===== EMPTY STATES ===== */
-
 .empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -2207,7 +2101,6 @@ body {
 }
 
 /* ===== BADGE NEW ===== */
-
 .badge-new {
     background-color: #8b5cf6;
     color: white;
@@ -2218,7 +2111,6 @@ body {
     margin-left: 8px;
     text-transform: uppercase;
     box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
-    vertical-align: middle;
     animation: pulse-badge 2s infinite;
     display: inline-block;
 }
@@ -2230,14 +2122,12 @@ body {
 }
 
 /* ===== DEV SIGNATURE ===== */
-
 .dev-signature {
     text-align: center;
     font-size: 10px;
     color: #cbd5e1;
     margin-top: auto;
-    padding-bottom: 20px;
-    padding-top: 20px;
+    padding: 20px 0;
     width: 100%;
     opacity: 0.7;
     font-weight: 300;
@@ -2246,7 +2136,6 @@ body {
 }
 
 /* ===== SMART INSTALL BANNER ===== */
-
 .install-banner {
     position: fixed;
     bottom: 20px;
@@ -2309,8 +2198,118 @@ body {
     to { transform: translate(-50%, 0); opacity: 1; }
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+/* ===== PAGINA SEGNALAZIONI ===== */
+#segnalazioni-screen .app-header {
+    background: #ef4444 !important;
+    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
+}
 
+#segnalazioni-screen .screen-title,
+#segnalazioni-screen .screen-subtitle,
+#segnalazioni-screen .back-btn {
+    color: white !important;
+}
+
+#segnalazioni-screen .back-btn {
+    background: rgba(255, 255, 255, 0.2) !important;
+}
+
+#segnalazioni-screen .content-area,
+#segnalazioni-screen label,
+#segnalazioni-screen p {
+    color: #000000 !important;
+}
+
+#segnalazioni-screen select,
+#segnalazioni-screen textarea {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #ccc !important;
+}
+
+#segnalazioni-screen button[type="submit"] {
+    background-color: #ef4444 !important;
+    color: white !important;
+    width: auto !important;
+    max-width: 250px !important;
+    padding: 12px 30px !important;
+    margin: 30px auto !important;
+    border-radius: 50px !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+#segnalazioni-screen button[type="submit"] .btn-icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1rem !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    border: none !important;
+    margin-right: 10px;
+}
+
+/* ===== PULSANTI MENU ===== */
+.modal-btn.btn-admin,
+.modal-btn.btn-report,
+.modal-btn.btn-qr,
+.modal-btn.btn-info {
+    margin-bottom: 10px;
+    font-weight: 500;
+    border-width: 1px;
+    border-style: solid;
+    justify-content: center;
+}
+
+.modal-btn.btn-admin {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+.modal-btn.btn-admin i { color: #2563eb; }
+
+.modal-btn.btn-report {
+    background-color: #fef2f2;
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+.modal-btn.btn-report i { color: #dc2626; }
+
+.modal-btn.btn-qr {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border-color: #bae6fd;
+}
+.modal-btn.btn-qr i { color: #0ea5e9; }
+
+.modal-btn.btn-info {
+    background-color: #f8fafc;
+    color: #334155;
+    border-color: #cbd5e1;
+}
+.modal-btn.btn-info i { color: #64748b; }
+
+/* ===== FIX LOGHI HOME ===== */
+.app-logo {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 3px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+    backdrop-filter: blur(2px);
+}
+
+.comune-logo {
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: scale(0.7) !important;
+    margin-left: 5px !important;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 380px) {
     .home-buttons {
         max-width: 100%;
@@ -2365,6 +2364,10 @@ body {
         flex-direction: column;
         gap: 10px;
         align-items: flex-start;
+    }
+    
+    .analytics-tables-section {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -2441,7 +2444,6 @@ body {
     
     .grid-item {
         border-radius: 25px;
-        transition: all 0.3s ease;
     }
     
     .grid-item:hover {
@@ -2526,18 +2528,9 @@ body {
         font-size: 1.2rem;
     }
     
-    .admin-fab {
-        bottom: 100px;
-        right: 30px;
-        width: 60px;
-        height: 60px;
-        font-size: 1.3rem;
-    }
-    
     .map-legend {
         top: 100px;
         right: 20px;
-        left: auto;
         padding: 15px;
         border-radius: 15px;
         max-width: 140px;
@@ -2563,11 +2556,6 @@ body {
     
     .admin-panel-content {
         max-width: 1000px;
-    }
-    
-    .admin-table-container {
-        max-height: 500px;
-        overflow-y: auto;
     }
     
     .compact-items-list {
@@ -2615,12 +2603,6 @@ body {
         grid-template-columns: 1fr 1fr;
         gap: 25px;
         margin-bottom: 30px;
-    }
-}
-
-@media (max-width: 1024px) {
-    .analytics-tables-section {
-        grid-template-columns: 1fr;
     }
 }
 
@@ -2715,280 +2697,4 @@ input[id$="-en"]:focus,
 textarea[id$="-en"]:focus {
     background-color: #fff;
     border-color: var(--primary-blue);
-}
-/* =======================================================
-   FIX DEFINITIVO COLORI E DIMENSIONI (Con tasto normale)
-   ======================================================= */
-
-/* --- 1. PAGINA SEGNALAZIONI (ID: segnalazioni-screen) --- */
-
-/* Intestazione Rossa */
-#segnalazioni-screen .app-header {
-    background: #ef4444 !important;
-    box-shadow: 0 2px 5px rgba(239, 68, 68, 0.3);
-}
-
-/* Testi bianchi nell'intestazione */
-#segnalazioni-screen .screen-title,
-#segnalazioni-screen .screen-subtitle,
-#segnalazioni-screen .back-btn {
-    color: white !important;
-}
-#segnalazioni-screen .back-btn {
-    background: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Testo del modulo NERO */
-#segnalazioni-screen .content-area,
-#segnalazioni-screen label,
-#segnalazioni-screen p {
-    color: #000000 !important;
-}
-
-/* Input e Textarea */
-#segnalazioni-screen select,
-#segnalazioni-screen textarea {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border: 1px solid #ccc !important;
-}
-
-/* --- FIX PULSANTE INVIA (Ora dimensioni normali) --- */
-#segnalazioni-screen button[type="submit"] {
-    background-color: #ef4444 !important; /* Rosso */
-    color: white !important;
-    
-    /* Resetta le dimensioni enormi ereditate */
-    width: auto !important; 
-    max-width: 250px !important; /* Larghezza massima contenuta */
-    min-height: unset !important;
-    height: auto !important;
-    
-    /* Spaziatura normale */
-    padding: 12px 30px !important;
-    margin: 30px auto !important; /* Centrato con margine sopra/sotto */
-    
-    /* Forma a pillola */
-    border-radius: 50px !important;
-    border: none !important;
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3) !important;
-    
-    /* Allineamento */
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-}
-
-/* Rimpicciolisce l'icona interna al pulsante */
-#segnalazioni-screen button[type="submit"] .btn-icon {
-    width: 32px !important;
-    height: 32px !important;
-    font-size: 1rem !important;
-    background: rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
-    border: none !important;
-    margin-right: 10px;
-}
-
-/* Rimuove effetti strani di sfondo ereditati */
-#segnalazioni-screen button[type="submit"]::before {
-    display: none !important;
-}
-
-
-/* --- 2. PULSANTI MENU (Invariati) --- */
-.modal-btn.btn-admin, 
-.modal-btn.btn-report, 
-.modal-btn.btn-admin, 
-.modal-btn.btn-report, 
-.modal-btn.btn-qr, 
-.modal-btn.btn-info {
-    margin-bottom: 10px;
-    font-weight: 500;
-    border-width: 1px;
-    border-style: solid;
-    justify-content: center; /* Allinea icone e testo al centro */
-    padding-left: 0;         /* Rimuove il blocco a sinistra */
-}
-
-.modal-btn.btn-admin {
-    background-color: #eff6ff; 
-    color: #1d4ed8;            
-    border-color: #bfdbfe;     
-}
-.modal-btn.btn-admin i { color: #2563eb; }
-
-.modal-btn.btn-report {
-    background-color: #fef2f2; 
-    color: #b91c1c;            
-    border-color: #fecaca;     
-}
-.modal-btn.btn-report i { color: #dc2626; }
-
-.modal-btn.btn-qr {
-    background-color: #e0f2fe; 
-    color: #0369a1;            
-    border-color: #bae6fd;     
-}
-.modal-btn.btn-qr i { color: #0ea5e9; }
-
-.modal-btn.btn-info {
-    background-color: #f8fafc;
-    color: #334155;
-    border-color: #cbd5e1;
-}
-.modal-btn.btn-info i { color: #64748b; }
-/* =======================================================
-   RIPRISTINO TOTALE E FIX HOME (Versione Stabile)
-   ======================================================= */
-
-/* 1. STRUTTURA BASE (Ripristina lo scroll delle pagine interne) */
-html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow: hidden; /* Blocca scroll generale dell'app */
-    background-color: #f8fafc;
-}
-
-.screen {
-    display: none;
-    width: 100%;
-    height: 100%;
-    flex-direction: column;
-    overflow: hidden; /* Contenitore fermo */
-}
-
-.screen.active {
-    display: flex !important;
-}
-
-/* FONDAMENTALE: Riabilita lo scroll per le liste (Filosofi, Opere) */
-.content-area {
-    flex: 1;
-    overflow-y: auto !important; /* Questo fa tornare visibili i contenuti! */
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 90px;
-    width: 100%;
-}
-
-/* 2. HOME PAGE (Fissa e Centrata) */
-#home-screen {
-    /* Sfondo Mobile (No Zoom) */
-    background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.5)), 
-                url('https://derolu0.github.io/aeterna/images/sfondo-home-mobile.jpg');
-    background-size: cover;
-    background-position: center top; /* Parte dall'alto */
-    background-repeat: no-repeat;
-    
-    /* Layout */
-    justify-content: center; /* Centra tutto verticalmente */
-    align-items: center;
-    padding-bottom: 80px;    /* Spazio per non coprire col menu */
-    overflow: hidden !important; /* Niente scroll sulla home */
-}
-
-/* 3. FIX SPAZI HOME (Fa salire i pulsanti) */
-.logo-container {
-    margin-top: 0;
-    margin-bottom: 10px;
-    transform: scale(0.9); /* Loghi un po' più piccoli */
-}
-
-.home-welcome-animated {
-    margin: 0;
-    font-size: 1.2rem;
-}
-
-.home-title {
-    margin-top: 5px;
-    margin-bottom: 5px;
-    font-size: 2.2rem; /* Dimensione giusta */
-    line-height: 1.1;
-    color: white;
-    text-align: center;
-}
-
-.home-subtitle {
-    margin-bottom: 15px; /* Spazio ridotto verso i bottoni */
-    font-size: 0.9rem;
-    max-width: 90%;
-    line-height: 1.3;
-    color: rgba(255,255,255,0.9);
-    text-align: center;
-}
-
-.home-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px; /* Meno spazio tra i bottoni */
-    width: 100%;
-    max-width: 350px;
-    padding: 0 20px;
-}
-
-.home-btn {
-    min-height: 65px; /* Pulsanti compatti ma cliccabili */
-    padding: 10px;
-}
-
-/* 4. FIX DESKTOP (PC) */
-@media (min-width: 1024px) {
-    #home-screen {
-        background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), 
-                          url('https://derolu0.github.io/aeterna/images/sfondo-home.jpg') !important;
-        background-position: center;
-        background-attachment: fixed; /* Su PC va bene fixed */
-    }
-
-    /* Layout orizzontale per i pulsanti su PC */
-    .home-buttons {
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        max-width: 800px;
-    }
-
-    .home-btn {
-        width: 180px; 
-        height: auto;
-    }
-    
-    /* Titoli ridimensionati per PC */
-    .home-title { font-size: 2.5rem; }
-    .logo-container { transform: scale(0.8); }
-}
-/* =======================================================
-   FIX LOGHI HOME (Corretto e Trasparente)
-   ======================================================= */
-
-/* 1. LOGO APP: Bordo Trasparente */
-.app-logo {
-    /* Sfondo del cerchio: semitrasparente */
-    background-color: rgba(255, 255, 255, 0.1) !important; 
-    
-    /* BORDO: Bianco ma con opacità 0.4 (40% visibile, 60% trasparente) */
-    border: 3px solid rgba(255, 255, 255, 0.4) !important; 
-    
-    /* Cerchio perfetto */
-    border-radius: 50% !important;
-    
-    /* Ombra più leggera */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-    
-    backdrop-filter: blur(2px); 
-}
-
-/* 2. LOGO COMUNE: Ripristinato e Piccolo */
-.comune-logo {
-    /* IMPORTANTE: Usiamo background-color per non cancellare l'immagine */
-    background-color: transparent !important; 
-    
-    border: none !important;
-    box-shadow: none !important;
-    
-    /* Rimpicciolito */
-    transform: scale(0.7) !important; 
-    margin-left: 5px !important;
 }

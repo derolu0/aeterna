@@ -30,7 +30,7 @@ if (!window.firebaseInitialized) {
         measurementId: "G-E70D7TDDV7"
     };
     
-    // Initialize Firebase (Standard method if library is loaded via script tag)
+    // Initialize Firebase
     if (typeof firebase !== 'undefined') {
         try {
             // Inizializza l'app Firebase
@@ -93,10 +93,10 @@ if (!window.firebaseInitialized) {
     console.log('Progetto: Aeterna Lexicon in Motu');
     console.log('Database: Firestore con collezioni [filosofi, opere, concetti, analytics, analisi]');
     
-    // Funzioni helper per il database (TUTTE ESISTENTI + NUOVE)
+    // Funzioni helper per il database
     window.firebaseHelpers = {
         // ==============================================
-        // FUNZIONI ESISTENTI (INTATTE)
+        // FUNZIONI BASE CRUD
         // ==============================================
         
         // Carica dati filosofi
@@ -293,7 +293,7 @@ if (!window.firebaseInitialized) {
         },
         
         // ==============================================
-        // NUOVE FUNZIONI PER ANALISI COMPARATIVA
+        // ANALISI COMPARATIVA
         // ==============================================
         
         /**
@@ -327,8 +327,8 @@ if (!window.firebaseInitialized) {
                 const opereContemporanee = await this.filterByPeriodo('opere', 'contemporaneo');
                 
                 // 3. ESTRAI OCCORRENZE DEL TERMINE
-                const occorrenzeClassiche = await this.estraiOccorrenzeTermine(termine, opereClassiche);
-                const occorrenzeContemporanee = await this.estraiOccorrenzeTermine(termine, opereContemporanee);
+                const occorrenzeClassiche = this.estraiOccorrenzeTermine(termine, opereClassiche);
+                const occorrenzeContemporanee = this.estraiOccorrenzeTermine(termine, opereContemporanee);
                 
                 // 4. ANALISI CONTESTUALE
                 const contestiClassici = this.analizzaContesti(occorrenzeClassiche);
@@ -375,7 +375,7 @@ if (!window.firebaseInitialized) {
                             opereAnalizzate: opereClassiche.length,
                             occorrenze: occorrenzeClassiche.length,
                             contesti: contestiClassici,
-                            esempi: occorrenzeClassiche.slice(0, 3) // Primi 3 esempi
+                            esempi: occorrenzeClassiche.slice(0, 3)
                         },
                         
                         contemporaneo: {
@@ -417,7 +417,7 @@ if (!window.firebaseInitialized) {
          * @param {Array} opere - Lista di opere
          * @returns {Array} Occorrenze trovate
          */
-        estraiOccorrenzeTermine: async function(termine, opere) {
+        estraiOccorrenzeTermine: function(termine, opere) {
             const occorrenze = [];
             const termineLower = termine.toLowerCase();
             
@@ -439,7 +439,7 @@ if (!window.firebaseInitialized) {
                 // Cerca nella sintesi/abstract
                 if (opera.sintesi && opera.sintesi.toLowerCase().includes(termineLower)) {
                     const posizione = opera.sintesi.toLowerCase().indexOf(termineLower);
-                    const estratto = this.estraiContestoTestuale(opera.sintesi, posizione, 100);
+                    const estratto = this.estraiContestoTestuale(opera.sintesi, posizione, termine.length, 100);
                     
                     occorrenze.push({
                         tipo: 'sintesi',
@@ -454,10 +454,10 @@ if (!window.firebaseInitialized) {
                 }
                 
                 // Cerca nei concetti trattati
-                if (opera.concetti && Array.isArray(opera.concetti)) {
-                    const concettiArray = typeof opera.concetti === 'string' 
-                        ? opera.concetti.split(',').map(c => c.trim())
-                        : opera.concetti;
+                if (opera.concetti) {
+                    const concettiArray = Array.isArray(opera.concetti) 
+                        ? opera.concetti
+                        : opera.concetti.split(',').map(c => c.trim());
                     
                     if (concettiArray.some(c => c.toLowerCase().includes(termineLower))) {
                         occorrenze.push({
@@ -546,32 +546,32 @@ if (!window.firebaseInitialized) {
             
             occorrenzeConAnno.forEach(occ => {
                 const secolo = Math.floor(occ.anno / 100) * 100;
-                const chiave = `${secolo}-${secolo + 99}`;
+                const chiave = `${secolo}`;
                 
                 if (!timelinePerSecolo[chiave]) {
                     timelinePerSecolo[chiave] = {
-                        secolo: `${secolo}-${secolo + 99}`,
+                        secolo: secolo,
                         periodo: this.determinaPeriodoDaAnno(occ.anno),
                         autori: new Set(),
-                        opere: [],
+                        opere: new Set(),
                         occorrenze: 0
                     };
                 }
                 
                 timelinePerSecolo[chiave].autori.add(occ.autore);
-                timelinePerSecolo[chiave].opere.push(occ.titolo);
+                timelinePerSecolo[chiave].opere.add(occ.titolo);
                 timelinePerSecolo[chiave].occorrenze++;
             });
             
-            // Converti in array e limita a 10 secoli più significativi
+            // Converti in array e ordina
             return Object.values(timelinePerSecolo)
-                .sort((a, b) => a.secolo.localeCompare(b.secolo))
+                .sort((a, b) => a.secolo - b.secolo)
                 .slice(0, 10)
                 .map(item => ({
-                    secolo: item.secolo,
+                    secolo: `${item.secolo}-${item.secolo + 99}`,
                     periodo: item.periodo,
-                    autori: Array.from(item.autori).slice(0, 3), // Massimo 3 autori
-                    opere: [...new Set(item.opere)].slice(0, 2), // Opere uniche
+                    autori: Array.from(item.autori).slice(0, 3),
+                    opere: Array.from(item.opere).slice(0, 2),
                     occorrenze: item.occorrenze
                 }));
         },
@@ -584,6 +584,37 @@ if (!window.firebaseInitialized) {
          */
         identificaTrasformazioni: function(contestiClassici, contestiContemporanei) {
             const trasformazioni = [];
+            
+            // Calcola variazioni percentuali
+            const tuttiContesti = new Set([
+                ...Object.keys(contestiClassici),
+                ...Object.keys(contestiContemporanei)
+            ]);
+            
+            tuttiContesti.forEach(contesto => {
+                const classico = contestiClassici[contesto] || 0;
+                const contemporaneo = contestiContemporanei[contesto] || 0;
+                const totaleClassico = Object.values(contestiClassici).reduce((a, b) => a + b, 0);
+                const totaleContemporaneo = Object.values(contestiContemporanei).reduce((a, b) => a + b, 0);
+                
+                if (totaleClassico > 0 && totaleContemporaneo > 0) {
+                    const percentualeClassico = (classico / totaleClassico) * 100;
+                    const percentualeContemporaneo = (contemporaneo / totaleContemporaneo) * 100;
+                    const variazione = percentualeContemporaneo - percentualeClassico;
+                    
+                    // Identifica trasformazioni significative
+                    if (Math.abs(variazione) > 20) {
+                        trasformazioni.push({
+                            tipo: variazione > 0 ? 'aumento' : 'diminuzione',
+                            contesto: contesto,
+                            variazione: Math.abs(variazione).toFixed(1) + '%',
+                            significato: variazione > 0 
+                                ? `Il termine diventa più ${contesto} nel pensiero contemporaneo`
+                                : `Il termine perde centralità ${contesto} nel pensiero contemporaneo`
+                        });
+                    }
+                }
+            });
             
             // Mappa delle possibili trasformazioni
             const mappeTrasformazioni = [
@@ -606,44 +637,6 @@ if (!window.firebaseInitialized) {
                     esempio: 'Il "bene" da principio etico a categoria estetica'
                 }
             ];
-            
-            // Calcola variazioni percentuali
-            const variazioni = {};
-            const tuttiContesti = new Set([
-                ...Object.keys(contestiClassici),
-                ...Object.keys(contestiContemporanei)
-            ]);
-            
-            tuttiContesti.forEach(contesto => {
-                const classico = contestiClassici[contesto] || 0;
-                const contemporaneo = contestiContemporanei[contesto] || 0;
-                const totaleClassico = Object.values(contestiClassici).reduce((a, b) => a + b, 0);
-                const totaleContemporaneo = Object.values(contestiContemporanei).reduce((a, b) => a + b, 0);
-                
-                if (totaleClassico > 0 && totaleContemporaneo > 0) {
-                    const percentualeClassico = (classico / totaleClassico) * 100;
-                    const percentualeContemporaneo = (contemporaneo / totaleContemporaneo) * 100;
-                    const variazione = percentualeContemporaneo - percentualeClassico;
-                    
-                    variazioni[contesto] = {
-                        classico: percentualeClassico.toFixed(1),
-                        contemporaneo: percentualeContemporaneo.toFixed(1),
-                        variazione: variazione.toFixed(1)
-                    };
-                    
-                    // Identifica trasformazioni significative
-                    if (Math.abs(variazione) > 20) {
-                        trasformazioni.push({
-                            tipo: variazione > 0 ? 'aumento' : 'diminuzione',
-                            contesto: contesto,
-                            variazione: Math.abs(variazione).toFixed(1) + '%',
-                            significato: variazione > 0 
-                                ? `Il termine diventa più ${contesto} nel pensiero contemporaneo`
-                                : `Il termine perde centralità ${contesto} nel pensiero contemporaneo`
-                        });
-                    }
-                }
-            });
             
             // Aggiungi trasformazioni dalla mappa
             mappeTrasformazioni.forEach(mappa => {
@@ -674,7 +667,7 @@ if (!window.firebaseInitialized) {
                     classico: totaleClassico,
                     contemporaneo: totaleContemporaneo,
                     totale: totale,
-                    rapporto: totale > 0 ? (totaleContemporaneo / totaleClassico).toFixed(2) : '0.00'
+                    rapporto: totaleClassico > 0 ? (totaleContemporaneo / totaleClassico).toFixed(2) : '0.00'
                 },
                 contesti: {
                     classico: Object.keys(classicoContesti).length,
@@ -780,11 +773,11 @@ if (!window.firebaseInitialized) {
         /**
          * ESTRATTO DI TESTO CON CONTESTO
          */
-        estraiContestoTestuale: function(testo, posizione, lunghezza) {
+        estraiContestoTestuale: function(testo, posizione, lunghezzaTermine, lunghezzaContesto) {
             if (!testo || posizione === -1) return '';
             
-            const inizio = Math.max(0, posizione - lunghezza);
-            const fine = Math.min(testo.length, posizione + termine.length + lunghezza);
+            const inizio = Math.max(0, posizione - lunghezzaContesto);
+            const fine = Math.min(testo.length, posizione + lunghezzaTermine + lunghezzaContesto);
             
             let estratto = testo.substring(inizio, fine);
             
@@ -793,6 +786,60 @@ if (!window.firebaseInitialized) {
             if (fine < testo.length) estratto = estratto + '...';
             
             return estratto;
+        },
+        
+        /**
+         * CARICA STORICO ANALISI SALVATE
+         */
+        caricaStoricoAnalisi: async function(limite = 10) {
+            if (!window.db) return [];
+            
+            try {
+                const snapshot = await window.db.collection('analisi')
+                    .orderBy('timestamp', 'desc')
+                    .limit(limite)
+                    .get();
+                
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (error) {
+                console.error('Errore caricamento storico analisi:', error);
+                return [];
+            }
+        },
+        
+        /**
+         * CERCA TERMINI SIMILI PER ANALISI CORRELATA
+         */
+        cercaTerminiCorrelati: async function(termine) {
+            const concetti = await this.loadConcetti();
+            
+            return concetti
+                .filter(concetto => {
+                    const parola = concetto.parola.toLowerCase();
+                    const termineLower = termine.toLowerCase();
+                    
+                    // Escludi il termine stesso
+                    if (parola === termineLower) return false;
+                    
+                    // Cerca similarità semantiche
+                    const gruppiSemantici = {
+                        verita: ['realtà', 'certezza', 'conoscenza', 'evidenza'],
+                        potere: ['autorità', 'dominio', 'controllo', 'influenza'],
+                        etica: ['morale', 'virtù', 'valore', 'dovere'],
+                        essere: ['esistenza', 'essenza', 'sostanza', 'ente']
+                    };
+                    
+                    // Controlla se appartengono allo stesso gruppo
+                    for (const [gruppo, termini] of Object.entries(gruppiSemantici)) {
+                        if (termini.includes(termineLower) && termini.includes(parola)) {
+                            return true;
+                        }
+                    }
+                    
+                    return false;
+                })
+                .slice(0, 5)
+                .map(c => c.parola);
         },
         
         /**
@@ -863,7 +910,9 @@ if (!window.firebaseInitialized) {
                             classico: dati.classico.occorrenze,
                             contemporaneo: dati.contemporaneo.occorrenze,
                             totale: dati.classico.occorrenze + dati.contemporaneo.occorrenze,
-                            rapporto: (dati.contemporaneo.occorrenze / dati.classico.occorrenze).toFixed(2)
+                            rapporto: dati.classico.occorrenze > 0 
+                                ? (dati.contemporaneo.occorrenze / dati.classico.occorrenze).toFixed(2) 
+                                : '0.00'
                         }
                     }
                 },
@@ -873,105 +922,10 @@ if (!window.firebaseInitialized) {
                     errore: errore || 'Database non disponibile'
                 }
             };
-        },
-        
-        // ==============================================
-        // NUOVE FUNZIONI AGGIUNTIVE
-        // ==============================================
-        
-        /**
-         * CARICA STORICO ANALISI SALVATE
-         */
-        caricaStoricoAnalisi: async function(limite = 10) {
-            if (!window.db) return [];
-            
-            try {
-                const snapshot = await window.db.collection('analisi')
-                    .orderBy('timestamp', 'desc')
-                    .limit(limite)
-                    .get();
-                
-                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (error) {
-                console.error('Errore caricamento storico analisi:', error);
-                return [];
-            }
-        },
-        
-        /**
-         * ESPORTA ANALISI IN FORMATO JSON
-         */
-        esportaAnalisiJSON: function(analisi) {
-            return JSON.stringify(analisi, null, 2);
-        },
-        
-        /**
-         * ESPORTA ANALISI IN FORMATO CSV
-         */
-        esportaAnalisiCSV: function(analisi) {
-            const righe = [];
-            
-            // Intestazione
-            righe.push(['Termine', 'Periodo', 'Occorrenze', 'Contesti', 'Trasformazioni']);
-            
-            // Dati classici
-            righe.push([
-                analisi.termine,
-                'Classico',
-                analisi.analisi.classico.occorrenze,
-                Object.keys(analisi.analisi.classico.contesti).join(', '),
-                analisi.analisi.trasformazioni.filter(t => t.da === 'classico').length
-            ]);
-            
-            // Dati contemporanei
-            righe.push([
-                analisi.termine,
-                'Contemporaneo',
-                analisi.analisi.contemporaneo.occorrenze,
-                Object.keys(analisi.analisi.contemporaneo.contesti).join(', '),
-                analisi.analisi.trasformazioni.filter(t => t.a === 'contemporaneo').length
-            ]);
-            
-            return righe.map(riga => riga.join(';')).join('\n');
-        },
-        
-        /**
-         * CERCA TERMINI SIMILI PER ANALISI CORRELATA
-         */
-        cercaTerminiCorrelati: async function(termine) {
-            const concetti = await this.loadConcetti();
-            
-            return concetti
-                .filter(concetto => {
-                    const parola = concetto.parola.toLowerCase();
-                    const termineLower = termine.toLowerCase();
-                    
-                    // Escludi il termine stesso
-                    if (parola === termineLower) return false;
-                    
-                    // Cerca similarità semantiche (semplificato)
-                    const gruppiSemantici = {
-                        verita: ['realtà', 'certezza', 'conoscenza', 'evidenza'],
-                        potere: ['autorità', 'dominio', 'controllo', 'influenza'],
-                        etica: ['morale', 'virtù', 'valore', 'dovere'],
-                        essere: ['esistenza', 'essenza', 'sostanza', 'ente']
-                    };
-                    
-                    // Controlla se appartengono allo stesso gruppo
-                    for (const [gruppo, termini] of Object.entries(gruppiSemantici)) {
-                        if (termini.includes(termineLower) && termini.includes(parola)) {
-                            return true;
-                        }
-                    }
-                    
-                    return false;
-                })
-                .slice(0, 5) // Massimo 5 termini correlati
-                .map(c => c.parola);
         }
     };
     
-    // Setup real-time listeners per aggiornamenti in tempo reale
+    // Setup real-time listeners
     window.setupFirestoreListeners = function() {
         if (!window.db) return;
         
@@ -1015,21 +969,21 @@ if (!window.firebaseInitialized) {
                 if (window.firebaseInitialized && window.db) {
                     window.setupFirestoreListeners();
                 }
-            }, 2000);
+            }, 1000);
         });
     } else {
         setTimeout(() => {
             if (window.firebaseInitialized && window.db) {
                 window.setupFirestoreListeners();
             }
-        }, 2000);
+        }, 1000);
     }
     
 } else {
     console.log('Firebase già inizializzato per Aeterna Lexicon in Motu');
 }
 
-// Funzioni globali per compatibilità con app.js esistente
+// Funzioni globali per compatibilità
 window.firebaseUtils = {
     // Verifica se Firebase è inizializzato
     isInitialized: function() {
@@ -1052,7 +1006,7 @@ window.firebaseUtils = {
         
         try {
             const startTime = Date.now();
-            await window.db.collection('analytics').doc('test').get();
+            await window.db.collection('analytics').limit(1).get();
             const latency = Date.now() - startTime;
             
             return {
@@ -1131,33 +1085,6 @@ window.firebaseUtils = {
         console.log('Dati locali puliti dopo sync');
     },
     
-    // ==============================================
-    // NUOVE FUNZIONI UTILITY PER ANALISI
-    // ==============================================
-    
-    /**
-     * INIZIALIZZA LE LIBRERIE DI ANALISI
-     */
-    initAnalisiLibraries: function() {
-        // Carica linguistic-analysis.js se non è già caricato
-        if (!window.LinguisticAnalysis) {
-            const script = document.createElement('script');
-            script.src = 'linguistic-analysis.js';
-            script.onload = () => console.log('✅ LinguisticAnalysis caricato');
-            document.head.appendChild(script);
-        }
-        
-        // Carica timeline-evolution.js se non è già caricato
-        if (!window.TimelineEvolution) {
-            const script = document.createElement('script');
-            script.src = 'timeline-evolution.js';
-            script.onload = () => console.log('✅ TimelineEvolution caricato');
-            document.head.appendChild(script);
-        }
-        
-        console.log('📚 Librerie analisi inizializzate');
-    },
-    
     /**
      * VERIFICA DISPONIBILITÀ DATI PER ANALISI
      */
@@ -1217,9 +1144,6 @@ window.firebaseUtils = {
 window.firebaseReady = new Promise((resolve) => {
     const checkFirebase = () => {
         if (window.firebaseInitialized && window.db) {
-            // Inizializza le librerie di analisi
-            window.firebaseUtils.initAnalisiLibraries();
-            
             resolve({
                 db: window.db,
                 auth: window.auth,
@@ -1240,19 +1164,4 @@ window.firebaseReady.then(() => {
     console.log('📊 Funzioni analisi comparativa pronte');
     
     window.dispatchEvent(new Event('firebase-ready'));
-    
-    // Traccia evento analytics
-    if (window.Analytics) {
-        window.Analytics.trackEvent('firebase', 'initialized', 'Aeterna Lexicon', null, {
-            project: 'Aeterna Lexicon in Motu',
-            timestamp: new Date().toISOString(),
-            analisi_comparativa: true
-        });
-    }
-    
-    // Verifica disponibilità analisi
-    setTimeout(async () => {
-        const disponibilita = await window.firebaseUtils.checkAnalisiAvailability();
-        console.log('📈 Disponibilità analisi:', disponibilita);
-    }, 2000);
 });

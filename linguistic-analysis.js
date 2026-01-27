@@ -3,7 +3,7 @@
 
 window.LinguisticAnalysis = {
   // VERSIONE
-  version: '1.0.0',
+  version: '1.0.1',
   
   // CONFIGURAZIONE
   config: {
@@ -19,6 +19,9 @@ window.LinguisticAnalysis = {
     }
   },
   
+  // CACHE PER PERFORMANCE
+  _cache: new Map(),
+  
   // 1. ANALISI DI BASE DI UN TERMINE
   analizzaTermine: function(termine, corpus) {
     console.log(`[LinguisticAnalysis] Analisi termine: "${termine}"`);
@@ -27,16 +30,29 @@ window.LinguisticAnalysis = {
       return { errore: 'Termine troppo corto', termine };
     }
     
+    const cacheKey = `termine_${termine}_${corpus.length}`;
+    if (this._cache.has(cacheKey)) {
+      console.log('[LinguisticAnalysis] Utilizzo cache');
+      return this._cache.get(cacheKey);
+    }
+    
     const termineNormalizzato = this.config.caseSensitive ? termine : termine.toLowerCase();
     const corpusNormalizzato = this.config.caseSensitive ? corpus : corpus.map(t => t.toLowerCase());
     
-    return {
+    const frequenza = this.calcolaFrequenza(termineNormalizzato, corpusNormalizzato);
+    const contesti = this.identificaContesti(termineNormalizzato, corpusNormalizzato);
+    const correlazioni = this.trovaCorrelazioni(termineNormalizzato, corpusNormalizzato);
+    
+    const risultato = {
       termine: termine,
-      frequenza: this.calcolaFrequenza(termineNormalizzato, corpusNormalizzato),
-      contesti: this.identificaContesti(termineNormalizzato, corpusNormalizzato),
-      correlazioni: this.trovaCorrelazioni(termineNormalizzato, corpusNormalizzato),
-      metriche: this.calcolaMetriche(termineNormalizzato, corpusNormalizzato)
+      frequenza: frequenza,
+      contesti: contesti,
+      correlazioni: correlazioni,
+      metriche: this.calcolaMetriche(frequenza, contesti)
     };
+    
+    this._cache.set(cacheKey, risultato);
+    return risultato;
   },
   
   // 2. CONFRONTO TRA DUE PERIODI STORICI
@@ -45,7 +61,6 @@ window.LinguisticAnalysis = {
     
     const analisiClassica = this.analizzaTermine(termine, corpusClassico);
     const analisiContemporanea = this.analizzaTermine(termine, corpusContemporaneo);
-    
     const differenze = this.calcolaDifferenze(analisiClassica, analisiContemporanea);
     
     return {
@@ -53,7 +68,7 @@ window.LinguisticAnalysis = {
       classico: analisiClassica,
       contemporaneo: analisiContemporanea,
       differenze: differenze,
-      trasformazioni: this.identificaTrasformazioni(analisiClassica, analisiContemporanea),
+      trasformazioni: this.identificaTrasformazioni(analisiClassica, analisiContemporanea, differenze),
       riepilogo: this.generaRiepilogoConfronto(analisiClassica, analisiContemporanea, differenze)
     };
   },
@@ -67,7 +82,7 @@ window.LinguisticAnalysis = {
     const occorrenzeOrdinate = occorrenze
       .filter(occ => occ.anno && occ.autore)
       .sort((a, b) => a.anno - b.anno)
-      .slice(0, 15); // Limita a 15 voci per performance
+      .slice(0, 15);
     
     return {
       termine: termine,
@@ -92,12 +107,14 @@ window.LinguisticAnalysis = {
   calcolaFrequenza: function(termine, corpus) {
     let count = 0;
     let posizioni = [];
+    const pattern = this.config.caseSensitive 
+      ? new RegExp(`\\b${this.escapeRegExp(termine)}\\b`, 'g')
+      : new RegExp(`\\b${this.escapeRegExp(termine)}\\b`, 'gi');
     
     corpus.forEach((testo, index) => {
       if (!testo) return;
       
-      const regex = new RegExp(`\\b${this.escapeRegExp(termine)}\\b`, 'gi');
-      const matches = testo.match(regex);
+      const matches = testo.match(pattern);
       
       if (matches) {
         count += matches.length;
@@ -105,20 +122,20 @@ window.LinguisticAnalysis = {
       }
     });
     
+    const totaleCaratteri = corpus.reduce((tot, testo) => tot + (testo ? testo.length : 0), 0);
+    
     return {
       assoluta: count,
       relativa: corpus.length > 0 ? (count / corpus.length).toFixed(3) : 0,
-      densita: corpus.reduce((tot, testo) => tot + (testo ? testo.length : 0), 0) > 0 
-        ? (count / corpus.reduce((tot, testo) => tot + (testo ? testo.length : 0), 0) * 1000).toFixed(3)
-        : 0,
+      densita: totaleCaratteri > 0 ? (count / totaleCaratteri * 1000).toFixed(3) : 0,
       distribuzione: posizioni
     };
   },
   
   identificaContesti: function(termine, corpus) {
-    const contesti = new Set();
     const contestiPonderati = {};
     
+    // Inizializza tutti i contesti a 0
     Object.keys(this.config.contextKeywords).forEach(tipo => {
       contestiPonderati[tipo] = 0;
     });
@@ -130,21 +147,20 @@ window.LinguisticAnalysis = {
         const keywords = this.config.contextKeywords[tipo];
         keywords.forEach(keyword => {
           if (testo.includes(keyword)) {
-            contesti.add(tipo);
             contestiPonderati[tipo] += 1;
           }
         });
       });
     });
     
-    // Ordina contesti per peso
-    const contestiOrdinati = Object.keys(contestiPonderati)
-      .filter(tipo => contestiPonderati[tipo] > 0)
-      .sort((a, b) => contestiPonderati[b] - contestiPonderati[a])
-      .map(tipo => ({ tipo, peso: contestiPonderati[tipo] }));
+    // Ordina contesti per peso e filtra quelli > 0
+    const contestiOrdinati = Object.entries(contestiPonderati)
+      .filter(([_, peso]) => peso > 0)
+      .sort(([, pesoA], [, pesoB]) => pesoB - pesoA)
+      .map(([tipo, peso]) => ({ tipo, peso }));
     
     return {
-      tipi: Array.from(contesti),
+      tipi: contestiOrdinati.map(c => c.tipo),
       dettagli: contestiOrdinati,
       principale: contestiOrdinati.length > 0 ? contestiOrdinati[0].tipo : 'non determinato'
     };
@@ -153,35 +169,29 @@ window.LinguisticAnalysis = {
   trovaCorrelazioni: function(termine, corpus, maxCorrelazioni = 10) {
     const terminiFrequenti = {};
     const stopWordsSet = new Set(this.config.stopWords.map(w => w.toLowerCase()));
+    const termineLower = termine.toLowerCase();
     
     corpus.forEach(testo => {
       if (!testo) return;
       
-      // Tokenizzazione semplice
       const parole = testo.toLowerCase()
         .replace(/[^\w\s]/g, ' ')
         .split(/\s+/)
         .filter(parola => 
           parola.length >= 3 && 
           !stopWordsSet.has(parola) && 
-          parola !== termine.toLowerCase()
+          parola !== termineLower
         );
       
       parole.forEach(parola => {
-        if (!terminiFrequenti[parola]) {
-          terminiFrequenti[parola] = 0;
-        }
-        terminiFrequenti[parola] += 1;
+        terminiFrequenti[parola] = (terminiFrequenti[parola] || 0) + 1;
       });
     });
     
-    // Converti in array e ordina
-    const correlazioni = Object.keys(terminiFrequenti)
-      .map(termine => ({ termine, frequenza: terminiFrequenti[termine] }))
+    return Object.entries(terminiFrequenti)
+      .map(([term, freq]) => ({ termine: term, frequenza: freq }))
       .sort((a, b) => b.frequenza - a.frequenza)
       .slice(0, maxCorrelazioni);
-    
-    return correlazioni;
   },
   
   determinaPeriodoStorico: function(anno) {
@@ -202,8 +212,7 @@ window.LinguisticAnalysis = {
     const testoLower = testo.toLowerCase();
     const contesti = [];
     
-    Object.keys(this.config.contextKeywords).forEach(tipo => {
-      const keywords = this.config.contextKeywords[tipo];
+    Object.entries(this.config.contextKeywords).forEach(([tipo, keywords]) => {
       if (keywords.some(keyword => testoLower.includes(keyword))) {
         contesti.push(tipo);
       }
@@ -213,14 +222,17 @@ window.LinguisticAnalysis = {
   },
   
   calcolaDifferenze: function(analisiClassica, analisiContemporanea) {
-    const differenze = {
+    const varFreq = analisiContemporanea.frequenza.assoluta - analisiClassica.frequenza.assoluta;
+    const percVar = analisiClassica.frequenza.assoluta > 0 
+      ? (varFreq / analisiClassica.frequenza.assoluta * 100).toFixed(1)
+      : '0';
+    
+    return {
       frequenza: {
         classica: analisiClassica.frequenza.assoluta,
         contemporanea: analisiContemporanea.frequenza.assoluta,
-        variazione: analisiContemporanea.frequenza.assoluta - analisiClassica.frequenza.assoluta,
-        percentuale: analisiClassica.frequenza.assoluta > 0 
-          ? ((analisiContemporanea.frequenza.assoluta - analisiClassica.frequenza.assoluta) / analisiClassica.frequenza.assoluta * 100).toFixed(1)
-          : 0
+        variazione: varFreq,
+        percentuale: percVar
       },
       contesti: {
         classici: analisiClassica.contesti.tipi,
@@ -235,33 +247,26 @@ window.LinguisticAnalysis = {
         )
       }
     };
-    
-    return differenze;
   },
   
   calcolaVariazioniCorrelazioni: function(correlazioniClassiche, correlazioniContemporanee) {
     const classicheMap = new Map(correlazioniClassiche.map(c => [c.termine, c.frequenza]));
     const contemporaneeMap = new Map(correlazioniContemporanee.map(c => [c.termine, c.frequenza]));
     
-    const tutteChiavi = new Set([
-      ...classicheMap.keys(),
-      ...contemporaneeMap.keys()
-    ]);
+    const tutteChiavi = new Set([...classicheMap.keys(), ...contemporaneeMap.keys()]);
     
-    const variazioni = [];
-    
-    tutteChiavi.forEach(termine => {
+    const variazioni = Array.from(tutteChiavi).map(termine => {
       const freqClassica = classicheMap.get(termine) || 0;
       const freqContemporanea = contemporaneeMap.get(termine) || 0;
       const variazione = freqContemporanea - freqClassica;
       
-      variazioni.push({
+      return {
         termine,
         classica: freqClassica,
         contemporanea: freqContemporanea,
         variazione,
         tendenza: variazione > 0 ? 'aumento' : variazione < 0 ? 'diminuzione' : 'stabile'
-      });
+      };
     });
     
     return variazioni
@@ -269,32 +274,28 @@ window.LinguisticAnalysis = {
       .slice(0, 10);
   },
   
-  identificaTrasformazioni: function(analisiClassica, analisiContemporanea) {
+  identificaTrasformazioni: function(analisiClassica, analisiContemporanea, differenze) {
     const trasformazioni = [];
     
     // 1. Trasformazione contestuale
-    const contestiClassici = new Set(analisiClassica.contesti.tipi);
-    const contestiContemporanei = new Set(analisiContemporanea.contesti.tipi);
+    const nuoviContesti = differenze.contesti.nuoviContesti;
+    const contestiPersi = differenze.contesti.contestiPersi;
     
-    if (!this.setsAreEqual(contestiClassici, contestiContemporanei)) {
+    if (nuoviContesti.length > 0 || contestiPersi.length > 0) {
       trasformazioni.push({
         tipo: 'contestuale',
         descrizione: 'Cambiamento nei contesti d\'uso',
         dettagli: {
-          da: Array.from(contestiClassici),
-          a: Array.from(contestiContemporanei)
+          acquisiti: nuoviContesti,
+          persi: contestiPersi
         }
       });
     }
     
-    // 2. Trasformazione semantica (basata su correlazioni)
-    const correlazioniPrincipaliClassiche = analisiClassica.correlazioni.slice(0, 5).map(c => c.termine);
-    const correlazioniPrincipaliContemporanee = analisiContemporanea.correlazioni.slice(0, 5).map(c => c.termine);
-    
-    const similarita = this.calcolaSimilarita(
-      correlazioniPrincipaliClassiche, 
-      correlazioniPrincipaliContemporanee
-    );
+    // 2. Trasformazione semantica
+    const correlazioniClassiche = analisiClassica.correlazioni.slice(0, 5).map(c => c.termine);
+    const correlazioniContemporanee = analisiContemporanea.correlazioni.slice(0, 5).map(c => c.termine);
+    const similarita = this.calcolaSimilarita(correlazioniClassiche, correlazioniContemporanee);
     
     if (similarita < 0.5) {
       trasformazioni.push({
@@ -302,43 +303,116 @@ window.LinguisticAnalysis = {
         descrizione: 'Ridefinizione semantica del concetto',
         similarita: similarita.toFixed(2),
         dettagli: {
-          associazioniClassiche: correlazioniPrincipaliClassiche,
-          associazioniContemporanee: correlazioniPrincipaliContemporanee
+          associazioniClassiche: correlazioniClassiche,
+          associazioniContemporanee: correlazioniContemporanee
         }
       });
     }
     
     // 3. Trasformazione di frequenza
-    const variazioneFreq = analisiContemporanea.frequenza.assoluta - analisiClassica.frequenza.assoluta;
-    const variazionePercentuale = analisiClassica.frequenza.assoluta > 0 
-      ? (variazioneFreq / analisiClassica.frequenza.assoluta * 100)
-      : 0;
-    
-    if (Math.abs(variazionePercentuale) > 50) {
+    const percVar = parseFloat(differenze.frequenza.percentuale);
+    if (Math.abs(percVar) > 50) {
       trasformazioni.push({
         tipo: 'frequenza',
-        descrizione: variazionePercentuale > 0 
+        descrizione: percVar > 0 
           ? 'Aumento significativo dell\'uso del termine'
           : 'Diminuzione significativa dell\'uso del termine',
-        percentuale: Math.abs(variazionePercentuale).toFixed(1) + '%',
-        tendenza: variazionePercentuale > 0 ? 'aumento' : 'diminuzione'
+        percentuale: Math.abs(percVar).toFixed(1) + '%',
+        tendenza: percVar > 0 ? 'aumento' : 'diminuzione'
       });
     }
     
     return trasformazioni;
   },
   
+  calcolaMetriche: function(frequenza, contesti) {
+    const scoreComplessita = (parseFloat(frequenza.relativa) * 10 + contesti.dettagli.length * 5);
+    
+    return {
+      complessita: {
+        score: scoreComplessita.toFixed(1),
+        descrizione: parseFloat(frequenza.relativa) > 0.1 ? 'termine centrale' : 'termine marginale'
+      },
+      versatilita: {
+        score: contesti.dettagli.length,
+        descrizione: contesti.dettagli.length > 2 ? 'termine versatile' : 'termine specializzato'
+      },
+      stabilità: {
+        score: 'N/A',
+        descrizione: 'da analizzare su timeline'
+      }
+    };
+  },
+  
+  calcolaPeriodoPiuAttivo: function(timeline) {
+    if (timeline.length === 0) return null;
+    
+    const periodiCount = timeline.reduce((acc, item) => {
+      acc[item.periodo] = (acc[item.periodo] || 0) + 1;
+      return acc;
+    }, {});
+    
+    const periodoPiuAttivo = Object.entries(periodiCount)
+      .map(([periodo, count]) => ({ periodo, count }))
+      .sort((a, b) => b.count - a.count)[0];
+    
+    return periodoPiuAttivo;
+  },
+  
+  calcolaAutoriPrincipali: function(timeline) {
+    if (timeline.length === 0) return [];
+    
+    const autoriCount = timeline.reduce((acc, item) => {
+      acc[item.autore] = (acc[item.autore] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return Object.entries(autoriCount)
+      .map(([autore, count]) => ({ autore, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+  },
+  
+  generaRiepilogoConfronto: function(classico, contemporaneo, differenze) {
+    const puntiChiave = [];
+    const percVar = parseFloat(differenze.frequenza.percentuale);
+    
+    // Frequenza
+    if (Math.abs(percVar) > 20) {
+      const direzione = percVar > 0 ? 'aumentato' : 'diminuito';
+      puntiChiave.push(`L'uso del termine è ${direzione} del ${Math.abs(percVar)}%`);
+    } else {
+      puntiChiave.push('La frequenza d\'uso è rimasta sostanzialmente stabile');
+    }
+    
+    // Contesti
+    if (differenze.contesti.nuoviContesti.length > 0) {
+      puntiChiave.push(`Nuovi contesti d'uso: ${differenze.contesti.nuoviContesti.join(', ')}`);
+    }
+    
+    if (differenze.contesti.contestiPersi.length > 0) {
+      puntiChiave.push(`Contesti abbandonati: ${differenze.contesti.contestiPersi.join(', ')}`);
+    }
+    
+    // Complessità
+    const complessitaVar = parseFloat(contemporaneo.metriche.complessita.score) - 
+                          parseFloat(classico.metriche.complessita.score);
+    
+    if (Math.abs(complessitaVar) > 2) {
+      puntiChiave.push(complessitaVar > 0 
+        ? 'Aumento della complessità concettuale' 
+        : 'Riduzione della complessità concettuale');
+    }
+    
+    return {
+      titolo: `Confronto: ${classico.termine}`,
+      puntiChiave: puntiChiave
+    };
+  },
+  
   // 5. UTILITIES
   escapeRegExp: function(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  },
-  
-  setsAreEqual: function(setA, setB) {
-    if (setA.size !== setB.size) return false;
-    for (const item of setA) {
-      if (!setB.has(item)) return false;
-    }
-    return true;
   },
   
   calcolaSimilarita: function(arrayA, arrayB) {
@@ -350,138 +424,28 @@ window.LinguisticAnalysis = {
     return union.size > 0 ? intersection.size / union.size : 0;
   },
   
-  calcolaMetriche: function(termine, corpus) {
-    const frequenza = this.calcolaFrequenza(termine, corpus);
-    const contesti = this.identificaContesti(termine, corpus);
-    
-    return {
-      complessita: {
-        score: (frequenza.relativa * 10 + contesti.dettagli.length * 5).toFixed(1),
-        descrizione: frequenza.relativa > 0.1 ? 'termine centrale' : 'termine marginale'
-      },
-      versatilita: {
-        score: contesti.dettagli.length,
-        descrizione: contesti.dettagli.length > 2 ? 'termine versatile' : 'termine specializzato'
-      },
-      stabilità: {
-        score: 'N/A', // Da calcolare su timeline
-        descrizione: 'da analizzare su timeline'
-      }
-    };
-  },
-  
-  calcolaPeriodoPiuAttivo: function(timeline) {
-    if (timeline.length === 0) return null;
-    
-    const periodiCount = {};
-    timeline.forEach(item => {
-      if (!periodiCount[item.periodo]) {
-        periodiCount[item.periodo] = 0;
-      }
-      periodiCount[item.periodo] += 1;
-    });
-    
-    return Object.keys(periodiCount)
-      .map(periodo => ({ periodo, count: periodiCount[periodo] }))
-      .sort((a, b) => b.count - a.count)[0];
-  },
-  
-  calcolaAutoriPrincipali: function(timeline) {
-    if (timeline.length === 0) return [];
-    
-    const autoriCount = {};
-    timeline.forEach(item => {
-      if (!autoriCount[item.autore]) {
-        autoriCount[item.autore] = 0;
-      }
-      autoriCount[item.autore] += 1;
-    });
-    
-    return Object.keys(autoriCount)
-      .map(autore => ({ autore, count: autoriCount[autore] }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-  },
-  
-  generaRiepilogoConfronto: function(classico, contemporaneo, differenze) {
-    const riepilogo = {
-      titolo: `Confronto: ${classico.termine}`,
-      puntiChiave: []
-    };
-    
-    // Frequenza
-    if (differenze.frequenza.percentuale > 20) {
-      riepilogo.puntiChiave.push(
-        `L'uso del termine è aumentato del ${differenze.frequenza.percentuale}% nel periodo contemporaneo`
-      );
-    } else if (differenze.frequenza.percentuale < -20) {
-      riepilogo.puntiChiave.push(
-        `L'uso del termine è diminuito del ${Math.abs(differenze.frequenza.percentuale)}% nel periodo contemporaneo`
-      );
-    } else {
-      riepilogo.puntiChiave.push('La frequenza d\'uso è rimasta sostanzialmente stabile');
-    }
-    
-    // Contesti
-    if (differenze.contesti.nuoviContesti.length > 0) {
-      riepilogo.puntiChiave.push(
-        `Nuovi contesti d'uso: ${differenze.contesti.nuoviContesti.join(', ')}`
-      );
-    }
-    
-    if (differenze.contesti.contestiPersi.length > 0) {
-      riepilogo.puntiChiave.push(
-        `Contesti abbandonati: ${differenze.contesti.contestiPersi.join(', ')}`
-      );
-    }
-    
-    // Complessità
-    const complessitaClassica = classico.metriche.complessita.score;
-    const complessitaContemporanea = contemporaneo.metriche.complessita.score;
-    
-    if (Math.abs(complessitaContemporanea - complessitaClassica) > 2) {
-      riepilogo.puntiChiave.push(
-        complessitaContemporanea > complessitaClassica 
-          ? 'Aumento della complessità concettuale'
-          : 'Riduzione della complessità concettuale'
-      );
-    }
-    
-    return riepilogo;
-  },
-  
   // 6. ESPORTAZIONE
   esportaAnalisiJSON: function(analisi) {
     return JSON.stringify(analisi, null, 2);
   },
   
   esportaAnalisiCSV: function(analisi) {
-    const rows = [];
+    const rows = [['Termine', 'Periodo', 'Frequenza', 'Contesti Principali', 'Correlazioni Top 3']];
     
-    // Header
-    rows.push(['Termine', 'Periodo', 'Frequenza', 'Contesti Principali', 'Correlazioni Top 3']);
+    const aggiungiRiga = (periodo, dati) => {
+      if (dati) {
+        rows.push([
+          analisi.termine,
+          periodo,
+          dati.frequenza.assoluta,
+          dati.contesti.dettagli.slice(0, 2).map(c => c.tipo).join(', '),
+          dati.correlazioni.slice(0, 3).map(c => c.termine).join(', ')
+        ]);
+      }
+    };
     
-    // Dati classici
-    if (analisi.classico) {
-      rows.push([
-        analisi.termine,
-        'Classico',
-        analisi.classico.frequenza.assoluta,
-        analisi.classico.contesti.dettagli.slice(0, 2).map(c => c.tipo).join(', '),
-        analisi.classico.correlazioni.slice(0, 3).map(c => c.termine).join(', ')
-      ]);
-    }
-    
-    // Dati contemporanei
-    if (analisi.contemporaneo) {
-      rows.push([
-        analisi.termine,
-        'Contemporaneo',
-        analisi.contemporaneo.frequenza.assoluta,
-        analisi.contemporaneo.contesti.dettagli.slice(0, 2).map(c => c.tipo).join(', '),
-        analisi.contemporaneo.correlazioni.slice(0, 3).map(c => c.termine).join(', ')
-      ]);
-    }
+    aggiungiRiga('Classico', analisi.classico);
+    aggiungiRiga('Contemporaneo', analisi.contemporaneo);
     
     return rows.map(row => row.join(';')).join('\n');
   },
@@ -489,7 +453,14 @@ window.LinguisticAnalysis = {
   // 7. INIZIALIZZAZIONE
   init: function() {
     console.log(`[LinguisticAnalysis] Inizializzato v${this.version}`);
+    this._cache.clear();
     return this;
+  },
+  
+  // 8. PULIZIA CACHE
+  clearCache: function() {
+    this._cache.clear();
+    console.log('[LinguisticAnalysis] Cache pulita');
   }
 };
 
