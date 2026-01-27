@@ -60,37 +60,11 @@
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
-    <!-- NUOVI SCRIPT PER ANALISI COMPARATIVA -->
     <script src="https://derolu0.github.io/aeterna/linguistic-analysis.js" defer></script>
     <script src="https://derolu0.github.io/aeterna/timeline-evolution.js" defer></script>
     
-    <!-- NUOVI STILI PER ANALISI -->
     <link rel="stylesheet" href="https://derolu0.github.io/aeterna/comparative-styles.css">
     
-    
-        
-        // Inizializza Firebase
-        const app = initializeApp(firebaseConfig);
-        
-        // Inizializza Analytics
-        const analytics = getAnalytics(app);
-
-        // ESPORTIAMO TUTTO A LIVELLO GLOBALE (Fondamentale per app.js)
-        window.db = getFirestore(app);
-        window.auth = getAuth(app);
-        window.firebaseAnalytics = analytics; 
-        window.firebaseSignIn = signInWithEmailAndPassword;
-        window.app = app;
-
-        // Esportiamo le funzioni necessarie per il database
-        window.doc = doc;
-        window.getDoc = getDoc;
-        window.setDoc = setDoc;
-        window.onSnapshot = onSnapshot;
-        window.setAnalyticsCollectionEnabled = setAnalyticsCollectionEnabled;
-        
-        console.log('Firebase (Project Work: De Rosa) inizializzato correttamente');
-    </script>
     <link rel="stylesheet" href="https://derolu0.github.io/aeterna/style.css">
 
     <script>
