@@ -144,7 +144,7 @@ async function cercaCoordinate(params) {
         coordinate = getFallbackCoordinate(citta, paese, filosofo);
     }
     
-    // 7. Salva in cache
+    // 7. Salva in cache (solo memoria)
     if (coordinate && isValidCoordinate(coordinate)) {
         coordinateCache.set(cacheKey, coordinate);
         saveToLocalStorage(cacheKey, coordinate);
@@ -501,46 +501,20 @@ function toRad(degrees) {
 }
 
 /**
- * Salva in localStorage per uso futuro
+ * Salva in localStorage (DISABILITATO PER WORKER)
  */
 function saveToLocalStorage(key, data) {
-    try {
-        const cache = JSON.parse(localStorage.getItem('geocoding_cache') || '{}');
-        cache[key] = {
-            data,
-            timestamp: Date.now()
-        };
-        
-        // Mantieni solo le ultime 100 voci
-        const keys = Object.keys(cache);
-        if (keys.length > 100) {
-            const oldestKey = keys.sort((a, b) => cache[a].timestamp - cache[b].timestamp)[0];
-            delete cache[oldestKey];
-        }
-        
-        localStorage.setItem('geocoding_cache', JSON.stringify(cache));
-    } catch (error) {
-        console.warn('Errore salvataggio cache:', error);
-    }
+    // I Web Worker non possono accedere a localStorage.
+    // La cache rimarrà solo in memoria (coordinateCache) per questa sessione.
+    return; 
 }
 
 /**
- * Carica cache da localStorage
+ * Carica cache da localStorage (DISABILITATO PER WORKER)
  */
 function loadCacheFromStorage() {
-    try {
-        const cache = JSON.parse(localStorage.getItem('geocoding_cache') || '{}');
-        const now = Date.now();
-        const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
-        
-        Object.entries(cache).forEach(([key, entry]) => {
-            if (now - entry.timestamp < ONE_WEEK) {
-                coordinateCache.set(key, entry.data);
-            }
-        });
-    } catch (error) {
-        console.warn('Errore caricamento cache:', error);
-    }
+    // I Web Worker non possono accedere a localStorage.
+    return;
 }
 
 // ============================================
@@ -577,7 +551,8 @@ self.addEventListener('message', async function(event) {
                 
             case 'CLEAR_CACHE':
                 coordinateCache.clear();
-                localStorage.removeItem('geocoding_cache');
+                // LocalStorage rimosso per compatibilità worker
+                // localStorage.removeItem('geocoding_cache'); 
                 result = { success: true };
                 break;
                 
@@ -619,8 +594,8 @@ self.addEventListener('message', async function(event) {
 // INIZIALIZZAZIONE
 // ============================================
 
-// Carica cache all'avvio
-loadCacheFromStorage();
+// Carica cache all'avvio (DISABILITATO)
+// loadCacheFromStorage(); 
 
 // Notifica che il worker è pronto
 self.postMessage({
