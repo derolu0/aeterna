@@ -1557,25 +1557,36 @@ function initializeScreenContent(screenId) {
 }
 
 // Data Loading Functions
+// ==========================================
+// MODIFICA: loadFilosofi (Filtri attivi + Design con Immagini)
+// ==========================================
 function loadFilosofi() {
     const container = document.getElementById('filosofi-list');
     if (!container) return;
     
     container.innerHTML = '';
     
-    // Ordina alfabeticamente (Logica originale)
-    const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
+    // 1. FIX FILTRI: Usa getFilteredItems invece di appData.filosofi diretto
+    const filteredData = getFilteredItems('filosofi');
+    
+    // 2. Ordinamento Alfabetico
+    const sortedList = [...filteredData].sort((a, b) => a.nome.localeCompare(b.nome));
 
+    // Stato Vuoto
     if (sortedList.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="empty-state-icon"><i class="fas fa-user-graduate"></i></div><div class="empty-state-text">Nessun elemento trovato</div></div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon"><i class="fas fa-user-graduate"></i></div>
+                <div class="empty-state-text">Nessun filosofo trovato</div>
+                <div class="empty-state-subtext">Prova a modificare i filtri</div>
+            </div>`;
         return;
     }
     
-    // Mantiene la logica dei badge "Nuovo"
     const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
 
     sortedList.forEach(item => {
-        // Determina Stile Bordo (Verde=Classico, Arancio=Contemporaneo)
+        // Determina Stile Bordo
         let borderClass = 'border-default';
         if (item.periodo) {
             const p = item.periodo.toLowerCase();
@@ -1586,33 +1597,38 @@ function loadFilosofi() {
         // Badge Nuovo
         let badgeHTML = '';
         if (highlights.new.includes(item.id)) {
-            badgeHTML = '<span class="badge-new" style="float:right">NUOVO</span>';
+            badgeHTML = '<span class="badge-new" style="position:absolute; top:10px; right:10px; z-index:2;">NUOVO</span>';
         }
 
-        // Crea la Card
+        // Immagine con fallback
+        const defaultImage = './images/default-philosopher.jpg'; // Assicurati di avere un'immagine di default o usa un placeholder
+        const imageUrl = (item.ritratto && item.ritratto.trim() !== '') ? item.ritratto : defaultImage;
+
+        // Crea Elemento (Usa grid-item come da CSS esistente per avere le immagini)
         const card = document.createElement('div');
-        card.className = `card ${borderClass}`; 
-        
-        // Rende TUTTA la card cliccabile
-        card.style.cursor = 'pointer';
-        card.onclick = (e) => {
-            // Se clicco su bottoni interni non aprire, altrimenti apri modale
-            if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
-                showDetail(item.id, 'filosofi');
-            }
-        };
+        card.className = `grid-item ${borderClass}`;
+        card.onclick = () => showDetail(item.id, 'filosofi');
 
         card.innerHTML = `
-            <div class="card-body">
+            <div class="item-image-container">
                 ${badgeHTML}
-                <span class="card-tag">${item.scuola || 'Scuola non def.'}</span>
-                <h3 class="card-title">${item.nome}</h3>
-                <p class="card-text">
-                    <i class="fas fa-hourglass-half"></i> ${item.periodo || 'N/D'}<br>
+                <img src="${imageUrl}" 
+                     alt="${item.nome}" 
+                     class="item-image"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'image-fallback\\'><i class=\\'fas fa-user-graduate\\'></i></div>';">
+            </div>
+            <div class="item-content">
+                <div class="item-header">
+                    <h3 class="item-name">${item.nome}</h3>
+                    <span class="item-periodo periodo-${item.periodo}">${getPeriodoText(item.periodo)}</span>
+                </div>
+                <p class="item-details">
+                    <i class="fas fa-university"></i> ${item.scuola || 'Scuola non def.'}<br>
                     <i class="fas fa-map-marker-alt"></i> ${item.luogo_nascita || 'N/D'}
                 </p>
-                <div style="text-align:right; margin-top:10px; color:#ccc;">
-                    <i class="fas fa-chevron-right"></i>
+                <div class="item-footer">
+                   <span style="font-size:0.8rem; color:#666;">${item.anni_vita || ''}</span>
+                   <i class="fas fa-arrow-right" style="color:var(--primary-blue)"></i>
                 </div>
             </div>
         `;
@@ -1914,7 +1930,7 @@ function renderConcettiItems(container, concetti) {
     });
 }
 
-// Detail View per Filosofia
+// Detail View per Filosofia (Aggiornata con Immagini)
 function showDetail(id, type) {
     currentDetailId = id;
     currentDetailType = type;
@@ -1939,24 +1955,43 @@ function showDetail(id, type) {
         contentElement = document.getElementById('filosofo-detail-content');
         
         if (item && contentElement) {
-            // Coordinate per il tasto Naviga
             const lat = item.lat || (item.coordinate ? item.coordinate.lat : null);
             const lng = item.lng || (item.coordinate ? item.coordinate.lng : null);
             const hasCoords = lat && lng;
 
+            // Gestione Immagine (Ritratto o Placeholder)
+            const imgUrl = (item.ritratto && item.ritratto.trim() !== '') ? item.ritratto : null;
+            const imgHtml = imgUrl 
+                ? `<img src="${imgUrl}" class="detail-image" alt="${item.nome}" onerror="this.style.display='none'">` 
+                : `<div class="detail-image-placeholder" style="height:200px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; border-radius:20px; margin-bottom:20px; border: 1px solid #e2e8f0;"><i class="fas fa-user-graduate" style="font-size:4rem; color:#cbd5e1;"></i></div>`;
+
+            // HTML Concetti (se presenti)
+            const concettiHtml = (item.concetti_principali && item.concetti_principali.length > 0) 
+                ? `<div class="detail-section" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+                       <h4><i class="fas fa-brain"></i> Concetti Chiave</h4>
+                       <div class="tags-cloud">
+                           ${item.concetti_principali.map(c => `<span class="tag-chip">${c}</span>`).join('')}
+                       </div>
+                   </div>`
+                : '';
+
             contentElement.innerHTML = `
+                ${imgHtml}
+                
                 <div class="detail-card">
                     <div class="detail-meta-grid">
-                        <div class="meta-item"><strong>Periodo:</strong> ${item.periodo || '-'}</div>
+                        <div class="meta-item"><strong>Periodo:</strong> ${getPeriodoText(item.periodo)}</div>
                         <div class="meta-item"><strong>Scuola:</strong> ${item.scuola || '-'}</div>
                         <div class="meta-item"><strong>Anni:</strong> ${item.anni_vita || '-'}</div>
                         <div class="meta-item"><strong>Luogo:</strong> ${item.luogo_nascita || '-'}</div>
                     </div>
                     
                     <div class="detail-section">
-                        <h4>Biografia</h4>
-                        <p>${item.biografia || 'Nessuna biografia disponibile.'}</p>
+                        <h4><i class="fas fa-book-open"></i> Biografia</h4>
+                        <p class="biography-text">${item.biografia || 'Nessuna biografia disponibile.'}</p>
                     </div>
+
+                    ${concettiHtml}
 
                     <div class="action-buttons-container" style="margin-top:25px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                         ${hasCoords ? 

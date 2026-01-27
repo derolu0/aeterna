@@ -3015,27 +3015,98 @@ html, body {
     transform: scale(0.98);
 }
 /* =======================================================
-   STILI PER LE CARD FILOSOFI (Classico vs Contemporaneo)
+   STILI CARDS FILOSOFI E DETTAGLI (Aggiornati)
    ======================================================= */
+
+/* Colori dei bordi laterali (applicati alle card .grid-item) */
 .border-classic { 
-    border-left: 5px solid #10b981 !important;  /* VERDE */
+    border-left: 5px solid #10b981 !important;  /* VERDE - Classico */
 }
 
 .border-contemporary { 
-    border-left: 5px solid #f59e0b !important;  /* ARANCIONE */
+    border-left: 5px solid #f59e0b !important;  /* ARANCIONE - Contemporaneo */
 }
 
 .border-default { 
-    border-left: 5px solid #ccc !important;     /* GRIGIO (se manca il periodo) */
+    border-left: 5px solid #ccc !important;     /* GRIGIO - Default */
 }
 
-/* Rende evidente che la card è cliccabile */
-.card {
+/* Assicura interattività su tutte le card */
+.grid-item, .card {
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative; /* Necessario per posizionare i badge "Nuovo" */
 }
 
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+/* Effetto Hover unificato */
+.grid-item:hover, .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* --- NUOVI STILI PER SCHERMATA DETTAGLIO --- */
+
+/* Immagine grande nel dettaglio filosofo */
+.detail-image {
+    width: 100%;
+    height: 250px; /* Altezza fissa per coerenza */
+    object-fit: cover; /* Taglia l'immagine senza deformarla */
+    border-radius: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: block;
+    background-color: #eee;
+}
+
+/* Griglia dati (Periodo, Scuola, Anni, Luogo) */
+.detail-meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 25px;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+}
+
+.meta-item {
+    font-size: 0.95rem;
+    color: #4b5563;
+}
+
+.meta-item strong {
+    display: block;
+    color: var(--primary-blue);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+/* Testo Biografia leggibile */
+.biography-text {
+    line-height: 1.8;
+    text-align: left;
+    color: #374151;
+    font-size: 1rem;
+    white-space: pre-line; /* Mantiene i paragrafi */
+}
+
+/* Nuvola dei tag (Concetti) */
+.tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.tag-chip {
+    background: var(--primary-blue);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
 }
