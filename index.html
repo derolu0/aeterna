@@ -67,22 +67,7 @@
     <!-- NUOVI STILI PER ANALISI -->
     <link rel="stylesheet" href="https://derolu0.github.io/aeterna/comparative-styles.css">
     
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getAnalytics, setAnalyticsCollectionEnabled } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
-        
-        // CONFIGURAZIONE FIREBASE ESISTENTE (Aeterna Lexicon in Motu)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBo-Fz2fb8KHlvuZmb23psKDT6QvrJowB8",
-            authDomain: "aeterna-lexicon-in-motu.firebaseapp.com",
-            projectId: "aeterna-lexicon-in-motu",
-            storageBucket: "aeterna-lexicon-in-motu.firebasestorage.app",
-            messagingSenderId: "928786632423",
-            appId: "1:928786632423:web:578d45e7d6961a298d5c42",
-            measurementId: "G-E70D7TDDV7"
-        };
+    
         
         // Inizializza Firebase
         const app = initializeApp(firebaseConfig);

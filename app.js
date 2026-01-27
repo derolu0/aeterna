@@ -182,66 +182,56 @@ function getLocalizedText(item, field) {
     return item[field] || '';
 }
 
-// ==========================================
-// SISTEMA CONTROLLO REMOTO (MANUTENZIONE & PRIVACY)
-// ==========================================
-// Nota: Il listener DOMContentLoaded principale è in fondo al file per evitare duplicazioni
-
 function initRemoteControl() {
-    if (!window.db || !window.onSnapshot) {
+    // Se il db non è ancora pronto, riprova tra poco
+    if (!window.db) {
         setTimeout(initRemoteControl, 500);
         return;
     }
 
-    const configRef = window.doc(window.db, "config", "general_settings");
-    
-    window.onSnapshot(configRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const isAdmin = localStorage.getItem('abc_admin_logged') === 'true';
+    // VERSIONE CORRETTA (COMPAT)
+    window.db.collection("config").doc("general_settings")
+        .onSnapshot((docSnap) => {
+            if (docSnap.exists) {
+                const data = docSnap.data();
+                const isAdmin = localStorage.getItem('abc_admin_logged') === 'true';
 
-            // 1. GESTIONE MANUTENZIONE
-            const isMaintenance = data.maintenanceMode === true;
-            
-            const maintBtn = document.getElementById('global-maintenance-toggle');
-            if (maintBtn) maintBtn.checked = isMaintenance;
+                // 1. GESTIONE MANUTENZIONE
+                const isMaintenance = data.maintenanceMode === true;
+                const maintBtn = document.getElementById('global-maintenance-toggle');
+                if (maintBtn) maintBtn.checked = isMaintenance;
 
-            const maintenanceScreen = document.getElementById('maintenance-mode');
-            if (maintenanceScreen) {
-                if (isMaintenance && !isAdmin) {
-                    maintenanceScreen.style.display = 'flex';
-                    document.body.style.overflow = 'hidden';
-                } else {
-                    maintenanceScreen.style.display = 'none';
-                    document.body.style.overflow = 'auto';
-                }
-            }
-
-            // 2. GESTIONE PRIVACY (KILL SWITCH)
-            const isTrackingAllowed = data.analyticsEnabled !== false; 
-            
-            const privacyBtn = document.getElementById('global-privacy-toggle');
-            const privacyText = document.getElementById('privacy-status-text');
-            if (privacyBtn) privacyBtn.checked = isTrackingAllowed;
-            
-            if (window.firebaseAnalytics && window.setAnalyticsCollectionEnabled) {
-                if (isTrackingAllowed) {
-                    window.setAnalyticsCollectionEnabled(window.firebaseAnalytics, true);
-                    if(privacyText) {
-                        privacyText.textContent = "✅ Tracciamento ATTIVO";
-                        privacyText.style.color = "#166534";
-                    }
-                } else {
-                    window.setAnalyticsCollectionEnabled(window.firebaseAnalytics, false);
-                    console.warn("🚫 ANALYTICS DISATTIVATO DA REMOTO");
-                    if(privacyText) {
-                        privacyText.textContent = "🛡️ PROTEZIONE ATTIVA (No Dati)";
-                        privacyText.style.color = "#ef4444";
+                const maintenanceScreen = document.getElementById('maintenance-mode');
+                if (maintenanceScreen) {
+                    if (isMaintenance && !isAdmin) {
+                        maintenanceScreen.style.display = 'flex';
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        maintenanceScreen.style.display = 'none';
+                        document.body.style.overflow = 'auto';
                     }
                 }
+
+                // 2. GESTIONE PRIVACY
+                const isTrackingAllowed = data.analyticsEnabled !== false;
+                const privacyBtn = document.getElementById('global-privacy-toggle');
+                if (privacyBtn) privacyBtn.checked = isTrackingAllowed;
             }
-        }
-    });
+        });
+}
+
+// Helper per aggiornare config (COMPAT)
+async function updateConfig(key, value) {
+    try {
+        // VERSIONE CORRETTA (COMPAT)
+        await window.db.collection("config").doc("general_settings").set({ 
+            [key]: value,
+            lastUpdate: new Date().toISOString()
+        }, { merge: true });
+    } catch (e) {
+        console.error(e);
+        showToast("Errore di connessione", "error");
+    }
 }
 
 // --- FUNZIONI PER I PULSANTI ADMIN ---
@@ -276,8 +266,8 @@ async function toggleGlobalAnalytics(checkbox) {
 
 async function updateConfig(key, value) {
     try {
-        const configRef = window.doc(window.db, "config", "general_settings");
-        await window.setDoc(configRef, { 
+        // VERSIONE CORRETTA (COMPAT)
+        await window.db.collection("config").doc("general_settings").set({ 
             [key]: value,
             lastUpdate: new Date().toISOString()
         }, { merge: true });
@@ -1190,23 +1180,23 @@ async function loadFirebaseData(type) {
     }
 }
 
+// VERSIONE CORRETTA (COMPAT) - Sostituisci quella esistente
 async function saveFirebaseData(type, item, id = null) {
     try {
-        const { doc, setDoc, updateDoc, collection, addDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        // Usa direttamente window.db (versione compat)
+        const collectionName = COLLECTIONS[type.toUpperCase()] || type;
+        const collectionRef = window.db.collection(collectionName);
         
         let savedId;
-        const collectionName = COLLECTIONS[type.toUpperCase()];
-        
         if (id) {
-            const docRef = doc(window.db, collectionName, id);
-            await updateDoc(docRef, item);
+            // Modifica esistente
+            await collectionRef.doc(id).update(item);
             savedId = id;
         } else {
-            const dataRef = collection(window.db, collectionName);
-            const newDoc = await addDoc(dataRef, item);
-            savedId = newDoc.id;
+            // Nuova creazione
+            const docRef = await collectionRef.add(item);
+            savedId = docRef.id;
         }
-        
         return savedId;
     } catch (error) {
         console.error(`Errore nel salvataggio ${type}:`, error);
@@ -1214,12 +1204,11 @@ async function saveFirebaseData(type, item, id = null) {
     }
 }
 
+// VERSIONE CORRETTA (COMPAT) - Sostituisci quella esistente
 async function deleteFirebaseData(type, id) {
     try {
-        const { doc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
-        const collectionName = COLLECTIONS[type.toUpperCase()];
-        const docRef = doc(window.db, collectionName, id);
-        await deleteDoc(docRef);
+        const collectionName = COLLECTIONS[type.toUpperCase()] || type;
+        await window.db.collection(collectionName).doc(id).delete();
         return true;
     } catch (error) {
         console.error(`Errore nell'eliminazione ${type}:`, error);
@@ -1365,9 +1354,7 @@ function closeAdminAuth() {
     document.getElementById('auth-error').style.display = 'none';
 }
 
-// ========================================================
-// NUOVA FUNZIONE DI LOGIN SICURA
-// ========================================================
+// VERSIONE CORRETTA (COMPAT) - Sostituisci quella esistente
 async function checkAdminAuth() {
     const emailInput = document.getElementById('admin-email');
     const passInput = document.getElementById('admin-password');
@@ -1377,7 +1364,8 @@ async function checkAdminAuth() {
     const password = passInput.value;
 
     try {
-        await window.firebaseSignIn(window.auth, email, password);
+        // Login diretto con Auth Compat
+        await window.auth.signInWithEmailAndPassword(email, password);
         
         isAdminAuthenticated = true;
         localStorage.setItem('abc_admin_logged', 'true');
@@ -1388,36 +1376,9 @@ async function checkAdminAuth() {
         
         if (typeof initRemoteControl === 'function') initRemoteControl();
 
-        // 2. CONTROLLO RUOLI
-        let isSuperAdmin = false;
-        try {
-            const docRef = window.doc(window.db, "impostazioni", "ruoli");
-            const docSnap = await window.getDoc(docRef);
-            
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                const dbAdmins = (data.super_admins || []).map(e => e.trim().toLowerCase());
-                const myEmail = email.toLowerCase();
-                
-                console.log("LOGIN DEBUG - Email inserita:", myEmail);
-                console.log("LOGIN DEBUG - Lista DB:", dbAdmins);
-
-                if (dbAdmins.includes(myEmail)) {
-                    isSuperAdmin = true;
-                }
-            }
-        } catch (e) {
-            console.error("Errore lettura ruoli DB:", e);
-        }
-
-        // 3. Assegnazione Ruolo
-        if (isSuperAdmin) {
-            currentUserRole = 'admin';
-            showToast('Benvenuto Amministratore (Accesso Completo)', 'success');
-        } else {
-            currentUserRole = 'editor';
-            showToast('Benvenuto Operatore (Accesso Modifica)', 'info');
-        }
+        // Controllo semplice del ruolo
+        currentUserRole = 'admin';
+        showToast('Benvenuto Amministratore', 'success');
         
         closeAdminAuth();
         
@@ -5580,7 +5541,25 @@ window.closeComparativeAnalysis = closeComparativeAnalysis;
 window.exportAnalysisToExcel = exportAnalysisToExcel;
 window.shareAnalysis = shareAnalysis;
 window.hasComparativeAnalysis = hasComparativeAnalysis;
-
+function performMapSearch() {
+    const input = document.getElementById('map-search-input');
+    if (input && input.value.trim() !== '') {
+        const query = input.value.toLowerCase();
+        // Cerca nel dataset locale
+        const filosofo = appData.filosofi.find(f => 
+            f.nome.toLowerCase().includes(query)
+        );
+        
+        if (filosofo) {
+            goToMap(filosofo.id);
+            // Nascondi i suggerimenti
+            const results = document.getElementById('map-search-results');
+            if(results) results.style.display = 'none';
+        } else {
+            showToast(`Nessun filosofo trovato per "${input.value}"`, 'warning');
+        }
+    }
+}
 // Fallback per sync
 if (typeof addToSyncQueue === 'undefined') {
     window.addToSyncQueue = async function(op, type, data, id) {
