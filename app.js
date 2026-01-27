@@ -3797,7 +3797,8 @@ async function saveFilosofo() {
     try {
         const id = getVal('filosofo-id');
         const nome = getVal('filosofo-nome');
-        const periodo = document.getElementById('filosofo-periodo').value || 'classico';
+        const periodoEl = document.getElementById('filosofo-periodo');
+        const periodo = periodoEl ? periodoEl.value : 'classico';
         
         if (!nome) {
             alert("Il nome è obbligatorio");
@@ -3810,7 +3811,7 @@ async function saveFilosofo() {
             ? concettiRaw.split(',').map(s => s.trim()).filter(s => s !== '')
             : [];
 
-        // Oggetto Base
+        // Oggetto Base con TUTTI i campi
         const filosofoData = {
             nome: nome,
             periodo: periodo,
@@ -3830,14 +3831,14 @@ async function saveFilosofo() {
         if (latStr && lngStr && !isNaN(parseFloat(latStr)) && !isNaN(parseFloat(lngStr))) {
             filosofoData.lat = parseFloat(latStr);
             filosofoData.lng = parseFloat(lngStr);
-            // Salviamo anche la struttura nidificata per sicurezza
+            // Salviamo anche la struttura nidificata per sicurezza mappe
             filosofoData.coordinate = {
                 lat: parseFloat(latStr),
                 lng: parseFloat(lngStr)
             };
         }
 
-        // Salvataggio
+        // Salvataggio su Firebase
         if (window.db) {
             if (id && id.trim() !== '') {
                 await db.collection('filosofi').doc(id).update(filosofoData);
@@ -3846,17 +3847,14 @@ async function saveFilosofo() {
                 await db.collection('filosofi').add(filosofoData);
             }
             
-            // Successo
-            if (typeof showToast === 'function') showToast('Filosofo salvato!', 'success');
+            // Notifica Successo
+            if (typeof showToast === 'function') showToast('Filosofo salvato con successo!', 'success');
             else alert('Salvato con successo');
 
-            closeModal('admin-modal-filosofo');
+            // Chiudi modale
+            if (typeof closeModal === 'function') closeModal('admin-modal-filosofo');
             
-            // Ricarica le viste
-            if (typeof loadFilosofi === 'function') loadFilosofi(); 
-            // Se hai una funzione specifica per ricaricare la tabella admin, chiamala qui:
-            // if (typeof loadAdminData === 'function') loadAdminData();
-            // Oppure ricarica la pagina se preferisci:
+            // Ricarica la pagina per aggiornare sia la griglia che la tabella admin
             setTimeout(() => location.reload(), 500);
 
         } else {
