@@ -1282,7 +1282,7 @@ async function deleteFirebaseData(type, id) {
         await deleteDoc(docRef);
         return true;
     } catch (error) {
-        console.error(`Errore nell\'eliminazione ${type}:`, error);
+        console.error(`Errore nell'eliminazione ${type}:`, error);
         throw error;
     }
 }
@@ -1351,6 +1351,28 @@ function showToast(message, type = 'info', duration = 3000) {
 // FINE MODIFICA
 // ======================================================
 
+function logActivity(description) {
+    const timestamp = new Date().toLocaleString('it-IT');
+    
+    // CORREZIONE: Se la lista non esiste ancora, la creiamo al volo
+    // Questo evita l'errore "undefined" che bloccava tutto
+    if (typeof activityLog === 'undefined') {
+        window.activityLog = [];
+    }
+
+    activityLog.unshift({ description, timestamp });
+
+    if (activityLog.length > 10) {
+        activityLog = activityLog.slice(0, 10);
+    }
+
+    localStorage.setItem('activityLog', JSON.stringify(activityLog));
+    
+    // CORREZIONE: Aggiorniamo la grafica solo se la funzione è pronta
+    if (typeof updateActivityLog === 'function') {
+        updateActivityLog();
+    }
+}
 function updateActivityLog() {
     const activityList = document.getElementById('activity-list');
     if (!activityList) return;
@@ -4035,7 +4057,7 @@ async function saveFilosofo(e) {
                 const index = appData.filosofi.findIndex(f => f.id == id);
                 if (index !== -1) appData.filosofi[index] = { id: savedId, ...filosofoData };
             } else {
-                appData.filosofi.push({ id: savedId, ...filosofoData };
+                appData.filosofi.push({ id: savedId, ...filosofoData });
             }
             showToast('Filosofo salvato localmente (Offline).', 'info');
         }
@@ -5532,6 +5554,192 @@ function updateAllSelects() {
     }
 }
 // ==========================================
+// VISUALIZZAZIONE FILOSOFI (Card complete + Navigazione)
+// ==========================================
+function loadFilosofi() {
+    const container = document.getElementById('filosofi-list');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Ordina alfabeticamente per nome
+    const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
+
+    if (sortedList.length === 0) {
+        container.innerHTML = '<p style="text-align:center; width:100%; color:#666;">Nessun filosofo presente. Inseriscine uno dal pannello Admin.</p>';
+        return;
+    }
+
+    sortedList.forEach(f => {
+        // Controlla se il filosofo ha coordinate valide (nuovo o vecchio formato)
+        let hasCoords = false;
+        if (f.coordinate && f.coordinate.lat) hasCoords = true;
+        else if (f.lat && f.lng) hasCoords = true;
+
+        const div = document.createElement('div');
+        div.className = 'grid-item animate-in'; 
+        
+        // Immagine: usa quella del DB o una di default
+        const imgUrl = f.ritratto && f.ritratto.trim() !== '' ? f.ritratto : 'images/default-filosofo.jpg';
+        
+        div.innerHTML = `
+            <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
+                <span class="item-period-badge ${f.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.9); font-size: 0.8rem; font-weight: bold;">
+                    ${f.periodo || ''}
+                </span>
+            </div>
+            <div class="item-content" style="padding: 15px;">
+                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">${f.nome}</h3>
+                
+                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
+                    <span style="font-size: 1.1rem;">🏛️</span> ${f.scuola || 'Scuola non definita'}
+                </div>
+                
+                <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
+                    <div style="margin-bottom: 3px;">📅 ${f.anni_vita || 'Anni sconosciuti'}</div>
+                    <div>📍 ${f.luogo_nascita || 'Luogo sconosciuto'}</div>
+                </div>
+                
+                <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
+                    <button onclick="showDetail('${f.id}', 'filosofo')" class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer; transition: background 0.2s;">
+                        Scheda
+                    </button>
+                    
+                    ${hasCoords ? `
+                        <button onclick="goToMap('${f.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px;">
+                            <span>🗺️</span> Mappa
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ==========================================
+// INIZIALIZZAZIONE MAIN (Modificata)
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    
+    // 1. MANTENIAMO IL TUO CONTROLLO ANDROID
+    if (typeof detectAndShowInstallInstructions === 'function') {
+        detectAndShowInstallInstructions();
+    }
+
+    // 2. Setup Base
+    loadLocalData();
+    if (typeof applyTranslations === 'function') applyTranslations();
+
+    // 3. Caricamento Dati Firebase (SEQUENZA CORRETTA)
+    if (window.firebaseInitialized || window.db) {
+        try {
+            console.log("Inizio caricamento dati Firebase...");
+            
+            // A. Carica PRIMA i filosofi (essenziali per i menu)
+            await loadFirebaseData('filosofi');
+            
+            // B. Carica POI opere e concetti
+            await Promise.all([
+                loadFirebaseData('opere'),
+                loadFirebaseData('concetti')
+            ]);
+            
+            // C. ORA popola i menu a tendina (FIX CRUCIALE)
+            updateAllSelects(); 
+            
+            // D. Aggiorna le liste visive
+            if (typeof loadFilosofi === 'function') loadFilosofi(); 
+            if (typeof loadOpere === 'function') loadOpere();
+            if (typeof loadConcetti === 'function') loadConcetti();
+            
+            // E. Aggiorna Admin Panel se visibile
+            const adminPanel = document.getElementById('admin-panel');
+            if(adminPanel && adminPanel.style.display !== 'none') {
+                if (typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
+                if (typeof loadAdminOpere === 'function') loadAdminOpere();
+                if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
+            }
+
+        } catch (e) {
+            console.error("Errore sequenza caricamento:", e);
+        }
+    }
+
+    // 4. Riattacco gli Event Listeners dei Form
+    const fForm = document.getElementById('filosofo-form');
+    if(fForm) fForm.onsubmit = saveFilosofo;
+    
+    const oForm = document.getElementById('opera-form');
+    if(oForm) oForm.onsubmit = saveOpera;
+    
+    const cForm = document.getElementById('concetto-form');
+    if(cForm) cForm.onsubmit = saveConcetto;
+
+    // 5. Listener per bottone Geocoding
+    const geoBtn = document.getElementById('geocoding-btn');
+    if(geoBtn && typeof cercaCoordinateFilosofo === 'function') {
+        geoBtn.onclick = cercaCoordinateFilosofo;
+    }
+});
+
+// ============================================
+// FUNZIONI DI SUPPORTO AGGIUNTIVE
+// ============================================
+
+// --- 1. NUOVA FUNZIONE: Carica i punti (marker) sulla mappa ---
+function loadMapMarkers() {
+    // Verifica che la mappa e Leaflet (L) esistano
+    if (typeof map === 'undefined' || typeof L === 'undefined') return;
+
+    console.log("Generazione marker sulla mappa...");
+
+    // Se esiste la mappa globale dei marker, puliscila per evitare duplicati
+    if (typeof markers !== 'undefined' && markers instanceof Map) {
+        markers.forEach(marker => map.removeLayer(marker));
+        markers.clear();
+    }
+
+    // Itera su tutti i filosofi
+    if (appData.filosofi) {
+        appData.filosofi.forEach(f => {
+            let lat, lng;
+
+            // CASO A: Coordinate nel nuovo formato oggetto {lat: ..., lng: ...}
+            if (f.coordinate && typeof f.coordinate === 'object') {
+                lat = parseFloat(f.coordinate.lat);
+                lng = parseFloat(f.coordinate.lng);
+            } 
+            // CASO B: Coordinate nel vecchio formato "piatto"
+            else if (f.lat && f.lng) {
+                lat = parseFloat(f.lat);
+                lng = parseFloat(f.lng);
+            }
+
+            // Se abbiamo coordinate valide, crea il marker
+            if (!isNaN(lat) && !isNaN(lng)) {
+                const marker = L.marker([lat, lng])
+                    .bindPopup(`
+                        <div style="text-align:center">
+                            <b>${f.nome}</b><br>
+                            <i>${f.luogo_nascita || ''}</i><br>
+                            <button onclick="showDetail('${f.id}', 'filosofo')" style="margin-top:5px; padding:4px 8px; cursor:pointer;">
+                                Dettagli
+                            </button>
+                        </div>
+                    `);
+                
+                marker.addTo(map);
+
+                // IMPORTANTE: Salva il marker nella memoria globale così centerMapOnFilosofo funziona
+                if (typeof markers !== 'undefined' && markers instanceof Map) {
+                    markers.set(`filosofo-${f.id}`, marker);
+                }
+            }
+        });
+    }
+}
+// ==========================================
 // 1. VISUALIZZAZIONE FILOSOFI (Card complete)
 // ==========================================
 function loadFilosofi() {
@@ -5641,8 +5849,7 @@ function goToMap(id) {
         centerMapOnFilosofo(filosofo);
     }, 300);
 }
-
-// --- 2. FUNZIONE: Centra la mappa su un filosofo ---
+// --- 2. FUNZIONE ESISTENTE: Centra la mappa su un filosofo ---
 function centerMapOnFilosofo(filosofo) {
     if (map && filosofo.coordinate) {
         // Centra la vista
@@ -5662,7 +5869,7 @@ function centerMapOnFilosofo(filosofo) {
     }
 }
 
-// --- 3. FUNZIONE: Gestione parametri URL ---
+// --- 3. FUNZIONE ESISTENTE: Gestione parametri URL ---
 function handleUrlParameters() {
     const urlParams = new URLSearchParams(window.location.search);
     
@@ -5749,9 +5956,28 @@ function addGeocodingButtonToForm() {
     }
 }
 // ==========================================
-// FUNZIONI DI UTILITÀ
+// FUNZIONI DI VALIDAZIONE E UTILITÀ
 // (Incolla questo alla fine di app.js)
 // ==========================================
+
+function validateFilosofoData(data) {
+    const errors = [];
+    if (!data.nome || data.nome.length < 2) errors.push("Il nome deve essere di almeno 2 caratteri");
+    return errors;
+}
+
+function validateOperaData(data) {
+    const errors = [];
+    if (!data.titolo || data.titolo.length < 2) errors.push("Il titolo è obbligatorio");
+    if (!data.autore_id) errors.push("Devi selezionare un autore");
+    return errors;
+}
+
+function validateConcettoData(data) {
+    const errors = [];
+    if (!data.parola || data.parola.length < 2) errors.push("La parola chiave è obbligatoria");
+    return errors;
+}
 
 // Fallback per la sincronizzazione offline se non implementata
 if (typeof addToSyncQueue === 'undefined') {
@@ -5847,7 +6073,16 @@ async function prepareConcettoForm() {
     };
 }
 
-// 3. Funzione Helper per aprire i modali e CARICARE I DATI
+// 3. Funzione per il tasto "Traduci" ✨
+function autoTranslate(sourceId, targetId) {
+    const sourceVal = document.getElementById(sourceId).value;
+    if (sourceVal) {
+        document.getElementById(targetId).value = sourceVal + " [TRADURRE]";
+        if(window.showToast) showToast('Testo copiato. Traducilo in inglese!', 'info');
+    }
+}
+
+// 4. Funzione Helper per aprire i modali e CARICARE I DATI
 // (Chiamala quando clicchi "Aggiungi Opera" o "Aggiungi Concetto")
 window.initFormOpere = function() {
     popolaSelectFilosofi('opera-autore');
