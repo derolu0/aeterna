@@ -1566,19 +1566,18 @@ function loadFilosofi() {
     
     container.innerHTML = '';
     
-    // 1. FIX FILTRI: Usa getFilteredItems invece di appData.filosofi diretto
-    const filteredData = getFilteredItems('filosofi');
+    // 1. Definisci il percorso esatto dell'immagine di default locale
+    // MODIFICA QUI SE IL NOME DEL FILE È DIVERSO
+    const defaultImage = 'images/default-filosofo.jpg'; 
     
-    // 2. Ordinamento Alfabetico
+    const filteredData = getFilteredItems('filosofi');
     const sortedList = [...filteredData].sort((a, b) => a.nome.localeCompare(b.nome));
 
-    // Stato Vuoto
     if (sortedList.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="fas fa-user-graduate"></i></div>
                 <div class="empty-state-text">Nessun filosofo trovato</div>
-                <div class="empty-state-subtext">Prova a modificare i filtri</div>
             </div>`;
         return;
     }
@@ -1586,36 +1585,33 @@ function loadFilosofi() {
     const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
 
     sortedList.forEach(item => {
-        // Determina Stile Bordo
         let borderClass = 'border-default';
         if (item.periodo) {
             const p = item.periodo.toLowerCase();
-            if (p.includes('classico') || p.includes('antico')) borderClass = 'border-classic';
-            else if (p.includes('contemporaneo') || p.includes('moderno')) borderClass = 'border-contemporary';
+            if (p.includes('classico')) borderClass = 'border-classic';
+            else if (p.includes('contemporaneo')) borderClass = 'border-contemporary';
         }
 
-        // Badge Nuovo
         let badgeHTML = '';
         if (highlights.new.includes(item.id)) {
             badgeHTML = '<span class="badge-new" style="position:absolute; top:10px; right:10px; z-index:2;">NUOVO</span>';
         }
 
-        // Immagine con fallback
-        const defaultImage = './images/default-philosopher.jpg'; // Assicurati di avere un'immagine di default o usa un placeholder
+        // Se c'è un ritratto usa quello, altrimenti usa defaultImage
         const imageUrl = (item.ritratto && item.ritratto.trim() !== '') ? item.ritratto : defaultImage;
 
-        // Crea Elemento (Usa grid-item come da CSS esistente per avere le immagini)
         const card = document.createElement('div');
         card.className = `grid-item ${borderClass}`;
         card.onclick = () => showDetail(item.id, 'filosofi');
 
+        // Nota l'evento onerror: se l'immagine online fallisce, carica quella locale
         card.innerHTML = `
             <div class="item-image-container">
                 ${badgeHTML}
                 <img src="${imageUrl}" 
                      alt="${item.nome}" 
                      class="item-image"
-                     onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'image-fallback\\'><i class=\\'fas fa-user-graduate\\'></i></div>';">
+                     onerror="this.onerror=null; this.src='${defaultImage}';">
             </div>
             <div class="item-content">
                 <div class="item-header">
@@ -1935,10 +1931,7 @@ function showDetail(id, type) {
     currentDetailId = id;
     currentDetailType = type;
 
-    // Gestione scroll
-    if ('scrollRestoration' in history) {
-        history.scrollRestoration = 'manual';
-    }
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
     let item, screenId, titleElement, contentElement;
     
@@ -1947,36 +1940,34 @@ function showDetail(id, type) {
     const isOpera = (type === 'opera' || type === 'opere');
     const isConcetto = (type === 'concetto' || type === 'concetti');
 
+    // Immagine di default (MODIFICA IL NOME SE NECESSARIO)
+    const defaultFilosofoImg = 'images/default-filosofo.jpg';
+
     if (isFilosofo) {
-        // --- LOGICA FILOSOFI ---
         item = appData.filosofi.find(f => f.id == id);
         screenId = 'filosofo-detail-screen';
         titleElement = document.getElementById('filosofo-detail-title');
         contentElement = document.getElementById('filosofo-detail-content');
         
         if (item && contentElement) {
-            const lat = item.lat || (item.coordinate ? item.coordinate.lat : null);
-            const lng = item.lng || (item.coordinate ? item.coordinate.lng : null);
-            const hasCoords = lat && lng;
+            const hasCoords = (item.lat || item.coordinate?.lat) && (item.lng || item.coordinate?.lng);
 
-            // Gestione Immagine (Ritratto o Placeholder)
-            const imgUrl = (item.ritratto && item.ritratto.trim() !== '') ? item.ritratto : null;
-            const imgHtml = imgUrl 
-                ? `<img src="${imgUrl}" class="detail-image" alt="${item.nome}" onerror="this.style.display='none'">` 
-                : `<div class="detail-image-placeholder" style="height:200px; background:#f1f5f9; display:flex; align-items:center; justify-content:center; border-radius:20px; margin-bottom:20px; border: 1px solid #e2e8f0;"><i class="fas fa-user-graduate" style="font-size:4rem; color:#cbd5e1;"></i></div>`;
+            // Usa l'immagine specifica o quella di default
+            const imgUrl = (item.ritratto && item.ritratto.trim() !== '') ? item.ritratto : defaultFilosofoImg;
 
-            // HTML Concetti (se presenti)
             const concettiHtml = (item.concetti_principali && item.concetti_principali.length > 0) 
                 ? `<div class="detail-section" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
                        <h4><i class="fas fa-brain"></i> Concetti Chiave</h4>
                        <div class="tags-cloud">
                            ${item.concetti_principali.map(c => `<span class="tag-chip">${c}</span>`).join('')}
                        </div>
-                   </div>`
-                : '';
+                   </div>` : '';
 
             contentElement.innerHTML = `
-                ${imgHtml}
+                <img src="${imgUrl}" 
+                     class="detail-image" 
+                     alt="${item.nome}" 
+                     onerror="this.onerror=null; this.src='${defaultFilosofoImg}';">
                 
                 <div class="detail-card">
                     <div class="detail-meta-grid">
@@ -2010,14 +2001,13 @@ function showDetail(id, type) {
         }
 
     } else if (isOpera) {
-        // --- LOGICA OPERE ---
+        // --- LOGICA OPERE (Invariata) ---
         item = appData.opere.find(o => o.id == id);
         screenId = 'opera-detail-screen';
         titleElement = document.getElementById('opera-detail-title');
         contentElement = document.getElementById('opera-detail-content');
 
         if (item && contentElement) {
-            // Trova Concetti correlati a quest'opera
             const concettiCorrelati = appData.concetti.filter(c => 
                 (c.opere_riferimento && c.opere_riferimento.includes(item.titolo)) ||
                 (c.opera_id === item.id)
@@ -2025,9 +2015,9 @@ function showDetail(id, type) {
 
             const listaConcetti = concettiCorrelati.length > 0 
                 ? `<div class="tags-cloud">${concettiCorrelati.map(c => 
-                    `<span class="tag-chip" onclick="showDetail('${c.id}', 'concetti')" style="cursor:pointer; background:var(--primary-purple); color:white; padding:5px 10px; border-radius:15px; margin:2px; display:inline-block; font-size:0.9em;">${c.parola}</span>`
+                    `<span class="tag-chip" onclick="showDetail('${c.id}', 'concetti')">${c.parola}</span>`
                   ).join('')}</div>`
-                : '<em>Nessun concetto collegato direttamente.</em>';
+                : '<em>Nessun concetto collegato.</em>';
 
             contentElement.innerHTML = `
                 <div class="detail-card">
@@ -2043,12 +2033,10 @@ function showDetail(id, type) {
                         <h4><i class="fas fa-brain"></i> Concetti Trattati</h4>
                         ${listaConcetti}
                     </div>
-                </div>
-            `;
+                </div>`;
         }
-
     } else if (isConcetto) {
-        // --- LOGICA CONCETTI ---
+        // --- LOGICA CONCETTI (Invariata) ---
         item = appData.concetti.find(c => c.id == id);
         screenId = 'concetto-detail-screen';
         titleElement = document.getElementById('concetto-detail-title');
@@ -2065,23 +2053,19 @@ function showDetail(id, type) {
                         <h4>Definizione</h4>
                         <p class="definition-text">${item.definizione}</p>
                     </div>
-                    
                     <div class="action-buttons-container" style="margin-top:20px; text-align:center;">
                         <button class="btn-primary" onclick="if(window.openComparativeAnalysis) window.openComparativeAnalysis('${item.parola}')">
                             <i class="fas fa-project-diagram"></i> Analisi Comparativa
                         </button>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
     }
 
-    // Aggiorna titolo e mostra schermata
     if (item && titleElement) {
         titleElement.innerText = item.nome || item.titolo || item.parola;
     }
     
-    // Mostra la schermata usando la tua funzione di navigazione
     if (screenId && typeof showScreen === 'function') {
         showScreen(screenId);
         window.scrollTo(0, 0);
