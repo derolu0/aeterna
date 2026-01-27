@@ -970,7 +970,8 @@ function logPerformanceMetric(name, duration) {
 // VARIABILI GLOBALI E GESTIONE RUOLI
 // ============================================
 
-let appData = {
+// MODIFICA: Usa 'window.appData' invece di 'let appData'
+window.appData = {
     filosofi: [],    // ex-fontane
     opere: [],       // ex-beverini
     concetti: []     // ex-news
