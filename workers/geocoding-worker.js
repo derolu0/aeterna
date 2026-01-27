@@ -93,20 +93,6 @@ const CITTA_IMPORTANTI = {
     'Il Cairo': { lat: 30.0444, lng: 31.2357, paese: 'Egitto' }
 };
 
-// Capitali per fallback a livello di paese
-const CAPITALI = {
-    'Italia': { lat: 41.9028, lng: 12.4964, citta: 'Roma' },
-    'Francia': { lat: 48.8566, lng: 2.3522, citta: 'Parigi' },
-    'Germania': { lat: 52.5200, lng: 13.4050, citta: 'Berlino' },
-    'Regno Unito': { lat: 51.5074, lng: -0.1278, citta: 'Londra' },
-    'Spagna': { lat: 40.4168, lng: -3.7038, citta: 'Madrid' },
-    'Grecia': { lat: 37.9838, lng: 23.7275, citta: 'Atene' },
-    'USA': { lat: 38.9072, lng: -77.0369, citta: 'Washington' },
-    'Cina': { lat: 39.9042, lng: 116.4074, citta: 'Pechino' },
-    'Giappone': { lat: 35.6762, lng: 139.6503, citta: 'Tokyo' },
-    'Russia': { lat: 55.7558, lng: 37.6173, citta: 'Mosca' }
-};
-
 // Ultima richiesta timestamp (per rate limiting)
 let lastRequestTime = 0;
 
@@ -161,6 +147,7 @@ async function cercaCoordinate(params) {
     // 7. Salva in cache (solo memoria)
     if (coordinate && isValidCoordinate(coordinate)) {
         coordinateCache.set(cacheKey, coordinate);
+        saveToLocalStorage(cacheKey, coordinate);
     }
     
     return coordinate;
@@ -405,9 +392,22 @@ function getFallbackCoordinate(citta, paese, filosofo) {
     }
     
     // 3. Cerca per paese (coordinate capitali)
-    if (paese && CAPITALI[paese]) {
+    const capitali = {
+        'Italia': { lat: 41.9028, lng: 12.4964, citta: 'Roma' },
+        'Francia': { lat: 48.8566, lng: 2.3522, citta: 'Parigi' },
+        'Germania': { lat: 52.5200, lng: 13.4050, citta: 'Berlino' },
+        'Regno Unito': { lat: 51.5074, lng: -0.1278, citta: 'Londra' },
+        'Spagna': { lat: 40.4168, lng: -3.7038, citta: 'Madrid' },
+        'Grecia': { lat: 37.9838, lng: 23.7275, citta: 'Atene' },
+        'USA': { lat: 38.9072, lng: -77.0369, citta: 'Washington' },
+        'Cina': { lat: 39.9042, lng: 116.4074, citta: 'Pechino' },
+        'Giappone': { lat: 35.6762, lng: 139.6503, citta: 'Tokyo' },
+        'Russia': { lat: 55.7558, lng: 37.6173, citta: 'Mosca' }
+    };
+    
+    if (paese && capitali[paese]) {
         return {
-            ...CAPITALI[paese],
+            ...capitali[paese],
             source: 'database_capitali',
             accuracy: 'low'
         };
@@ -459,20 +459,6 @@ function searchLocalDatabase(query) {
         }
     });
     
-    // Cerca tra le capitali
-    Object.entries(CAPITALI).forEach(([paese, coord]) => {
-        if (paese.toLowerCase().includes(queryLower)) {
-            risultati.push({
-                display_name: `${coord.citta}, ${paese}`,
-                lat: coord.lat,
-                lng: coord.lng,
-                type: 'capital',
-                importance: 0.8,
-                source: 'local_database'
-            });
-        }
-    });
-    
     return risultati.sort((a, b) => b.importance - a.importance);
 }
 
@@ -514,6 +500,23 @@ function toRad(degrees) {
     return degrees * Math.PI / 180;
 }
 
+/**
+ * Salva in localStorage (DISABILITATO PER WORKER)
+ */
+function saveToLocalStorage(key, data) {
+    // I Web Worker non possono accedere a localStorage.
+    // La cache rimarrà solo in memoria (coordinateCache) per questa sessione.
+    return; 
+}
+
+/**
+ * Carica cache da localStorage (DISABILITATO PER WORKER)
+ */
+function loadCacheFromStorage() {
+    // I Web Worker non possono accedere a localStorage.
+    return;
+}
+
 // ============================================
 // GESTIONE MESSAGGI DEL WORKER
 // ============================================
@@ -548,6 +551,8 @@ self.addEventListener('message', async function(event) {
                 
             case 'CLEAR_CACHE':
                 coordinateCache.clear();
+                // LocalStorage rimosso per compatibilità worker
+                // localStorage.removeItem('geocoding_cache'); 
                 result = { success: true };
                 break;
                 
@@ -588,6 +593,9 @@ self.addEventListener('message', async function(event) {
 // ============================================
 // INIZIALIZZAZIONE
 // ============================================
+
+// Carica cache all'avvio (DISABILITATO)
+// loadCacheFromStorage(); 
 
 // Notifica che il worker è pronto
 self.postMessage({

@@ -14,6 +14,7 @@
     
     <meta name="theme-color" content="#3b82f6">
     <meta name="msapplication-TileColor" content="#3b82f6">
+    
     <meta name="display" content="standalone">
     <meta name="orientation" content="portrait">
     
@@ -22,6 +23,7 @@
     <link rel="icon" type="image/x-icon" href="https://derolu0.github.io/aeterna/images/favicon.ico">
     <link rel="icon" type="image/png" sizes="16x16" href="https://derolu0.github.io/aeterna/images/favicon-16x16.png">
     <link rel="icon" type="image/png" sizes="32x32" href="https://derolu0.github.io/aeterna/images/favicon-32x32.png">
+    
     <link rel="apple-touch-icon" href="https://derolu0.github.io/aeterna/images/apple-touch-icon.png">
     <link rel="apple-touch-icon" sizes="144x144" href="https://derolu0.github.io/aeterna/images/icona-avvio-144.png">
     <link rel="apple-touch-icon" sizes="192x192" href="https://derolu0.github.io/aeterna/images/icona-avvio-192.png">
@@ -52,15 +54,19 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
-    
-    <link rel="stylesheet" href="https://derolu0.github.io/aeterna/comparative-styles.css">
-    <link rel="stylesheet" href="https://derolu0.github.io/aeterna/style.css">
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.js"></script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
+    <script src="https://derolu0.github.io/aeterna/linguistic-analysis.js" defer></script>
+    <script src="https://derolu0.github.io/aeterna/timeline-evolution.js" defer></script>
+    
+    <link rel="stylesheet" href="https://derolu0.github.io/aeterna/comparative-styles.css">
+    
+    <link rel="stylesheet" href="https://derolu0.github.io/aeterna/style.css">
+
     <script>
         // Gestione scroll per ancore
         document.addEventListener('DOMContentLoaded', () => {
@@ -81,6 +87,7 @@
             });
         });
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
     <div id="maintenance-mode" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
@@ -93,7 +100,6 @@
             <i class="fas fa-lock"></i> Area Riservata
         </button>
     </div>
-    
     <div id="splash-screen">
         <div class="splash-container">
             <img src="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png" alt="Aeterna Lexicon" class="splash-image">
@@ -147,6 +153,7 @@
         </div>
     </div>
 
+    <!-- NUOVA MODALE PER ANALISI COMPARATIVA -->
     <div class="modal-overlay" id="comparative-analysis-modal" style="display: none;">
         <div class="modal-content comparative-modal">
             <div class="comparative-header">
@@ -163,6 +170,7 @@
             </div>
             
             <div class="timeline-container" id="evolution-timeline">
+                <!-- Timeline verrà popolata dinamicamente -->
                 <div class="analisi-loading">
                     <div class="analisi-spinner"></div>
                     <p>Caricamento timeline evolutiva...</p>
@@ -272,6 +280,7 @@
                 </button>
             </header>
 
+            
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" data-tab="dashboard-admin">Dashboard</button>
                 <button class="admin-tab-btn" data-tab="filosofi-admin">Filosofi</button>
@@ -334,7 +343,8 @@
                             <i class="fas fa-trash"></i> Pulisci
                         </button>
                     </div>
-                    <div class="activity-list" id="activity-list"></div>
+                    <div class="activity-list" id="activity-list">
+                    </div>
                 </div>
             </div>
 
@@ -466,7 +476,8 @@
                                 <th>Azioni</th>
                             </tr>
                         </thead>
-                        <tbody id="filosofi-table-body"></tbody>
+                        <tbody id="filosofi-table-body">
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -573,7 +584,8 @@
                                 <th>Azioni</th>
                             </tr>
                         </thead>
-                        <tbody id="opere-table-body"></tbody>
+                        <tbody id="opere-table-body">
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -676,7 +688,8 @@
                                 <th>Azioni</th>
                             </tr>
                         </thead>
-                        <tbody id="concetti-table-body"></tbody>
+                        <tbody id="concetti-table-body">
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -783,7 +796,8 @@
                                         <th>Severità</th>
                                     </tr>
                                 </thead>
-                                <tbody id="analytics-errors-table"></tbody>
+                                <tbody id="analytics-errors-table">
+                                    </tbody>
                             </table>
                         </div>
                     </div>
@@ -800,7 +814,8 @@
                                         <th>Ultimo</th>
                                     </tr>
                                 </thead>
-                                <tbody id="analytics-events-table"></tbody>
+                                <tbody id="analytics-events-table">
+                                    </tbody>
                             </table>
                         </div>
                     </div>
@@ -930,7 +945,7 @@
                     </button>
                 </div>
             </div>
-        </div>
+            </div>
     </div>
 
     <div class="app-container">
@@ -976,6 +991,7 @@
                         <span class="btn-text" id="nav-concetti">Concetti</span>
                     </button>
                 </div>
+                <!-- NUOVA RIGA PER MAPPA CONCETTUALE -->
                 <div class="button-row">
                     <button class="home-btn network-btn" onclick="showScreen('mappa-concettuale-screen')">
                         <span class="btn-icon"><i class="fas fa-project-diagram"></i></span>
@@ -985,10 +1001,13 @@
             </div>
         </div>
 
+        <!-- ============ SCHERMATA FILOSOFI ============ -->
         <div class="screen list-screen" id="filosofi-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        
                 <h1 class="screen-title" id="filosofi-title">Filosofi</h1>
+        
                 <p class="screen-subtitle" id="filosofi-subtitle">Esplora i filosofi della storia</p>
             </header>
     
@@ -1001,12 +1020,15 @@
                     <button class="filter-btn all active" onclick="setFilter('filosofi', 'all')">
                         <i class="fas fa-layer-group"></i> Tutti
                     </button>
+            
                     <button class="filter-btn funzionante" onclick="setFilter('filosofi', 'classico')">
                         <i class="fas fa-columns"></i> Classici
                     </button>
+            
                     <button class="filter-btn non-funzionante" onclick="setFilter('filosofi', 'contemporaneo')">
                         <i class="fas fa-bolt"></i> Contemporanei
                     </button>
+            
                     <button class="filter-btn manutenzione" onclick="setFilter('filosofi', 'altro')">
                         <i class="fas fa-history"></i> Altri Periodi
                     </button>
@@ -1015,16 +1037,17 @@
                <div class="items-grid" id="filosofi-list">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                        <p>Caricamento filosofi in corso...</p>
-                    </div>
+                    <p>Caricamento filosofi in corso...</p>
                 </div>
-            </div>
-        </div>
+            </div> </div> </div>
 
+        <!-- ============ SCHERMATA OPERE ============ -->
         <div class="screen list-screen" id="opere-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+    
                 <h1 class="screen-title" id="opere-title">Opere</h1>
+    
                 <p class="screen-subtitle" id="opere-subtitle">Scopri le opere filosofiche</p>
             </header>
     
@@ -1037,12 +1060,15 @@
                     <button class="filter-btn all active" onclick="setFilter('opere', 'all')">
                         <i class="fas fa-layer-group"></i> Tutte
                     </button>
+            
                     <button class="filter-btn funzionante" onclick="setFilter('opere', 'classico')">
                         <i class="fas fa-columns"></i> Classiche
                     </button>
+            
                     <button class="filter-btn non-funzionante" onclick="setFilter('opere', 'contemporaneo')">
                         <i class="fas fa-bolt"></i> Contemporanee
                     </button>
+            
                     <button class="filter-btn manutenzione" onclick="setFilter('opere', 'altro')">
                         <i class="fas fa-history"></i> Altri Periodi
                     </button>
@@ -1057,10 +1083,13 @@
             </div>
         </div>
 
+        <!-- ============ SCHERMATA CONCETTI ============ -->
         <div class="screen list-screen" id="concetti-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+                
                 <h1 class="screen-title" id="concetti-title">Concetti</h1>
+                
                 <p class="screen-subtitle" id="concetti-subtitle">Analizza le parole chiave della filosofia</p>
             </header>
             
@@ -1074,6 +1103,7 @@
             </div>
         </div>
 
+        <!-- ============ DETTAGLIO FILOSOFO ============ -->
         <div class="screen detail-screen" id="filosofo-detail-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
@@ -1086,6 +1116,7 @@
             </div>
         </div>
 
+        <!-- ============ DETTAGLIO OPERA ============ -->
         <div class="screen detail-screen" id="opera-detail-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
@@ -1098,6 +1129,7 @@
             </div>
         </div>
 
+        <!-- ============ DETTAGLIO CONCETTO ============ -->
         <div class="screen detail-screen" id="concetto-detail-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
@@ -1110,6 +1142,7 @@
             </div>
         </div>
 
+        <!-- ============ MAPPA GEOGRAFICA (ESISTENTE MODIFICATA) ============ -->
         <div class="screen" id="mappa-screen">
             <header class="app-header" style="position: absolute; top: 0; left: 0; right: 0; z-index: 1000; padding: 15px 20px;">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
@@ -1131,14 +1164,17 @@
     
             <div class="map-legend">
                 <div class="legend-title" id="legend-title">Legenda</div>
+        
                 <div class="legend-item">
                     <div class="legend-icon icon-filosofo-classico"></div>
                     <span id="legend-filosofo-classico">Filosofo Classico</span>
                 </div>
+        
                 <div class="legend-item">
                     <div class="legend-icon icon-filosofo-contemporaneo"></div>
                     <span id="legend-filosofo-contemporaneo">Filosofo Contemporaneo</span>
                 </div>
+        
                 <div class="legend-item">
                     <div class="legend-icon icon-position"></div>
                     <span id="legend-pos">La tua posizione</span>
@@ -1150,6 +1186,7 @@
             </div>
         </div>
 
+        <!-- ============ NUOVA SCHERMATA: MAPPA CONCETTUALE ============ -->
         <div class="screen" id="mappa-concettuale-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
@@ -1158,6 +1195,7 @@
             </header>
 
             <div class="content-area">
+                <!-- Controlli della mappa concettuale -->
                 <div class="concetto-controls">
                     <div class="filter-buttons">
                         <button class="filter-btn all active" onclick="filterConcetti('tutti')">
@@ -1178,6 +1216,7 @@
                     </div>
                 </div>
 
+                <!-- Container per la mappa concettuale -->
                 <div id="concetto-network-container" style="width: 100%; height: 600px; border-radius: 15px; overflow: hidden;">
                     <div class="loading">
                         <div class="loading-spinner"></div>
@@ -1185,6 +1224,7 @@
                     </div>
                 </div>
 
+                <!-- Legenda mappa concettuale -->
                 <div class="concetto-legend">
                     <div class="legend-item">
                         <div class="legend-circle filosofo"></div>
@@ -1204,7 +1244,8 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div>                 
+         
 
         <div id="credits-screen" class="screen">
             <div class="app-header" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
@@ -1215,6 +1256,7 @@
             </div>
 
             <div class="content-area" style="text-align: center; padding: 30px 20px;">
+                
                 <div style="margin-bottom: 30px;">
                     <img src="https://derolu0.github.io/aeterna/images/logo-app.png" alt="Aeterna Lexicon" style="width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 10px;">
                     <h2 style="font-size: 1.3rem; color: var(--dark-text); margin-bottom: 5px;">Aeterna Lexicon in Motu</h2>
@@ -1225,10 +1267,13 @@
 
                 <div class="credit-section" style="margin-bottom: 30px;">
                     <h4 style="color: var(--primary-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">AUTHOR & PROJECT</h4>
+                    
                     <p style="font-weight: 700; font-size: 1.1rem; color: #1f2937; margin-bottom: 4px;">De Rosa Salvatore</p>
+                    
                     <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 2px;">
                         Corso di Laurea in Filosofia ed Etica
                     </p>
+                    
                     <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 12px;">
                         Università Telematica Pegaso (Unipegaso)<br>
                         Anno Accademico 2025/2026
@@ -1240,7 +1285,6 @@
                         </p>
                     </div>
                 </div>
-                
                 <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;">
 
                 <div style="font-size: 0.75rem; color: #9ca3af; line-height: 1.5;">
@@ -1265,6 +1309,7 @@
                 <div style="height: 120px;"></div>
             </div>
         </div>
+        
 
         <div class="tab-bar">
             <button class="tab-btn active" data-target="home-screen" onclick="showScreen('home-screen')">
@@ -1332,10 +1377,21 @@
                             <span class="btn-text">Invia Segnalazione</span>
                         </button>
                     </form>
-                </div>
-            </div>
+            </div> </div> <div class="tab-bar">
+            <button class="tab-btn" onclick="showScreen('home-screen')">
+                <span class="tab-icon"><i class="fas fa-home"></i></span><span>Home</span>
+            </button>
+            <button class="tab-btn" onclick="showScreen('filosofi-screen')">
+                <span class="tab-icon"><i class="fas fa-user-graduate"></i></span><span>Filosofi</span>
+            </button>
+            <button class="tab-btn" onclick="showScreen('opere-screen')">
+                <span class="tab-icon"><i class="fas fa-book"></i></span><span>Opere</span>
+            </button>
+            <button class="tab-btn" onclick="showScreen('mappa-screen')">
+                <span class="tab-icon"><i class="fas fa-map-marked-alt"></i></span><span>Mappa</span>
+            </button>
         </div>
-    </div>
+    </div> </div> 
 
     <div id="top-menu-modal" class="modal-overlay" onclick="closeMenuModal(event)" style="z-index: 9999; display: none;">
         <div class="modal-content menu-modal-content" onclick="event.stopPropagation()">
@@ -1379,61 +1435,22 @@
             </div>
         </div>
     </div>
-
-    <div id="qr-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
-        <div class="modal-content" style="text-align: center; max-width: 300px; padding: 25px; border-radius: 20px;">
-            <h3 class="modal-title" data-i18n="qr_title" style="margin-bottom: 15px;">Scarica l'App</h3>
-            
-            <div id="qrcode-container" style="display: flex; justify-content: center; margin: 20px auto; padding: 10px; background: white; border-radius: 10px;"></div>
-            
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px; line-height: 1.4;" data-i18n="qr_subtitle">
-                Fai scansionare questo codice per aprire l'app.
-            </p>
-            
-            <button class="modal-btn" onclick="closeQRModal()" style="width: 100%; padding: 12px; background: #e2e8f0; border: none; border-radius: 12px; font-weight: 600;">
-                <span data-i18n="btn_close">Chiudi</span>
-            </button>
-        </div>
-    </div>
-
-    <div id="smart-install-banner" class="install-banner" style="display: none;">
-        <div class="install-text">
-            <span class="install-title" data-i18n="install_title">Installa Aeterna Lexicon</span>
-            <span class="install-subtitle" data-i18n="install_subtitle">Per dataset offline e analisi</span>
-        </div>
-        <button id="smart-install-btn" class="install-action-btn" data-i18n="install_btn" onclick="installPWA()">
-            Installa
-        </button>
-        <button class="install-close-btn" onclick="document.getElementById('smart-install-banner').style.display='none'">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-
-    <!-- Script esterni -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
-
-    <!-- Script locali -->
+    
     <script src="https://derolu0.github.io/aeterna/translations.js"></script>
-    <script src="https://derolu0.github.io/aeterna/firebase-init.js"></script>
-    <script src="https://derolu0.github.io/aeterna/geocoding-manager.js"></script>
-    <script src="https://derolu0.github.io/aeterna/linguistic-analysis.js"></script>
-    <script src="https://derolu0.github.io/aeterna/timeline-evolution.js"></script>
-    <script src="https://derolu0.github.io/aeterna/excel-worker.js"></script>
-    <script src="https://derolu0.github.io/aeterna/analytics.js"></script>
+    
     <script src="https://derolu0.github.io/aeterna/app.js"></script>
-
+    
+    <script src="https://derolu0.github.io/aeterna/analytics.js" defer></script>
+    
     <script>
         // SERVICE WORKER REGISTRATION
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swUrl = 'https://derolu0.github.io/aeterna/sw.js';
                 fetch(swUrl, { mode: 'no-cors' })
-                  .then(() => {
+                  .then(response => {
                       return navigator.serviceWorker.register(swUrl)
                           .then(registration => {
                               console.log('✅ Service Worker registrato:', registration.scope);
@@ -1445,6 +1462,7 @@
                                       }
                                   });
                               });
+                              return registration;
                           });
                   })
                   .catch(error => {
@@ -1457,7 +1475,7 @@
             e.preventDefault();
             window.deferredPrompt = e;
         });
-
+        
         // FUNZIONI ANALYTICS
         function refreshAnalyticsDashboard() {
             if (window.Analytics) {
@@ -1575,32 +1593,91 @@
         // FUNZIONI PER MAPPA CONCETTUALE
         function filterConcetti(periodo) {
             console.log(`Filtra concetti per periodo: ${periodo}`);
+            // Implementa logica di filtraggio
             showToast(`Filtro attivo: ${periodo}`, 'info');
         }
         
         function searchConcetti(query) {
             console.log(`Cerca concetto: ${query}`);
+            // Implementa ricerca
             if (query.length > 2) {
                 showToast(`Ricerca: ${query}`, 'info');
             }
+        }
+        
+        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                if (tabId === 'analytics-admin') {
+                    setTimeout(() => {
+                        refreshAnalyticsDashboard();
+                        setTimeout(createActivityChart, 500);
+                    }, 100);
+                }
+            });
+        });
+        
+        function createActivityChart() {
+            const canvas = document.getElementById('activity-chart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            if (window.activityChart) window.activityChart.destroy();
+            const labels = [];
+            const data = [];
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toLocaleDateString('it-IT', { weekday: 'short' }));
+                data.push(Math.floor(Math.random() * 50) + 20);
+            }
+            window.activityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Eventi',
+                        data: data,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
         }
         
         // NUOVE FUNZIONI PER ANALISI COMPARATIVA
         function openComparativeAnalysis(termine) {
             console.log('Avvio analisi comparativa per:', termine);
             
+            // Mostra la modale
             const modal = document.getElementById('comparative-analysis-modal');
             modal.style.display = 'flex';
             
+            // Aggiorna titolo
             document.getElementById('comparative-term-title').textContent = termine.toUpperCase();
             
+            // Simula caricamento dati
             setTimeout(() => {
+                // Popola con dati di esempio
                 populateComparativeAnalysis(termine);
                 showToast(`Analisi comparativa per "${termine}" completata`, 'success');
             }, 1500);
         }
         
         function populateComparativeAnalysis(termine) {
+            // Dati di esempio per test
             const timelineData = [
                 { anno: -400, periodo: 'classico', autore: 'Platone', opera: 'La Repubblica', estratto: 'La verità come idea eterna...' },
                 { anno: -350, periodo: 'classico', autore: 'Aristotele', opera: 'Metafisica', estratto: 'Verità come corrispondenza...' },
@@ -1609,10 +1686,12 @@
                 { anno: 1971, periodo: 'contemporaneo', autore: 'Foucault', opera: 'L\'ordine del discorso', estratto: 'Verità come costruzione discorsiva...' }
             ];
             
+            // Inizializza timeline
             if (window.TimelineEvolution) {
                 window.TimelineEvolution.init('evolution-timeline', timelineData);
             }
             
+            // Popola metriche
             document.getElementById('classical-metrics').innerHTML = `
                 <div class="metric">
                     <span class="metric-label">Contesto d'uso:</span>
@@ -1649,65 +1728,100 @@
         }
         
         function exportComparativeAnalysis() {
+            // Implementazione esportazione
             showToast('Funzione di esportazione in sviluppo', 'info');
         }
         
-        function createActivityChart() {
-            const canvas = document.getElementById('activity-chart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-            if (window.activityChart) window.activityChart.destroy();
-            
-            const labels = [];
-            const data = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString('it-IT', { weekday: 'short' }));
-                data.push(Math.floor(Math.random() * 50) + 20);
-            }
-            
-            window.activityChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Eventi',
-                        data: data,
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
-                        x: { grid: { display: false } }
-                    }
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {
+                    refreshAnalyticsDashboard();
                 }
+            }, 2000);
+        });
+    </script>
+
+    <div id="qr-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
+        <div class="modal-content" style="text-align: center; max-width: 300px; padding: 25px; border-radius: 20px;">
+            <h3 class="modal-title" data-i18n="qr_title" style="margin-bottom: 15px;">Scarica l'App</h3>
+            
+            <div id="qrcode-container" style="display: flex; justify-content: center; margin: 20px auto; padding: 10px; background: white; border-radius: 10px;"></div>
+            
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px; line-height: 1.4;" data-i18n="qr_subtitle">
+                Fai scansionare questo codice per aprire l'app.
+            </p>
+            
+            <button class="modal-btn" onclick="closeQRModal()" style="width: 100%; padding: 12px; background: #e2e8f0; border: none; border-radius: 12px; font-weight: 600;">
+                <span data-i18n="btn_close">Chiudi</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="smart-install-banner" class="install-banner" style="display: none;">
+        <div class="install-text">
+            <span class="install-title" data-i18n="install_title">Installa Aeterna Lexicon</span>
+            <span class="install-subtitle" data-i18n="install_subtitle">Per dataset offline e analisi</span>
+        </div>
+        <button id="smart-install-btn" class="install-action-btn" data-i18n="install_btn" onclick="installPWA()">
+            Installa
+        </button>
+        <button class="install-close-btn" onclick="document.getElementById('smart-install-banner').style.display='none'">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
+
+    <script src="./translations.js"></script>       <script src="./firebase-init.js"></script>      <script src="./geocoding-manager.js"></script>
+    <script src="./linguistic-analysis.js"></script>
+    <script src="./timeline-evolution.js"></script>
+    <script src="./excel-worker.js"></script>
+    <script src="./analytics.js"></script>
+
+    <script src="./app.js"></script>
+
+    <script>
+        // SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swUrl = 'https://derolu0.github.io/aeterna/sw.js';
+                fetch(swUrl, { mode: 'no-cors' })
+                  .then(response => {
+                      return navigator.serviceWorker.register(swUrl)
+                          .then(registration => {
+                              console.log('✅ Service Worker registrato:', registration.scope);
+                              registration.addEventListener('updatefound', () => {
+                                  const newWorker = registration.installing;
+                                  newWorker.addEventListener('statechange', () => {
+                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
+                                      }
+                                  });
+                              });
+                              return registration;
+                          });
+                  })
+                  .catch(error => {
+                      console.warn('⚠️ Registrazione SW fallita:', error.message);
+                  });
             });
         }
         
-        // Gestione tab analytics
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                if (tabId === 'analytics-admin') {
-                    setTimeout(() => {
-                        refreshAnalyticsDashboard();
-                        setTimeout(createActivityChart, 500);
-                    }, 100);
-                }
-            });
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredPrompt = e;
         });
-        
-        // Inizializzazione analytics al caricamento
+
+        // INIZIALIZZAZIONE ANALYTICS E DASHBOARD
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {

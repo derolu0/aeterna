@@ -247,6 +247,8 @@ window.translations = {
         'termini_correlati': 'Termini Correlati',
         'frequenza_uso': 'Frequenza d\'uso',
         'contesto_duso': 'Contesto d\'uso',
+        'periodo_classico': 'Periodo Classico',
+        'periodo_contemporaneo': 'Periodo Contemporaneo',
         
         'modale_titolo_analisi': 'Analisi Comparativa: ',
         'modale_sottotitolo': 'Confronto tra interpretazioni classiche e contemporanee',
@@ -485,7 +487,7 @@ window.translations = {
         
         'concept_map_filter_all': 'All Concepts',
         'concept_map_filter_classic': 'Classical Period',
-        'concept_map_filter_contemporaneo': 'Contemporary Period',
+        'concept_map_filter_contemporary': 'Contemporary Period',
         'concept_map_zoom_in': 'Zoom In',
         'concept_map_zoom_out': 'Zoom Out',
         'concept_map_reset_view': 'Reset View',
@@ -560,6 +562,8 @@ window.translations = {
         'termini_correlati': 'Related Terms',
         'frequenza_uso': 'Usage Frequency',
         'contesto_duso': 'Usage Context',
+        'periodo_classico': 'Classical Period',
+        'periodo_contemporaneo': 'Contemporary Period',
         
         'modale_titolo_analisi': 'Comparative Analysis: ',
         'modale_sottotitolo': 'Comparison between classical and contemporary interpretations',

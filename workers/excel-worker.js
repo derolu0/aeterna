@@ -1,5 +1,5 @@
 // ==============================================
-// EXCEL-WORKER.JS (VERSIONE PULITA)
+// EXCEL-WORKER.JS (VERSIONE CORRETTA COMPAT)
 // Gestione Import/Export Excel
 // ==============================================
 
@@ -10,18 +10,19 @@ window.ExcelWorker = {
     
     /**
      * Esporta tutti i dati in un unico file Excel
+     * Ora accetta i dati direttamente come parametro opzionale o li legge da appData
      */
     exportAllDataToExcel: async function() {
         try {
-            this._showToast('Preparazione export dati completi...', 'info');
+            showToast('Preparazione export dati completi...', 'info');
             
             // PRENDE I DATI DALLA VARIABILE GLOBALE DI APP.JS
             const filosofi = window.appData?.filosofi || [];
             const opere = window.appData?.opere || [];
             const concetti = window.appData?.concetti || [];
             
-            if (filosofi.length === 0 && opere.length === 0 && concetti.length === 0) {
-                this._showToast('Nessun dato trovato in memoria da esportare', 'warning');
+            if (filosofi.length === 0 && opere.length === 0) {
+                showToast('Nessun dato trovato in memoria da esportare', 'warning');
                 return;
             }
 
@@ -29,25 +30,19 @@ window.ExcelWorker = {
             const wb = XLSX.utils.book_new();
             
             // Sheet Filosofi
-            if (filosofi.length > 0) {
-                const filosofiData = this._prepareFilosofiForExport(filosofi);
-                const filosofiWS = XLSX.utils.json_to_sheet(filosofiData);
-                XLSX.utils.book_append_sheet(wb, filosofiWS, "Filosofi");
-            }
+            const filosofiData = this.prepareFilosofiForExport(filosofi);
+            const filosofiWS = XLSX.utils.json_to_sheet(filosofiData);
+            XLSX.utils.book_append_sheet(wb, filosofiWS, "Filosofi");
             
             // Sheet Opere
-            if (opere.length > 0) {
-                const opereData = this._prepareOpereForExport(opere);
-                const opereWS = XLSX.utils.json_to_sheet(opereData);
-                XLSX.utils.book_append_sheet(wb, opereWS, "Opere");
-            }
+            const opereData = this.prepareOpereForExport(opere);
+            const opereWS = XLSX.utils.json_to_sheet(opereData);
+            XLSX.utils.book_append_sheet(wb, opereWS, "Opere");
             
             // Sheet Concetti
-            if (concetti.length > 0) {
-                const concettiData = this._prepareConcettiForExport(concetti);
-                const concettiWS = XLSX.utils.json_to_sheet(concettiData);
-                XLSX.utils.book_append_sheet(wb, concettiWS, "Concetti");
-            }
+            const concettiData = this.prepareConcettiForExport(concetti);
+            const concettiWS = XLSX.utils.json_to_sheet(concettiData);
+            XLSX.utils.book_append_sheet(wb, concettiWS, "Concetti");
             
             // Genera nome file con data
             const dateStr = new Date().toISOString().split('T')[0];
@@ -55,38 +50,40 @@ window.ExcelWorker = {
             
             // Salva file
             XLSX.writeFile(wb, filename);
-            this._showToast(`Dati esportati in ${filename}`, 'success');
+            showToast(`Dati esportati in ${filename}`, 'success');
             
         } catch (error) {
             console.error('Errore export dati:', error);
-            this._showToast('Errore durante l\'export: ' + error.message, 'error');
+            showToast('Errore durante l\'export: ' + error.message, 'error');
         }
     },
     
     /**
      * Esporta dati specifici per collezione
+     * CORREZIONE: Ora accetta 'data' come secondo argomento
      */
-    exportCollectionToExcel: function(collectionName, customData = null) {
+    exportDataToExcel: function(collectionName, data) {
         try {
-            // Determina i dati da esportare
-            const data = customData || window.appData?.[collectionName] || [];
-            
+            let sheetName = '';
+            // Se i dati non vengono passati, prova a prenderli da appData
+            if (!data && window.appData) {
+                data = window.appData[collectionName] || [];
+            }
+
             if (!data || data.length === 0) {
-                this._showToast('Nessun dato da esportare', 'warning');
-                return;
+                showToast('Nessun dato da esportare', 'warning');
+                return null;
             }
             
-            // Mappa nomi collezione a nomi sheet
-            const sheetMap = {
-                'filosofi': 'Filosofi',
-                'opere': 'Opere', 
-                'concetti': 'Concetti'
-            };
-            
-            const sheetName = sheetMap[collectionName] || 'Dati';
+            switch(collectionName) {
+                case 'filosofi': sheetName = 'Filosofi'; break;
+                case 'opere': sheetName = 'Opere'; break;
+                case 'concetti': sheetName = 'Concetti'; break;
+                default: sheetName = 'Dati';
+            }
             
             // Prepara dati per export
-            const exportData = this[`_prepare${sheetName}ForExport`](data);
+            const exportData = this[`prepare${sheetName}ForExport`](data);
             
             // Crea workbook
             const wb = XLSX.utils.book_new();
@@ -99,11 +96,11 @@ window.ExcelWorker = {
             
             // Salva file
             XLSX.writeFile(wb, filename);
-            this._showToast(`${sheetName} esportati con successo`, 'success');
+            showToast(`${sheetName} esportati con successo`, 'success');
             
         } catch (error) {
             console.error(`Errore export ${collectionName}:`, error);
-            this._showToast('Errore export: ' + error.message, 'error');
+            showToast('Errore export: ' + error.message, 'error');
         }
     },
     
@@ -111,13 +108,13 @@ window.ExcelWorker = {
     // 2. IMPORT DATI
     // ================================
     
-    handleFileImport: async function(collectionName, files) {
-        if (!files || files.length === 0) return { success: false, error: 'Nessun file selezionato' };
+    handleFileImport: async function(collectionName, files, currentAppData) {
+        if (!files || files.length === 0) return;
         
         const file = files[0];
         const reader = new FileReader();
         
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             reader.onload = async (e) => {
                 try {
                     const data = new Uint8Array(e.target.result);
@@ -127,27 +124,21 @@ window.ExcelWorker = {
                     const jsonData = XLSX.utils.sheet_to_json(worksheet);
                     
                     if (jsonData.length === 0) {
-                        this._showToast('Il file è vuoto', 'warning');
+                        showToast('Il file è vuoto', 'warning');
                         resolve({ success: false, error: 'File vuoto' });
                         return;
                     }
                     
-                    // Processa i dati
-                    const processedData = this._processImportData(collectionName, jsonData);
+                    // Processa i dati in base alla collezione
+                    const processedData = this.processImportData(collectionName, jsonData);
                     
-                    if (processedData.length === 0) {
-                        resolve({ success: false, error: 'Nessun dato valido trovato nel file' });
-                        return;
-                    }
-                    
-                    // Salva su Firebase
-                    const results = await this._saveImportedData(collectionName, processedData);
+                    // Salva su Firebase usando la funzione globale di app.js
+                    const results = await this.saveImportedData(collectionName, processedData);
                     
                     resolve({ 
                         success: true, 
-                        importedCount: results.success,
-                        errorCount: results.errors.length,
-                        data: processedData
+                        importedCount: results.success, 
+                        data: { [collectionName]: processedData } // Ritorna i dati per aggiornare la UI
                     });
                     
                 } catch (error) {
@@ -155,35 +146,36 @@ window.ExcelWorker = {
                     resolve({ success: false, error: error.message });
                 }
             };
-            
-            reader.onerror = () => {
-                resolve({ success: false, error: 'Errore nella lettura del file' });
-            };
-            
             reader.readAsArrayBuffer(file);
         });
     },
     
-    // ================================
-    // 3. FUNZIONI PRIVATE (Helper)
-    // ================================
-    
-    /**
-     * Helper per mostrare toast (compatibilità)
-     */
-    _showToast: function(message, type = 'info') {
-        if (typeof showToast === 'function') {
-            showToast(message, type);
-        } else {
-            console.log(`${type.toUpperCase()}: ${message}`);
-            alert(message);
-        }
+    processImportData: function(collectionName, jsonData) {
+        if (collectionName === 'filosofi') return this.processFilosofiImport(jsonData);
+        if (collectionName === 'opere') return this.processOpereImport(jsonData);
+        if (collectionName === 'concetti') return this.processConcettiImport(jsonData);
+        return [];
     },
     
-    /**
-     * Prepara dati filosofi per export
-     */
-    _prepareFilosofiForExport: function(filosofi) {
+    saveImportedData: async function(collectionName, data) {
+        let success = 0;
+        // Usa le funzioni globali definite in app.js
+        for (const item of data) {
+            try {
+                if (window.saveFirebaseData) {
+                    await window.saveFirebaseData(collectionName, item);
+                    success++;
+                }
+            } catch (e) { console.error("Errore salvataggio item import", e); }
+        }
+        return { success, errors: [] };
+    },
+
+    // ================================
+    // 3. PREPARAZIONE DATI (Helper)
+    // ================================
+    
+    prepareFilosofiForExport: function(filosofi) {
         return filosofi.map(f => ({
             'ID': f.id || '',
             'Nome': f.nome || '',
@@ -195,10 +187,7 @@ window.ExcelWorker = {
         }));
     },
     
-    /**
-     * Prepara dati opere per export
-     */
-    _prepareOpereForExport: function(opere) {
+    prepareOpereForExport: function(opere) {
         return opere.map(o => ({
             'ID': o.id || '',
             'Titolo': o.titolo || '',
@@ -208,10 +197,7 @@ window.ExcelWorker = {
         }));
     },
     
-    /**
-     * Prepara dati concetti per export
-     */
-    _prepareConcettiForExport: function(concetti) {
+    prepareConcettiForExport: function(concetti) {
         return concetti.map(c => ({
             'ID': c.id || '',
             'Parola': c.parola || '',
@@ -219,129 +205,49 @@ window.ExcelWorker = {
             'Autore': c.autore_riferimento || ''
         }));
     },
-    
-    /**
-     * Processa dati importati in base alla collezione
-     */
-    _processImportData: function(collectionName, jsonData) {
-        const processors = {
-            'filosofi': this._processFilosofiImport.bind(this),
-            'opere': this._processOpereImport.bind(this),
-            'concetti': this._processConcettiImport.bind(this)
-        };
-        
-        const processor = processors[collectionName];
-        return processor ? processor(jsonData) : [];
+
+    // Funzioni di import specifiche
+    processFilosofiImport: function(data) {
+        return data.map(item => ({
+            nome: item['Nome'] || item['Nome Completo'] || '',
+            scuola: item['Scuola'] || '',
+            periodo: (item['Periodo'] || 'classico').toLowerCase(),
+            anni_vita: item['Anni'] || '',
+            luogo_nascita: item['Luogo'] || '',
+            biografia: item['Biografia'] || '',
+            last_modified: new Date().toISOString()
+        })).filter(f => f.nome);
     },
-    
-    /**
-     * Processa import filosofi
-     */
-    _processFilosofiImport: function(data) {
-        return data
-            .map(item => ({
-                nome: item['Nome'] || item['Nome Completo'] || '',
-                scuola: item['Scuola'] || '',
-                periodo: (item['Periodo'] || 'classico').toLowerCase(),
-                anni_vita: item['Anni'] || '',
-                luogo_nascita: item['Luogo'] || '',
-                biografia: item['Biografia'] || '',
-                last_modified: new Date().toISOString()
-            }))
-            .filter(f => f.nome && f.nome.trim() !== '');
+
+    processOpereImport: function(data) {
+        return data.map(item => ({
+            titolo: item['Titolo'] || '',
+            autore_nome: item['Autore'] || '',
+            anno: item['Anno'] || '',
+            sintesi: item['Sintesi'] || '',
+            last_modified: new Date().toISOString()
+        })).filter(o => o.titolo);
     },
-    
-    /**
-     * Processa import opere
-     */
-    _processOpereImport: function(data) {
-        return data
-            .map(item => ({
-                titolo: item['Titolo'] || '',
-                autore_nome: item['Autore'] || '',
-                anno: item['Anno'] || '',
-                sintesi: item['Sintesi'] || '',
-                last_modified: new Date().toISOString()
-            }))
-            .filter(o => o.titolo && o.titolo.trim() !== '');
+
+    processConcettiImport: function(data) {
+        return data.map(item => ({
+            parola: item['Parola'] || '',
+            definizione: item['Definizione'] || '',
+            autore_riferimento: item['Autore'] || '',
+            last_modified: new Date().toISOString()
+        })).filter(c => c.parola);
     },
-    
-    /**
-     * Processa import concetti
-     */
-    _processConcettiImport: function(data) {
-        return data
-            .map(item => ({
-                parola: item['Parola'] || '',
-                definizione: item['Definizione'] || '',
-                autore_riferimento: item['Autore'] || '',
-                last_modified: new Date().toISOString()
-            }))
-            .filter(c => c.parola && c.parola.trim() !== '');
-    },
-    
-    /**
-     * Salva dati importati su Firebase
-     */
-    _saveImportedData: async function(collectionName, data) {
-        const results = {
-            success: 0,
-            errors: []
-        };
-        
-        // Usa le funzioni globali definite in app.js
-        if (!window.saveFirebaseData) {
-            throw new Error('Funzione saveFirebaseData non disponibile');
-        }
-        
-        for (let i = 0; i < data.length; i++) {
-            try {
-                await window.saveFirebaseData(collectionName, data[i]);
-                results.success++;
-            } catch (error) {
-                console.error(`Errore salvataggio item ${i}:`, error);
-                results.errors.push({
-                    index: i,
-                    data: data[i],
-                    error: error.message
-                });
-            }
-        }
-        
-        return results;
-    },
-    
+
     // ================================
-    // 4. FUNZIONI UTILITY PUBBLICHE
+    // ALTRE FUNZIONI UTILI
     // ================================
-    
-    /**
-     * Scarica template per import
-     */
     downloadTemplate: function(type) {
-        // Implementazione futura
-        this._showToast("Template download non ancora implementato in questa versione light.", 'info');
+        alert("Template download non ancora implementato in questa versione light.");
     },
-    
-    /**
-     * Esporta analisi comparativa
-     */
     exportAnalisiComparativa: function(termine, analisi) {
-        // Implementazione futura
-        this._showToast("Export analisi non ancora disponibile offline.", 'info');
-    },
-    
-    /**
-     * Verifica se la libreria XLSX è disponibile
-     */
-    isAvailable: function() {
-        return typeof XLSX !== 'undefined';
+        alert("Export analisi non ancora disponibile offline.");
     }
 };
 
-// Verifica dipendenze all'avvio
-if (typeof XLSX === 'undefined') {
-    console.warn('⚠️ Libreria XLSX non trovata. Le funzioni di export Excel non saranno disponibili.');
-} else {
-    console.log('✅ ExcelWorker caricato e pronto');
-}
+// Inizializzazione
+console.log('✅ ExcelWorker caricato e pronto (Versione Compat)');

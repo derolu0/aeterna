@@ -226,29 +226,19 @@ class GeocodingManager {
     
     async waitForWorkerReady() {
         return new Promise((resolve, reject) => {
-            let readyHandler;
-            let timeout;
+            const timeout = setTimeout(() => {
+                reject(new Error('Timeout attesa worker (10s)'));
+            }, 10000);
             
-            const cleanup = () => {
-                clearTimeout(timeout);
-                if (this.worker && readyHandler) {
-                    this.worker.removeEventListener('message', readyHandler);
-                }
-            };
-            
-            readyHandler = (event) => {
+            const readyHandler = (event) => {
                 if (event.data.type === 'WORKER_READY') {
-                    cleanup();
+                    clearTimeout(timeout);
+                    this.worker.removeEventListener('message', readyHandler);
                     resolve();
                 }
             };
             
             this.worker.addEventListener('message', readyHandler);
-            
-            timeout = setTimeout(() => {
-                cleanup();
-                reject(new Error('Timeout attesa worker (10s)'));
-            }, 10000);
         });
     }
     
@@ -386,37 +376,28 @@ class GeocodingManager {
     }
 }
 
-// ==================== GESTIONE GLOBALE ====================
+// ==================== INTEGRAZIONE CON APP ====================
 
-// Verifica se esiste già un'istanza globale
-if (!window.geocodingManagerInstance) {
-    window.geocodingManagerInstance = new GeocodingManager();
-}
-
-// Alias per compatibilità con codice esistente
-window.GeocodingManager = window.geocodingManagerInstance;
+// Crea istanza globale
+window.GeocodingManager = new GeocodingManager();
 
 // Funzioni helper globali per compatibilità
-if (!window.geocodeLocation) {
-    window.geocodeLocation = async function(citta, paese, filosofo) {
-        return await window.geocodingManagerInstance.geocode(citta, paese, filosofo);
-    };
-}
+window.geocodeLocation = async function(citta, paese, filosofo) {
+    return await window.GeocodingManager.geocode(citta, paese, filosofo);
+};
 
-if (!window.searchGeographicPlaces) {
-    window.searchGeographicPlaces = async function(query) {
-        return await window.geocodingManagerInstance.searchPlaces(query);
-    };
-}
+window.searchGeographicPlaces = async function(query) {
+    return await window.GeocodingManager.searchPlaces(query);
+};
 
 // Inizializzazione ritardata per non bloccare il caricamento
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
-        if (window.geocodingManagerInstance) {
-            console.log('🌍 Geocoding Manager caricato:', window.geocodingManagerInstance.getStatus());
+        if (window.GeocodingManager) {
+            console.log('🌍 Geocoding Manager caricato:', window.GeocodingManager.getStatus());
             
             // Test di connessione
-            window.geocodingManagerInstance.getCacheStats()
+            window.GeocodingManager.getCacheStats()
                 .then(stats => {
                     console.log('📊 Cache geocoding:', stats);
                 })
@@ -429,5 +410,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Esporta per moduli (se necessario)
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { GeocodingManager, geocodingManagerInstance: window.geocodingManagerInstance };
+    module.exports = { GeocodingManager };
 }
