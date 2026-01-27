@@ -3737,152 +3737,137 @@ function hasComparativeAnalysisForFilosofo(filosofo) {
 }
 
 function editFilosofo(id) {
-    const filosofo = appData.filosofi.find(f => f.id == id);
-    if (!filosofo) return;
+    const item = appData.filosofi.find(f => f.id == id);
+    if (!item) return;
+
+    // Popola i campi esistenti
+    document.getElementById('filosofo-id').value = item.id;
+    document.getElementById('filosofo-nome').value = item.nome || '';
+    document.getElementById('filosofo-periodo').value = item.periodo || 'classico';
+    document.getElementById('filosofo-scuola').value = item.scuola || '';
+    document.getElementById('filosofo-anni').value = item.anni_vita || '';
+    document.getElementById('filosofo-luogo').value = item.luogo_nascita || '';
+
+    // --- CORREZIONE ERRORE: Popola i NUOVI campi (ora esistono nell'HTML) ---
     
-    document.getElementById('filosofo-id').value = filosofo.id;
+    // Ritratto
+    const ritrattoInput = document.getElementById('filosofo-ritratto');
+    if(ritrattoInput) ritrattoInput.value = item.ritratto || '';
+
+    // Coordinate (gestisce sia formato piatto che oggetto coordinate)
+    const lat = item.lat || (item.coordinate ? item.coordinate.lat : '');
+    const lng = item.lng || (item.coordinate ? item.coordinate.lng : '');
     
-    // Campi Italiani
-    document.getElementById('filosofo-nome').value = filosofo.nome || '';
-    document.getElementById('filosofo-scuola').value = filosofo.scuola || '';
-    document.getElementById('filosofo-periodo').value = filosofo.periodo || 'classico';
-    document.getElementById('filosofo-anni').value = filosofo.anni_vita || '';
-    document.getElementById('filosofo-luogo').value = filosofo.luogo_nascita || '';
-    document.getElementById('filosofo-biografia').value = filosofo.biografia || '';
-    
-    // Campi Inglesi
-    if(document.getElementById('filosofo-nome-en')) 
-        document.getElementById('filosofo-nome-en').value = filosofo.nome_en || '';
-    if(document.getElementById('filosofo-biografia-en')) 
-        document.getElementById('filosofo-biografia-en').value = filosofo.biografia_en || '';
-    
-    // Coordinate (se presenti)
-    if (filosofo.coordinate) {
-        document.getElementById('filosofo-lat').value = filosofo.coordinate.lat || '';
-        document.getElementById('filosofo-lng').value = filosofo.coordinate.lng || '';
+    const latInput = document.getElementById('filosofo-lat');
+    const lngInput = document.getElementById('filosofo-lng');
+    if(latInput) latInput.value = lat || '';
+    if(lngInput) lngInput.value = lng || '';
+
+    // Concetti (Array -> Stringa separata da virgole)
+    const concettiInput = document.getElementById('filosofo-concetti');
+    if(concettiInput) {
+        concettiInput.value = (item.concetti_principali && Array.isArray(item.concetti_principali)) 
+            ? item.concetti_principali.join(', ') 
+            : '';
     }
-    
-    document.getElementById('filosofo-ritratto').value = filosofo.ritratto || '';
-    
-    showAdminTab('filosofi-admin');
+
+    // Biografia
+    const bioInput = document.getElementById('filosofo-biografia');
+    if(bioInput) bioInput.value = item.biografia || '';
+
+    // Apre il modale (assicurati che l'ID del modale sia corretto per il tuo CSS)
+    openModal('admin-modal-filosofo'); 
 }
 
-async function saveFilosofo(e) {
-    e.preventDefault();
-
-    // Helper interno per evitare crash se un campo input non esiste nell'HTML
+async function saveFilosofo() {
+    // Helper interno per leggere valori in sicurezza
     const getVal = (id) => {
         const el = document.getElementById(id);
         return el ? el.value.trim() : '';
     };
 
     try {
-        // Lettura sicura dei valori dal form
+        // Lettura dati dal form
         const id = getVal('filosofo-id');
         const nome = getVal('filosofo-nome');
-        const scuola = getVal('filosofo-scuola');
-        const periodo = document.getElementById('filosofo-periodo') ? document.getElementById('filosofo-periodo').value : 'classico'; // Select ha logica diversa
-        const anni = getVal('filosofo-anni');
-        const luogo = getVal('filosofo-luogo');
-        const biografia = getVal('filosofo-biografia');
-        const lat = getVal('filosofo-lat');
-        const lng = getVal('filosofo-lng');
-        const ritratto = getVal('filosofo-ritratto');
         
-        // Campi inglesi (opzionali)
-        const nome_en = getVal('filosofo-nome-en');
-        const biografia_en = getVal('filosofo-biografia-en');
+        // Lettura Select (ha una logica diversa dagli input)
+        const periodoEl = document.getElementById('filosofo-periodo');
+        const periodo = periodoEl ? periodoEl.value : 'classico';
 
-        // Validazione minima essenziale
+        // Validazione essenziale
         if (!nome) {
-            showToast("Il nome è obbligatorio", "error");
+            alert("Il nome è obbligatorio");
             return;
         }
 
+        // --- GESTIONE CONCETTI (Stringa -> Array) ---
+        // Fondamentale per vedere i tag colorati
+        const concettiRaw = getVal('filosofo-concetti');
+        const concettiArray = concettiRaw 
+            ? concettiRaw.split(',').map(s => s.trim()).filter(s => s !== '')
+            : [];
+
+        // Costruzione Oggetto Dati
         const filosofoData = {
-            nome,
-            nome_en,
-            scuola,
-            periodo,
-            anni_vita: anni,
-            luogo_nascita: luogo,
-            biografia,
-            biografia_en,
-            ritratto,
-            last_modified: new Date().toISOString()
+            nome: nome,
+            scuola: getVal('filosofo-scuola'),
+            periodo: periodo,
+            anni_vita: getVal('filosofo-anni'),
+            luogo_nascita: getVal('filosofo-luogo'),
+            biografia: getVal('filosofo-biografia'),
+            ritratto: getVal('filosofo-ritratto'), // URL Immagine
+            concetti_principali: concettiArray,    // Array di concetti
+            updatedAt: new Date().toISOString()
         };
 
-        // Aggiungi coordinate solo se valide
+        // --- GESTIONE COORDINATE ---
+        const lat = getVal('filosofo-lat');
+        const lng = getVal('filosofo-lng');
+        
+        // Aggiungi solo se sono numeri validi
         if (lat && lng && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng))) {
+            filosofoData.lat = parseFloat(lat);
+            filosofoData.lng = parseFloat(lng);
+            // Manteniamo anche la struttura oggetto per compatibilità
             filosofoData.coordinate = {
                 lat: parseFloat(lat),
                 lng: parseFloat(lng)
             };
         }
 
-        // --- INIZIO LOGICA SALVATAGGIO (Firebase + Locale) ---
-        let savedId;
-        const operation = id ? 'UPDATE' : 'CREATE';
-
-        if (navigator.onLine && window.db) { // Controllo extra su window.db
+        // --- SALVATAGGIO SU FIREBASE ---
+        if (window.db) {
             if (id && id.trim() !== '') {
-                // Update esistente
-                await saveFirebaseData('filosofi', filosofoData, id);
-                savedId = id;
-                
-                // Aggiorna array locale in memoria
-                const index = appData.filosofi.findIndex(f => f.id == id);
-                if (index !== -1) appData.filosofi[index] = { id, ...filosofoData };
-                
-                showToast('Filosofo modificato con successo', 'success');
+                // MODIFICA ESISTENTE
+                await db.collection('filosofi').doc(id).update(filosofoData);
+                console.log('Filosofo aggiornato:', id);
             } else {
-                // Crea nuovo
-                savedId = await saveFirebaseData('filosofi', filosofoData); // saveFirebaseData gestisce l'add
-                
-                // Aggiungi a memoria locale
-                appData.filosofi.push({ id: savedId, ...filosofoData });
-                
-                showToast(`Filosofo aggiunto (ID: ${savedId})`, 'success');
+                // CREAZIONE NUOVO
+                filosofoData.createdAt = new Date().toISOString();
+                const docRef = await db.collection('filosofi').add(filosofoData);
+                console.log('Nuovo filosofo creato con ID:', docRef.id);
             }
-        } else {
-            // Offline Mode
-            savedId = id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             
-            // Se esiste la funzione addToSyncQueue usala, altrimenti salva solo localmente
-            if (typeof addToSyncQueue === 'function') {
-                await addToSyncQueue(operation, 'filosofi', filosofoData, savedId);
-            }
+            // Aggiorna UI locale
+            if (typeof showToast === 'function') showToast('Salvataggio completato!', 'success');
+            else alert('Salvataggio completato!');
 
-            if (operation === 'UPDATE') {
-                const index = appData.filosofi.findIndex(f => f.id == id);
-                if (index !== -1) appData.filosofi[index] = { id: savedId, ...filosofoData };
-            } else {
-                appData.filosofi.push({ id: savedId, ...filosofoData });
-            }
-            showToast('Filosofo salvato localmente (Offline).', 'info');
+            // Chiudi modale e ricarica griglia
+            if (typeof closeModal === 'function') closeModal('admin-modal-filosofo');
+            if (typeof loadFilosofi === 'function') loadFilosofi(); 
+            
+            // Se sei nel pannello admin, ricarica anche la tabella
+            // if (typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
+
+        } else {
+            console.error("Database Firebase non connesso.");
+            alert("Errore: Database non connesso.");
         }
-
-        // Aggiorna UI e Storage
-        saveLocalData();
-        loadAdminFilosofi(); // Ricarica tabella admin
-        loadFilosofi();      // Ricarica griglia pubblica
-        
-        // Reset del form
-        const form = document.getElementById('filosofo-form');
-        if (form) form.reset();
-        const idField = document.getElementById('filosofo-id');
-        if (idField) idField.value = '';
-
-        if (typeof updateDashboardStats === 'function') updateDashboardStats();
 
     } catch (error) {
         console.error("Errore salvataggio:", error);
-        // Usa handleError solo se esiste, altrimenti fallback su console/toast
-        if (typeof handleError === 'function') {
-            await handleError('saveFilosofo', error, 'Errore nel salvataggio');
-        } else {
-            showToast('Errore nel salvataggio: ' + error.message, 'error');
-        }
+        alert("Errore nel salvataggio: " + error.message);
     }
 }
 
