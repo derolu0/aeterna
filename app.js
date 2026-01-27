@@ -3,10 +3,11 @@
 // Sostituisce app.js originale mantenendo accessi Firebase esistenti
 // ==========================================
 
-let activityChartInstance = null;
-let currentLanguage = localStorage.getItem('app_language') || 'it';
-let currentDetailId = null;
-let currentDetailType = null;
+// Gestione Variabili Globali Sicura (Evita errore "already declared")
+if (typeof activityChartInstance === 'undefined') var activityChartInstance = null;
+if (typeof currentLanguage === 'undefined') var currentLanguage = localStorage.getItem('app_language') || 'it';
+if (typeof currentDetailId === 'undefined') var currentDetailId = null;
+if (typeof currentDetailType === 'undefined') var currentDetailType = null;
 
 // Firebase Collections (MODIFICATE per Filosofia)
 const COLLECTIONS = {
@@ -1556,13 +1557,13 @@ function initializeScreenContent(screenId) {
 }
 
 // Data Loading Functions
-async function loadFilosofi() {
+function loadFilosofi() {
     const container = document.getElementById('filosofi-list');
     if (!container) return;
     
     container.innerHTML = '';
     
-    // Ordina alfabeticamente
+    // Ordina alfabeticamente (Logica originale)
     const sortedList = [...(appData.filosofi || [])].sort((a, b) => a.nome.localeCompare(b.nome));
 
     if (sortedList.length === 0) {
@@ -1570,62 +1571,52 @@ async function loadFilosofi() {
         return;
     }
     
+    // Mantiene la logica dei badge "Nuovo"
     const highlights = JSON.parse(localStorage.getItem('app_highlights') || '{"new": [], "updated": []}');
 
     sortedList.forEach(item => {
-        // Controlla se ha coordinate per mostrare il tasto mappa
-        let hasCoords = false;
-        if (item.coordinate && item.coordinate.lat) hasCoords = true;
-        else if (item.lat && item.lng) hasCoords = true;
+        // Determina Stile Bordo (Verde=Classico, Arancio=Contemporaneo)
+        let borderClass = 'border-default';
+        if (item.periodo) {
+            const p = item.periodo.toLowerCase();
+            if (p.includes('classico') || p.includes('antico')) borderClass = 'border-classic';
+            else if (p.includes('contemporaneo') || p.includes('moderno')) borderClass = 'border-contemporary';
+        }
 
-        const gridItem = document.createElement('div');
-        gridItem.className = 'grid-item animate-in'; 
-        
+        // Badge Nuovo
         let badgeHTML = '';
-        if (highlights.new.includes(item.id)) badgeHTML = '<span class="badge-new">NUOVO</span>';
-        else if (highlights.updated.includes(item.id)) badgeHTML = '<span class="badge-updated">AGGIORNATO</span>';
+        if (highlights.new.includes(item.id)) {
+            badgeHTML = '<span class="badge-new" style="float:right">NUOVO</span>';
+        }
+
+        // Crea la Card
+        const card = document.createElement('div');
+        card.className = `card ${borderClass}`; 
         
-        // Immagine
-        const imgUrl = item.ritratto && item.ritratto.trim() !== '' ? item.ritratto : 'images/default-filosofo.jpg';
-        
-        // Traduzione periodo
-        const getPeriodoLabel = (periodo) => {
-            return (window.translations && window.translations[currentLanguage] && window.translations[currentLanguage]['period_' + periodo]) 
-                ? window.translations[currentLanguage]['period_' + periodo] : periodo;
+        // Rende TUTTA la card cliccabile
+        card.style.cursor = 'pointer';
+        card.onclick = (e) => {
+            // Se clicco su bottoni interni non aprire, altrimenti apri modale
+            if(e.target.tagName !== 'BUTTON' && e.target.tagName !== 'I') {
+                showDetail(item.id, 'filosofi');
+            }
         };
 
-        gridItem.innerHTML = `
-            <div class="item-header" style="background-image: url('${imgUrl}'); background-size: cover; height: 150px; border-radius: 10px 10px 0 0; position: relative;">
-                <span class="item-period-badge ${item.periodo || 'classico'}" style="position: absolute; bottom: 10px; right: 10px; padding: 4px 8px; border-radius: 12px; background: rgba(255,255,255,0.9); font-size: 0.8rem; font-weight: bold;">
-                    ${getPeriodoLabel(item.periodo) || item.periodo || ''}
-                </span>
-            </div>
-            <div class="item-content" style="padding: 15px;">
-                <h3 class="item-name" style="margin: 0 0 5px 0; font-size: 1.2rem; font-weight: 700;">${item.nome} ${badgeHTML}</h3>
-                
-                <div class="item-scuola" style="color: #666; font-size: 0.9rem; margin-bottom: 10px;">
-                    🏛️ ${item.scuola || 'Scuola non definita'}
-                </div>
-                
-                <div class="item-details" style="font-size: 0.85rem; color: #888; margin-bottom: 15px;">
-                    <div>📅 ${item.anni_vita || 'Anni sconosciuti'}</div>
-                    <div>📍 ${item.luogo_nascita || 'Luogo sconosciuto'}</div>
-                </div>
-                
-                <div class="item-actions" style="display: flex; gap: 10px; margin-top: auto;">
-                    <button onclick="showDetail('${item.id}', 'filosofo')" class="btn-detail" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
-                        Scheda
-                    </button>
-                    
-                    ${hasCoords ? `
-                        <button onclick="goToMap('${item.id}')" class="btn-map" style="flex: 1; padding: 8px; border-radius: 6px; border: none; background: #e0f2fe; color: #0284c7; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;">
-                            🗺️ Mappa
-                        </button>
-                    ` : ''}
+        card.innerHTML = `
+            <div class="card-body">
+                ${badgeHTML}
+                <span class="card-tag">${item.scuola || 'Scuola non def.'}</span>
+                <h3 class="card-title">${item.nome}</h3>
+                <p class="card-text">
+                    <i class="fas fa-hourglass-half"></i> ${item.periodo || 'N/D'}<br>
+                    <i class="fas fa-map-marker-alt"></i> ${item.luogo_nascita || 'N/D'}
+                </p>
+                <div style="text-align:right; margin-top:10px; color:#ccc;">
+                    <i class="fas fa-chevron-right"></i>
                 </div>
             </div>
         `;
-        container.appendChild(gridItem);
+        container.appendChild(card);
     });
 }
 
@@ -1928,217 +1919,138 @@ function showDetail(id, type) {
     currentDetailId = id;
     currentDetailType = type;
 
+    // Gestione scroll
     if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
     }
 
     let item, screenId, titleElement, contentElement;
+    
+    // Normalizza i tipi
     const isFilosofo = (type === 'filosofo' || type === 'filosofi');
+    const isOpera = (type === 'opera' || type === 'opere');
+    const isConcetto = (type === 'concetto' || type === 'concetti');
 
     if (isFilosofo) {
+        // --- LOGICA FILOSOFI ---
         item = appData.filosofi.find(f => f.id == id);
         screenId = 'filosofo-detail-screen';
         titleElement = document.getElementById('filosofo-detail-title');
         contentElement = document.getElementById('filosofo-detail-content');
-    } else if (type === 'opera') {
+        
+        if (item && contentElement) {
+            // Coordinate per il tasto Naviga
+            const lat = item.lat || (item.coordinate ? item.coordinate.lat : null);
+            const lng = item.lng || (item.coordinate ? item.coordinate.lng : null);
+            const hasCoords = lat && lng;
+
+            contentElement.innerHTML = `
+                <div class="detail-card">
+                    <div class="detail-meta-grid">
+                        <div class="meta-item"><strong>Periodo:</strong> ${item.periodo || '-'}</div>
+                        <div class="meta-item"><strong>Scuola:</strong> ${item.scuola || '-'}</div>
+                        <div class="meta-item"><strong>Anni:</strong> ${item.anni_vita || '-'}</div>
+                        <div class="meta-item"><strong>Luogo:</strong> ${item.luogo_nascita || '-'}</div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Biografia</h4>
+                        <p>${item.biografia || 'Nessuna biografia disponibile.'}</p>
+                    </div>
+
+                    <div class="action-buttons-container" style="margin-top:25px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                        ${hasCoords ? 
+                            `<button class="btn-primary" onclick="goToMap('${item.id}')">
+                                <i class="fas fa-map-marked-alt"></i> Naviga sulla Mappa
+                            </button>` : 
+                            `<button class="btn-secondary" disabled style="opacity:0.6"><i class="fas fa-map-slash"></i> Posizione non disponibile</button>`
+                        }
+                        <button class="btn-warning" style="background:#f59e0b; color:white; border:none;" 
+                            onclick="window.location.href='mailto:admin@aeterna.com?subject=Segnalazione ${encodeURIComponent(item.nome)}'">
+                            <i class="fas fa-flag"></i> Segnalazione
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+    } else if (isOpera) {
+        // --- LOGICA OPERE ---
         item = appData.opere.find(o => o.id == id);
         screenId = 'opera-detail-screen';
         titleElement = document.getElementById('opera-detail-title');
         contentElement = document.getElementById('opera-detail-content');
-    } else {
+
+        if (item && contentElement) {
+            // Trova Concetti correlati a quest'opera
+            const concettiCorrelati = appData.concetti.filter(c => 
+                (c.opere_riferimento && c.opere_riferimento.includes(item.titolo)) ||
+                (c.opera_id === item.id)
+            );
+
+            const listaConcetti = concettiCorrelati.length > 0 
+                ? `<div class="tags-cloud">${concettiCorrelati.map(c => 
+                    `<span class="tag-chip" onclick="showDetail('${c.id}', 'concetti')" style="cursor:pointer; background:var(--primary-purple); color:white; padding:5px 10px; border-radius:15px; margin:2px; display:inline-block; font-size:0.9em;">${c.parola}</span>`
+                  ).join('')}</div>`
+                : '<em>Nessun concetto collegato direttamente.</em>';
+
+            contentElement.innerHTML = `
+                <div class="detail-card">
+                    <div class="detail-info-row">
+                        <p><strong>Autore:</strong> ${item.autore_nome}</p>
+                        <p><strong>Anno:</strong> ${item.anno}</p>
+                    </div>
+                    <div class="detail-section">
+                        <h4>Sintesi</h4>
+                        <p>${item.sintesi || 'Descrizione non disponibile.'}</p>
+                    </div>
+                    <div class="detail-section" style="border-top:1px solid #eee; margin-top:20px; padding-top:10px;">
+                        <h4><i class="fas fa-brain"></i> Concetti Trattati</h4>
+                        ${listaConcetti}
+                    </div>
+                </div>
+            `;
+        }
+
+    } else if (isConcetto) {
+        // --- LOGICA CONCETTI ---
         item = appData.concetti.find(c => c.id == id);
         screenId = 'concetto-detail-screen';
         titleElement = document.getElementById('concetto-detail-title');
         contentElement = document.getElementById('concetto-detail-content');
-    }
-    
-    if (!item) {
-        showToast('Elemento non trovato', 'error');
-        return;
-    }
 
-    const t = (window.translations && window.translations[currentLanguage]) ? window.translations[currentLanguage] : {};
-    
-    if (t.screen_philosophers) {
-        if (isFilosofo) {
-            titleElement.textContent = t.screen_philosophers;
-        } else if (type === 'opera') {
-            titleElement.textContent = t.screen_works;
-        } else {
-            titleElement.textContent = t.screen_concepts;
+        if (item && contentElement) {
+            contentElement.innerHTML = `
+                <div class="detail-card">
+                    <div class="detail-info-row">
+                        <p><strong>Filosofo Rif.:</strong> ${item.autore_riferimento || '-'}</p>
+                        <p><strong>Opera Rif.:</strong> ${item.opere_riferimento || '-'}</p>
+                    </div>
+                    <div class="detail-section">
+                        <h4>Definizione</h4>
+                        <p class="definition-text">${item.definizione}</p>
+                    </div>
+                    
+                    <div class="action-buttons-container" style="margin-top:20px; text-align:center;">
+                        <button class="btn-primary" onclick="if(window.openComparativeAnalysis) window.openComparativeAnalysis('${item.parola}')">
+                            <i class="fas fa-project-diagram"></i> Analisi Comparativa
+                        </button>
+                    </div>
+                </div>
+            `;
         }
     }
 
-    // Helper per periodo
-    const getPeriodoLabel = (periodo) => {
-        const key = {
-            'classico': 'period_classic',
-            'contemporaneo': 'period_contemporary',
-            'medioevale': 'period_medieval',
-            'moderno': 'period_modern'
-        }[periodo] || periodo;
-        return t[key] || periodo;
-    };
-
-    // Genera HTML in base al tipo
-    let detailHTML = '';
-    const defaultImage = isFilosofo ? './images/default-filosofo.jpg' : './images/default-opera.jpg';
-    
-    if (isFilosofo) {
-        detailHTML = `
-            <div class="detail-header-image">
-                <img src="${item.ritratto || defaultImage}" class="detail-image" onerror="this.src='${defaultImage}'">
-            </div>
-            <div class="detail-info">
-                <h2 class="detail-name">${getLocalizedText(item, 'nome')}</h2>
-                <div class="info-row">
-                    <span class="info-label"><i class="fas fa-graduation-cap"></i></span>
-                    <span class="info-value">${item.scuola}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label"><i class="fas fa-calendar-alt"></i></span>
-                    <span class="info-value">${item.anni_vita}</span>
-                </div>
-                <div class="info-row">
-                    <span class="item-period periodo-${item.periodo}">${getPeriodoLabel(item.periodo)}</span>
-                </div>
-                ${item.luogo_nascita ? `<div class="info-row">
-                    <span class="info-label"><i class="fas fa-map-marker-alt"></i></span>
-                    <span class="info-value">${item.luogo_nascita}</span>
-                </div>` : ''}
-                <div class="detail-description">${getLocalizedText(item, 'biografia') || ''}</div>
-                ${item.opere_principali && item.opere_principali.length > 0 ? 
-                    `<div class="detail-opere">
-                        <h3>${t.label_main_works || 'Opere principali'}</h3>
-                        <ul>
-                            ${item.opere_principali.map(operaId => {
-                                const opera = appData.opere.find(o => o.id === operaId);
-                                return opera ? `<li>${getLocalizedText(opera, 'titolo')} (${opera.anno})</li>` : '';
-                            }).join('')}
-                        </ul>
-                    </div>` : ''}
-                ${item.concetti_principali && item.concetti_principali.length > 0 ? 
-                    `<div class="detail-concetti">
-                        <h3>${t.label_main_concepts || 'Concetti principali'}</h3>
-                        <div class="concetti-tags">
-                            ${item.concetti_principali.map(concetto => 
-                                `<span class="concetto-tag">${concetto}</span>`
-                            ).join('')}
-                        </div>
-                    </div>` : ''}
-            </div>
-        `;
-    } else if (type === 'opera') {
-        detailHTML = `
-            <div class="detail-header-image">
-                <img src="${item.immagine || defaultImage}" class="detail-image" onerror="this.src='${defaultImage}'">
-            </div>
-            <div class="detail-info">
-                <h2 class="detail-name">${getLocalizedText(item, 'titolo')}</h2>
-                <div class="info-row">
-                    <span class="info-label"><i class="fas fa-user"></i></span>
-                    <span class="info-value">${item.autore_nome}</span>
-                </div>
-                <div class="info-row">
-                    <span class="info-label"><i class="fas fa-calendar"></i></span>
-                    <span class="info-value">${item.anno}</span>
-                </div>
-                <div class="info-row">
-                    <span class="item-period periodo-${item.periodo}">${getPeriodoLabel(item.periodo)}</span>
-                </div>
-                ${item.lingua ? `<div class="info-row">
-                    <span class="info-label"><i class="fas fa-language"></i></span>
-                    <span class="info-value">${item.lingua}</span>
-                </div>` : ''}
-                <div class="detail-description">${getLocalizedText(item, 'sintesi') || ''}</div>
-                ${item.concetti && item.concetti.length > 0 ? 
-                    `<div class="detail-concetti">
-                        <h3>${t.label_related_concepts || 'Concetti correlati'}</h3>
-                        <div class="concetti-tags">
-                            ${item.concetti.map(concetto => 
-                                `<span class="concetto-tag">${concetto}</span>`
-                            ).join('')}
-                        </div>
-                    </div>` : ''}
-                ${item.pdf_url ? `
-                <div class="detail-actions">
-                    <button class="detail-action-btn primary" onclick="window.open('${item.pdf_url}', '_blank')">
-                        <i class="fas fa-file-pdf"></i> ${t.read_pdf || 'Leggi PDF'}
-                    </button>
-                </div>` : ''}
-            </div>
-        `;
-    } else {
-        // Concetto
-        detailHTML = `
-            <div class="detail-info">
-                <h2 class="detail-name">${getLocalizedText(item, 'parola')}</h2>
-                <div class="info-row">
-                    <span class="info-label"><i class="fas fa-history"></i></span>
-                    <span class="info-value">${item.periodo_storico}</span>
-                </div>
-                ${item.autore_riferimento ? `<div class="info-row">
-                    <span class="info-label"><i class="fas fa-user"></i></span>
-                    <span class="info-value">${item.autore_riferimento}</span>
-                </div>` : ''}
-                ${item.opera_riferimento ? `<div class="info-row">
-                    <span class="info-label"><i class="fas fa-book"></i></span>
-                    <span class="info-value">${item.opera_riferimento}</span>
-                </div>` : ''}
-                <div class="detail-description">
-                    <h3>${t.label_definition || 'Definizione'}</h3>
-                    <p>${getLocalizedText(item, 'definizione')}</p>
-                </div>
-                ${item.esempio_citazione ? `
-                <div class="detail-citazione">
-                    <h3>${t.label_example_quote || 'Esempio/Citazione'}</h3>
-                    <blockquote>${item.esempio_citazione}</blockquote>
-                </div>` : ''}
-                ${item.evoluzione ? `
-                <div class="detail-evoluzione">
-                    <h3>${t.label_historical_evolution || 'Evoluzione storica'}</h3>
-                    <p>${item.evoluzione}</p>
-                </div>` : ''}
-                <div class="detail-actions">
-                    ${hasComparativeAnalysis(item.parola) ? `
-                    <button class="detail-action-btn analysis-btn" onclick="openComparativeAnalysis('${item.parola}', '${item.id}')">
-                        <i class="fas fa-chart-line"></i> ${t.view_comparative_analysis || 'Analisi Comparativa'}
-                    </button>
-                    ` : ''}
-                    <button class="detail-action-btn" onclick="showConceptNetwork('${item.parola}')">
-                        <i class="fas fa-project-diagram"></i> ${t.view_concept_network || 'Vedi rete concettuale'}
-                    </button>
-                </div>
-            </div>
-        `;
+    // Aggiorna titolo e mostra schermata
+    if (item && titleElement) {
+        titleElement.innerText = item.nome || item.titolo || item.parola;
     }
     
-    if (contentElement) {
-        contentElement.innerHTML = detailHTML;
-    }
-    
-    if (item.coordinate && isFilosofo) {
-        currentLatLng = { lat: item.coordinate.lat, lng: item.coordinate.lng };
-    }
-    
-    showScreen(screenId);
-    
-    requestAnimationFrame(() => {
+    // Mostra la schermata usando la tua funzione di navigazione
+    if (screenId && typeof showScreen === 'function') {
+        showScreen(screenId);
         window.scrollTo(0, 0);
-        document.body.scrollTop = 0;
-        document.documentElement.scrollTop = 0;
-        
-        const activeScreen = document.getElementById(screenId);
-        if (activeScreen) activeScreen.scrollTop = 0;
-        
-        if (contentElement) contentElement.scrollTop = 0;
-    });
-
-    setTimeout(() => {
-        window.scrollTo(0, 0);
-        const activeScreen = document.getElementById(screenId);
-        if (activeScreen) activeScreen.scrollTop = 0;
-    }, 50);
+    }
 }
 
 // Map Functions (Aggiornata per Filosofi)
@@ -5437,18 +5349,22 @@ async function cercaCoordinateFilosofo() {
 }
 
 // ==========================================
-// INIZIALIZZAZIONE FINALE & LISTENER UNIFICATI
+// INIZIALIZZAZIONE FINALE & LISTENER UNIFICATI (CORRETTO)
 // ==========================================
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
 
     // 1. Setup Base UI
     try {
-        loadLocalData();
+        if (typeof loadLocalData === 'function') loadLocalData();
         if (typeof applyTranslations === 'function') applyTranslations();
         if (typeof updateLangButton === 'function') updateLangButton();
-        if (typeof showScreen === 'function') showScreen('home-screen');
-        if (typeof handleUrlParameters === 'function') handleUrlParameters();
+        if (typeof showScreen === 'function') showScreen('home-screen'); // Mostra subito la home
+        
+        // Nascondi preventivamente admin e modali
+        const adminPanel = document.getElementById('admin-panel');
+        if (adminPanel) adminPanel.style.display = 'none';
+        
         if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
         if (typeof checkOnlineStatus === 'function') checkOnlineStatus();
         if (typeof detectAndShowInstallInstructions === 'function') detectAndShowInstallInstructions();
@@ -5474,31 +5390,45 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (typeof initRemoteControl === 'function') initRemoteControl();
         if (typeof registerServiceWorker === 'function') registerServiceWorker();
 
+        // Attendiamo che Firebase sia pronto (se usiamo window.firebaseReady promise è meglio, ma manteniamo la tua logica)
         if (window.firebaseInitialized || window.db) {
             try {
                 console.log("📥 Inizio download dati...");
                 
                 // Sequenza corretta: Filosofi -> Altro
-                await loadFirebaseData('filosofi');
-                await Promise.all([
-                    loadFirebaseData('opere'),
-                    loadFirebaseData('concetti')
-                ]);
+                if (typeof loadFirebaseData === 'function') {
+                    await loadFirebaseData('filosofi');
+                    await Promise.all([
+                        loadFirebaseData('opere'),
+                        loadFirebaseData('concetti')
+                    ]);
+                }
                 
                 console.log("✅ Dati scaricati. Aggiornamento UI...");
 
                 // Aggiorna UI che dipende dai dati
-                updateAllSelects(); 
+                if (typeof updateAllSelects === 'function') updateAllSelects(); 
+                if (typeof populateAdminDropdowns === 'function') populateAdminDropdowns(); // Per le nuove relazioni
+                
                 if (typeof initMap === 'function') initMap();
                 if (typeof loadMapMarkers === 'function') loadMapMarkers();
 
-                loadFilosofi();
-                loadOpere();
-                loadConcetti();
+                if (typeof loadFilosofi === 'function') loadFilosofi();
+                if (typeof loadOpere === 'function') loadOpere();
+                if (typeof loadConcetti === 'function') loadConcetti();
                 
-                // Se il pannello admin è aperto (es. reload), aggiorna anche lui
-                if(document.getElementById('admin-panel') && document.getElementById('admin-panel').style.display !== 'none') {
-                    showAdminPanel();
+                // === FIX ROUTING: FORZA HOME SE NON CI SONO PARAMETRI ===
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.has('filosofo') || urlParams.has('concept')) {
+                    if (typeof handleUrlParameters === 'function') handleUrlParameters();
+                } else {
+                    // NESSUN PARAMETRO: Assicuriamoci di essere sulla HOME
+                    console.log("🏠 Routing: Home Screen forzata");
+                    if (typeof showScreen === 'function') showScreen('home-screen');
+                    // Nascondi pannello admin per sicurezza
+                    if(document.getElementById('admin-panel')) {
+                        document.getElementById('admin-panel').style.display = 'none';
+                    }
                 }
 
             } catch (error) {
@@ -5509,16 +5439,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 4. Attach Event Listeners ai Form
     const fForm = document.getElementById('filosofo-form');
-    if(fForm) fForm.onsubmit = saveFilosofo;
+    if(fForm && typeof saveFilosofo === 'function') fForm.onsubmit = saveFilosofo;
     
     const oForm = document.getElementById('opera-form');
-    if(oForm) oForm.onsubmit = saveOpera;
+    if(oForm && typeof saveOpera === 'function') oForm.onsubmit = saveOpera;
     
     const cForm = document.getElementById('concetto-form');
-    if(cForm) cForm.onsubmit = saveConcetto;
+    if(cForm && typeof saveConcetto === 'function') cForm.onsubmit = saveConcetto;
 
     const geoBtn = document.getElementById('geocoding-btn');
-    if(geoBtn) geoBtn.onclick = cercaCoordinateFilosofo;
+    if(geoBtn && typeof cercaCoordinateFilosofo === 'function') geoBtn.onclick = cercaCoordinateFilosofo;
 
     // 5. Fix Mappa (Resize)
     const navMap = document.getElementById('nav-map');
@@ -5567,4 +5497,71 @@ if (typeof addToSyncQueue === 'undefined') {
         console.warn("Sincronizzazione offline non completa, salvataggio solo locale.");
         return true;
     };
+}
+// Funzione per aprire la modale "Smart" con i pulsanti richiesti
+function openSmartModal(type, id) {
+    // Usa la modale esistente se c'è, o creane una se necessario
+    // Assumiamo che esista un elemento modale generico o detail-screen
+    // Qui simuliamo il comportamento "Scheda Concetto" usando una modale custom
+    
+    let modal = document.getElementById('detail-modal');
+    if (!modal) {
+        // Se non esiste la crea al volo (fallback)
+        modal = document.createElement('div');
+        modal.id = 'detail-modal';
+        modal.className = 'modal-overlay'; // Usa le tue classi CSS esistenti
+        modal.style.display = 'none';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close-modal" onclick="document.getElementById('detail-modal').style.display='none'">&times;</span>
+                <h2 id="smart-modal-title"></h2>
+                <div id="smart-modal-body" class="modal-body-scroll"></div>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
+    const data = appData[type].find(i => i.id === id);
+    if (!data) return;
+
+    const title = document.getElementById('smart-modal-title') || modal.querySelector('h2');
+    const body = document.getElementById('smart-modal-body') || modal.querySelector('.modal-body-scroll');
+    
+    title.innerText = data.nome || data.titolo || data.parola;
+
+    // --- LAYOUT SPECIFICO PER FILOSOFI ---
+    if (type === 'filosofi') {
+        const lat = data.lat || (data.coordinate ? data.coordinate.lat : null);
+        const lng = data.lng || (data.coordinate ? data.coordinate.lng : null);
+        const hasCoords = lat && lng;
+
+        body.innerHTML = `
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px; background:#f9f9f9; padding:10px; border-radius:8px;">
+                <div><strong>Periodo:</strong><br>${data.periodo || '-'}</div>
+                <div><strong>Scuola:</strong><br>${data.scuola || '-'}</div>
+                <div><strong>Anni:</strong><br>${data.anni_vita || '-'}</div>
+                <div><strong>Luogo:</strong><br>${data.luogo_nascita || '-'}</div>
+            </div>
+            
+            <div style="margin-bottom:20px;">
+                <h4>Biografia</h4>
+                <p style="line-height:1.6">${data.biografia || 'Nessuna biografia disponibile.'}</p>
+            </div>
+
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
+                ${hasCoords ? 
+                    `<button class="btn-primary" onclick="goToMap('${data.id}'); document.getElementById('detail-modal').style.display='none'">
+                        <i class="fas fa-map-marked-alt"></i> Naviga
+                    </button>` : 
+                    `<button class="btn-secondary" disabled style="opacity:0.5"><i class="fas fa-map-slash"></i> No Mappa</button>`
+                }
+                
+                <button class="btn-warning" style="background:#f59e0b; color:white; border:none; padding:10px 15px; border-radius:5px;" 
+                    onclick="window.location.href='mailto:admin@aeterna.com?subject=Segnalazione ${data.nome}'">
+                    <i class="fas fa-flag"></i> Segnalazione
+                </button>
+            </div>
+        `;
+    }
+    
+    modal.style.display = 'flex';
 }

@@ -2992,3 +2992,50 @@ html, body {
     transform: scale(0.7) !important; 
     margin-left: 5px !important;
 }
+/* Incolla alla fine di style.css */
+
+.border-classic {
+    border-left: 6px solid #10b981 !important; /* Verde Classico */
+}
+
+.border-contemporary {
+    border-left: 6px solid #f59e0b !important; /* Arancio Contemporaneo */
+}
+
+.border-default {
+    border-left: 6px solid #ccc !important;
+}
+
+/* Assicura che la card sembri cliccabile */
+.card {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.card:active {
+    transform: scale(0.98);
+}
+/* =======================================================
+   STILI PER LE CARD FILOSOFI (Classico vs Contemporaneo)
+   ======================================================= */
+.border-classic { 
+    border-left: 5px solid #10b981 !important;  /* VERDE */
+}
+
+.border-contemporary { 
+    border-left: 5px solid #f59e0b !important;  /* ARANCIONE */
+}
+
+.border-default { 
+    border-left: 5px solid #ccc !important;     /* GRIGIO (se manca il periodo) */
+}
+
+/* Rende evidente che la card è cliccabile */
+.card {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
