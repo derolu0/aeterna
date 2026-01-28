@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aeterna-lexicon-v6.6.7-PHILOSOPHIA';
+const CACHE_NAME = 'aeterna-lexicon-v6.6.8-PHILOSOPHIA';
 const STATIC_CACHE = 'static-philosophy-v2';
 const DYNAMIC_CACHE = 'dynamic-philosophy-v2';
 
@@ -10,42 +10,47 @@ const STATIC_ASSETS = [
   BASE_URL + 'index.html',
   BASE_URL + 'style.css',
   BASE_URL + 'app.js',
-  BASE_URL + 'analytics.js',
   BASE_URL + 'firebase-init.js',
   BASE_URL + 'manifest.json',
-  BASE_URL + 'translations.js',
-  BASE_URL + 'excel-worker.js',
-  BASE_URL + 'comparative-styles.css',
   BASE_URL + 'geocoding-manager.js',
-  BASE_URL + 'linguistic-analysis.js',
-  BASE_URL + 'timeline-evolution.js',
+  BASE_URL + 'comparative-styles.css', // Teniamo questo per gli stili nuovi
+  BASE_URL + 'excel-worker.js', // ✅ AGGIUNGI QUESTA RIGA QUI!
 
-  // IMMAGINI GIA' PRESENTI SU GITHUB
+  // --- IMMAGINI (Tutte quelle che avevi, NON le tocchiamo) ---
   BASE_URL + 'images/logo-app.png',
   BASE_URL + 'images/logo-comune.png',
   BASE_URL + 'images/sfondo-home.jpg',
   BASE_URL + 'images/sfondo-home-mobile.jpg',
   BASE_URL + 'images/default-filosofo.jpg',
   BASE_URL + 'images/default-opera.jpg',
+  
+  // Icone app
   BASE_URL + 'images/icona-avvio-144.png',
   BASE_URL + 'images/icona-avvio-192.png',
   BASE_URL + 'images/icona-avvio-512.png',
   BASE_URL + 'images/icona-avvio-splash.png',
   BASE_URL + 'images/apple-touch-icon.png',
+  
+  // Favicon
   BASE_URL + 'images/favicon.ico',
   BASE_URL + 'images/favicon-16x16.png',
   BASE_URL + 'images/favicon-32x32.png',
+  
+  // Marker Mappa
   BASE_URL + 'images/marker-blue.png',
   BASE_URL + 'images/marker-green.png',
   BASE_URL + 'images/marker-orange.png',
   BASE_URL + 'images/marker-red.png',
   
-  // NUOVI FILE ANALISI
-  BASE_URL + 'linguistic-analysis.js',
-  BASE_URL + 'timeline-evolution.js',
-  BASE_URL + 'comparative-styles.css'
+  // --- LIBRERIE ESTERNE (CDN) ---
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js',
+  'https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js'
 ];
-
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',

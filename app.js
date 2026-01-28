@@ -41,28 +41,6 @@ function logActivity(description) {
 
 // ==========================================
 
-// Funzione principale cambio lingua
-function toggleLanguage() {
-    // 1. Cambia lingua
-    currentLanguage = currentLanguage === 'it' ? 'en' : 'it';
-    localStorage.setItem('app_language', currentLanguage);
-    
-    // 2. Aggiorna testi fissi
-    applyTranslations();
-    updateLangButton();
-    
-    // 3. Ricarica liste
-    if (typeof loadFilosofi === 'function') loadFilosofi();
-    if (typeof loadOpere === 'function') loadOpere();
-    if (typeof loadConcetti === 'function') loadConcetti();
-    
-    // 4. Se c'è una scheda aperta, ricaricala tradotta!
-    const activeScreen = document.querySelector('.screen.active');
-    if (activeScreen && (activeScreen.id.includes('detail'))) {
-        if (currentDetailId && currentDetailType) {
-            showDetail(currentDetailId, currentDetailType);
-        }
-    }
     
     // 5. Chiudi menu
     setTimeout(() => {
@@ -71,16 +49,6 @@ function toggleLanguage() {
     }, 300);
 }
 
-// Applica le traduzioni ai testi statici (data-i18n)
-function applyTranslations() {
-    const t = window.translations[currentLanguage];
-    if (!t) return;
-
-    // 1. Traduzione generica per elementi con data-i18n
-    document.querySelectorAll('[data-i18n]').forEach(element => {
-        const key = element.getAttribute('data-i18n');
-        if (t[key]) element.textContent = t[key];
-    });
 
     // 2. HOME & MENU (Aggiornati per Filosofia)
     
@@ -135,8 +103,7 @@ function applyTranslations() {
         updateFilterText(el, t.filter_ethics);
     });
 
-    // 7. Aggiorna bottone lingua nel menu
-    updateLangButton();
+    
 }
 
 // --- FUNZIONI DI SUPPORTO ---
@@ -157,19 +124,6 @@ function updateFilterText(btn, newText) {
     }
 }
 
-function updateLangButton() {
-    const flag = document.getElementById('lang-flag');
-    const label = document.getElementById('lang-label');
-    if (flag && label) {
-        if (currentLanguage === 'it') {
-            flag.textContent = '🇬🇧';
-            label.textContent = 'Switch to English';
-        } else {
-            flag.textContent = '🇮🇹';
-            label.textContent = 'Passa a Italiano';
-        }
-    }
-}
 
 function getLocalizedText(item, field) {
     if (currentLanguage === 'en') {
@@ -5300,119 +5254,50 @@ async function cercaCoordinateFilosofo() {
 // ==========================================
 // INIZIALIZZAZIONE FINALE & LISTENER UNIFICATI (CORRETTO)
 // ==========================================
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
 
-    // 1. Setup Base UI
-    try {
-        if (typeof loadLocalData === 'function') loadLocalData();
-        if (typeof applyTranslations === 'function') applyTranslations();
-        if (typeof updateLangButton === 'function') updateLangButton();
-        if (typeof showScreen === 'function') showScreen('home-screen'); // Mostra subito la home
-        
-        // Nascondi preventivamente admin e modali
-        const adminPanel = document.getElementById('admin-panel');
-        if (adminPanel) adminPanel.style.display = 'none';
-        
-        if (typeof setupBackButtonHandler === 'function') setupBackButtonHandler();
-        if (typeof checkOnlineStatus === 'function') checkOnlineStatus();
-        if (typeof detectAndShowInstallInstructions === 'function') detectAndShowInstallInstructions();
-    } catch (e) { console.warn("Errore init UI:", e); }
-
-    // 2. Splash Screen
-    const splash = document.getElementById('splash-screen');
-    const progressBar = document.querySelector('.splash-progress-bar');
-    if (progressBar) {
-        progressBar.style.transition = 'width 1.5s ease-in-out';
-        progressBar.style.width = '100%';
-    }
-    if (splash) {
-        setTimeout(() => {
-            splash.style.transition = 'opacity 0.5s ease';
-            splash.style.opacity = '0'; 
-            setTimeout(() => { splash.style.display = 'none'; }, 500);
-        }, 1500);
+    // 1. Inizializza Gestori Essenziali
+    if (window.GeocodingManager) {
+        console.log("Geocoding Manager attivo");
     }
 
-    // 3. Inizializzazione Remota e Caricamento Dati
-    setTimeout(async () => {
-        if (typeof initRemoteControl === 'function') initRemoteControl();
-        if (typeof registerServiceWorker === 'function') registerServiceWorker();
-
-        // Attendiamo che Firebase sia pronto (se usiamo window.firebaseReady promise è meglio, ma manteniamo la tua logica)
-        if (window.firebaseInitialized || window.db) {
-            try {
-                console.log("📥 Inizio download dati...");
-                
-                // Sequenza corretta: Filosofi -> Altro
-                if (typeof loadFirebaseData === 'function') {
-                    await loadFirebaseData('filosofi');
-                    await Promise.all([
-                        loadFirebaseData('opere'),
-                        loadFirebaseData('concetti')
-                    ]);
-                }
-                
-                console.log("✅ Dati scaricati. Aggiornamento UI...");
-
-                // Aggiorna UI che dipende dai dati
-                if (typeof updateAllSelects === 'function') updateAllSelects(); 
-                if (typeof populateAdminDropdowns === 'function') populateAdminDropdowns(); // Per le nuove relazioni
-                
-                if (typeof initMap === 'function') initMap();
-                if (typeof loadMapMarkers === 'function') loadMapMarkers();
-
-                if (typeof loadFilosofi === 'function') loadFilosofi();
-                if (typeof loadOpere === 'function') loadOpere();
-                if (typeof loadConcetti === 'function') loadConcetti();
-                
-                // === FIX ROUTING: FORZA HOME SE NON CI SONO PARAMETRI ===
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.has('filosofo') || urlParams.has('concept')) {
-                    if (typeof handleUrlParameters === 'function') handleUrlParameters();
-                } else {
-                    // NESSUN PARAMETRO: Assicuriamoci di essere sulla HOME
-                    console.log("🏠 Routing: Home Screen forzata");
-                    if (typeof showScreen === 'function') showScreen('home-screen');
-                    // Nascondi pannello admin per sicurezza
-                    if(document.getElementById('admin-panel')) {
-                        document.getElementById('admin-panel').style.display = 'none';
-                    }
-                }
-
-            } catch (error) {
-                console.warn("⚠️ Errore caricamento dati remoti:", error);
-            }
+    // 2. Carica i dati locali (per visualizzare qualcosa subito)
+    if (typeof loadLocalData === 'function') loadLocalData();
+    
+    // 3. Setup Navigazione e UI di base
+    if (typeof setupNavigation === 'function') setupNavigation();
+    if (typeof showScreen === 'function') showScreen('home-screen');
+    
+    // 4. Carica dati da Firebase (Sincronizzazione Online)
+    if (navigator.onLine) {
+        // Se Firebase è già pronto, sincronizza subito
+        if (window.firebaseInitialized) {
+             console.log("Firebase già pronto, sincronizzo...");
+             if (typeof syncData === 'function') syncData();
+        } else {
+             // Altrimenti aspetta il segnale da firebase-init.js
+             window.addEventListener('firebase-ready', () => {
+                 console.log("Firebase pronto, avvio sincronizzazione...");
+                 if (typeof syncData === 'function') syncData();
+             });
         }
-    }, 100);
+    } else {
+        showToast("Modalità Offline: visualizzo dati salvati", "info");
+    }
 
-    // 4. Attach Event Listeners ai Form
+    // 5. Gestione Installazione PWA (Opzionale)
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+        const installBtn = document.getElementById('pwa-install-btn');
+        if (installBtn) installBtn.style.display = 'block';
+    });
+    
+    // 6. Collega manualmente i form (per sicurezza extra)
     const fForm = document.getElementById('filosofo-form');
-    if(fForm && typeof saveFilosofo === 'function') fForm.onsubmit = saveFilosofo;
-    
-    const oForm = document.getElementById('opera-form');
-    if(oForm && typeof saveOpera === 'function') oForm.onsubmit = saveOpera;
-    
-    const cForm = document.getElementById('concetto-form');
-    if(cForm && typeof saveConcetto === 'function') cForm.onsubmit = saveConcetto;
-
-    const geoBtn = document.getElementById('geocoding-btn');
-    if(geoBtn && typeof cercaCoordinateFilosofo === 'function') geoBtn.onclick = cercaCoordinateFilosofo;
-
-    // 5. Fix Mappa (Resize)
-    const navMap = document.getElementById('nav-map');
-    if (navMap) {
-        navMap.addEventListener('click', function() {
-            setTimeout(() => {
-                if (window.map) window.map.invalidateSize();
-            }, 200);
-        });
-    }
-    
-    // 6. Init Excel Worker
-    if (typeof ExcelWorker !== 'undefined') {
-        console.log('✅ ExcelWorker pronto');
-    }
+    // IMPORTANTE: onsubmit deve gestire l'evento, saveFilosofo(event)
+    if(fForm) fForm.onsubmit = function(e) { saveFilosofo(e); };
 });
 
 // Esposizione globale funzioni utili
