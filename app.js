@@ -5187,7 +5187,7 @@ async function cercaCoordinateFilosofo() {
 }
 
 // ==========================================
-// INIZIALIZZAZIONE FINALE & LISTENER UNIFICATI
+// INIZIALIZZAZIONE FINALE & FIX SCHERMATA BIANCA
 // ==========================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
@@ -5200,9 +5200,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // 2. Carica i dati locali
     if (typeof loadLocalData === 'function') loadLocalData();
     
-    // 3. Setup Navigazione e UI
+    // 3. Setup Navigazione
     if (typeof setupNavigation === 'function') setupNavigation();
-    if (typeof showScreen === 'function') showScreen('home-screen');
     
     // 4. Carica dati da Firebase
     if (navigator.onLine) {
@@ -5219,7 +5218,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast("Modalità Offline: visualizzo dati salvati", "info");
     }
 
-    // 5. Gestione PWA
+    // 5. PWA Install
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         window.deferredPrompt = e;
@@ -5227,12 +5226,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (installBtn) installBtn.style.display = 'block';
     });
     
-    // 6. Collega Form
+    // 6. Fix Form Submit
     const fForm = document.getElementById('filosofo-form');
     if(fForm) fForm.onsubmit = function(e) { saveFilosofo(e); };
 
     // =============================================
-    // ✅ FIX FONDAMENTALE: RIMUOVI SPLASH SCREEN
+    // ✅ FIX DEFINITIVO: RIMUOVI SPLASH E FORZA HOME
     // =============================================
     setTimeout(() => {
         const splash = document.getElementById('splash-screen');
@@ -5244,10 +5243,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // Rimozione fisica dopo la dissolvenza
             setTimeout(() => { 
                 splash.style.display = 'none'; 
+                
+                // --- AGGIUNTA FONDAMENTALE PER LA SCHERMATA BIANCA ---
+                // Forziamo la Home Screen ad apparire
+                const homeScreen = document.getElementById('home-screen');
+                if (homeScreen) {
+                    // Nascondi tutte le altre schermate per sicurezza
+                    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                    
+                    // Mostra la Home
+                    homeScreen.style.display = 'block';
+                    homeScreen.classList.add('active');
+                    console.log("🏠 Home Screen forzata visibile");
+                } else {
+                    console.warn("⚠️ Attenzione: Elemento 'home-screen' non trovato. Controllo index.html");
+                }
+                // -----------------------------------------------------
+
                 console.log("Splash screen rimosso. App pronta.");
             }, 500);
         }
-    }, 1500); // 1.5 secondi di attesa estetica
+    }, 1500);
 });
 // Esposizione globale funzioni utili
 window.openComparativeAnalysis = openComparativeAnalysis;
