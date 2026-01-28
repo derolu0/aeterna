@@ -222,19 +222,54 @@ function initRemoteControl() {
 }
 
 // Helper per aggiornare config (COMPAT)
-async function updateConfig(key, value) {
+async function saveOpera(event) {
+    if(event) event.preventDefault();
+    
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
+    };
+
     try {
-        // VERSIONE CORRETTA (COMPAT)
-        await window.db.collection("config").doc("general_settings").set({ 
-            [key]: value,
-            lastUpdate: new Date().toISOString()
-        }, { merge: true });
+        const id = getVal('opera-id');
+        const operaData = {
+            titolo: getVal('opera-titolo'),
+            autore_nome: getVal('opera-autore'),
+            anno: getVal('opera-anno'),
+            periodo: document.getElementById('opera-periodo').value, // FIX FILTRI
+            lingua: getVal('opera-lingua'),
+            immagine: getVal('opera-immagine'),
+            pdf_url: getVal('opera-pdf'),
+            sintesi: getVal('opera-sintesi'),
+            last_modified: new Date().toISOString()
+        };
+
+        if (!operaData.titolo) { showToast("Titolo obbligatorio", "error"); return; }
+
+        if (window.db) {
+            if (id) await window.db.collection('opere').doc(id).update(operaData);
+            else {
+                const docRef = await window.db.collection('opere').add(operaData);
+                operaData.id = docRef.id;
+            }
+        }
+
+        // Aggiorna memoria locale
+        const newItem = { id: id || operaData.id, ...operaData };
+        const index = appData.opere.findIndex(o => o.id == newItem.id);
+        if (index !== -1) appData.opere[index] = newItem;
+        else appData.opere.push(newItem);
+
+        saveLocalData();
+        loadOpere();
+        loadAdminOpere();
+        
+        if(typeof closeModal === 'function') closeModal('admin-modal-opera');
+        showToast('Opera salvata correttamente!', 'success');
     } catch (e) {
-        console.error(e);
-        showToast("Errore di connessione", "error");
+        showToast("Errore: " + e.message, "error");
     }
 }
-
 // --- FUNZIONI PER I PULSANTI ADMIN ---
 
 async function toggleGlobalMaintenance(checkbox) {
@@ -1465,43 +1500,36 @@ function logoutAdmin() {
 // Navigation and Screen Management
 function showScreen(screenId) {
     const currentScreen = screenHistory[screenHistory.length - 1];
-    
     if (currentScreen === screenId) return;
     
+    // Nascondi tutti gli schermi
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
         screen.style.display = 'none';
     });
     
+    // Mostra quello giusto
     const targetScreen = document.getElementById(screenId);
     if (targetScreen) {
         targetScreen.style.display = 'flex';
+        
+        // Ritardo minimo per animazioni e rendering mappa
         setTimeout(() => {
             targetScreen.classList.add('active');
+            
+            // --- FIX FONDAMENTALE PER MAPPA GRIGIA ---
+            if (screenId === 'mappa-screen' && window.map) {
+                window.map.invalidateSize(); 
+            }
         }, 10);
         
         screenHistory.push(screenId);
-        if (screenHistory.length > 10) {
-            screenHistory = screenHistory.slice(-10);
-        }
-        
         resetScroll();
-        
         initializeScreenContent(screenId);
     }
     
     updateTabBar(screenId);
-    
-    document.getElementById('fixed-navigate-btn').classList.add('hidden');
-    
-    if (backPressTimer) {
-        clearTimeout(backPressTimer);
-        backPressTimer = null;
-        const toast = document.getElementById('toast');
-        if (toast) toast.classList.remove('show');
-    }
 }
-
 function goBack() {
     document.getElementById('fixed-navigate-btn').classList.add('hidden');
     
@@ -1928,147 +1956,177 @@ function renderConcettiItems(container, concetti) {
 
 // Detail View per Filosofia (Aggiornata con Immagini)
 function showDetail(id, type) {
+    console.log(`Apertura dettaglio: ${type} - ${id}`);
+    
+    // Salva stato per pulsante "Indietro"
     currentDetailId = id;
     currentDetailType = type;
 
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    // --- SEZIONE FILOSOFI ---
+    if (type === 'filosofi') {
+        const item = appData.filosofi.find(f => f.id == id);
+        if (!item) return;
 
-    let item, screenId, titleElement, contentElement;
-    
-    // Normalizza i tipi
-    const isFilosofo = (type === 'filosofo' || type === 'filosofi');
-    const isOpera = (type === 'opera' || type === 'opere');
-    const isConcetto = (type === 'concetto' || type === 'concetti');
-
-    // Immagine di default (MODIFICA IL NOME SE NECESSARIO)
-    const defaultFilosofoImg = 'images/default-filosofo.jpg';
-
-    if (isFilosofo) {
-        item = appData.filosofi.find(f => f.id == id);
-        screenId = 'filosofo-detail-screen';
-        titleElement = document.getElementById('filosofo-detail-title');
-        contentElement = document.getElementById('filosofo-detail-content');
+        const contentElement = document.getElementById('filosofo-detail-content');
+        const titleElement = document.getElementById('filosofo-detail-title');
         
-        if (item && contentElement) {
-            const hasCoords = (item.lat || item.coordinate?.lat) && (item.lng || item.coordinate?.lng);
+        if (titleElement) titleElement.textContent = item.nome;
 
-            // Usa l'immagine specifica o quella di default
-            const imgUrl = (item.ritratto && item.ritratto.trim() !== '') ? item.ritratto : defaultFilosofoImg;
-
-            const concettiHtml = (item.concetti_principali && item.concetti_principali.length > 0) 
-                ? `<div class="detail-section" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
-                       <h4><i class="fas fa-brain"></i> Concetti Chiave</h4>
-                       <div class="tags-cloud">
-                           ${item.concetti_principali.map(c => `<span class="tag-chip">${c}</span>`).join('')}
-                       </div>
-                   </div>` : '';
+        if (contentElement) {
+            // Controlla se ha coordinate valide
+            const hasCoords = (item.lat && item.lng) || (item.coordinate && item.coordinate.lat);
+            
+            // Immagine (usa default se manca)
+            const imgUrl = item.ritratto && item.ritratto.length > 5 ? item.ritratto : './images/default-filosofo.jpg';
 
             contentElement.innerHTML = `
-                <img src="${imgUrl}" 
-                     class="detail-image" 
-                     alt="${item.nome}" 
-                     onerror="this.onerror=null; this.src='${defaultFilosofoImg}';">
+                <img src="${imgUrl}" class="detail-image" alt="${item.nome}" onerror="this.src='./images/default-filosofo.jpg'">
                 
-                <div class="detail-card">
-                    <div class="detail-meta-grid">
-                        <div class="meta-item"><strong>Periodo:</strong> ${getPeriodoText(item.periodo)}</div>
-                        <div class="meta-item"><strong>Scuola:</strong> ${item.scuola || '-'}</div>
-                        <div class="meta-item"><strong>Anni:</strong> ${item.anni_vita || '-'}</div>
-                        <div class="meta-item"><strong>Luogo:</strong> ${item.luogo_nascita || '-'}</div>
-                    </div>
-                    
-                    <div class="detail-section">
-                        <h4><i class="fas fa-book-open"></i> Biografia</h4>
-                        <p class="biography-text">${item.biografia || 'Nessuna biografia disponibile.'}</p>
-                    </div>
+                <div class="detail-meta-grid">
+                    <div class="meta-item"><strong>Periodo:</strong> ${item.periodo || '-'}</div>
+                    <div class="meta-item"><strong>Scuola:</strong> ${item.scuola || '-'}</div>
+                    <div class="meta-item"><strong>Anni:</strong> ${item.anni_vita || '-'}</div>
+                    <div class="meta-item"><strong>Luogo:</strong> ${item.luogo_nascita || '-'}</div>
+                </div>
+                
+                <div class="detail-section">
+                    <h4>Biografia</h4>
+                    <p class="biography-text">${item.biografia || 'Nessuna biografia disponibile.'}</p>
+                </div>
 
-                    ${concettiHtml}
-
-                    <div class="action-buttons-container" style="margin-top:25px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-                        ${hasCoords ? 
-                            `<button class="btn-primary" onclick="goToMap('${item.id}')">
-                                <i class="fas fa-map-marked-alt"></i> Naviga sulla Mappa
-                            </button>` : 
-                            `<button class="btn-secondary" disabled style="opacity:0.6"><i class="fas fa-map-slash"></i> Posizione non disponibile</button>`
-                        }
-                        <button class="btn-warning" style="background:#f59e0b; color:white; border:none;" 
-                            onclick="window.location.href='mailto:admin@aeterna.com?subject=Segnalazione ${encodeURIComponent(item.nome)}'">
-                            <i class="fas fa-flag"></i> Segnalazione
-                        </button>
+                ${item.concetti_principali && item.concetti_principali.length > 0 ? `
+                <div class="detail-section" style="margin-top:20px;">
+                    <h4>Concetti Chiave</h4>
+                    <div class="tags-cloud">
+                        ${item.concetti_principali.map(c => `<span class="tag-chip">${c}</span>`).join('')}
                     </div>
+                </div>` : ''}
+
+                <div class="action-buttons-container">
+                    ${hasCoords ? 
+                        `<button class="btn-primary" onclick="goToMap('${item.id}')">
+                            <i class="fas fa-map-marked-alt"></i> Naviga
+                        </button>` : 
+                        `<button class="btn-secondary" disabled style="opacity:0.5; cursor:not-allowed;">
+                            <i class="fas fa-map-slash"></i> No Mappa
+                        </button>`
+                    }
+                    <button class="btn-warning" style="background:#f59e0b; color:white;" 
+                        onclick="window.location.href='mailto:admin@aeterna.com?subject=Segnalazione ${item.nome}'">
+                        <i class="fas fa-flag"></i> Segnala
+                    </button>
                 </div>
             `;
         }
+        showScreen('filosofo-detail-screen');
+    } 
 
-    } else if (isOpera) {
-        // --- LOGICA OPERE (Invariata) ---
-        item = appData.opere.find(o => o.id == id);
-        screenId = 'opera-detail-screen';
-        titleElement = document.getElementById('opera-detail-title');
-        contentElement = document.getElementById('opera-detail-content');
+    // --- SEZIONE OPERE (NUOVO STILE) ---
+    else if (type === 'opere') {
+        const item = appData.opere.find(o => o.id == id);
+        if (!item) return;
 
-        if (item && contentElement) {
-            const concettiCorrelati = appData.concetti.filter(c => 
-                (c.opere_riferimento && c.opere_riferimento.includes(item.titolo)) ||
-                (c.opera_id === item.id)
+        const contentElement = document.getElementById('opera-detail-content');
+        const titleElement = document.getElementById('opera-detail-title');
+        
+        if (titleElement) titleElement.textContent = item.titolo;
+
+        if (contentElement) {
+            const imgUrl = item.immagine && item.immagine.length > 5 ? item.immagine : './images/default-opera.jpg';
+            
+            contentElement.innerHTML = `
+                <img src="${imgUrl}" class="detail-image" alt="${item.titolo}" onerror="this.src='./images/default-opera.jpg'">
+                
+                <div class="detail-card">
+                    <h2 style="color:var(--primary-blue); margin-bottom:15px;">${item.titolo}</h2>
+                    
+                    <div class="detail-meta-grid">
+                        <div class="meta-item"><strong>Autore:</strong> ${item.autore_nome || 'Anonimo'}</div>
+                        <div class="meta-item"><strong>Anno:</strong> ${item.anno || '-'}</div>
+                        <div class="meta-item"><strong>Lingua:</strong> ${item.lingua || '-'}</div>
+                        <div class="meta-item"><strong>Periodo:</strong> ${item.periodo || '-'}</div>
+                    </div>
+
+                    <div class="detail-section">
+                        <h4><i class="fas fa-align-left"></i> Sintesi</h4>
+                        <p style="line-height:1.6; color:#333;">${item.sintesi || 'Nessuna sintesi disponibile.'}</p>
+                    </div>
+
+                    ${item.pdf_url ? `
+                    <div style="text-align:center; margin-top:20px;">
+                        <a href="${item.pdf_url}" target="_blank" class="btn-primary" style="text-decoration:none; display:inline-block;">
+                            <i class="fas fa-file-pdf"></i> Leggi Testo Completo
+                        </a>
+                    </div>` : ''}
+                </div>`;
+        }
+        showScreen('opera-detail-screen');
+    }
+
+    // --- SEZIONE CONCETTI (NUOVA LOGICA EVOLUTIVA) ---
+    else if (type === 'concetti' || type === 'concepts') {
+        const item = appData.concetti.find(c => c.id == id);
+        if (!item) return;
+
+        const contentElement = document.getElementById('concetto-detail-content');
+        const titleElement = document.getElementById('concetto-detail-title');
+        
+        if (titleElement) titleElement.textContent = "Analisi Concetto";
+
+        if (contentElement) {
+            // LOGICA: Cerca chi usa questa parola
+            const parolaKey = item.parola.toLowerCase();
+            
+            // Cerca match nei filosofi
+            const usage = appData.filosofi.filter(f => 
+                f.concetti_principali && 
+                f.concetti_principali.some(tag => tag.toLowerCase().includes(parolaKey))
             );
 
-            const listaConcetti = concettiCorrelati.length > 0 
-                ? `<div class="tags-cloud">${concettiCorrelati.map(c => 
-                    `<span class="tag-chip" onclick="showDetail('${c.id}', 'concetti')">${c.parola}</span>`
-                  ).join('')}</div>`
-                : '<em>Nessun concetto collegato.</em>';
+            // Dividi per epoca
+            const classici = usage.filter(f => ['classico', 'medioevale'].includes(f.periodo));
+            const moderni = usage.filter(f => !['classico', 'medioevale'].includes(f.periodo));
+
+            // Helper per creare la lista HTML
+            const renderList = (list) => {
+                if(!list.length) return '<p style="color:#999; font-style:italic; padding:5px;">Nessun riferimento trovato.</p>';
+                return list.map(f => `
+                    <div class="ref-item" onclick="showDetail('${f.id}', 'filosofi')" style="cursor:pointer; padding:8px; border-bottom:1px solid #eee;">
+                        <strong style="color:var(--primary-blue)">${f.nome}</strong>
+                        <div style="font-size:0.8rem; color:#666">${f.scuola || ''}</div>
+                    </div>
+                `).join('');
+            };
 
             contentElement.innerHTML = `
                 <div class="detail-card">
-                    <div class="detail-info-row">
-                        <p><strong>Autore:</strong> ${item.autore_nome}</p>
-                        <p><strong>Anno:</strong> ${item.anno}</p>
+                    <h2 style="color:var(--primary-purple); text-align:center; font-size:2rem; margin-bottom:20px;">${item.parola}</h2>
+                    
+                    <div class="detail-section" style="margin: 20px 0; background:#f9f9f9; padding:20px; border-left:5px solid var(--primary-purple); border-radius:5px;">
+                        <h4 style="margin-bottom:10px; color:#555;">Definizione</h4>
+                        <p style="font-style:italic; font-size:1.1rem; line-height:1.6;">"${item.definizione}"</p>
                     </div>
-                    <div class="detail-section">
-                        <h4>Sintesi</h4>
-                        <p>${item.sintesi || 'Descrizione non disponibile.'}</p>
-                    </div>
-                    <div class="detail-section" style="border-top:1px solid #eee; margin-top:20px; padding-top:10px;">
-                        <h4><i class="fas fa-brain"></i> Concetti Trattati</h4>
-                        ${listaConcetti}
+
+                    <h3 style="text-align:center; margin-top:30px; margin-bottom:20px; color:#333;">Evoluzione del Concetto</h3>
+                    
+                    <div class="comparative-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                        <div class="epoch-column" style="background:#f0fdf4; border:1px solid #bbf7d0; padding:15px; border-radius:10px;">
+                            <h4 style="color:#166534; border-bottom:1px solid #166534; padding-bottom:10px; margin-bottom:10px;">
+                                <i class="fas fa-landmark"></i> Classico / Medioevale
+                            </h4>
+                            <div class="ref-list">${renderList(classici)}</div>
+                        </div>
+
+                        <div class="epoch-column" style="background:#fffbeb; border:1px solid #fde68a; padding:15px; border-radius:10px;">
+                            <h4 style="color:#92400e; border-bottom:1px solid #92400e; padding-bottom:10px; margin-bottom:10px;">
+                                <i class="fas fa-lightbulb"></i> Moderno / Contemp.
+                            </h4>
+                            <div class="ref-list">${renderList(moderni)}</div>
+                        </div>
                     </div>
                 </div>`;
         }
-    } else if (isConcetto) {
-        // --- LOGICA CONCETTI (Invariata) ---
-        item = appData.concetti.find(c => c.id == id);
-        screenId = 'concetto-detail-screen';
-        titleElement = document.getElementById('concetto-detail-title');
-        contentElement = document.getElementById('concetto-detail-content');
-
-        if (item && contentElement) {
-            contentElement.innerHTML = `
-                <div class="detail-card">
-                    <div class="detail-info-row">
-                        <p><strong>Filosofo Rif.:</strong> ${item.autore_riferimento || '-'}</p>
-                        <p><strong>Opera Rif.:</strong> ${item.opere_riferimento || '-'}</p>
-                    </div>
-                    <div class="detail-section">
-                        <h4>Definizione</h4>
-                        <p class="definition-text">${item.definizione}</p>
-                    </div>
-                    <div class="action-buttons-container" style="margin-top:20px; text-align:center;">
-                        <button class="btn-primary" onclick="if(window.openComparativeAnalysis) window.openComparativeAnalysis('${item.parola}')">
-                            <i class="fas fa-project-diagram"></i> Analisi Comparativa
-                        </button>
-                    </div>
-                </div>`;
-        }
-    }
-
-    if (item && titleElement) {
-        titleElement.innerText = item.nome || item.titolo || item.parola;
-    }
-    
-    if (screenId && typeof showScreen === 'function') {
-        showScreen(screenId);
-        window.scrollTo(0, 0);
+        showScreen('concetto-detail-screen');
     }
 }
 
@@ -3788,7 +3846,9 @@ function editFilosofo(id) {
     openModal('admin-modal-filosofo'); 
 }
 
-async function saveFilosofo() {
+async function saveFilosofo(event) {
+    if(event) event.preventDefault(); // BLOCCA IL RIAVVIO DELLA PAGINA
+
     const getVal = (id) => {
         const el = document.getElementById(id);
         return el ? el.value.trim() : '';
@@ -3796,77 +3856,79 @@ async function saveFilosofo() {
 
     try {
         const id = getVal('filosofo-id');
-        const nome = getVal('filosofo-nome');
-        const periodoEl = document.getElementById('filosofo-periodo');
-        const periodo = periodoEl ? periodoEl.value : 'classico';
         
-        if (!nome) {
-            alert("Il nome è obbligatorio");
-            return;
+        // Recupero e pulizia coordinate
+        let latStr = getVal('filosofo-lat').replace(',', '.');
+        let lngStr = getVal('filosofo-lng').replace(',', '.');
+        let lat = parseFloat(latStr);
+        let lng = parseFloat(lngStr);
+        
+        let coordinateObj = null;
+        if (!isNaN(lat) && !isNaN(lng)) {
+            coordinateObj = { lat: lat, lng: lng };
         }
 
-        // Conversione Concetti da Stringa a Array
-        const concettiRaw = getVal('filosofo-concetti');
-        const concettiArray = concettiRaw 
-            ? concettiRaw.split(',').map(s => s.trim()).filter(s => s !== '')
-            : [];
-
-        // Oggetto Base con TUTTI i campi
         const filosofoData = {
-            nome: nome,
-            periodo: periodo,
+            nome: getVal('filosofo-nome'),
+            nome_en: getVal('filosofo-nome-en'),
+            periodo: document.getElementById('filosofo-periodo').value,
             scuola: getVal('filosofo-scuola'),
             anni_vita: getVal('filosofo-anni'),
             luogo_nascita: getVal('filosofo-luogo'),
             ritratto: getVal('filosofo-ritratto'),
             biografia: getVal('filosofo-biografia'),
-            concetti_principali: concettiArray,
-            updatedAt: new Date().toISOString()
+            biografia_en: getVal('filosofo-biografia-en'),
+            concetti_principali: getVal('filosofo-concetti').split(',').map(s => s.trim()).filter(s => s !== ''),
+            
+            // Salviamo tutto per sicurezza
+            lat: isNaN(lat) ? null : lat,
+            lng: isNaN(lng) ? null : lng,
+            coordinate: coordinateObj,
+            
+            last_modified: new Date().toISOString()
         };
 
-        // --- FIX COORDINATE (Virgola -> Punto) ---
-        let latStr = getVal('filosofo-lat').replace(',', '.');
-        let lngStr = getVal('filosofo-lng').replace(',', '.');
-        
-        if (latStr && lngStr && !isNaN(parseFloat(latStr)) && !isNaN(parseFloat(lngStr))) {
-            filosofoData.lat = parseFloat(latStr);
-            filosofoData.lng = parseFloat(lngStr);
-            // Salviamo anche la struttura nidificata per sicurezza mappe
-            filosofoData.coordinate = {
-                lat: parseFloat(latStr),
-                lng: parseFloat(lngStr)
-            };
-        }
+        if (!filosofoData.nome) { showToast("Nome obbligatorio", "error"); return; }
 
-        // Salvataggio su Firebase
+        // 1. Salvataggio su Firebase
+        let savedId = id;
         if (window.db) {
-            if (id && id.trim() !== '') {
-                await db.collection('filosofi').doc(id).update(filosofoData);
+            if (id) {
+                await window.db.collection('filosofi').doc(id).update(filosofoData);
             } else {
-                filosofoData.createdAt = new Date().toISOString();
-                await db.collection('filosofi').add(filosofoData);
+                const docRef = await window.db.collection('filosofi').add(filosofoData);
+                savedId = docRef.id;
             }
-            
-            // Notifica Successo
-            if (typeof showToast === 'function') showToast('Filosofo salvato con successo!', 'success');
-            else alert('Salvato con successo');
-
-            // Chiudi modale
-            if (typeof closeModal === 'function') closeModal('admin-modal-filosofo');
-            
-            // Ricarica la pagina per aggiornare sia la griglia che la tabella admin
-            setTimeout(() => location.reload(), 500);
-
-        } else {
-            alert("Errore: Database non connesso.");
         }
+
+        // 2. Aggiornamento Locale (AGGIORNA SUBITO SENZA RICARICARE)
+        const newItem = { id: savedId, ...filosofoData };
+        if (id) {
+            const index = appData.filosofi.findIndex(f => f.id === id);
+            if (index !== -1) appData.filosofi[index] = newItem;
+        } else {
+            appData.filosofi.push(newItem);
+        }
+        
+        saveLocalData();
+        loadFilosofi(); 
+        loadAdminFilosofi(); 
+        
+        // Chiudi modale
+        if(typeof closeModal === 'function') closeModal('admin-modal-filosofo');
+        else document.getElementById('admin-modal-filosofo').style.display = 'none';
+        
+        // Pulisci form
+        document.getElementById('filosofo-form').reset();
+        document.getElementById('filosofo-id').value = '';
+        
+        showToast('Filosofo salvato con successo!', 'success');
 
     } catch (error) {
-        console.error("Errore salvataggio:", error);
-        alert("Errore: " + error.message);
+        console.error("Errore saveFilosofo:", error);
+        showToast("Errore salvataggio: " + error.message, "error");
     }
 }
-
 // Opere Admin
 async function loadAdminOpere() {
     const tbody = document.getElementById('opere-table-body');
@@ -4158,97 +4220,44 @@ function editConcetto(id) {
 }
 
 async function saveConcetto(event) {
-    event.preventDefault(); // Blocca il ricaricamento della pagina
-
-    // Helper per leggere valori velocemente
+    if(event) event.preventDefault();
+    
     const getVal = (id) => {
         const el = document.getElementById(id);
         return el ? el.value.trim() : '';
     };
 
     try {
-        const id = getVal('concetto-id'); // Se c'è un ID, è una modifica
-
-        // 1. RECUPERO DATI RELAZIONALI (La parte più importante)
-        // Dobbiamo prendere sia l'ID (per il link) che il NOME (per mostrarlo)
-        
-        // Autore
-        const selAutore = document.getElementById('concetto-autore');
-        const autoreId = selAutore ? selAutore.value : '';
-        let autoreNome = '';
-        if (selAutore && selAutore.selectedIndex >= 0) {
-            autoreNome = selAutore.options[selAutore.selectedIndex].text;
-            if (autoreNome === 'Seleziona un filosofo...') autoreNome = '';
-        }
-
-        // Opera
-        const selOpera = document.getElementById('concetto-opera');
-        const operaId = selOpera ? selOpera.value : '';
-        let operaTitolo = '';
-        if (selOpera && selOpera.selectedIndex >= 0) {
-            operaTitolo = selOpera.options[selOpera.selectedIndex].text;
-            if (operaTitolo.startsWith('Seleziona')) operaTitolo = '';
-        }
-
-        // Validazione
-        if (!getVal('concetto-parola')) {
-            showToast("La parola chiave è obbligatoria", "error");
-            return;
-        }
-
-        // 2. COSTRUZIONE OGGETTO DATI
+        const id = getVal('concetto-id');
         const concettoData = {
             parola: getVal('concetto-parola'),
-            parola_en: getVal('concetto-parola-en'), // Campo nuovo
-            
             definizione: getVal('concetto-definizione'),
-            definizione_en: getVal('concetto-definizione-en'), // Campo nuovo
-            
-            citazione: getVal('concetto-citazione') || getVal('concetto-esempio'), // Supporta entrambi gli ID vecchi/nuovi
-            
-            // Relazioni Forti (ID per il codice)
-            autore_riferimento_id: autoreId,
-            opera_riferimento_id: operaId,
-            
-            // Relazioni Deboli (Nomi per la lettura umana nelle liste)
-            autore_riferimento_nome: autoreNome,
-            opera_riferimento_titolo: operaTitolo,
-            
-            periodo_storico: getVal('concetto-periodo'),
-            evoluzione_storica: getVal('concetto-evoluzione'),
-            
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            last_modified: new Date().toISOString()
         };
 
-        // 3. SALVATAGGIO (Metodo diretto e sicuro)
-        const database = window.db || db; 
+        if (!concettoData.parola) { showToast("Parola obbligatoria", "error"); return; }
 
-        if (id && id.trim() !== '') {
-            // MODIFICA
-            await database.collection('concetti').doc(id).update(concettoData);
-            showToast('Concetto aggiornato con successo', 'success');
-        } else {
-            // NUOVO
-            await database.collection('concetti').add(concettoData);
-            showToast('Nuovo concetto salvato!', 'success');
+        if (window.db) {
+            if (id) await window.db.collection('concetti').doc(id).update(concettoData);
+            else {
+                const docRef = await window.db.collection('concetti').add(concettoData);
+                concettoData.id = docRef.id;
+            }
         }
 
-        // 4. PULIZIA E AGGIORNAMENTO UI
-        const form = document.getElementById('concetto-form');
-        if (form) form.reset();
-        document.getElementById('concetto-id').value = '';
+        const newItem = { id: id || concettoData.id, ...concettoData };
+        const index = appData.concetti.findIndex(c => c.id == newItem.id);
+        if (index !== -1) appData.concetti[index] = newItem;
+        else appData.concetti.push(newItem);
 
-        // Chiudi modale (se la funzione esiste)
-        if (typeof closeModal === 'function') closeModal('add-concetto-modal');
-
-        // Ricarica la lista (prova tutte le varianti possibili del tuo codice)
-        if (typeof loadConcettiList === 'function') loadConcettiList();
-        else if (typeof loadAdminConcetti === 'function') loadAdminConcetti();
-        else if (typeof loadConcetti === 'function') loadConcetti();
-
-    } catch (error) {
-        console.error("Errore salvataggio concetto:", error);
-        showToast("Errore: " + error.message, "error");
+        saveLocalData();
+        loadConcetti();
+        loadAdminConcetti();
+        
+        if(typeof closeModal === 'function') closeModal('admin-modal-concetto');
+        showToast('Concetto salvato!', 'success');
+    } catch (e) {
+        showToast("Errore: " + e.message, "error");
     }
 }
 

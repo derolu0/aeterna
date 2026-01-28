@@ -183,7 +183,11 @@ window.ExcelWorker = {
             'Periodo': f.periodo || '',
             'Anni': f.anni_vita || '',
             'Luogo': f.luogo_nascita || '',
-            'Biografia': f.biografia || ''
+             // FIX: Salviamo le coordinate esplicitamente
+            'Latitudine': f.lat || (f.coordinate ? f.coordinate.lat : ''), 
+            'Longitudine': f.lng || (f.coordinate ? f.coordinate.lng : ''),
+            'Biografia': f.biografia || '',
+            'Concetti': Array.isArray(f.concetti_principali) ? f.concetti_principali.join(', ') : (f.concetti_principali || '')
         }));
     },
     
@@ -208,15 +212,31 @@ window.ExcelWorker = {
 
     // Funzioni di import specifiche
     processFilosofiImport: function(data) {
-        return data.map(item => ({
-            nome: item['Nome'] || item['Nome Completo'] || '',
-            scuola: item['Scuola'] || '',
-            periodo: (item['Periodo'] || 'classico').toLowerCase(),
-            anni_vita: item['Anni'] || '',
-            luogo_nascita: item['Luogo'] || '',
-            biografia: item['Biografia'] || '',
-            last_modified: new Date().toISOString()
-        })).filter(f => f.nome);
+        return data.map(item => {
+            // FIX: Leggiamo le coordinate e creiamo l'oggetto per la mappa
+            let lat = parseFloat(item['Latitudine']);
+            let lng = parseFloat(item['Longitudine']);
+            let coordObj = null;
+        
+            if(!isNaN(lat) && !isNaN(lng)) {
+                coordObj = { lat: lat, lng: lng };
+            }
+
+            return {
+                nome: item['Nome'] || item['Nome Completo'] || '',
+                scuola: item['Scuola'] || '',
+                periodo: (item['Periodo'] || 'classico').toLowerCase(),
+                anni_vita: item['Anni'] || '',
+                luogo_nascita: item['Luogo'] || '',
+                // FIX: Salviamo in tutti i formati necessari all'app
+                lat: isNaN(lat) ? null : lat,
+                lng: isNaN(lng) ? null : lng,
+                coordinate: coordObj,
+                concetti_principali: item['Concetti'] ? item['Concetti'].split(',').map(s => s.trim()) : [],
+                biografia: item['Biografia'] || '',
+               last_modified: new Date().toISOString()
+           };
+       }).filter(f => f.nome);
     },
 
     processOpereImport: function(data) {
