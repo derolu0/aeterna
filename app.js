@@ -5187,7 +5187,7 @@ async function cercaCoordinateFilosofo() {
 }
 
 // ==========================================
-// INIZIALIZZAZIONE FINALE & FIX SCHERMATA BIANCA
+// INIZIALIZZAZIONE FINALE & FIX "VISIBILITÀ TOTALE"
 // ==========================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
@@ -5231,37 +5231,51 @@ document.addEventListener('DOMContentLoaded', function() {
     if(fForm) fForm.onsubmit = function(e) { saveFilosofo(e); };
 
     // =============================================
-    // ✅ FIX DEFINITIVO: MOSTRA LA HOME PAGE
+    // ✅ FIX NUCLEARE: FORZA VISIBILITÀ
     // =============================================
     setTimeout(() => {
+        // A. Nascondi schermate di blocco
         const splash = document.getElementById('splash-screen');
+        const maintenance = document.getElementById('maintenance-mode');
         
-        // 1. Forza la visualizzazione della HOME
+        if (splash) {
+            splash.style.opacity = '0';
+            splash.style.display = 'none'; // Rimozione istantanea
+        }
+        if (maintenance) {
+            maintenance.style.display = 'none';
+        }
+
+        // B. Mostra Contenitore App (se esiste)
+        const appContainer = document.querySelector('.app-container');
+        if (appContainer) {
+            appContainer.style.display = 'block';
+            appContainer.style.opacity = '1';
+        }
+        
+        // C. FORZA LA HOME SCREEN
         const homeScreen = document.getElementById('home-screen');
         if (homeScreen) {
-            // Nascondi tutte le altre schermate
+            // 1. Reset di tutte le schermate
             document.querySelectorAll('.screen').forEach(s => {
                 s.style.display = 'none';
                 s.classList.remove('active');
             });
             
-            // MOSTRA LA HOME
+            // 2. Attiva la Home con regole CSS forzate
             homeScreen.style.display = 'block';
+            homeScreen.style.visibility = 'visible';
+            homeScreen.style.opacity = '1';
+            homeScreen.style.zIndex = '1'; // Porta in primo piano
             homeScreen.classList.add('active');
-            console.log("🏠 Home Screen forzata visibile");
+            
+            console.log("🏠 Home Screen FORZATA (Display: Block, Opacity: 1)");
         } else {
-            console.error("⚠️ ERRORE: Elemento 'home-screen' non trovato in index.html!");
+            console.error("⚠️ ERRORE CRITICO: 'home-screen' non trovato!");
+            alert("Errore: Impossibile trovare la schermata Home.");
         }
 
-        // 2. Rimuovi lo Splash Screen
-        if (splash) {
-            splash.style.transition = 'opacity 0.5s ease';
-            splash.style.opacity = '0';
-            setTimeout(() => { 
-                splash.style.display = 'none'; 
-            }, 500);
-        }
-    }, 1500);
+    }, 1000); // Tempo ridotto a 1 secondo
 });
 // Esposizione globale funzioni utili
 window.openComparativeAnalysis = openComparativeAnalysis;
