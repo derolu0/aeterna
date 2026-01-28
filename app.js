@@ -5187,7 +5187,7 @@ async function cercaCoordinateFilosofo() {
 }
 
 // ==========================================
-// INIZIALIZZAZIONE FINALE & LISTENER UNIFICATI (CORRETTO)
+// INIZIALIZZAZIONE FINALE & LISTENER UNIFICATI
 // ==========================================
 document.addEventListener('DOMContentLoaded', function() {
     console.log("🚀 Avvio Aeterna Lexicon...");
@@ -5197,21 +5197,19 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log("Geocoding Manager attivo");
     }
 
-    // 2. Carica i dati locali (per visualizzare qualcosa subito)
+    // 2. Carica i dati locali
     if (typeof loadLocalData === 'function') loadLocalData();
     
-    // 3. Setup Navigazione e UI di base
+    // 3. Setup Navigazione e UI
     if (typeof setupNavigation === 'function') setupNavigation();
     if (typeof showScreen === 'function') showScreen('home-screen');
     
-    // 4. Carica dati da Firebase (Sincronizzazione Online)
+    // 4. Carica dati da Firebase
     if (navigator.onLine) {
-        // Se Firebase è già pronto, sincronizza subito
         if (window.firebaseInitialized) {
              console.log("Firebase già pronto, sincronizzo...");
              if (typeof syncData === 'function') syncData();
         } else {
-             // Altrimenti aspetta il segnale da firebase-init.js
              window.addEventListener('firebase-ready', () => {
                  console.log("Firebase pronto, avvio sincronizzazione...");
                  if (typeof syncData === 'function') syncData();
@@ -5221,7 +5219,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showToast("Modalità Offline: visualizzo dati salvati", "info");
     }
 
-    // 5. Gestione Installazione PWA (Opzionale)
+    // 5. Gestione PWA
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         window.deferredPrompt = e;
@@ -5229,12 +5227,28 @@ document.addEventListener('DOMContentLoaded', function() {
         if (installBtn) installBtn.style.display = 'block';
     });
     
-    // 6. Collega manualmente i form (per sicurezza extra)
+    // 6. Collega Form
     const fForm = document.getElementById('filosofo-form');
-    // IMPORTANTE: onsubmit deve gestire l'evento, saveFilosofo(event)
     if(fForm) fForm.onsubmit = function(e) { saveFilosofo(e); };
-});
 
+    // =============================================
+    // ✅ FIX FONDAMENTALE: RIMUOVI SPLASH SCREEN
+    // =============================================
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            // Dissolvenza
+            splash.style.transition = 'opacity 0.5s ease';
+            splash.style.opacity = '0';
+            
+            // Rimozione fisica dopo la dissolvenza
+            setTimeout(() => { 
+                splash.style.display = 'none'; 
+                console.log("Splash screen rimosso. App pronta.");
+            }, 500);
+        }
+    }, 1500); // 1.5 secondi di attesa estetica
+});
 // Esposizione globale funzioni utili
 window.openComparativeAnalysis = openComparativeAnalysis;
 window.closeComparativeAnalysis = closeComparativeAnalysis;
