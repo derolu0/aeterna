@@ -1,25 +1,12 @@
 /**
- * FIREBASE CONFIGURATION - PERSONAL BUILD
- * ---------------------------------------------
- * Author: De Rosa Salvatore
- * Project Work: Realizzazione di un dataset per l'interpretazione dei testi filosofici
- * Project ID: aeterna-lexicon-in-motu
- * ---------------------------------------------
- * DATASET FILOSOFICO: Analisi comparativa Classico vs Contemporaneo
- * Struttura:
- * - Filosofi (collezione: filosofi)
- * - Opere (collezione: opere) 
- * - Concetti (collezione: concetti)
- * - Analytics (collezione: analytics)
- * - Analisi (collezione: analisi) - NUOVA
- * ---------------------------------------------
+ * FIREBASE CONFIGURATION - CLEAN & STABLE BUILD
+ * Progetto: Aeterna Lexicon in Motu
  */
 
-// Check if firebase is already initialized
+// 1. Inizializzazione Unica (Previene errori di doppia inizializzazione)
 if (!window.firebaseInitialized) {
-    console.log('Initializing Firebase for Aeterna Lexicon in Motu...');
-    
-    // Configurazione per il progetto "Aeterna Lexicon in Motu"
+    console.log('🚀 Initializing Firebase for Aeterna Lexicon...');
+
     const firebaseConfig = {
         apiKey: "AIzaSyBo-Fz2fb8KHlvuZmb23psKDT6QvrJowB8",
         authDomain: "aeterna-lexicon-in-motu.firebaseapp.com",
@@ -29,63 +16,39 @@ if (!window.firebaseInitialized) {
         appId: "1:928786632423:web:578d45e7d6961a298d5c42",
         measurementId: "G-E70D7TDDV7"
     };
-    
-    // Initialize Firebase (Standard method if library is loaded via script tag)
-    if (typeof firebase !== 'undefined') {
-        try {
-            // Inizializza l'app Firebase
-            firebase.initializeApp(firebaseConfig);
-            
-            // Inizializza Firestore
-            if (firebase.firestore) {
-                window.db = firebase.firestore();
-                console.log('Firestore inizializzato');
-                
-                // Abilita la persistenza offline
-                window.db.enablePersistence()
-                    .then(() => {
-                        console.log('Firestore persistence abilitata');
-                    })
-                    .catch((err) => {
-                        if (err.code === 'failed-precondition') {
-                            console.warn('Persistence fallita: multiple tabs aperte');
-                        } else if (err.code === 'unimplemented') {
-                            console.warn('Persistence non supportata dal browser');
-                        }
-                    });
-            }
-            
-            // Inizializza Analytics se disponibile
-            if (firebase.analytics) {
-                window.firebaseAnalytics = firebase.analytics();
-                console.log('Firebase Analytics inizializzato');
-                
-                // Traccia avvio app
-                window.firebaseAnalytics.logEvent('app_launch', {
-                    project: 'Aeterna Lexicon in Motu',
-                    version: '2.0.0',
-                    platform: navigator.platform,
-                    timestamp: new Date().toISOString()
-                });
-            }
-            
-            // Inizializza Authentication
-            if (firebase.auth) {
-                window.auth = firebase.auth();
-                console.log('Firebase Auth inizializzato');
-            }
-            
-            // Inizializza Storage se necessario
-            if (firebase.storage) {
-                window.storage = firebase.storage();
-                console.log('Firebase Storage inizializzato');
-            }
-            
-        } catch (error) {
-            console.error('Errore inizializzazione Firebase:', error);
-        }
-    }
 
+    // Inizializza l'app solo se la libreria è caricata
+    if (typeof firebase !== 'undefined') {
+        // Evita il crash se firebase è già stato inizializzato altrove
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Inizializza SOLO i servizi essenziali (Niente Analytics pesante)
+        window.db = firebase.firestore();
+        window.auth = firebase.auth();
+        
+        // Abilita persistenza dati offline (Utile per non perdere dati se cade la linea)
+        window.db.enablePersistence({ synchronizeTabs: true })
+            .catch((err) => console.warn("Persistenza offline non disponibile:", err.code));
+        
+        window.firebaseInitialized = true;
+        console.log('✅ Firebase e Firestore pronti.');
+    } else {
+        console.error('❌ Errore: Librerie Firebase non trovate. Verifica i tag <script> in index.html');
+    }
+}
+
+// 2. DEFINIZIONE GLOBALE COLLEZIONI (FONDAMENTALE)
+// Definiamo qui le costanti per evitare l'errore "already declared" in app.js
+window.COLLECTIONS = {
+    FILOSOFI: 'filosofi',
+    OPERE: 'opere',
+    CONCETTI: 'concetti'
+};
+
+// 3. Notifica al sistema che siamo pronti
+window.dispatchEvent(new Event('firebase-ready'));
     // Set flag to prevent double initialization
     window.firebaseInitialized = true;
     

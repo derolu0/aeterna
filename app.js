@@ -9,12 +9,7 @@ if (typeof currentLanguage === 'undefined') var currentLanguage = localStorage.g
 if (typeof currentDetailId === 'undefined') var currentDetailId = null;
 if (typeof currentDetailType === 'undefined') var currentDetailType = null;
 
-// Firebase Collections (MODIFICATE per Filosofia)
-const COLLECTIONS = {
-    FILOSOFI: 'filosofi',      // ex-FONTANE
-    OPERE: 'opere',           // ex-BEVERINI
-    CONCETTI: 'concetti'      // ex-NEWS
-};
+
 
 // ==========================================
 // FUNZIONE LOG ACTIVITY
@@ -3846,90 +3841,35 @@ function editFilosofo(id) {
     openModal('admin-modal-filosofo'); 
 }
 
-async function saveFilosofo(event) {
-    if(event) event.preventDefault(); // BLOCCA IL RIAVVIO DELLA PAGINA
+async function saveFilosofo() {
+    // 1. Recupero dati (Assicurati che questi ID esistano e siano UNICI in index.html)
+    const nome = document.getElementById('filosofo-nome').value;
+    const scuola = document.getElementById('filosofo-scuola').value;
+    const periodo = document.getElementById('filosofo-periodo').value;
+    const anni = document.getElementById('filosofo-anni').value;
+    const biografia = document.getElementById('filosofo-biografia').value;
+    const lat = document.getElementById('filosofo-lat').value;
+    const lng = document.getElementById('filosofo-lng').value;
+    const concettiRaw = document.getElementById('filosofo-concetti').value;
 
-    const getVal = (id) => {
-        const el = document.getElementById(id);
-        return el ? el.value.trim() : '';
+    if(!nome) { alert("Il nome è obbligatorio"); return; }
+
+    const data = {
+        nome, scuola, periodo, anni_vita: anni, biografia,
+        lat: parseFloat(lat) || null,
+        lng: parseFloat(lng) || null,
+        concetti_principali: concettiRaw.split(',').map(c => c.trim()),
+        last_modified: new Date().toISOString()
     };
 
     try {
-        const id = getVal('filosofo-id');
-        
-        // Recupero e pulizia coordinate
-        let latStr = getVal('filosofo-lat').replace(',', '.');
-        let lngStr = getVal('filosofo-lng').replace(',', '.');
-        let lat = parseFloat(latStr);
-        let lng = parseFloat(lngStr);
-        
-        let coordinateObj = null;
-        if (!isNaN(lat) && !isNaN(lng)) {
-            coordinateObj = { lat: lat, lng: lng };
-        }
-
-        const filosofoData = {
-            nome: getVal('filosofo-nome'),
-            nome_en: getVal('filosofo-nome-en'),
-            periodo: document.getElementById('filosofo-periodo').value,
-            scuola: getVal('filosofo-scuola'),
-            anni_vita: getVal('filosofo-anni'),
-            luogo_nascita: getVal('filosofo-luogo'),
-            ritratto: getVal('filosofo-ritratto'),
-            biografia: getVal('filosofo-biografia'),
-            biografia_en: getVal('filosofo-biografia-en'),
-            concetti_principali: getVal('filosofo-concetti').split(',').map(s => s.trim()).filter(s => s !== ''),
-            
-            // Salviamo tutto per sicurezza
-            lat: isNaN(lat) ? null : lat,
-            lng: isNaN(lng) ? null : lng,
-            coordinate: coordinateObj,
-            
-            last_modified: new Date().toISOString()
-        };
-
-        if (!filosofoData.nome) { showToast("Nome obbligatorio", "error"); return; }
-
-        // 1. Salvataggio su Firebase
-        let savedId = id;
-        if (window.db) {
-            if (id) {
-                await window.db.collection('filosofi').doc(id).update(filosofoData);
-            } else {
-                const docRef = await window.db.collection('filosofi').add(filosofoData);
-                savedId = docRef.id;
-            }
-        }
-
-        // 2. Aggiornamento Locale (AGGIORNA SUBITO SENZA RICARICARE)
-        const newItem = { id: savedId, ...filosofoData };
-        if (id) {
-            const index = appData.filosofi.findIndex(f => f.id === id);
-            if (index !== -1) appData.filosofi[index] = newItem;
-        } else {
-            appData.filosofi.push(newItem);
-        }
-        
-        saveLocalData();
-        loadFilosofi(); 
-        loadAdminFilosofi(); 
-        
-        // Chiudi modale
-        if(typeof closeModal === 'function') closeModal('admin-modal-filosofo');
-        else document.getElementById('admin-modal-filosofo').style.display = 'none';
-        
-        // Pulisci form
-        document.getElementById('filosofo-form').reset();
-        document.getElementById('filosofo-id').value = '';
-        
-        showToast('Filosofo salvato con successo!', 'success');
-
+        await window.db.collection('filosofi').add(data);
+        alert("Dati salvati correttamente!");
+        location.reload(); // Per ora usiamo il reload per pulire tutto, è più sicuro
     } catch (error) {
-        console.error("Errore saveFilosofo:", error);
-        showToast("Errore salvataggio: " + error.message, "error");
+        console.error("Errore salvataggio:", error);
     }
-}
-// Opere Admin
+}// Opere Admin
 async function loadAdminOpere() {
     const tbody = document.getElementById('opere-table-body');
     if (!tbody) return;
