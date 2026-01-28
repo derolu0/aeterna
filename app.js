@@ -39,72 +39,7 @@ function logActivity(description) {
     }
 }
 
-// ==========================================
 
-    
-    // 5. Chiudi menu
-    setTimeout(() => {
-        const modal = document.getElementById('top-menu-modal');
-        if(modal) modal.style.display = 'none';
-    }, 300);
-}
-
-
-    // 2. HOME & MENU (Aggiornati per Filosofia)
-    
-    setText('nav-filosofi', t.tab_filosophers);
-    setText('nav-opere', t.tab_works);
-    setText('nav-map', t.tab_map);
-    setText('nav-concetti', t.tab_concepts);
-    setText('nav-btn-text', t.navigate_btn);
-
-    // 3. TITOLI SCHERMATE (Filosofi, Opere, Concetti)
-    setText('filosofi-title', t.screen_philosophers);
-    setText('filosofi-subtitle', t.subtitle_philosophers);
-    
-    setText('opere-title', t.screen_works);
-    setText('opere-subtitle', t.subtitle_works);
-
-    setText('concetti-title', t.screen_concepts);
-    setText('concetti-subtitle', t.subtitle_concepts);
-
-    // 4. MAPPA & LEGENDA (Aggiornata per Filosofi)
-    setText('map-title', t.screen_map);
-    setText('legend-title', t.legend_title);
-    setText('legend-filosofo', t.legend_item_philosopher);
-    setText('legend-opera', t.legend_item_work);
-    setText('legend-pos', t.legend_item_position);
-    
-    // 5. PLACEHOLDER (Barre di ricerca)
-    const mapSearch = document.getElementById('map-search-input');
-    if (mapSearch) mapSearch.placeholder = t.map_search_placeholder;
-    
-    const listSearch = document.getElementById('search-input');
-    if (listSearch) listSearch.placeholder = t.search_placeholder;
-    
-    document.querySelectorAll('.search-input').forEach(el => {
-        el.placeholder = t.search_placeholder;
-    });
-
-    // 6. FILTRI (Aggiornati per Filosofia)
-    document.querySelectorAll('.trans-filter-all').forEach(el => {
-        updateFilterText(el, t.filter_all);
-    });
-    document.querySelectorAll('.trans-filter-classic').forEach(el => {
-        updateFilterText(el, t.filter_classic);
-    });
-    document.querySelectorAll('.trans-filter-contemporary').forEach(el => {
-        updateFilterText(el, t.filter_contemporary);
-    });
-    document.querySelectorAll('.trans-filter-ontology').forEach(el => {
-        updateFilterText(el, t.filter_ontology);
-    });
-    document.querySelectorAll('.trans-filter-ethics').forEach(el => {
-        updateFilterText(el, t.filter_ethics);
-    });
-
-    
-}
 
 // --- FUNZIONI DI SUPPORTO ---
 
