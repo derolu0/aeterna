@@ -1926,9 +1926,7 @@ function renderConcettiItems(container, concetti) {
     });
 }
 
-// ==========================================
-// FUNZIONE SHOW DETAIL AGGIORNATA (Filosofi Fix)
-// ==========================================
+// Detail View per Filosofia (Aggiornata con Immagini)
 function showDetail(id, type) {
     currentDetailId = id;
     currentDetailType = type;
@@ -1937,12 +1935,14 @@ function showDetail(id, type) {
 
     let item, screenId, titleElement, contentElement;
     
-    // Normalizza i tipi per evitare errori
-    const isFilosofo = (type === 'filosofo' || type === 'filosofi' || type === COLLECTIONS.FILOSOFI);
-    const isOpera = (type === 'opera' || type === 'opere' || type === COLLECTIONS.OPERE);
-    const isConcetto = (type === 'concetto' || type === 'concetti' || type === COLLECTIONS.CONCETTI);
+    // Normalizza i tipi
+    const isFilosofo = (type === 'filosofo' || type === 'filosofi');
+    const isOpera = (type === 'opera' || type === 'opere');
+    const isConcetto = (type === 'concetto' || type === 'concetti');
 
-    // --- SEZIONE FILOSOFI (RIFATTA COMPLETAMENTE) ---
+    // Immagine di default (MODIFICA IL NOME SE NECESSARIO)
+    const defaultFilosofoImg = 'images/default-filosofo.jpg';
+
     if (isFilosofo) {
         item = appData.filosofi.find(f => f.id == id);
         screenId = 'filosofo-detail-screen';
@@ -1950,170 +1950,128 @@ function showDetail(id, type) {
         contentElement = document.getElementById('filosofo-detail-content');
         
         if (item && contentElement) {
-            // Gestione Immagine (Supporta sia 'immagine' che 'ritratto' per compatibilità)
-            const imgUrl = (item.immagine && item.immagine.length > 5) ? item.immagine : 
-                          (item.ritratto && item.ritratto.length > 5) ? item.ritratto : 
-                          'images/default-filosofo.jpg';
+            const hasCoords = (item.lat || item.coordinate?.lat) && (item.lng || item.coordinate?.lng);
 
-            // Gestione Coordinate (Fix numeri)
-            const lat = parseFloat(item.lat || item.coordinate?.lat);
-            const lng = parseFloat(item.lng || item.coordinate?.lng);
-            const hasCoords = !isNaN(lat) && !isNaN(lng);
+            // Usa l'immagine specifica o quella di default
+            const imgUrl = (item.ritratto && item.ritratto.trim() !== '') ? item.ritratto : defaultFilosofoImg;
 
-            // HTML MODERNO E FUNZIONALE
+            const concettiHtml = (item.concetti_principali && item.concetti_principali.length > 0) 
+                ? `<div class="detail-section" style="margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+                       <h4><i class="fas fa-brain"></i> Concetti Chiave</h4>
+                       <div class="tags-cloud">
+                           ${item.concetti_principali.map(c => `<span class="tag-chip">${c}</span>`).join('')}
+                       </div>
+                   </div>` : '';
+
             contentElement.innerHTML = `
-                <div class="detail-container" style="padding-bottom: 80px;">
-                    <div style="text-align:center; margin-bottom:20px; position:relative;">
-                        <img src="${imgUrl}" 
-                             class="detail-image" 
-                             style="width:100%; max-height:300px; object-fit:cover; border-radius:15px; box-shadow:0 4px 15px rgba(0,0,0,0.1);"
-                             onerror="this.src='images/default-filosofo.jpg'">
-                        
-                        <div style="margin-top:15px;">
-                            <span class="badge badge-${item.periodo}" style="font-size:1rem; padding:5px 15px;">
-                                ${item.periodo || 'Periodo N/D'}
-                            </span>
-                        </div>
+                <img src="${imgUrl}" 
+                     class="detail-image" 
+                     alt="${item.nome}" 
+                     onerror="this.onerror=null; this.src='${defaultFilosofoImg}';">
+                
+                <div class="detail-card">
+                    <div class="detail-meta-grid">
+                        <div class="meta-item"><strong>Periodo:</strong> ${getPeriodoText(item.periodo)}</div>
+                        <div class="meta-item"><strong>Scuola:</strong> ${item.scuola || '-'}</div>
+                        <div class="meta-item"><strong>Anni:</strong> ${item.anni_vita || '-'}</div>
+                        <div class="meta-item"><strong>Luogo:</strong> ${item.luogo_nascita || '-'}</div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4><i class="fas fa-book-open"></i> Biografia</h4>
+                        <p class="biography-text">${item.biografia || 'Nessuna biografia disponibile.'}</p>
                     </div>
 
-                    <div class="detail-meta-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:15px; background:#f1f5f9; padding:15px; border-radius:12px; margin-bottom:20px;">
-                        <div class="meta-item">
-                            <strong style="color:#3b82f6; display:block; font-size:0.8rem;">SCUOLA</strong>
-                            <span>${item.scuola || '-'}</span>
-                        </div>
-                        <div class="meta-item">
-                            <strong style="color:#3b82f6; display:block; font-size:0.8rem;">ANNI</strong>
-                            <span>${item.anni_vita || '-'}</span>
-                        </div>
-                        <div class="meta-item">
-                            <strong style="color:#3b82f6; display:block; font-size:0.8rem;">LUOGO</strong>
-                            <span>${item.luogo_nascita || '-'}</span>
-                        </div>
-                        <div class="meta-item">
-                            <strong style="color:#3b82f6; display:block; font-size:0.8rem;">COORDINATE</strong>
-                            <span>${hasCoords ? '✅ Presenti' : '❌ Assenti'}</span>
-                        </div>
-                    </div>
+                    ${concettiHtml}
 
-                    <div class="detail-bio" style="margin-bottom:25px;">
-                        <h3 style="border-bottom:2px solid #e2e8f0; padding-bottom:10px; margin-bottom:10px;">Biografia</h3>
-                        <p style="line-height:1.6; color:#334155;">${item.biografia || 'Nessuna biografia disponibile per questo autore.'}</p>
-                    </div>
-
-                    <div class="action-buttons" style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
-                        
+                    <div class="action-buttons-container" style="margin-top:25px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
                         ${hasCoords ? 
-                            `<button onclick="forceMapNavigation(${lat}, ${lng}, '${item.nome}')" 
-                                     class="btn-primary" style="width:100%; padding:12px; display:flex; justify-content:center; align-items:center; gap:10px; background:#3b82f6; color:white; border:none; border-radius:8px; font-weight:bold;">
-                                <i class="fas fa-map-marked-alt"></i> VAI ALLA MAPPA
+                            `<button class="btn-primary" onclick="goToMap('${item.id}')">
+                                <i class="fas fa-map-marked-alt"></i> Naviga sulla Mappa
                             </button>` : 
-                            `<button disabled style="width:100%; padding:12px; background:#e2e8f0; color:#94a3b8; border:none; border-radius:8px; cursor:not-allowed;">
-                                <i class="fas fa-map-slash"></i> Posizione non disponibile
-                            </button>`
+                            `<button class="btn-secondary" disabled style="opacity:0.6"><i class="fas fa-map-slash"></i> Posizione non disponibile</button>`
                         }
-
-                        <button onclick="editItem('${item.id}', 'filosofi')" 
-                                style="width:100%; padding:12px; background:#64748b; color:white; border:none; border-radius:8px; font-weight:bold;">
-                            <i class="fas fa-edit"></i> MODIFICA DATI
+                        <button class="btn-warning" style="background:#f59e0b; color:white; border:none;" 
+                            onclick="window.location.href='mailto:admin@aeterna.com?subject=Segnalazione ${encodeURIComponent(item.nome)}'">
+                            <i class="fas fa-flag"></i> Segnalazione
                         </button>
                     </div>
                 </div>
             `;
         }
-    
-    // --- SEZIONE OPERE (MANTENUTA QUASI UGUALE) ---
+
     } else if (isOpera) {
+        // --- LOGICA OPERE (Invariata) ---
         item = appData.opere.find(o => o.id == id);
         screenId = 'opera-detail-screen';
         titleElement = document.getElementById('opera-detail-title');
         contentElement = document.getElementById('opera-detail-content');
 
         if (item && contentElement) {
-            // Immagine Copertina (Fallback)
-            const imgUrl = (item.immagine && item.immagine.length > 5) ? item.immagine : 'images/default-opera.jpg';
-            
-            // Gestione Link PDF
-            const pdfButton = item.url_testo 
-                ? `<a href="${item.url_testo}" target="_blank" class="btn-primary" style="text-decoration:none; display:inline-block; margin-top:10px;">
-                     <i class="fas fa-file-pdf"></i> Leggi Testo Completo
-                   </a>` 
-                : '';
+            const concettiCorrelati = appData.concetti.filter(c => 
+                (c.opere_riferimento && c.opere_riferimento.includes(item.titolo)) ||
+                (c.opera_id === item.id)
+            );
 
-            // Concetti (Tag)
-            const tagsHtml = (item.concetti_trattati && item.concetti_trattati.length > 0)
-                ? `<div class="tags-cloud" style="margin-top:10px;">
-                    ${item.concetti_trattati.map(t => `<span class="badge badge-concetto" style="background:#8b5cf6; color:white; padding:4px 8px; border-radius:4px; font-size:0.8rem; margin-right:5px;">${t}</span>`).join('')}
-                   </div>`
-                : '<em style="color:#999">Nessun concetto taggato.</em>';
+            const listaConcetti = concettiCorrelati.length > 0 
+                ? `<div class="tags-cloud">${concettiCorrelati.map(c => 
+                    `<span class="tag-chip" onclick="showDetail('${c.id}', 'concetti')">${c.parola}</span>`
+                  ).join('')}</div>`
+                : '<em>Nessun concetto collegato.</em>';
 
             contentElement.innerHTML = `
-                <div class="detail-container">
-                    <div style="display:flex; gap:20px; margin-bottom:20px; align-items:flex-start;">
-                        <img src="${imgUrl}" style="width:100px; height:140px; object-fit:cover; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.1);" onerror="this.src='images/default-opera.jpg'">
-                        <div>
-                            <h2 style="color:var(--primary-green); margin:0;">${item.titolo}</h2>
-                            <h4 style="color:#555; margin:5px 0;">di ${item.autore_nome}</h4>
-                            <span class="badge badge-${item.periodo}">${item.periodo || 'N/D'}</span>
-                            <span style="font-size:0.9rem; color:#666; display:block; margin-top:5px;">
-                                <i class="fas fa-calendar"></i> ${item.anno || '?'} | 
-                                <i class="fas fa-language"></i> ${item.lingua || 'IT'}
-                            </span>
-                            ${pdfButton}
-                        </div>
+                <div class="detail-card">
+                    <div class="detail-info-row">
+                        <p><strong>Autore:</strong> ${item.autore_nome}</p>
+                        <p><strong>Anno:</strong> ${item.anno}</p>
                     </div>
-
-                    <div class="detail-section" style="background:#f9fcf9; padding:15px; border-radius:10px; border:1px solid #dcfce7; margin-bottom:20px;">
-                        <h4 style="color:#166534; border-bottom:1px solid #bbf7d0; padding-bottom:5px;">Sintesi</h4>
-                        <p style="line-height:1.6; color:#374151;">${item.sintesi || 'Descrizione non disponibile.'}</p>
-                    </div>
-
                     <div class="detail-section">
-                        <h4>Concetti Trattati</h4>
-                        ${tagsHtml}
+                        <h4>Sintesi</h4>
+                        <p>${item.sintesi || 'Descrizione non disponibile.'}</p>
                     </div>
+                    <div class="detail-section" style="border-top:1px solid #eee; margin-top:20px; padding-top:10px;">
+                        <h4><i class="fas fa-brain"></i> Concetti Trattati</h4>
+                        ${listaConcetti}
+                    </div>
+                </div>`;
+        }
+    } else if (isConcetto) {
+        // --- LOGICA CONCETTI (Invariata) ---
+        item = appData.concetti.find(c => c.id == id);
+        screenId = 'concetto-detail-screen';
+        titleElement = document.getElementById('concetto-detail-title');
+        contentElement = document.getElementById('concetto-detail-content');
 
-                    <div style="margin-top:30px; text-align:center;">
-                        <button onclick="editItem('${item.id}', 'opere')" class="btn-secondary" style="width:100%;">
-                            <i class="fas fa-edit"></i> Modifica Dati Opera
+        if (item && contentElement) {
+            contentElement.innerHTML = `
+                <div class="detail-card">
+                    <div class="detail-info-row">
+                        <p><strong>Filosofo Rif.:</strong> ${item.autore_riferimento || '-'}</p>
+                        <p><strong>Opera Rif.:</strong> ${item.opere_riferimento || '-'}</p>
+                    </div>
+                    <div class="detail-section">
+                        <h4>Definizione</h4>
+                        <p class="definition-text">${item.definizione}</p>
+                    </div>
+                    <div class="action-buttons-container" style="margin-top:20px; text-align:center;">
+                        <button class="btn-primary" onclick="if(window.openComparativeAnalysis) window.openComparativeAnalysis('${item.parola}')">
+                            <i class="fas fa-project-diagram"></i> Analisi Comparativa
                         </button>
                     </div>
                 </div>`;
         }
+    }
 
-    // Imposta il titolo nell'header
     if (item && titleElement) {
         titleElement.innerText = item.nome || item.titolo || item.parola;
     }
     
-    // Cambia schermata
     if (screenId && typeof showScreen === 'function') {
         showScreen(screenId);
         window.scrollTo(0, 0);
     }
 }
 
-// === HELPER FUNCTION PER LA MAPPA ===
-// Aggiungi questa piccola funzione subito sotto showDetail per far funzionare il bottone Mappa
-function forceMapNavigation(lat, lng, nome) {
-    // 1. Vai alla schermata mappa
-    showScreen('mappa'); 
-    
-    // 2. Aspetta che il div sia visibile e muovi la mappa
-    setTimeout(() => {
-        if (window.map) {
-            window.map.setView([lat, lng], 10); // Zoom 10 sulla città
-            
-            // Cerca il marker corrispondente e apri il popup
-            if (window.markers) {
-                window.markers.forEach(marker => {
-                    if (marker.options.title === nome) {
-                        marker.openPopup();
-                    }
-                });
-            }
-        }
-    }, 500);
-}
 // Map Functions (Aggiornata per Filosofi)
 function initMappa() {
     // Se non c'è il div o è già init, esci
@@ -3782,116 +3740,133 @@ function editFilosofo(id) {
     const item = appData.filosofi.find(f => f.id == id);
     if (!item) return;
 
-    // Popola i campi
+    // Popola i campi ID e Nome
     document.getElementById('filosofo-id').value = item.id;
     document.getElementById('filosofo-nome').value = item.nome || '';
-    if(document.getElementById('filosofo-periodo')) document.getElementById('filosofo-periodo').value = item.periodo || 'classico';
+    
+    // Select Periodo
+    const periodoSelect = document.getElementById('filosofo-periodo');
+    if(periodoSelect) periodoSelect.value = item.periodo || 'classico';
+
+    // Altri campi testuali
     document.getElementById('filosofo-scuola').value = item.scuola || '';
     document.getElementById('filosofo-anni').value = item.anni_vita || '';
     
-    // Campi aggiuntivi
-    if(document.getElementById('filosofo-luogo')) document.getElementById('filosofo-luogo').value = item.luogo_nascita || '';
+    // --- CAMPI CHE TI MANCAVANO ---
     
-    // Immagine (nota: nel tuo HTML hai usato 'filosofo-immagine' nel pannello, usiamo quello)
-    if(document.getElementById('filosofo-immagine')) document.getElementById('filosofo-immagine').value = item.immagine || item.ritratto || '';
+    // 1. Luogo
+    const luogoInput = document.getElementById('filosofo-luogo');
+    if(luogoInput) luogoInput.value = item.luogo_nascita || '';
 
-    // Coordinate
+    // 2. Ritratto
+    const ritrattoInput = document.getElementById('filosofo-ritratto');
+    if(ritrattoInput) ritrattoInput.value = item.ritratto || '';
+
+    // 3. Coordinate (gestisce sia numeri che stringhe)
+    // Cerca lat/lng piatti OPPURE dentro l'oggetto coordinate
     const lat = item.lat || (item.coordinate ? item.coordinate.lat : '');
     const lng = item.lng || (item.coordinate ? item.coordinate.lng : '');
-    if(document.getElementById('filosofo-lat')) document.getElementById('filosofo-lat').value = lat || '';
-    if(document.getElementById('filosofo-lng')) document.getElementById('filosofo-lng').value = lng || '';
+    
+    const latInput = document.getElementById('filosofo-lat');
+    const lngInput = document.getElementById('filosofo-lng');
+    if(latInput) latInput.value = lat || '';
+    if(lngInput) lngInput.value = lng || '';
 
-    // Concetti
-    if(document.getElementById('filosofo-concetti')) {
-        document.getElementById('filosofo-concetti').value = (item.concetti_principali && Array.isArray(item.concetti_principali)) 
+    // 4. Concetti (Array -> Stringa per l'input)
+    const concettiInput = document.getElementById('filosofo-concetti');
+    if(concettiInput) {
+        concettiInput.value = (item.concetti_principali && Array.isArray(item.concetti_principali)) 
             ? item.concetti_principali.join(', ') 
             : '';
     }
 
-    if(document.getElementById('filosofo-biografia')) document.getElementById('filosofo-biografia').value = item.biografia || '';
+    // 5. Biografia
+    const bioInput = document.getElementById('filosofo-biografia');
+    if(bioInput) bioInput.value = item.biografia || '';
 
-    // INVECE DI APRIRE UN MODALE, VAI AL TAB GIUSTO E SCROLLA AL FORM
-    showAdminTab('filosofi-admin');
-    const formContainer = document.getElementById('filosofo-input-container');
-    if (formContainer) formContainer.scrollIntoView({ behavior: 'smooth' });
+    // Apre il modale
+    openModal('admin-modal-filosofo'); 
 }
 
-// AGGIUNGI QUESTA FUNZIONE (MANCAVA)
-function resetFilosofoForm() {
-    document.getElementById('filosofo-id').value = '';
-    document.getElementById('filosofo-nome').value = '';
-    document.getElementById('filosofo-scuola').value = '';
-    document.getElementById('filosofo-anni').value = '';
-    document.getElementById('filosofo-luogo').value = '';
-    document.getElementById('filosofo-lat').value = '';
-    document.getElementById('filosofo-lng').value = '';
-    document.getElementById('filosofo-immagine').value = '';
-    document.getElementById('filosofo-biografia').value = '';
-    if(document.getElementById('filosofo-concetti')) document.getElementById('filosofo-concetti').value = '';
-}
 async function saveFilosofo() {
-    // 1. Prevenzione errori base
-    const nomeInput = document.getElementById('filosofo-nome');
-    if (!nomeInput || !nomeInput.value.trim()) {
-        showToast('Il nome del filosofo è obbligatorio!', 'error');
-        return;
-    }
-
-    showToast('Salvataggio in corso...', 'info');
-
-    // 2. Raccolta Dati (Coerente con Excel e Mappa)
-    const filosofoData = {
-        nome: nomeInput.value.trim(),
-        scuola: document.getElementById('filosofo-scuola')?.value.trim() || '',
-        periodo: document.getElementById('filosofo-periodo')?.value || 'classico',
-        anni_vita: document.getElementById('filosofo-anni')?.value.trim() || '',
-        
-        // Luogo e Coordinate (Cruciali per la mappa)
-        luogo_nascita: document.getElementById('filosofo-luogo')?.value.trim() || '',
-        lat: parseFloat(document.getElementById('filosofo-lat')?.value) || null,
-        lng: parseFloat(document.getElementById('filosofo-lng')?.value) || null,
-        
-        // Immagine e Biografia
-        immagine: document.getElementById('filosofo-immagine')?.value.trim() || '', // URL Immagine
-        biografia: document.getElementById('filosofo-biografia')?.value.trim() || '',
-        
-        // Gestione concetti (opzionale, se hai il campo concetti)
-        concetti_principali: document.getElementById('filosofo-concetti') 
-            ? document.getElementById('filosofo-concetti').value.split(',').map(s => s.trim()).filter(s => s) 
-            : [],
-
-        // Metadati sistema
-        last_updated: new Date().toISOString()
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
     };
 
     try {
-        // 3. Salvataggio su Firebase
-        if (currentDetailId) {
-            // MODIFICA ESISTENTE
-            await db.collection(COLLECTIONS.FILOSOFI).doc(currentDetailId).update(filosofoData);
-            showToast('Filosofo aggiornato con successo!', 'success');
-        } else {
-            // NUOVO INSERIMENTO
-            filosofoData.created_at = new Date().toISOString();
-            await db.collection(COLLECTIONS.FILOSOFI).add(filosofoData);
-            showToast('Nuovo filosofo creato!', 'success');
+        const id = getVal('filosofo-id');
+        const nome = getVal('filosofo-nome');
+        const periodoEl = document.getElementById('filosofo-periodo');
+        const periodo = periodoEl ? periodoEl.value : 'classico';
+        
+        if (!nome) {
+            alert("Il nome è obbligatorio");
+            return;
         }
 
-        // 4. Aggiornamento UI
-        // IMPORTANTE: Usiamo il reset del form invece di chiudere il modale (che non esiste più)
-        resetFilosofoForm(); 
+        // Conversione Concetti da Stringa a Array
+        const concettiRaw = getVal('filosofo-concetti');
+        const concettiArray = concettiRaw 
+            ? concettiRaw.split(',').map(s => s.trim()).filter(s => s !== '')
+            : [];
+
+        // Oggetto Base con TUTTI i campi
+        const filosofoData = {
+            nome: nome,
+            periodo: periodo,
+            scuola: getVal('filosofo-scuola'),
+            anni_vita: getVal('filosofo-anni'),
+            luogo_nascita: getVal('filosofo-luogo'),
+            ritratto: getVal('filosofo-ritratto'),
+            biografia: getVal('filosofo-biografia'),
+            concetti_principali: concettiArray,
+            updatedAt: new Date().toISOString()
+        };
+
+        // --- FIX COORDINATE (Virgola -> Punto) ---
+        let latStr = getVal('filosofo-lat').replace(',', '.');
+        let lngStr = getVal('filosofo-lng').replace(',', '.');
         
-        // Ricarica la lista per vedere subito le modifiche
-        loadData(COLLECTIONS.FILOSOFI); 
-        
-        // Resetta l'ID globale così il prossimo inserimento sarà nuovo
-        currentDetailId = null;
+        if (latStr && lngStr && !isNaN(parseFloat(latStr)) && !isNaN(parseFloat(lngStr))) {
+            filosofoData.lat = parseFloat(latStr);
+            filosofoData.lng = parseFloat(lngStr);
+            // Salviamo anche la struttura nidificata per sicurezza mappe
+            filosofoData.coordinate = {
+                lat: parseFloat(latStr),
+                lng: parseFloat(lngStr)
+            };
+        }
+
+        // Salvataggio su Firebase
+        if (window.db) {
+            if (id && id.trim() !== '') {
+                await db.collection('filosofi').doc(id).update(filosofoData);
+            } else {
+                filosofoData.createdAt = new Date().toISOString();
+                await db.collection('filosofi').add(filosofoData);
+            }
+            
+            // Notifica Successo
+            if (typeof showToast === 'function') showToast('Filosofo salvato con successo!', 'success');
+            else alert('Salvato con successo');
+
+            // Chiudi modale
+            if (typeof closeModal === 'function') closeModal('admin-modal-filosofo');
+            
+            // Ricarica la pagina per aggiornare sia la griglia che la tabella admin
+            setTimeout(() => location.reload(), 500);
+
+        } else {
+            alert("Errore: Database non connesso.");
+        }
 
     } catch (error) {
         console.error("Errore salvataggio:", error);
-        showToast('Errore durante il salvataggio: ' + error.message, 'error');
+        alert("Errore: " + error.message);
     }
 }
+
 // Opere Admin
 async function loadAdminOpere() {
     const tbody = document.getElementById('opere-table-body');
@@ -3977,75 +3952,110 @@ function editOpera(id) {
     showAdminTab('opere-admin');
 }
 
-async function saveOpera() {
-    const titoloInput = document.getElementById('opera-titolo');
+async function saveOpera(event) {
+    event.preventDefault();
     
-    if (!titoloInput || !titoloInput.value.trim()) {
-        showToast('Il titolo dell\'opera è obbligatorio!', 'error');
-        return;
-    }
-
-    showToast('Salvataggio opera...', 'info');
-
-    const operaData = {
-        titolo: titoloInput.value.trim(),
-        autore_nome: document.getElementById('opera-autore')?.value.trim() || 'Anonimo',
-        anno: document.getElementById('opera-anno')?.value.trim() || '',
-        
-        // Dati che mancavano prima
-        periodo: document.getElementById('opera-periodo')?.value || 'classico',
-        lingua: document.getElementById('opera-lingua')?.value.trim() || '',
-        url_testo: document.getElementById('opera-url')?.value.trim() || '', // PDF/Link
-        immagine: document.getElementById('opera-immagine')?.value.trim() || '', // Copertina
-        
-        sintesi: document.getElementById('opera-sintesi')?.value.trim() || '',
-        
-        // Salviamo i concetti come array (separati da virgola)
-        concetti_trattati: document.getElementById('opera-concetti')?.value
-            .split(',')
-            .map(s => s.trim())
-            .filter(s => s.length > 0) || [],
-
-        last_updated: new Date().toISOString()
+    // Helper per leggere valori
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        return el ? el.value.trim() : '';
     };
 
     try {
-        if (currentDetailId) {
-            await db.collection(COLLECTIONS.OPERE).doc(currentDetailId).update(operaData);
-            showToast('Opera aggiornata!', 'success');
-        } else {
-            operaData.created_at = new Date().toISOString();
-            await db.collection(COLLECTIONS.OPERE).add(operaData);
-            showToast('Nuova opera inserita!', 'success');
+        const id = getVal('opera-id');
+        const titolo = getVal('opera-titolo');
+        const titolo_en = getVal('opera-titolo-en');
+        const autoreSelect = document.getElementById('opera-autore');
+        const autoreId = autoreSelect ? autoreSelect.value : '';
+        
+        // VALIDAZIONI
+        if (!titolo) {
+            showToast("Il titolo è obbligatorio", "error");
+            return;
+        }
+        
+        if (!autoreId) {
+            showToast("Devi selezionare un autore", "error");
+            return;
+        }
+        
+        // Trova il nome dell'autore
+        let autoreNome = '';
+        if (autoreSelect && autoreSelect.selectedIndex >= 0) {
+            autoreNome = autoreSelect.options[autoreSelect.selectedIndex].text;
+        }
+        
+        // Se non troviamo il nome dal menu, cercalo nei dati
+        if (!autoreNome && autoreId) {
+            const filosofo = appData.filosofi.find(f => f.id === autoreId);
+            autoreNome = filosofo ? filosofo.nome : 'Autore sconosciuto';
         }
 
-        closeAdminModal();
-        loadData(COLLECTIONS.OPERE); // Ricarica la lista
+        // Costruisci i dati dell'opera
+        const operaData = {
+            titolo: titolo,
+            titolo_en: titolo_en || '',
+            autore_id: autoreId,
+            autore_nome: autoreNome,
+            anno: getVal('opera-anno'),
+            periodo: getVal('opera-periodo'),
+            sintesi: getVal('opera-sintesi'),
+            sintesi_en: getVal('opera-sintesi-en') || '',
+            lingua: getVal('opera-lingua'),
+            pdf_url: getVal('opera-pdf'),
+            immagine: getVal('opera-immagine'),
+            concetti: getVal('opera-concetti') ? 
+                getVal('opera-concetti').split(',').map(c => c.trim()).filter(c => c !== '') : [],
+            last_modified: new Date().toISOString()
+        };
+
+        let savedId;
+        
+        if (navigator.onLine && window.db) {
+            if (id) {
+                // Modifica esistente
+                await saveFirebaseData('opere', operaData, id);
+                savedId = id;
+                
+                // Aggiorna localmente
+                const index = appData.opere.findIndex(o => o.id === id);
+                if (index !== -1) {
+                    appData.opere[index] = { id, ...operaData };
+                }
+            } else {
+                // Crea nuovo
+                savedId = await saveFirebaseData('opere', operaData);
+                appData.opere.push({ id: savedId, ...operaData });
+            }
+            
+            showToast('Opera salvata con successo!', 'success');
+        } else {
+            // Modalità offline
+            savedId = id || `local_${Date.now()}`;
+            if (typeof addToSyncQueue === 'function') {
+                await addToSyncQueue(id ? 'UPDATE' : 'CREATE', 'opere', operaData, savedId);
+            }
+            showToast('Opera salvata localmente (offline)', 'info');
+        }
+        
+        // Aggiorna UI
+        saveLocalData();
+        loadAdminOpere();
+        if (typeof loadOpere === 'function') loadOpere();
+        
+        // Reset form
+        document.getElementById('opera-form').reset();
+        document.getElementById('opera-id').value = '';
+        
+        // Ricarica i menu se necessario
+        updateAllSelects();
         
     } catch (error) {
-        console.error("Errore saveOpera:", error);
-        showToast('Errore: ' + error.message, 'error');
+        console.error("Errore salvataggio opera:", error);
+        showToast("Errore: " + error.message, "error");
     }
 }
 
-// 2. FILTRO OPERE (Fix Filtri)
-function filterOpere() {
-    const search = document.getElementById('search-opere')?.value.toLowerCase() || '';
-    const periodoFilter = document.getElementById('filter-periodo-opere')?.value || 'all';
-
-    const filtered = appData.opere.filter(opera => {
-        // Filtro testo (Cerca in titolo o autore)
-        const matchesSearch = (opera.titolo && opera.titolo.toLowerCase().includes(search)) ||
-                              (opera.autore_nome && opera.autore_nome.toLowerCase().includes(search));
-        
-        // Filtro Periodo
-        const matchesPeriodo = periodoFilter === 'all' || opera.periodo === periodoFilter;
-
-        return matchesSearch && matchesPeriodo;
-    });
-
-    renderOpereList(filtered);
-}
 function resetOperaForm() {
     document.getElementById('opera-form').reset();
     document.getElementById('opera-id').value = '';
@@ -5554,5 +5564,4 @@ function openSmartModal(type, id) {
     }
     
     modal.style.display = 'flex';
-}
 }

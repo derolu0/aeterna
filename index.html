@@ -366,101 +366,121 @@
                 </div>
 
                 <h3>Aggiungi/Modifica Filosofo</h3>
-
-                <div id="filosofo-input-container">
+                <form id="filosofo-form" onsubmit="saveFilosofo(event)">
                     <input type="hidden" id="filosofo-id">
-
                     <div class="form-group">
-                        <label for="filosofo-nome">Nome Completo *</label>
-                        <input type="text" id="filosofo-nome" class="form-control" required placeholder="Es. Platone">
+                        <label for="filosofo-nome">Nome Completo</label>
+                        <input type="text" id="filosofo-nome" required>
                     </div>
-
                     <div class="form-group">
-                        <label for="filosofo-immagine">URL Ritratto/Immagine (Nuovo)</label>
-                        <input type="text" id="filosofo-immagine" class="form-control" placeholder="Incolla qui link immagine (https://...)">
-                    </div>
-
-                    <div class="form-row" style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <div class="form-group" style="flex: 1;">
-                            <label for="filosofo-periodo">Periodo:</label>
-                            <select id="filosofo-periodo" class="form-control">
-                                <option value="classico">Classico/Antico</option>
-                                <option value="medioevale">Medioevale</option>
-                                <option value="rinascimentale">Rinascimentale</option>
-                                <option value="moderno">Moderno</option>
-                                <option value="contemporaneo">Contemporaneo</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label for="filosofo-anni">Anni (Nascita-Morte):</label>
-                            <input type="text" id="filosofo-anni" class="form-control" placeholder="es: 427-347 a.C.">
+                        <label for="filosofo-nome-en" style="color: #3b82f6; font-style: italic;">Nome (Inglese)</label>
+                        <div style="display: flex; gap: 5px;">
+                            <input type="text" id="filosofo-nome-en" placeholder="Name in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
+                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('filosofo-nome', 'filosofo-nome-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
                         </div>
                     </div>
-
+                    <div class="form-group">
+                        <label for="filosofo-periodo">Periodo:</label>
+                        <select id="filosofo-periodo" required>
+                            <option value="classico">Classico/Antico</option>
+                            <option value="medioevale">Medioevale</option>
+                            <option value="rinascimentale">Rinascimentale</option>
+                            <option value="moderno">Moderno</option>
+                            <option value="contemporaneo">Contemporaneo</option>
+                        </select>
+                    </div>
                     <div class="form-group">
                         <label for="filosofo-scuola">Scuola/Corrente:</label>
-                        <input type="text" id="filosofo-scuola" class="form-control" placeholder="Es. Accademia di Atene">
+                        <input type="text" id="filosofo-scuola" required>
                     </div>
+                    <div class="form-group">
+                        <label for="filosofo-anni">Anni (Nascita-Morte):</label>
+                        <input type="text" id="filosofo-anni" placeholder="es: 1844-1900">
+                    </div>
+                    <div class="form-group">
+                        <label for="filosofo-biografia">Biografia</label>
+                        <textarea id="filosofo-biografia" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="filosofo-biografia-en" style="color: #3b82f6; font-style: italic;">Biografia (Inglese)</label>
+                        <div style="display: flex; gap: 5px; align-items: flex-start;">
+                            <textarea id="filosofo-biografia-en" rows="3" placeholder="Biography in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
+                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('filosofo-biografia', 'filosofo-biografia-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="filosofo-concetti">Concetti Principali:</label>
+                        <textarea id="filosofo-concetti" rows="3" placeholder="Separati da virgola"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="filosofo-luogo-nascita">Luogo di Nascita:</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--light-text);">Città</label>
+                                <input type="text" id="filosofo-citta-nascita" placeholder="es: Königsberg">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--light-text);">Paese</label>
+                                <input type="text" id="filosofo-paese-nascita" placeholder="es: Germania">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="filosofo-coordinate">Coordinate Geografiche:</label>
+                        <div style="margin-bottom: 8px;">
+                            <div class="location-buttons">
+                                <button type="button" class="location-btn primary" onclick="cercaCoordinateFilosofo()">
+                                    <i class="fas fa-search-location"></i> Cerca Coordinate
+                                </button>
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--light-text);">Latitudine</label>
+                                <input type="text" id="filosofo-latitudine" placeholder="54.7167">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.8rem; color: var(--light-text);">Longitudine</label>
+                                <input type="text" id="filosofo-longitudine" placeholder="20.5">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="filosofo-immagine">URL Ritratto/Immagine:</label>
+                        <input type="text" id="filosofo-immagine" placeholder="https://...">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="admin-btn primary">Salva</button>
+                        <button type="button" class="admin-btn secondary" onclick="resetFilosofoForm()">Annulla</button>
+                    </div>
+                </form>
 
-                    <div style="background:#f0f9ff; padding:15px; border-radius:8px; margin:15px 0; border:1px solid #bae6fd;">
-                        <h4 style="margin-top:0; margin-bottom:10px; color:#0369a1; font-size:0.9rem;">📍 Dati Geografici (Per Mappa)</h4>
-        
-                        <div class="form-group">
-                            <label for="filosofo-luogo">Luogo di Nascita (Città, Paese)</label>
-                            <input type="text" id="filosofo-luogo" class="form-control" placeholder="Es. Atene, Grecia">
-                         </div>
+                <div class="admin-table-actions" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
+                    <button id="btn-delete-sel-filosofi" class="delete-selected-btn" onclick="deleteSelectedItems('filosofi')" disabled>
+                        <i class="fas fa-trash"></i> Elimina Selezionati (0)
+                    </button>
+                </div>
 
-                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                             <div class="form-group">
-                                 <label style="font-size: 0.8rem; color: var(--light-text);">Latitudine</label>
-                                 <input type="number" step="any" id="filosofo-lat" class="form-control" placeholder="Es. 37.98">
-                             </div>
-                             <div class="form-group">
-                                 <label style="font-size: 0.8rem; color: var(--light-text);">Longitudine</label>
-                                 <input type="number" step="any" id="filosofo-lng" class="form-control" placeholder="Es. 23.72">
-                             </div>
-                         </div>
-        
-                         <div style="text-align:right; margin-top:5px;">
-                             <button type="button" class="admin-btn secondary" onclick="window.open('https://www.latlong.net/','_blank')" style="font-size:0.8rem; padding:5px 10px;">
-                                 🔎 Trova coordinate online
-                             </button>
-                         </div>
-                     </div>
-
-                     <div class="form-group">
-                         <label for="filosofo-biografia">Biografia</label>
-                         <textarea id="filosofo-biografia" class="form-control" rows="4"></textarea>
-                     </div>
-
-                     <div class="form-actions" style="margin-top:20px; display:flex; gap:10px;">
-                         <button type="button" onclick="saveFilosofo()" class="admin-btn primary" style="flex:1; padding:12px; font-weight:bold;">💾 SALVA DATI</button>
-                          <button type="button" onclick="resetFilosofoForm()" class="admin-btn secondary" style="flex:1;">Annulla</button>
-                          </div>
-                      </div>
-
-                      <div class="admin-table-actions" style="margin-top: 30px; margin-bottom: 10px; display: flex; justify-content: flex-end;">
-                           <button id="btn-delete-sel-filosofi" class="delete-selected-btn" onclick="deleteSelectedItems('filosofi')" disabled>
-                                <i class="fas fa-trash"></i> Elimina Selezionati (0)
-                           </button>
-                       </div>
-
-                       <div class="admin-table-container">
-                           <table class="admin-table" id="filosofi-table">
-                               <thead>
-                                   <tr>
-                                       <th style="width: 40px; text-align: center;">
-                                           <input type="checkbox" onchange="toggleSelectAll('filosofi', this)">
-                                       </th>
-                                       <th>Nome</th>
-                                       <th>Periodo</th>
-                                       <th>Luogo</th> <th>Azioni</th>
-                                   </tr>
-                               </thead>
-                               <tbody id="filosofi-table-body">
-                                   </tbody>
-                           </table>
-                       </div>
+                <div class="admin-table-container">
+                    <table class="admin-table" id="filosofi-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;">
+                                    <input type="checkbox" onchange="toggleSelectAll('filosofi', this)">
+                                </th>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Periodo</th>
+                                <th>Scuola</th>
+                                <th>Anni</th>
+                                <th>Azioni</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filosofi-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
             <div class="admin-tab-content" id="opere-admin">
                 <div class="import-export-section">
@@ -1810,5 +1830,76 @@
             }, 2000);
         });
     </script>
+<div id="admin-modal-filosofo" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
+    <div class="modal-container" style="background:white; width:90%; max-width:600px; max-height:90vh; overflow-y:auto; border-radius:15px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative; margin: 20px auto;">
+        
+        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
+            <h3 style="margin:0; color:var(--primary-blue);">Gestione Filosofo</h3>
+            <button class="btn-close" onclick="closeModal('admin-modal-filosofo')" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <input type="hidden" id="filosofo-id"> 
+
+            <div class="form-group" style="margin-bottom:15px;">
+                <label style="display:block; font-weight:bold; margin-bottom:5px;">Nome Filosofo</label>
+                <input type="text" id="filosofo-nome" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. Platone" required>
+            </div>
+
+            <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div class="form-group">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Periodo</label>
+                    <select id="filosofo-periodo" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
+                        <option value="classico">Classico</option>
+                        <option value="contemporaneo">Contemporaneo</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Scuola</label>
+                    <input type="text" id="filosofo-scuola" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. Accademia">
+                </div>
+            </div>
+
+            <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div class="form-group">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Anni di Vita</label>
+                    <input type="text" id="filosofo-anni" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. 427-347 a.C.">
+                </div>
+                <div class="form-group">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Luogo di Nascita</label>
+                    <input type="text" id="filosofo-luogo" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. Atene">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:15px;">
+                <label style="display:block; font-weight:bold; margin-bottom:5px;">URL Ritratto/Immagine</label>
+                <input type="text" id="filosofo-ritratto" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="https://... o images/nome.jpg">
+            </div>
+
+            <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
+                <div class="form-group">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Latitudine</label>
+                    <input type="number" step="any" id="filosofo-lat" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. 37.98">
+                </div>
+                <div class="form-group">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Longitudine</label>
+                    <input type="number" step="any" id="filosofo-lng" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. 23.72">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:15px;">
+                <label style="display:block; font-weight:bold; margin-bottom:5px;">Concetti Principali (separati da virgola)</label>
+                <input type="text" id="filosofo-concetti" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. Iperuranio, Reminiscenza">
+            </div>
+
+            <div class="form-group" style="margin-bottom:20px;">
+                <label style="display:block; font-weight:bold; margin-bottom:5px;">Biografia Completa</label>
+                <textarea id="filosofo-biografia" class="form-control" rows="5" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit;" placeholder="Inserisci la biografia qui..."></textarea>
+            </div>
+            
+            <button onclick="saveFilosofo()" class="btn-primary" style="width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">SALVA FILOSOFO</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
