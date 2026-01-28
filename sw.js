@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aeterna-lexicon-v6.6.8-PHILOSOPHIA';
+const CACHE_NAME = 'aeterna-lexicon-v6.6.9-PHILOSOPHIA';
 const STATIC_CACHE = 'static-philosophy-v2';
 const DYNAMIC_CACHE = 'dynamic-philosophy-v2';
 
@@ -14,7 +14,7 @@ const STATIC_ASSETS = [
   BASE_URL + 'manifest.json',
   BASE_URL + 'geocoding-manager.js',
   BASE_URL + 'comparative-styles.css', // Teniamo questo per gli stili nuovi
-  BASE_URL + 'excel-worker.js', // ✅ AGGIUNGI QUESTA RIGA QUI!
+  BASE_URL + 'worker/excel-worker.js',
 
   // --- IMMAGINI (Tutte quelle che avevi, NON le tocchiamo) ---
   BASE_URL + 'images/logo-app.png',
