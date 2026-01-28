@@ -3782,54 +3782,53 @@ function editFilosofo(id) {
     const item = appData.filosofi.find(f => f.id == id);
     if (!item) return;
 
-    // Popola i campi ID e Nome
+    // Popola i campi
     document.getElementById('filosofo-id').value = item.id;
     document.getElementById('filosofo-nome').value = item.nome || '';
-    
-    // Select Periodo
-    const periodoSelect = document.getElementById('filosofo-periodo');
-    if(periodoSelect) periodoSelect.value = item.periodo || 'classico';
-
-    // Altri campi testuali
+    if(document.getElementById('filosofo-periodo')) document.getElementById('filosofo-periodo').value = item.periodo || 'classico';
     document.getElementById('filosofo-scuola').value = item.scuola || '';
     document.getElementById('filosofo-anni').value = item.anni_vita || '';
     
-    // --- CAMPI CHE TI MANCAVANO ---
+    // Campi aggiuntivi
+    if(document.getElementById('filosofo-luogo')) document.getElementById('filosofo-luogo').value = item.luogo_nascita || '';
     
-    // 1. Luogo
-    const luogoInput = document.getElementById('filosofo-luogo');
-    if(luogoInput) luogoInput.value = item.luogo_nascita || '';
+    // Immagine (nota: nel tuo HTML hai usato 'filosofo-immagine' nel pannello, usiamo quello)
+    if(document.getElementById('filosofo-immagine')) document.getElementById('filosofo-immagine').value = item.immagine || item.ritratto || '';
 
-    // 2. Ritratto
-    const ritrattoInput = document.getElementById('filosofo-ritratto');
-    if(ritrattoInput) ritrattoInput.value = item.ritratto || '';
-
-    // 3. Coordinate (gestisce sia numeri che stringhe)
-    // Cerca lat/lng piatti OPPURE dentro l'oggetto coordinate
+    // Coordinate
     const lat = item.lat || (item.coordinate ? item.coordinate.lat : '');
     const lng = item.lng || (item.coordinate ? item.coordinate.lng : '');
-    
-    const latInput = document.getElementById('filosofo-lat');
-    const lngInput = document.getElementById('filosofo-lng');
-    if(latInput) latInput.value = lat || '';
-    if(lngInput) lngInput.value = lng || '';
+    if(document.getElementById('filosofo-lat')) document.getElementById('filosofo-lat').value = lat || '';
+    if(document.getElementById('filosofo-lng')) document.getElementById('filosofo-lng').value = lng || '';
 
-    // 4. Concetti (Array -> Stringa per l'input)
-    const concettiInput = document.getElementById('filosofo-concetti');
-    if(concettiInput) {
-        concettiInput.value = (item.concetti_principali && Array.isArray(item.concetti_principali)) 
+    // Concetti
+    if(document.getElementById('filosofo-concetti')) {
+        document.getElementById('filosofo-concetti').value = (item.concetti_principali && Array.isArray(item.concetti_principali)) 
             ? item.concetti_principali.join(', ') 
             : '';
     }
 
-    // 5. Biografia
-    const bioInput = document.getElementById('filosofo-biografia');
-    if(bioInput) bioInput.value = item.biografia || '';
+    if(document.getElementById('filosofo-biografia')) document.getElementById('filosofo-biografia').value = item.biografia || '';
 
-    // Apre il modale
-    openModal('admin-modal-filosofo'); 
+    // INVECE DI APRIRE UN MODALE, VAI AL TAB GIUSTO E SCROLLA AL FORM
+    showAdminTab('filosofi-admin');
+    const formContainer = document.getElementById('filosofo-input-container');
+    if (formContainer) formContainer.scrollIntoView({ behavior: 'smooth' });
 }
 
+// AGGIUNGI QUESTA FUNZIONE (MANCAVA)
+function resetFilosofoForm() {
+    document.getElementById('filosofo-id').value = '';
+    document.getElementById('filosofo-nome').value = '';
+    document.getElementById('filosofo-scuola').value = '';
+    document.getElementById('filosofo-anni').value = '';
+    document.getElementById('filosofo-luogo').value = '';
+    document.getElementById('filosofo-lat').value = '';
+    document.getElementById('filosofo-lng').value = '';
+    document.getElementById('filosofo-immagine').value = '';
+    document.getElementById('filosofo-biografia').value = '';
+    if(document.getElementById('filosofo-concetti')) document.getElementById('filosofo-concetti').value = '';
+}
 async function saveFilosofo() {
     // 1. Prevenzione errori base
     const nomeInput = document.getElementById('filosofo-nome');
@@ -3856,6 +3855,11 @@ async function saveFilosofo() {
         immagine: document.getElementById('filosofo-immagine')?.value.trim() || '', // URL Immagine
         biografia: document.getElementById('filosofo-biografia')?.value.trim() || '',
         
+        // Gestione concetti (opzionale, se hai il campo concetti)
+        concetti_principali: document.getElementById('filosofo-concetti') 
+            ? document.getElementById('filosofo-concetti').value.split(',').map(s => s.trim()).filter(s => s) 
+            : [],
+
         // Metadati sistema
         last_updated: new Date().toISOString()
     };
@@ -3863,26 +3867,31 @@ async function saveFilosofo() {
     try {
         // 3. Salvataggio su Firebase
         if (currentDetailId) {
-            // MODIFICA
+            // MODIFICA ESISTENTE
             await db.collection(COLLECTIONS.FILOSOFI).doc(currentDetailId).update(filosofoData);
             showToast('Filosofo aggiornato con successo!', 'success');
         } else {
-            // NUOVO
+            // NUOVO INSERIMENTO
             filosofoData.created_at = new Date().toISOString();
             await db.collection(COLLECTIONS.FILOSOFI).add(filosofoData);
             showToast('Nuovo filosofo creato!', 'success');
         }
 
-        // 4. Aggiornamento UI senza ricaricare tutta la pagina
-        closeAdminModal();
-        loadData(COLLECTIONS.FILOSOFI); // Ricarica solo la lista
+        // 4. Aggiornamento UI
+        // IMPORTANTE: Usiamo il reset del form invece di chiudere il modale (che non esiste più)
+        resetFilosofoForm(); 
         
+        // Ricarica la lista per vedere subito le modifiche
+        loadData(COLLECTIONS.FILOSOFI); 
+        
+        // Resetta l'ID globale così il prossimo inserimento sarà nuovo
+        currentDetailId = null;
+
     } catch (error) {
         console.error("Errore salvataggio:", error);
         showToast('Errore durante il salvataggio: ' + error.message, 'error');
     }
-}
-// Opere Admin
+}// Opere Admin
 async function loadAdminOpere() {
     const tbody = document.getElementById('opere-table-body');
     if (!tbody) return;
