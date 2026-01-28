@@ -3,17 +3,20 @@
 // Gestione Import/Export Excel
 // ==============================================
 
+// CORREZIONE QUI: Niente trattino nel nome!
 window.ExcelWorker = {
     // ================================
     // 1. ESPORTAZIONE DATI
     // ================================
     
-    /**
-     * Esporta tutti i dati in un unico file Excel
-     * Ora accetta i dati direttamente come parametro opzionale o li legge da appData
-     */
     exportAllDataToExcel: async function() {
         try {
+            // Controlla se la libreria XLSX è caricata
+            if (typeof XLSX === 'undefined') {
+                showToast('Libreria Excel non caricata!', 'error');
+                return;
+            }
+
             showToast('Preparazione export dati completi...', 'info');
             
             // PRENDE I DATI DALLA VARIABILE GLOBALE DI APP.JS
@@ -58,14 +61,11 @@ window.ExcelWorker = {
         }
     },
     
-    /**
-     * Esporta dati specifici per collezione
-     * CORREZIONE: Ora accetta 'data' come secondo argomento
-     */
     exportDataToExcel: function(collectionName, data) {
         try {
+            if (typeof XLSX === 'undefined') return;
+
             let sheetName = '';
-            // Se i dati non vengono passati, prova a prenderli da appData
             if (!data && window.appData) {
                 data = window.appData[collectionName] || [];
             }
@@ -82,19 +82,14 @@ window.ExcelWorker = {
                 default: sheetName = 'Dati';
             }
             
-            // Prepara dati per export
             const exportData = this[`prepare${sheetName}ForExport`](data);
-            
-            // Crea workbook
             const wb = XLSX.utils.book_new();
             const ws = XLSX.utils.json_to_sheet(exportData);
             XLSX.utils.book_append_sheet(wb, ws, sheetName);
             
-            // Genera nome file
             const dateStr = new Date().toISOString().split('T')[0];
             const filename = `AeternaLexicon_${sheetName}_${dateStr}.xlsx`;
             
-            // Salva file
             XLSX.writeFile(wb, filename);
             showToast(`${sheetName} esportati con successo`, 'success');
             
@@ -110,6 +105,10 @@ window.ExcelWorker = {
     
     handleFileImport: async function(collectionName, files, currentAppData) {
         if (!files || files.length === 0) return;
+        if (typeof XLSX === 'undefined') {
+            showToast('Libreria Excel mancante', 'error');
+            return;
+        }
         
         const file = files[0];
         const reader = new FileReader();
@@ -129,16 +128,13 @@ window.ExcelWorker = {
                         return;
                     }
                     
-                    // Processa i dati in base alla collezione
                     const processedData = this.processImportData(collectionName, jsonData);
-                    
-                    // Salva su Firebase usando la funzione globale di app.js
                     const results = await this.saveImportedData(collectionName, processedData);
                     
                     resolve({ 
                         success: true, 
                         importedCount: results.success, 
-                        data: { [collectionName]: processedData } // Ritorna i dati per aggiornare la UI
+                        data: { [collectionName]: processedData } 
                     });
                     
                 } catch (error) {
@@ -159,7 +155,6 @@ window.ExcelWorker = {
     
     saveImportedData: async function(collectionName, data) {
         let success = 0;
-        // Usa le funzioni globali definite in app.js
         for (const item of data) {
             try {
                 if (window.saveFirebaseData) {
@@ -206,7 +201,6 @@ window.ExcelWorker = {
         }));
     },
 
-    // Funzioni di import specifiche
     processFilosofiImport: function(data) {
         return data.map(item => ({
             nome: item['Nome'] || item['Nome Completo'] || '',
@@ -238,16 +232,12 @@ window.ExcelWorker = {
         })).filter(c => c.parola);
     },
 
-    // ================================
-    // ALTRE FUNZIONI UTILI
-    // ================================
     downloadTemplate: function(type) {
-        alert("Template download non ancora implementato in questa versione light.");
+        alert("Template download non ancora implementato.");
     },
     exportAnalisiComparativa: function(termine, analisi) {
-        alert("Export analisi non ancora disponibile offline.");
+        alert("Export analisi non ancora disponibile.");
     }
 };
 
-// Inizializzazione
 console.log('✅ ExcelWorker caricato e pronto (Versione Compat)');

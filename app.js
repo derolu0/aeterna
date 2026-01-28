@@ -3891,7 +3891,8 @@ async function saveFilosofo() {
         console.error("Errore salvataggio:", error);
         showToast('Errore durante il salvataggio: ' + error.message, 'error');
     }
-}// Opere Admin
+}
+// Opere Admin
 async function loadAdminOpere() {
     const tbody = document.getElementById('opere-table-body');
     if (!tbody) return;
