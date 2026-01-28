@@ -5555,3 +5555,4 @@ function openSmartModal(type, id) {
     
     modal.style.display = 'flex';
 }
+}
