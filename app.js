@@ -5231,37 +5231,34 @@ document.addEventListener('DOMContentLoaded', function() {
     if(fForm) fForm.onsubmit = function(e) { saveFilosofo(e); };
 
     // =============================================
-    // ✅ FIX DEFINITIVO: RIMUOVI SPLASH E FORZA HOME
+    // ✅ FIX DEFINITIVO: MOSTRA LA HOME PAGE
     // =============================================
     setTimeout(() => {
         const splash = document.getElementById('splash-screen');
+        
+        // 1. Forza la visualizzazione della HOME
+        const homeScreen = document.getElementById('home-screen');
+        if (homeScreen) {
+            // Nascondi tutte le altre schermate
+            document.querySelectorAll('.screen').forEach(s => {
+                s.style.display = 'none';
+                s.classList.remove('active');
+            });
+            
+            // MOSTRA LA HOME
+            homeScreen.style.display = 'block';
+            homeScreen.classList.add('active');
+            console.log("🏠 Home Screen forzata visibile");
+        } else {
+            console.error("⚠️ ERRORE: Elemento 'home-screen' non trovato in index.html!");
+        }
+
+        // 2. Rimuovi lo Splash Screen
         if (splash) {
-            // Dissolvenza
             splash.style.transition = 'opacity 0.5s ease';
             splash.style.opacity = '0';
-            
-            // Rimozione fisica dopo la dissolvenza
             setTimeout(() => { 
                 splash.style.display = 'none'; 
-                
-                // --- AGGIUNTA FONDAMENTALE PER LA SCHERMATA BIANCA ---
-                // Forziamo la Home Screen ad apparire
-                const homeScreen = document.getElementById('home-screen');
-                if (homeScreen) {
-                    // Nascondi tutte le altre schermate per sicurezza
-                    document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    
-                    // Mostra la Home
-                    homeScreen.style.display = 'block';
-                    homeScreen.classList.add('active');
-                    console.log("🏠 Home Screen forzata visibile");
-                } else {
-                    console.warn("⚠️ Attenzione: Elemento 'home-screen' non trovato. Controllo index.html");
-                }
-                // -----------------------------------------------------
-
-                console.log("Splash screen rimosso. App pronta.");
             }, 500);
         }
     }, 1500);
