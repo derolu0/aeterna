@@ -111,6 +111,68 @@
         <i class="fas fa-wifi"></i> Connessione assente
     </div>
     <div class="toast" id="toast"></div>
+    
+    <div id="home-screen" class="screen active" style="display: block;">
+        <header class="hero-section">
+            <div class="hero-content">
+                <img src="images/logo-app.png" alt="Logo Aeterna" class="hero-logo">
+                <h1 class="hero-title">AETERNA LEXICON</h1>
+                <p class="hero-subtitle">L'evoluzione del linguaggio filosofico nel tempo e nello spazio</p>
+                
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search-input" class="search-input" placeholder="Cerca filosofo, opera o concetto..." oninput="handleGlobalSearch(this.value)">
+                </div>
+            </div>
+            
+            <div class="hero-stats">
+                <div class="stat-item" onclick="showScreen('filosofi-screen')">
+                    <div class="stat-value" id="count-filosofi">0</div>
+                    <div class="stat-label">Filosofi</div>
+                </div>
+                <div class="stat-item" onclick="showScreen('opere-screen')">
+                    <div class="stat-value" id="count-opere">0</div>
+                    <div class="stat-label">Opere</div>
+                </div>
+                <div class="stat-item" onclick="showScreen('concetti-screen')">
+                    <div class="stat-value" id="count-concetti">0</div>
+                    <div class="stat-label">Concetti</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="quick-nav-grid">
+            <div class="nav-card" onclick="showScreen('filosofi-screen')">
+                <div class="nav-icon blue"><i class="fas fa-user-graduate"></i></div>
+                <h3>Filosofi</h3>
+                <p>Esplora i pensatori</p>
+            </div>
+            <div class="nav-card" onclick="showScreen('opere-screen')">
+                <div class="nav-icon green"><i class="fas fa-book-open"></i></div>
+                <h3>Opere</h3>
+                <p>Biblioteca universale</p>
+            </div>
+            <div class="nav-card" onclick="showScreen('map-screen')">
+                <div class="nav-icon orange"><i class="fas fa-map-marked-alt"></i></div>
+                <h3>Mappa</h3>
+                <p>Geografia del pensiero</p>
+            </div>
+            <div class="nav-card" onclick="showScreen('concetti-screen')">
+                <div class="nav-icon purple"><i class="fas fa-lightbulb"></i></div>
+                <h3>Concetti</h3>
+                <p>Idee e definizioni</p>
+            </div>
+        </div>
+
+        <div class="recent-section">
+            <div class="section-header">
+                <h2>Ultime Aggiunte</h2>
+            </div>
+            <div class="recent-scroll" id="recent-items-container">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+    </div>
 
     <div class="auth-overlay" id="admin-auth">
         <div class="auth-modal">
