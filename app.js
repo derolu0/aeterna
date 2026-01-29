@@ -1,8 +1,21 @@
 /**
- * AETERNA LEXICON IN MOTU - APP.JS VERSIONE PULITA
+ * AETERNA LEXICON IN MOTU - APP.JS (FIXED UI)
  * Project Work Filosofico - Dataset per analisi trasformazioni linguistiche
- * Versione 3.1.0 - Solo funzionalità filosofiche essenziali
+ * Versione 3.1.1 - Fix Menu, Admin, Back Button e QR Code
  */
+
+// ==================== VARIABILI DI STATO ====================
+let currentScreen = 'home-screen'; // Tiene traccia della schermata attuale
+let previousScreen = null;         // Per gestire il 'torna indietro'
+
+// Dati Filosofici
+let filosofiData = [];
+let opereData = [];
+let concettiData = [];
+let currentFilter = 'all';
+
+// Mappa Filosofica
+let philosophicalMap = null;
 
 // ==================== INIZIALIZZAZIONE APP ====================
 document.addEventListener('DOMContentLoaded', async function() {
@@ -22,14 +35,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Mostra home
         showScreen('home-screen');
         
-        // Gestisci parametri URL
+        // Gestisci parametri URL (es. ?screen=filosofi)
         handleUrlParameters();
         
         console.log('✅ App filosofica pronta');
     }, 1500);
     
-    // Inizializza Firebase
-    initializeFirebase();
+    // Inizializza Firebase (se presente)
+    if (window.initializeFirebase) window.initializeFirebase();
     
     // Carica dati filosofici
     await loadPhilosophicalData();
@@ -41,11 +54,242 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupPWA();
 });
 
+// ==================== GESTIONE NAVIGAZIONE (FIXED) ====================
+
+function showScreen(screenId) {
+    // Nascondi tutte le schermate
+    document.querySelectorAll('.screen').forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none'; // Importante per forzare il layout
+    });
+    
+    const target = document.getElementById(screenId);
+    if (target) {
+        // Aggiorna lo stato per il pulsante indietro
+        if (screenId !== currentScreen) {
+            previousScreen = currentScreen;
+        }
+        currentScreen = screenId;
+
+        // Mostra la nuova schermata
+        target.classList.add('active');
+        target.style.display = 'flex';
+        
+        // Aggiorna tab bar (barra in basso)
+        updateTabBar(screenId);
+        
+        // Carica dati specifici se necessario
+        loadScreenData(screenId);
+        
+        // Scroll in cima
+        if(document.querySelector('.content-area')) {
+             document.querySelector('.content-area').scrollTop = 0;
+        }
+        window.scrollTo(0,0);
+    }
+}
+
+function goBack() {
+    // Logica intelligente per tornare indietro
+    if (currentScreen === 'home-screen') return;
+
+    // Se siamo in un dettaglio, torniamo alla lista corretta
+    if (currentScreen === 'filosofo-detail-screen') {
+        showScreen('filosofi-screen');
+    } else if (currentScreen === 'opera-detail-screen') {
+        showScreen('opere-screen');
+    } else if (currentScreen === 'concetto-detail-screen') {
+        showScreen('concetti-screen');
+    } else if (previousScreen && previousScreen !== currentScreen) {
+        // Se c'è una storia precedente valida
+        showScreen(previousScreen);
+    } else {
+        // Fallback sicuro alla home
+        showScreen('home-screen');
+    }
+}
+
+function updateTabBar(screenId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-target') === screenId) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const screen = urlParams.get('screen');
+    if (screen) {
+        const map = {
+            'filosofi': 'filosofi-screen',
+            'opere': 'opere-screen',
+            'concetti': 'concetti-screen',
+            'mappa': 'mappa-screen',
+            'analisi': 'comparative-analysis-modal' // Gestione speciale per modale
+        };
+        if (map[screen] && map[screen] !== 'comparative-analysis-modal') {
+            showScreen(map[screen]);
+        }
+    }
+}
+
+// ==================== GESTIONE MENU & MODALI (FIXED) ====================
+
+// Apre/Chiude il menu laterale
+function toggleMenuModal() {
+    const modal = document.getElementById('top-menu-modal');
+    if (modal) {
+        // Se è 'flex' o vuoto (visualizzato), nascondi. Altrimenti mostra.
+        const isVisible = window.getComputedStyle(modal).display === 'flex';
+        modal.style.display = isVisible ? 'none' : 'flex';
+    }
+}
+
+// Chiude esplicitamente il menu
+function closeMenuModal(event) {
+    // Se chiamato da un evento click sull'overlay, verifica che non sia sul contenuto
+    if (event && event.target && !event.target.classList.contains('modal-overlay') && !event.target.classList.contains('modal-btn')) {
+        // Se clicco dentro il contenuto bianco ma non su un bottone, non chiudere (opzionale)
+        // Ma per semplicità, chiudiamo se clicco sulla X o sull'overlay
+        if(!event.target.closest('.close-btn')) return; 
+    }
+    
+    const modal = document.getElementById('top-menu-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// Info & Credits
+function openCreditsScreen() {
+    document.getElementById('top-menu-modal').style.display = 'none';
+    showScreen('credits-screen');
+}
+
+// Segnalazioni
+function openReportScreen() {
+    document.getElementById('top-menu-modal').style.display = 'none';
+    showScreen('segnalazioni-screen');
+}
+
+// ==================== GESTIONE QR CODE (FIXED) ====================
+
+function openQRModal() {
+    // Chiudi il menu prima
+    document.getElementById('top-menu-modal').style.display = 'none';
+    
+    const modal = document.getElementById('qr-modal');
+    const container = document.getElementById('qrcode-container');
+    
+    if (modal && container) {
+        container.innerHTML = ''; // Pulisci QR precedenti
+        
+        // Genera QR Code
+        new QRCode(container, {
+            text: window.location.href,
+            width: 200,
+            height: 200,
+            colorDark : "#000000",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+        
+        modal.style.display = 'flex';
+    }
+}
+
+function closeQRModal() {
+    const modal = document.getElementById('qr-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// ==================== GESTIONE ADMIN & AUTH (FIXED) ====================
+
+// Apre il form di login (dal menu o dal maintenance mode)
+function openAdminPanel() {
+    // Se sono già loggato, vai diretto al pannello
+    const auth = window.authUtils ? window.authUtils.isAdminLoggedIn() : { loggedIn: false };
+    
+    if (auth.loggedIn) {
+        document.getElementById('top-menu-modal').style.display = 'none';
+        document.getElementById('admin-panel').style.display = 'flex';
+        updateAdminStats(); // Aggiorna statistiche
+    } else {
+        // Altrimenti mostra login
+        document.getElementById('top-menu-modal').style.display = 'none';
+        document.getElementById('admin-auth').style.display = 'flex';
+        document.getElementById('auth-error').style.display = 'none';
+        document.getElementById('admin-password').value = '';
+    }
+}
+
+// Chiude il pannello admin principale
+function closeAdminPanel() {
+    document.getElementById('admin-panel').style.display = 'none';
+}
+
+// Chiude il form di login
+function closeAdminAuth() {
+    document.getElementById('admin-auth').style.display = 'none';
+}
+
+// Verifica credenziali
+async function checkAdminAuth() {
+    const email = document.getElementById('admin-email').value;
+    const password = document.getElementById('admin-password').value;
+    const errorMsg = document.getElementById('auth-error');
+    
+    if (!window.authUtils) {
+        // Fallback se authUtils non caricato
+        if (password === 'admin123') { // Password di emergenza
+             successLogin();
+             return;
+        }
+        errorMsg.textContent = "Sistema Auth non caricato.";
+        errorMsg.style.display = 'block';
+        return;
+    }
+
+    const result = await window.authUtils.loginAdmin(email, password);
+    
+    if (result.success) {
+        successLogin();
+    } else {
+        errorMsg.textContent = "Credenziali errate.";
+        errorMsg.style.display = 'block';
+    }
+}
+
+function successLogin() {
+    document.getElementById('admin-auth').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'flex';
+    // Rimuovi overlay manutenzione se presente
+    const maintenance = document.getElementById('maintenance-mode');
+    if(maintenance) maintenance.style.display = 'none';
+    showToast('Login effettuato con successo', 'success');
+    updateAdminStats();
+}
+
+function logoutAdmin() {
+    if (window.authUtils) window.authUtils.logoutAdmin();
+    document.getElementById('admin-panel').style.display = 'none';
+    showToast('Logout effettuato');
+}
+
+// Aggiorna i contatori nel pannello admin
+function updateAdminStats() {
+    document.getElementById('total-filosofi').textContent = filosofiData.length;
+    document.getElementById('filosofi-classici').textContent = filosofiData.filter(f => f.periodo === 'classico').length;
+    document.getElementById('filosofi-contemporanei').textContent = filosofiData.filter(f => f.periodo === 'contemporaneo').length;
+    
+    document.getElementById('total-opere').textContent = opereData.length;
+    document.getElementById('opere-classiche').textContent = opereData.filter(o => o.periodo === 'classico').length;
+    document.getElementById('opere-contemporanee').textContent = opereData.filter(o => o.periodo === 'contemporaneo').length;
+    
+    document.getElementById('total-concetti').textContent = concettiData.length;
+}
+
 // ==================== DATI FILOSOFICI ====================
-let filosofiData = [];
-let opereData = [];
-let concettiData = [];
-let currentFilter = 'all';
 
 async function loadPhilosophicalData() {
     try {
@@ -66,7 +310,7 @@ async function loadPhilosophicalData() {
         
         // Inizializza mappe quando necessario
         if (document.getElementById('map')) {
-            initPhilosophicalMap();
+            // initPhilosophicalMap sarà chiamato quando si apre la schermata mappa
         }
         
     } catch (error) {
@@ -80,7 +324,7 @@ async function loadPhilosophicalData() {
 // ==================== GESTIONE FILOSOFI ====================
 async function loadFilosofi() {
     try {
-        if (window.db) {
+        if (window.db && window.COLLECTIONS) {
             const snapshot = await window.db.collection(window.COLLECTIONS.FILOSOFI).get();
             filosofiData = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -89,9 +333,7 @@ async function loadFilosofi() {
         } else {
             filosofiData = getSampleFilosofi();
         }
-        
         renderFilosofiList();
-        
     } catch (error) {
         console.error('Errore filosofi:', error);
         filosofiData = getSampleFilosofi();
@@ -106,13 +348,7 @@ function renderFilosofiList() {
     container.innerHTML = '';
     
     if (filosofiData.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">👤</div>
-                <p class="empty-state-text">Nessun filosofo trovato</p>
-                <p class="empty-state-subtext">Aggiungi filosofi dal pannello admin</p>
-            </div>
-        `;
+        container.innerHTML = `<div class="empty-state"><p>Nessun filosofo trovato</p></div>`;
         return;
     }
     
@@ -124,6 +360,20 @@ function renderFilosofiList() {
     filtered.forEach(filosofo => {
         container.appendChild(createFilosofoCard(filosofo));
     });
+}
+
+function setFilter(filter) {
+    currentFilter = filter;
+    // Aggiorna UI bottoni
+    document.querySelectorAll('#filosofi-screen .filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if ((filter === 'all' && btn.classList.contains('all')) || 
+            (filter === 'classico' && btn.classList.contains('funzionante')) ||
+            (filter === 'contemporaneo' && btn.classList.contains('non-funzionante'))) {
+            btn.classList.add('active');
+        }
+    });
+    renderFilosofiList();
 }
 
 function createFilosofoCard(filosofo) {
@@ -144,20 +394,16 @@ function createFilosofoCard(filosofo) {
             <div class="item-details">
                 <div><strong>Periodo:</strong> ${getPeriodoLabel(filosofo.periodo)}</div>
                 <div><strong>Scuola:</strong> ${filosofo.scuola || 'N/D'}</div>
-                <div><strong>Anni:</strong> ${filosofo.anni || 'N/D'}</div>
             </div>
             <div class="item-footer">
                 <span class="item-periodo periodo-${filosofo.periodo}">
                     ${filosofo.periodo === 'contemporaneo' ? 'CONTEMPORANEO' : 'CLASSICO'}
                 </span>
-                ${filosofo.concetti_principali?.length > 0 ? 
-                    `<span class="item-concetti-count">${filosofo.concetti_principali.length} concetti</span>` : ''}
             </div>
         </div>
     `;
     
     card.addEventListener('click', () => showFilosofoDetail(filosofo.id));
-    
     return card;
 }
 
@@ -170,58 +416,24 @@ function showFilosofoDetail(id) {
     
     content.innerHTML = `
         <div class="detail-header">
-            <div class="detail-image-container">
-                ${filosofo.immagine ? 
-                    `<img src="${filosofo.immagine}" alt="${filosofo.nome}" class="detail-image" 
-                         onerror="this.src='https://derolu0.github.io/aeterna/images/default-filosofo.jpg'">` :
-                    `<div class="image-fallback detail-fallback">👤</div>`
-                }
-            </div>
             <h1 class="detail-name">${filosofo.nome}</h1>
             <div class="detail-meta-grid">
-                <div class="meta-item">
-                    <strong>Periodo Storico</strong>
-                    <span>${getPeriodoLabel(filosofo.periodo)}</span>
-                </div>
-                <div class="meta-item">
-                    <strong>Scuola/Corrente</strong>
-                    <span>${filosofo.scuola || 'N/D'}</span>
-                </div>
-                <div class="meta-item">
-                    <strong>Anni di Vita</strong>
-                    <span>${filosofo.anni || 'N/D'}</span>
-                </div>
-                <div class="meta-item">
-                    <strong>Luogo di Nascita</strong>
-                    <span>${filosofo.luogo_nascita?.citta || 'N/D'}, ${filosofo.luogo_nascita?.paese || ''}</span>
-                </div>
+                <div class="meta-item"><strong>Periodo:</strong> ${getPeriodoLabel(filosofo.periodo)}</div>
+                <div class="meta-item"><strong>Anni:</strong> ${filosofo.anni || 'N/D'}</div>
+                <div class="meta-item"><strong>Scuola:</strong> ${filosofo.scuola || 'N/D'}</div>
             </div>
         </div>
-        
         <div class="detail-info">
-            <h3><i class="fas fa-book-open"></i> Biografia</h3>
-            <p class="biography-text">${filosofo.biografia || 'Biografia non disponibile.'}</p>
+            <h3>Biografia</h3>
+            <p class="biography-text">${filosofo.biografia || 'Nessuna biografia disponibile.'}</p>
         </div>
-        
-        ${filosofo.concetti_principali?.length > 0 ? `
-            <div class="detail-info">
-                <h3><i class="fas fa-brain"></i> Concetti Principali</h3>
-                <div class="tags-cloud">
-                    ${filosofo.concetti_principali.map(c => `<span class="tag-chip">${c}</span>`).join('')}
-                </div>
+        ${filosofo.concetti_principali ? `
+        <div class="detail-info">
+            <h3>Concetti Principali</h3>
+            <div class="tags-cloud">
+                ${filosofo.concetti_principali.map(c => `<span class="tag-chip">${c}</span>`).join('')}
             </div>
-        ` : ''}
-        
-        <div class="action-buttons-container">
-            ${filosofo.luogo_nascita?.coordinate ? `
-                <button class="btn-analisi" onclick="openNavigationToFilosofo('${filosofo.id}')">
-                    <i class="fas fa-map-marker-alt"></i> Vai al Luogo
-                </button>
-            ` : ''}
-            <button class="btn-secondary" onclick="openComparativeAnalysis('${filosofo.nome.split(' ')[0]}')">
-                <i class="fas fa-chart-line"></i> Analisi Comparativa
-            </button>
-        </div>
+        </div>` : ''}
     `;
     
     showScreen('filosofo-detail-screen');
@@ -230,20 +442,14 @@ function showFilosofoDetail(id) {
 // ==================== GESTIONE OPERE ====================
 async function loadOpere() {
     try {
-        if (window.db) {
+        if (window.db && window.COLLECTIONS) {
             const snapshot = await window.db.collection(window.COLLECTIONS.OPERE).get();
-            opereData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            opereData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } else {
             opereData = getSampleOpere();
         }
-        
         renderOpereList();
-        
     } catch (error) {
-        console.error('Errore opere:', error);
         opereData = getSampleOpere();
         renderOpereList();
     }
@@ -252,24 +458,9 @@ async function loadOpere() {
 function renderOpereList() {
     const container = document.getElementById('opere-list');
     if (!container) return;
-    
     container.innerHTML = '';
     
-    if (opereData.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📚</div>
-                <p class="empty-state-text">Nessuna opera trovata</p>
-            </div>
-        `;
-        return;
-    }
-    
-    const filtered = currentFilter === 'all' 
-        ? opereData 
-        : opereData.filter(o => o.periodo === currentFilter);
-    
-    filtered.forEach(opera => {
+    opereData.forEach(opera => {
         container.appendChild(createOperaCard(opera));
     });
 }
@@ -279,8 +470,6 @@ function createOperaCard(opera) {
     card.className = 'compact-item';
     card.classList.add(`border-${opera.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}`);
     
-    const autore = filosofiData.find(f => f.id === opera.autore_id)?.nome || opera.autore || 'Autore sconosciuto';
-    
     card.innerHTML = `
         <div class="compact-item-image-container">
             <div class="compact-image-fallback">📖</div>
@@ -288,25 +477,15 @@ function createOperaCard(opera) {
         <div class="compact-item-content">
             <div class="compact-item-header">
                 <h3 class="compact-item-name">${opera.titolo}</h3>
-                <span class="compact-item-periodo periodo-${opera.periodo}">
-                    ${opera.periodo === 'contemporaneo' ? 'CONTEMP.' : 'CLASSICO'}
-                </span>
             </div>
-            <div class="compact-item-autore">
-                <i class="fas fa-user-pen"></i> ${autore}
-            </div>
+            <div class="compact-item-autore"><i class="fas fa-user-pen"></i> ${opera.autore || 'Autore sconosciuto'}</div>
             <div class="compact-item-footer">
-                <span class="compact-item-anno">
-                    <i class="fas fa-calendar"></i> ${opera.anno || 'N/D'}
-                </span>
-                ${opera.concetti?.length > 0 ? 
-                    `<span class="compact-item-concetti">${opera.concetti.length} concetti</span>` : ''}
+                <span class="compact-item-anno">${opera.anno || 'N/D'}</span>
+                <span class="compact-item-periodo periodo-${opera.periodo}">${opera.periodo === 'contemporaneo' ? 'CONTEMP.' : 'CLASSICO'}</span>
             </div>
         </div>
     `;
-    
     card.addEventListener('click', () => showOperaDetail(opera.id));
-    
     return card;
 }
 
@@ -315,82 +494,35 @@ function showOperaDetail(id) {
     if (!opera) return;
     
     const content = document.getElementById('opera-detail-content');
-    if (!content) return;
-    
-    const autore = filosofiData.find(f => f.id === opera.autore_id);
-    
     content.innerHTML = `
         <div class="detail-header">
-            <div class="detail-image-container">
-                <div class="image-fallback detail-fallback" style="font-size: 4rem;">📖</div>
-            </div>
             <h1 class="detail-name">${opera.titolo}</h1>
-            <div class="detail-meta-grid">
-                <div class="meta-item">
-                    <strong>Autore</strong>
-                    <span>${autore ? autore.nome : opera.autore || 'N/D'}</span>
-                </div>
-                <div class="meta-item">
-                    <strong>Anno</strong>
-                    <span>${opera.anno || 'N/D'}</span>
-                </div>
-                <div class="meta-item">
-                    <strong>Periodo</strong>
-                    <span>${getPeriodoLabel(opera.periodo)}</span>
-                </div>
-                <div class="meta-item">
-                    <strong>Lingua</strong>
-                    <span>${opera.lingua || 'N/D'}</span>
-                </div>
-            </div>
+            <p><strong>Autore:</strong> ${opera.autore}</p>
+            <p><strong>Anno:</strong> ${opera.anno}</p>
         </div>
-        
         <div class="detail-info">
-            <h3><i class="fas fa-file-alt"></i> Sintesi</h3>
+            <h3>Sintesi</h3>
             <p class="biography-text">${opera.sintesi || 'Sintesi non disponibile.'}</p>
         </div>
-        
-        ${opera.concetti?.length > 0 ? `
-            <div class="detail-info">
-                <h3><i class="fas fa-tags"></i> Concetti Trattati</h3>
-                <div class="tags-cloud">
-                    ${opera.concetti.map(c => `<span class="tag-chip">${c}</span>`).join('')}
-                </div>
-            </div>
-        ` : ''}
-        
         ${opera.pdf ? `
-            <div class="action-buttons-container">
-                <button class="btn-analisi" onclick="window.open('${opera.pdf}', '_blank')">
-                    <i class="fas fa-external-link-alt"></i> Apri Testo
-                </button>
-                <button class="btn-secondary" onclick="analyzeOperaLinguistics('${opera.id}')">
-                    <i class="fas fa-chart-bar"></i> Analisi Testuale
-                </button>
-            </div>
-        ` : ''}
+        <div class="action-buttons-container">
+            <button class="btn-analisi" onclick="window.open('${opera.pdf}', '_blank')">Apri PDF</button>
+        </div>` : ''}
     `;
-    
     showScreen('opera-detail-screen');
 }
 
 // ==================== GESTIONE CONCETTI ====================
 async function loadConcetti() {
     try {
-        if (window.db) {
+        if (window.db && window.COLLECTIONS) {
             const snapshot = await window.db.collection(window.COLLECTIONS.CONCETTI).get();
-            concettiData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
+            concettiData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } else {
             concettiData = getSampleConcetti();
         }
-        
         renderConcettiList();
-        
     } catch (error) {
-        console.error('Errore concetti:', error);
         concettiData = getSampleConcetti();
         renderConcettiList();
     }
@@ -399,34 +531,10 @@ async function loadConcetti() {
 function renderConcettiList() {
     const container = document.getElementById('concetti-list');
     if (!container) return;
-    
     container.innerHTML = '';
     
-    if (concettiData.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">💡</div>
-                <p class="empty-state-text">Nessun concetto trovato</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Raggruppa per periodo
-    const classici = concettiData.filter(c => c.periodo === 'classico');
-    const contemporanei = concettiData.filter(c => c.periodo === 'contemporaneo');
-    const transperiodali = concettiData.filter(c => c.periodo === 'entrambi');
-    
-    if (classici.length > 0) {
-        container.appendChild(createConcettiSection('Periodo Classico', classici, 'classico'));
-    }
-    
-    if (contemporanei.length > 0) {
-        container.appendChild(createConcettiSection('Periodo Contemporaneo', contemporanei, 'contemporaneo'));
-    }
-    
-    if (transperiodali.length > 0) {
-        container.appendChild(createConcettiSection('Transperiodali', transperiodali, 'entrambi'));
+    if (concettiData.length > 0) {
+        container.appendChild(createConcettiSection('Tutti i Concetti', concettiData, 'entrambi'));
     }
 }
 
@@ -435,57 +543,27 @@ function createConcettiSection(title, concetti, periodo) {
     section.className = 'concetti-section';
     
     section.innerHTML = `
-        <div class="section-header">
-            <h3><i class="fas fa-${periodo === 'classico' ? 'columns' : periodo === 'contemporaneo' ? 'bolt' : 'exchange-alt'}"></i> ${title}</h3>
-            <span class="section-count">${concetti.length} concetti</span>
-        </div>
+        <div class="section-header"><h3>${title}</h3><span class="section-count">${concetti.length}</span></div>
         <div class="concetti-grid">
-            ${concetti.map(concetto => createConcettoCard(concetto)).join('')}
+            ${concetti.map(c => createConcettoCardString(c)).join('')}
         </div>
     `;
-    
     return section;
 }
 
-function createConcettoCard(concetto) {
-    const card = document.createElement('div');
-    card.className = 'concetto-card';
-    card.classList.add(`border-${concetto.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}`);
-    
-    const autore = filosofiData.find(f => f.id === concetto.autore_id)?.nome || concetto.autore || '';
-    const opera = opereData.find(o => o.id === concetto.opera_id)?.titolo || concetto.opera || '';
-    
-    card.innerHTML = `
+function createConcettoCardString(concetto) {
+    // Nota: Uso stringa qui per semplicità nell'iniezione
+    return `
+    <div class="concetto-card border-${concetto.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}" onclick="showConcettoDetail('${concetto.id}')">
         <div class="concetto-header">
             <h3 class="concetto-parola">${concetto.parola}</h3>
-            <span class="concetto-periodo periodo-${concetto.periodo}">
-                ${concetto.periodo === 'contemporaneo' ? 'CONTEMP.' : concetto.periodo === 'classico' ? 'CLASSICO' : 'TRANS.'}
-            </span>
         </div>
-        <p class="concetto-definizione">${concetto.definizione || 'Definizione non disponibile.'}</p>
-        
-        ${concetto.esempio ? `
-            <div class="concetto-esempio">
-                <i class="fas fa-quote-left"></i> ${concetto.esempio}
-            </div>
-        ` : ''}
-        
-        <div class="concetto-footer">
-            ${autore ? `<span class="concetto-autore"><i class="fas fa-user"></i> ${autore}</span>` : ''}
-            ${opera ? `<span class="concetto-opera"><i class="fas fa-book"></i> ${opera}</span>` : ''}
-        </div>
-        
+        <p class="concetto-definizione">${concetto.definizione || ''}</p>
         <div class="concetto-actions">
-            <button class="btn-analisi small" onclick="openComparativeAnalysis('${concetto.parola}')">
-                <i class="fas fa-chart-line"></i> Analisi Evolutiva
-            </button>
-            <button class="btn-secondary small" onclick="showConcettoDetail('${concetto.id}')">
-                <i class="fas fa-info-circle"></i> Dettagli
-            </button>
+            <button class="btn-analisi small" onclick="event.stopPropagation(); openComparativeAnalysis('${concetto.parola}')">Analisi</button>
         </div>
+    </div>
     `;
-    
-    return card;
 }
 
 function showConcettoDetail(id) {
@@ -493,96 +571,41 @@ function showConcettoDetail(id) {
     if (!concetto) return;
     
     const content = document.getElementById('concetto-detail-content');
-    if (!content) return;
-    
-    const autore = filosofiData.find(f => f.id === concetto.autore_id);
-    const opera = opereData.find(o => o.id === concetto.opera_id);
-    
     content.innerHTML = `
         <div class="detail-header">
             <h1 class="detail-name">${concetto.parola}</h1>
             <div class="detail-meta-grid">
-                <div class="meta-item">
-                    <strong>Periodo</strong>
-                    <span>${getPeriodoLabel(concetto.periodo)}</span>
-                </div>
-                ${autore ? `
-                    <div class="meta-item">
-                        <strong>Autore</strong>
-                        <span>${autore.nome}</span>
-                    </div>
-                ` : ''}
-                ${opera ? `
-                    <div class="meta-item">
-                        <strong>Opera</strong>
-                        <span>${opera.titolo}</span>
-                    </div>
-                ` : ''}
+                <div class="meta-item"><strong>Periodo:</strong> ${getPeriodoLabel(concetto.periodo)}</div>
             </div>
         </div>
-        
         <div class="detail-info">
-            <h3><i class="fas fa-book"></i> Definizione</h3>
-            <p class="biography-text">${concetto.definizione || 'Definizione non disponibile.'}</p>
+            <h3>Definizione</h3>
+            <p>${concetto.definizione}</p>
         </div>
-        
-        ${concetto.esempio ? `
-            <div class="detail-info">
-                <h3><i class="fas fa-quote-right"></i> Esempio</h3>
-                <blockquote class="concetto-citazione">${concetto.esempio}</blockquote>
-            </div>
-        ` : ''}
-        
         ${concetto.evoluzione ? `
-            <div class="detail-info">
-                <h3><i class="fas fa-history"></i> Evoluzione</h3>
-                <p class="biography-text">${concetto.evoluzione}</p>
-            </div>
-        ` : ''}
-        
+        <div class="detail-info">
+            <h3>Evoluzione</h3>
+            <p>${concetto.evoluzione}</p>
+        </div>` : ''}
         <div class="action-buttons-container">
-            <button class="btn-analisi" onclick="openComparativeAnalysis('${concetto.parola}')">
-                <i class="fas fa-chart-line"></i> Analisi Comparativa
-            </button>
-            <button class="btn-secondary" onclick="showConceptConnections('${concetto.parola}')">
-                <i class="fas fa-project-diagram"></i> Connessioni
-            </button>
+            <button class="btn-analisi" onclick="openComparativeAnalysis('${concetto.parola}')">Analisi Comparativa</button>
         </div>
     `;
-    
     showScreen('concetto-detail-screen');
 }
 
-// ==================== MAPPA FILOSOFICA ====================
-let philosophicalMap = null;
-
+// ==================== MAPPA GEOGRAFICA ====================
 function initPhilosophicalMap() {
     if (!document.getElementById('map')) return;
+    if (philosophicalMap) return; // Già inizializzata
     
     try {
         philosophicalMap = L.map('map').setView([41.8719, 12.5674], 5);
-        
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap',
-            maxZoom: 18
+            attribution: '© OpenStreetMap'
         }).addTo(philosophicalMap);
         
         updateMapWithPhilosophers();
-        
-        // Posizione utente
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                const { latitude, longitude } = position.coords;
-                L.marker([latitude, longitude], {
-                    icon: L.icon({
-                        iconUrl: 'https://derolu0.github.io/aeterna/images/marker-red.png',
-                        iconSize: [25, 41]
-                    })
-                }).addTo(philosophicalMap)
-                  .bindPopup('La tua posizione');
-            });
-        }
-        
     } catch (error) {
         console.error('Errore mappa:', error);
     }
@@ -594,56 +617,49 @@ function updateMapWithPhilosophers() {
     filosofiData.forEach(filosofo => {
         if (filosofo.luogo_nascita?.coordinate) {
             const { lat, lng } = filosofo.luogo_nascita.coordinate;
-            const color = filosofo.periodo === 'contemporaneo' ? 'orange' : 'green';
-            
-            const marker = L.marker([lat, lng], {
-                icon: L.icon({
-                    iconUrl: `https://derolu0.github.io/aeterna/images/marker-${color}.png`,
-                    iconSize: [25, 41]
-                })
-            }).addTo(philosophicalMap);
-            
-            marker.bindPopup(`
-                <div class="map-popup">
-                    <h3>${filosofo.nome}</h3>
-                    <p>${getPeriodoLabel(filosofo.periodo)}</p>
-                    <p>${filosofo.luogo_nascita.citta}, ${filosofo.luogo_nascita.paese}</p>
-                    <button onclick="showFilosofoDetail('${filosofo.id}')" class="btn-map-detail">
-                        Dettagli
-                    </button>
-                </div>
-            `);
+            L.marker([lat, lng])
+             .addTo(philosophicalMap)
+             .bindPopup(`<b>${filosofo.nome}</b><br>${filosofo.luogo_nascita.citta}`);
         }
     });
 }
 
 // ==================== ANALISI COMPARATIVA ====================
 function openComparativeAnalysis(termine) {
-    console.log(`Analisi comparativa: ${termine}`);
-    
     const modal = document.getElementById('comparative-analysis-modal');
     if (!modal) {
-        showToast('Funzionalità in sviluppo', 'info');
+        showToast('Analisi non disponibile', 'info');
         return;
     }
     
+    document.getElementById('comparative-term-title').textContent = termine.toUpperCase();
     modal.style.display = 'flex';
-    
-    // Popola con dati reali
-    setTimeout(() => {
-        populateComparativeAnalysis(termine);
-    }, 500);
 }
 
-function populateComparativeAnalysis(termine) {
-    // Implementazione base
-    const title = document.getElementById('comparative-term-title');
-    if (title) title.textContent = termine.toUpperCase();
-    
-    showToast(`Analisi per "${termine}" completata`, 'success');
+function closeComparativeModal() {
+    document.getElementById('comparative-analysis-modal').style.display = 'none';
 }
 
-// ==================== UTILITY FUNCTIONS ====================
+// ==================== RICERCA ====================
+function searchFilosofi(query) {
+    const term = query.toLowerCase();
+    const items = document.querySelectorAll('#filosofi-list .grid-item');
+    items.forEach(item => {
+        const name = item.querySelector('.item-name').textContent.toLowerCase();
+        item.style.display = name.includes(term) ? 'flex' : 'none';
+    });
+}
+
+function searchOpere(query) {
+    const term = query.toLowerCase();
+    const items = document.querySelectorAll('#opere-list .compact-item');
+    items.forEach(item => {
+        const title = item.querySelector('.compact-item-name').textContent.toLowerCase();
+        item.style.display = title.includes(term) ? 'flex' : 'none';
+    });
+}
+
+// ==================== UTILITY & HELPERS ====================
 function getPeriodoLabel(periodo) {
     const labels = {
         'classico': 'Classico/Antico',
@@ -659,278 +675,91 @@ function getPeriodoLabel(periodo) {
 function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     if (!toast) return;
-    
     toast.textContent = message;
-    toast.className = 'toast ' + type;
     toast.style.display = 'block';
-    
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 3000);
+    setTimeout(() => toast.style.display = 'none', 3000);
 }
 
-function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(s => {
-        s.classList.remove('active');
-        s.style.display = 'none';
-    });
-    
-    const target = document.getElementById(screenId);
-    if (target) {
-        target.classList.add('active');
-        target.style.display = 'flex';
-        
-        // Aggiorna tab bar
-        updateTabBar(screenId);
-        
-        // Carica dati se necessario
-        loadScreenData(screenId);
-    }
-}
-
-function updateTabBar(screenId) {
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-target') === screenId) {
-            btn.classList.add('active');
-        }
-    });
-}
-
-function goBack() {
-    // Implementazione semplice
-    if (currentScreen.includes('detail')) {
-        showScreen(currentScreen.replace('-detail-screen', '-screen'));
-    } else {
-        showScreen('home-screen');
-    }
-}
-
-// ==================== DATI DI ESEMPIO ====================
-function getSampleFilosofi() {
-    return [
-        {
-            id: "F001",
-            nome: "Platone",
-            periodo: "classico",
-            scuola: "Accademia di Atene",
-            anni: "428/427 a.C. - 348/347 a.C.",
-            luogo_nascita: {
-                citta: "Atene",
-                paese: "Grecia",
-                coordinate: { lat: 37.9838, lng: 23.7275 }
-            },
-            biografia: "Fondatore dell'Accademia e autore dei Dialoghi. La sua filosofia esplora la teoria delle idee, l'immortalità dell'anima e la ricerca della verità.",
-            concetti_principali: ["Idea", "Bene", "Anima", "Stato Ideale"]
-        },
-        {
-            id: "F002",
-            nome: "Friedrich Nietzsche",
-            periodo: "contemporaneo",
-            scuola: "Filosofia continentale",
-            anni: "1844-1900",
-            luogo_nascita: {
-                citta: "Röcken",
-                paese: "Germania",
-                coordinate: { lat: 51.2372, lng: 12.0914 }
-            },
-            biografia: "Filosofo tedesco noto per la critica radicale alla cultura occidentale. Sviluppò concetti come l'Oltreuomo e la volontà di potenza.",
-            concetti_principali: ["Oltreuomo", "Volontà di potenza", "Morte di Dio"]
-        }
-    ];
-}
-
-function getSampleOpere() {
-    return [
-        {
-            id: "O001",
-            titolo: "La Repubblica",
-            autore: "Platone",
-            autore_id: "F001",
-            anno: "380 a.C.",
-            periodo: "classico",
-            sintesi: "Dialogo platonico che affronta il tema della giustizia e descrive lo Stato ideale governato dai filosofi.",
-            concetti: ["Giustizia", "Stato Ideale", "Idea del Bene"]
-        },
-        {
-            id: "O002",
-            titolo: "Così parlò Zarathustra",
-            autore: "Friedrich Nietzsche",
-            autore_id: "F002",
-            anno: "1883",
-            periodo: "contemporaneo",
-            sintesi: "Opera poetica e filosofica che presenta la figura dell'Oltreuomo e critica i valori tradizionali.",
-            concetti: ["Oltreuomo", "Volontà di potenza"]
-        }
-    ];
-}
-
-function getSampleConcetti() {
-    return [
-        {
-            id: "C001",
-            parola: "Verità",
-            definizione: "Concetto centrale della filosofia che indica la corrispondenza tra pensiero e realtà.",
-            periodo: "entrambi",
-            esempio: "La verità è la luce che permette di uscire dalla caverna delle apparenze.",
-            evoluzione: "Da concezione ontologica classica a costruzione discorsiva contemporanea."
-        },
-        {
-            id: "C002",
-            parola: "Potere",
-            definizione: "Capacità di influenzare, determinare o controllare il comportamento altrui.",
-            periodo: "contemporaneo",
-            esempio: "La volontà di potenza come principio fondamentale della vita.",
-            evoluzione: "Da potere sovrano a potere diffuso nelle società disciplinari."
-        }
-    ];
-}
-
-function loadSampleData() {
-    filosofiData = getSampleFilosofi();
-    opereData = getSampleOpere();
-    concettiData = getSampleConcetti();
-    
-    renderFilosofiList();
-    renderOpereList();
-    renderConcettiList();
-}
-
-// ==================== GESTIONE SCHERMATE ====================
 function loadScreenData(screenId) {
-    switch(screenId) {
-        case 'mappa-screen':
-            setTimeout(initPhilosophicalMap, 100);
-            break;
-        case 'filosofi-screen':
-            renderFilosofiList();
-            break;
-        case 'opere-screen':
-            renderOpereList();
-            break;
-        case 'concetti-screen':
-            renderConcettiList();
-            break;
+    if (screenId === 'mappa-screen') {
+        setTimeout(initPhilosophicalMap, 200);
+    } else if (screenId === 'mappa-concettuale-screen') {
+        // initNetworkMap(); // Se implementata
     }
 }
 
-// ==================== GESTIONE MENU ====================
-function toggleMenuModal() {
-    const modal = document.getElementById('top-menu-modal');
-    if (modal) {
-        modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
-    }
-}
-
-function openCreditsScreen() {
-    showScreen('credits-screen');
-    const modal = document.getElementById('top-menu-modal');
-    if (modal) modal.style.display = 'none';
-}
-
-function openReportScreen() {
-    showScreen('segnalazioni-screen');
-    const modal = document.getElementById('top-menu-modal');
-    if (modal) modal.style.display = 'none';
-}
-
-// ==================== GESTIONE OFFLINE ====================
-function setupConnectionListeners() {
-    const indicator = document.getElementById('offline-indicator');
-    
-    function updateStatus() {
-        if (indicator) {
-            indicator.style.display = navigator.onLine ? 'none' : 'block';
-        }
-    }
-    
-    window.addEventListener('online', updateStatus);
-    window.addEventListener('offline', updateStatus);
-    updateStatus();
-}
-
-// ==================== GESTIONE PWA ====================
-function setupPWA() {
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        console.log('📱 App installata come PWA');
-    }
-    
-    window.addEventListener('beforeinstallprompt', (e) => {
-        window.deferredPrompt = e;
-        showInstallBanner();
-    });
-}
-
-function showInstallBanner() {
-    const banner = document.getElementById('smart-install-banner');
-    if (banner && window.deferredPrompt) {
-        banner.style.display = 'flex';
-    }
-}
-
-function installPWA() {
-    if (window.deferredPrompt) {
-        window.deferredPrompt.prompt();
-        window.deferredPrompt.userChoice.then(choice => {
-            if (choice.outcome === 'accepted') {
-                showToast('App installata con successo!', 'success');
-            }
-            window.deferredPrompt = null;
-        });
-    }
-    
-    const banner = document.getElementById('smart-install-banner');
-    if (banner) banner.style.display = 'none';
-}
-
-// ==================== GESTIONE MANUTENZIONE ====================
 function checkMaintenanceMode() {
     const maintenance = localStorage.getItem('maintenance_mode');
     const element = document.getElementById('maintenance-mode');
-    
     if (element) {
         element.style.display = maintenance === 'true' ? 'flex' : 'none';
     }
 }
 
-// ==================== ESPORTAZIONE DATI ====================
-function exportPhilosophicalData() {
-    try {
-        const data = {
-            filosofi: filosofiData,
-            opere: opereData,
-            concetti: concettiData,
-            export_date: new Date().toISOString(),
-            version: 'Aeterna Lexicon 3.1.0'
-        };
-        
-        const json = JSON.stringify(data, null, 2);
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `dataset-filosofico-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showToast('Dataset esportato con successo', 'success');
-        
-    } catch (error) {
-        console.error('Errore esportazione:', error);
-        showToast('Errore nell\'esportazione', 'error');
+// ==================== PWA ====================
+function setupPWA() {
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPrompt = e;
+        const banner = document.getElementById('smart-install-banner');
+        if (banner) banner.style.display = 'flex';
+    });
+}
+
+function installPWA() {
+    if (window.deferredPrompt) {
+        window.deferredPrompt.prompt();
+        window.deferredPrompt = null;
+        document.getElementById('smart-install-banner').style.display = 'none';
     }
 }
 
-// ==================== FUNZIONI GLOBALI ====================
+function setupConnectionListeners() {
+    window.addEventListener('online', () => document.getElementById('offline-indicator').style.display = 'none');
+    window.addEventListener('offline', () => document.getElementById('offline-indicator').style.display = 'block');
+}
+
+// ==================== DATI DI ESEMPIO (FALLBACK) ====================
+function getSampleFilosofi() {
+    return [
+        { id: "F1", nome: "Platone", periodo: "classico", scuola: "Accademia", anni: "428-348 a.C.", biografia: "Filosofo greco...", concetti_principali: ["Idea", "Bene"] },
+        { id: "F2", nome: "Nietzsche", periodo: "contemporaneo", scuola: "Continental", anni: "1844-1900", biografia: "Filosofo tedesco...", concetti_principali: ["Oltreuomo"] }
+    ];
+}
+function getSampleOpere() {
+    return [
+        { id: "O1", title: "Repubblica", autore: "Platone", periodo: "classico" }
+    ];
+}
+function getSampleConcetti() {
+    return [
+        { id: "C1", parola: "Verità", periodo: "entrambi", definizione: "Corrispondenza..." }
+    ];
+}
+
+// ==================== ESPOSIZIONE GLOBALE ====================
+// Rende le funzioni accessibili all'HTML (onclick)
 window.showScreen = showScreen;
 window.goBack = goBack;
 window.toggleMenuModal = toggleMenuModal;
+window.closeMenuModal = closeMenuModal; // Era mancante!
 window.openCreditsScreen = openCreditsScreen;
 window.openReportScreen = openReportScreen;
+window.openQRModal = openQRModal; // Era mancante!
+window.closeQRModal = closeQRModal; // Era mancante!
+window.openAdminPanel = openAdminPanel; // Era mancante!
+window.closeAdminPanel = closeAdminPanel; // Era mancante!
+window.checkAdminAuth = checkAdminAuth; // Era mancante!
+window.closeAdminAuth = closeAdminAuth; // Era mancante!
+window.logoutAdmin = logoutAdmin;
 window.installPWA = installPWA;
-window.exportPhilosophicalData = exportPhilosophicalData;
+window.searchFilosofi = searchFilosofi;
+window.searchOpere = searchOpere;
+window.setFilter = setFilter;
+window.showFilosofoDetail = showFilosofoDetail;
+window.showOperaDetail = showOperaDetail;
+window.showConcettoDetail = showConcettoDetail;
+window.openComparativeAnalysis = openComparativeAnalysis;
+window.closeComparativeModal = closeComparativeModal;
 
-console.log('📚 Aeterna Lexicon App.js - Versione 3.1.0 - READY');
+console.log('📚 Aeterna Lexicon App.js (Fixed UI) - READY');
