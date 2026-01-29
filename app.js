@@ -23,42 +23,6 @@ let networkInstance = null;
 // PWA Installation
 let deferredPrompt = null;
 
-// ==================== INIZIALIZZAZIONE APP ====================
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('📚 Aeterna Lexicon - Caricamento app filosofica...');
-    
-    // Nascondi splash screen
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        if (splash) {
-            splash.classList.add('hidden');
-            setTimeout(() => splash.style.display = 'none', 500);
-        }
-        
-        // Controlla manutenzione
-        checkMaintenanceMode();
-        
-        // Mostra home
-        showScreen('home-screen');
-        
-        // Gestisci parametri URL (es. ?screen=filosofi)
-        handleUrlParameters();
-        
-        console.log('✅ App filosofica pronta');
-    }, 1500);
-    
-    // Inizializza Firebase (se presente)
-    if (window.initializeFirebase) window.initializeFirebase();
-    
-    // Carica dati filosofici
-    await loadPhilosophicalData();
-    
-    // Setup connessione
-    setupConnectionListeners();
-    
-    // Setup PWA
-    setupPWA();
-});
 
 // ==================== GESTIONE NAVIGAZIONE (FIXED) ====================
 
@@ -1179,22 +1143,50 @@ async function saveConcetto(e) {
     } catch(err) { alert("Errore: " + err.message); }
 }
 
+// ==================== PWA INSTALLATION LOGIC ====================
+// La variabile 'deferredPrompt' è già dichiarata all'inizio del file.
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault(); // Blocca banner nativo
+    deferredPrompt = e; // Salva evento
+    
+    const banner = document.getElementById('pwa-install-banner');
+    if (banner) {
+        banner.style.display = 'flex';
+        console.log("📲 Banner PWA attivato");
+    }
+});
+
+async function installPWA() {
+    if (!deferredPrompt) return;
+    
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`Esito installazione: ${outcome}`);
+    
+    deferredPrompt = null;
+    
+    const banner = document.getElementById('pwa-install-banner');
+    if(banner) banner.style.display = 'none';
+}
+
 // ==================== ESPOSIZIONE GLOBALE ====================
 // Rende le funzioni accessibili all'HTML (onclick)
+
 window.showScreen = showScreen;
 window.goBack = goBack;
 window.toggleMenuModal = toggleMenuModal;
-window.closeMenuModal = closeMenuModal; // Era mancante!
+window.closeMenuModal = closeMenuModal;
 window.openCreditsScreen = openCreditsScreen;
 window.openReportScreen = openReportScreen;
-window.openQRModal = openQRModal; // Era mancante!
-window.closeQRModal = closeQRModal; // Era mancante!
-window.openAdminPanel = openAdminPanel; // Era mancante!
-window.closeAdminPanel = closeAdminPanel; // Era mancante!
-window.checkAdminAuth = checkAdminAuth; // Era mancante!
-window.closeAdminAuth = closeAdminAuth; // Era mancante!
+window.openQRModal = openQRModal;
+window.closeQRModal = closeQRModal;
+window.openAdminPanel = openAdminPanel;
+window.closeAdminPanel = closeAdminPanel;
+window.checkAdminAuth = checkAdminAuth;
+window.closeAdminAuth = closeAdminAuth;
 window.logoutAdmin = logoutAdmin;
-window.installPWA = installPWA;
+window.installPWA = installPWA; // Ora funziona perché la funzione esiste qui sopra
 window.searchFilosofi = searchFilosofi;
 window.searchOpere = searchOpere;
 window.setFilter = setFilter;
@@ -1206,4 +1198,9 @@ window.closeComparativeModal = closeComparativeModal;
 window.goToMapLocation = goToMapLocation;
 window.initConceptMap = initConceptMap;
 
-console.log('📚 Aeterna Lexicon App.js (Fixed UI v3.2.0) - READY');
+// Placeholder per funzioni admin mancanti (per evitare errori se chiamate)
+window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ console.log("Funzione Admin Load mancante"); };
+window.loadAdminOpere = window.loadAdminOpere || function(){};
+window.loadAdminConcetti = window.loadAdminConcetti || function(){};
+
+console.log('📚 Aeterna Lexicon App.js (Fixed UI v3.2.1) - READY');
