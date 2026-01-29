@@ -247,53 +247,33 @@ function openAdminPanel() {
 }
 // 4. LOGIN CON FIREBASE (Azionato dal tasto "Accedi")
 function checkAdminAuth() {
-    const emailField = document.getElementById('admin-email');
-    const passField = document.getElementById('admin-password');
-    const errorMsg = document.getElementById('auth-error');
-
-    const email = emailField ? emailField.value.trim() : '';
-    const pass = passField ? passField.value : '';
+    const email = document.getElementById('admin-email').value.trim();
+    const pass = document.getElementById('admin-password').value;
 
     if (!email || !pass) {
-        if(errorMsg) {
-            errorMsg.style.display = 'block';
-            errorMsg.textContent = "Inserisci email e password.";
-        }
+        showToast("Inserisci i dati", "error");
         return;
     }
 
-    showToast("Verifica credenziali in corso...", "info");
+    showToast("Accesso in corso...", "info");
 
-    // Autenticazione reale tramite Firebase
     firebase.auth().signInWithEmailAndPassword(email, pass)
         .then((userCredential) => {
-            const user = userCredential.user;
-
-            // Controllo sicurezza: permette l'accesso solo alla tua email specifica
-            if (user.email === 'derolu0@gmail.com') {
-                closeAdminAuth();
+            if (userCredential.user.email === 'derolu0@gmail.com') {
+                document.getElementById('admin-auth').style.display = 'none';
                 showScreen('admin-panel');
                 loadAllAdminData();
-                showToast("Accesso Amministratore autorizzato", "success");
             } else {
-                // Se la mail non corrisponde, effettua il logout immediato
                 firebase.auth().signOut();
-                if(errorMsg) {
-                    errorMsg.style.display = 'block';
-                    errorMsg.textContent = "Accesso non autorizzato.";
-                }
-                showToast("Accesso Negato", "error");
+                showToast("Non autorizzato", "error");
             }
         })
         .catch((error) => {
-            console.error("Login Error:", error);
-            if(errorMsg) {
-                errorMsg.style.display = 'block';
-                errorMsg.textContent = "Email o Password errata.";
-            }
+            console.error(error);
+            document.getElementById('auth-error').style.display = 'block';
+            document.getElementById('auth-error').textContent = "Errore: " + error.message;
         });
 }
-
 // 5. LOGOUT MANUALE
 function logoutAdmin() {
     firebase.auth().signOut().then(() => {
