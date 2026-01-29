@@ -809,6 +809,165 @@
         <button onclick="document.getElementById('pwa-install-banner').style.display='none'" class="pwa-close">&times;</button>
     </div>
 
+    <div id="admin-panel" class="screen" style="display: none;">
+        <div class="admin-header">
+            <h2><i class="fas fa-cogs"></i> Pannello Gestione Dataset</h2>
+            <button class="close-btn" onclick="closeAdminPanel()"><i class="fas fa-times"></i></button>
+        </div>
+    
+        <div class="admin-content">
+            <div class="admin-stats">
+                <div class="stat-card">
+                    <h3>Filosofi</h3>
+                    <span id="total-filosofi">0</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Opere</h3>
+                    <span id="total-opere">0</span>
+                </div>
+                <div class="stat-card">
+                    <h3>Concetti</h3>
+                    <span id="total-concetti">0</span>
+                </div>
+            </div>
+            
+            <div class="admin-controls">
+                <button class="btn-danger" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                <button class="btn-primary" onclick="exportFullDataset()"><i class="fas fa-download"></i> Scarica Tutto (Backup)</button>
+            </div>
+    
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" onclick="switchAdminTab('admin-filosofi')">Filosofi</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('admin-opere')">Opere</button>
+                <button class="admin-tab-btn" onclick="switchAdminTab('admin-concetti')">Concetti</button>
+            </div>
+    
+            <div id="admin-filosofi" class="admin-tab-content active">
+                <div class="toolbar">
+                    <h3>Importa / Esporta CSV</h3>
+                    <div class="import-export-group">
+                        <input type="file" id="import-filosofi-file" accept=".csv" class="file-input-hidden">
+                        <label for="import-filosofi-file" class="btn-secondary"><i class="fas fa-file-upload"></i> Importa CSV</label>
+                        <button class="btn-secondary" onclick="exportFilosofiToExcel()"><i class="fas fa-file-download"></i> Esporta CSV</button>
+                    </div>
+                </div>
+    
+                <form id="filosofo-form" class="admin-form" onsubmit="saveFilosofo(event)">
+                    <h3>Nuovo Filosofo</h3>
+                    <input type="hidden" id="filosofo-id"> 
+                    <div class="form-group">
+                        <input type="text" id="filosofo-nome" placeholder="Nome (es. Platone)" required>
+                        <select id="filosofo-periodo">
+                            <option value="classico">Classico</option>
+                            <option value="contemporaneo">Contemporaneo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="filosofo-scuola" placeholder="Scuola (es. Accademia)">
+                        <input type="text" id="filosofo-anni" placeholder="Anni (es. 428-348 a.C.)">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="filosofo-citta" placeholder="Luogo Nascita">
+                        <input type="number" id="filosofo-lat" step="any" placeholder="Latitudine (es. 37.98)">
+                        <input type="number" id="filosofo-lng" step="any" placeholder="Longitudine (es. 23.72)">
+                    </div>
+                    <textarea id="filosofo-biografia" placeholder="Biografia breve..."></textarea>
+                    <input type="text" id="filosofo-concetti" placeholder="Concetti (separati da virgola)">
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-submit">Salva Filosofo</button>
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('filosofo-form').reset()">Pulisci</button>
+                    </div>
+                </form>
+    
+                <div class="data-table-container">
+                    <table class="admin-table">
+                        <thead><tr><th>ID</th><th>Nome</th><th>Periodo</th><th>Scuola</th><th>Azioni</th></tr></thead>
+                        <tbody id="filosofi-table-body"></tbody>
+                    </table>
+                    <button class="btn-secondary full-width" onclick="loadAdminFilosofi()">🔄 Aggiorna Lista</button>
+                </div>
+            </div>
+    
+            <div id="admin-opere" class="admin-tab-content">
+                <div class="toolbar">
+                    <div class="import-export-group">
+                        <input type="file" id="import-opere-file" accept=".csv" class="file-input-hidden">
+                        <label for="import-opere-file" class="btn-secondary"><i class="fas fa-file-upload"></i> Importa CSV</label>
+                        <button class="btn-secondary" onclick="exportOpereToExcel()"><i class="fas fa-file-download"></i> Esporta</button>
+                    </div>
+                </div>
+    
+                <form id="opera-form" class="admin-form" onsubmit="saveOpera(event)">
+                    <h3>Nuova Opera</h3>
+                    <input type="hidden" id="opera-id">
+                    <div class="form-group">
+                        <input type="text" id="opera-titolo" placeholder="Titolo Opera" required>
+                        <select id="opera-autore" required>
+                            <option value="">Seleziona Autore...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="opera-anno" placeholder="Anno pubblicazione">
+                        <select id="opera-periodo">
+                            <option value="classico">Classico</option>
+                            <option value="contemporaneo">Contemporaneo</option>
+                        </select>
+                    </div>
+                    <textarea id="opera-sintesi" placeholder="Sintesi dell'opera..."></textarea>
+                    <button type="submit" class="btn-submit">Salva Opera</button>
+                </form>
+    
+                <div class="data-table-container">
+                    <table class="admin-table">
+                        <thead><tr><th>ID</th><th>Titolo</th><th>Autore</th><th>Anno</th><th>Azioni</th></tr></thead>
+                        <tbody id="opere-table-body"></tbody>
+                    </table>
+                    <button class="btn-secondary full-width" onclick="loadAdminOpere()">🔄 Aggiorna Lista</button>
+                </div>
+            </div>
+    
+            <div id="admin-concetti" class="admin-tab-content">
+                <div class="toolbar">
+                    <div class="import-export-group">
+                        <input type="file" id="import-concetti-file" accept=".csv" class="file-input-hidden">
+                        <label for="import-concetti-file" class="btn-secondary"><i class="fas fa-file-upload"></i> Importa CSV</label>
+                        <button class="btn-secondary" onclick="exportConcettiToExcel()"><i class="fas fa-file-download"></i> Esporta</button>
+                    </div>
+                </div>
+    
+                <form id="concetto-form" class="admin-form" onsubmit="saveConcetto(event)">
+                    <h3>Nuovo Concetto</h3>
+                    <input type="hidden" id="concetto-id">
+                    <div class="form-group">
+                        <input type="text" id="concetto-parola" placeholder="Parola Chiave" required>
+                        <select id="concetto-periodo">
+                            <option value="entrambi">Transperiodale (Entrambi)</option>
+                            <option value="classico">Classico</option>
+                            <option value="contemporaneo">Contemporaneo</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="concetto-autore">
+                            <option value="">Autore di Riferimento (Opzionale)</option>
+                        </select>
+                    </div>
+                    <textarea id="concetto-definizione" placeholder="Definizione filosofica..."></textarea>
+                    <textarea id="concetto-evoluzione" placeholder="Evoluzione nel tempo (per analisi comparativa)..."></textarea>
+                    <button type="submit" class="btn-submit">Salva Concetto</button>
+                </form>
+    
+                <div class="data-table-container">
+                    <table class="admin-table">
+                        <thead><tr><th>ID</th><th>Parola</th><th>Definizione</th><th>Periodo</th><th>Azioni</th></tr></thead>
+                        <tbody id="concetti-table-body"></tbody>
+                    </table>
+                    <button class="btn-secondary full-width" onclick="loadAdminConcetti()">🔄 Aggiorna Lista</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
@@ -824,14 +983,9 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Anche qui usiamo il percorso locale sw.js
                 navigator.serviceWorker.register('sw.js')
-                    .then(registration => {
-                        console.log('✅ Service Worker registrato correttamente');
-                    })
-                    .catch(error => {
-                        console.warn('⚠️ Service Worker non registrato:', error);
-                    });
+                    .then(registration => console.log('✅ Service Worker registrato correttamente'))
+                    .catch(error => console.warn('⚠️ Service Worker non registrato:', error));
             });
         }
     </script>

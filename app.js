@@ -1210,6 +1210,117 @@ async function installPWA() {
     const banner = document.getElementById('pwa-install-banner');
     if(banner) banner.style.display = 'none';
 }
+// ==================== GESTIONE IMPORT / EXPORT (DATASET) ====================
+
+// --- EXPORT (Scarica i dati in CSV/Excel) ---
+function exportFilosofiToExcel() { exportToCSV('filosofi', filosofiData); }
+function exportOpereToExcel() { exportToCSV('opere', opereData); }
+function exportConcettiToExcel() { exportToCSV('concetti', concettiData); }
+
+async function exportFullDataset() {
+    showToast("Preparazione export completo...", "info");
+    exportToCSV('filosofi', filosofiData);
+    setTimeout(() => exportToCSV('opere', opereData), 1000);
+    setTimeout(() => exportToCSV('concetti', concettiData), 2000);
+}
+
+function exportToCSV(filename, data) {
+    if (!data || data.length === 0) {
+        showToast(`Nessun dato da esportare per ${filename}`, "warning");
+        return;
+    }
+
+    try {
+        // Estrai le intestazioni
+        const headers = Object.keys(data[0]);
+        const csvRows = [];
+        csvRows.push(headers.join(',')); // Intestazione
+
+        for (const row of data) {
+            const values = headers.map(header => {
+                const val = row[header] !== undefined ? '' + row[header] : '';
+                const escaped = val.replace(/"/g, '\\"'); // Gestione virgolette
+                return `"${escaped}"`;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.setAttribute('hidden', '');
+        a.setAttribute('href', url);
+        a.setAttribute('download', `aeterna_${filename}.csv`);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        showToast(`Export ${filename} completato`, "success");
+    } catch (error) {
+        console.error("Errore export:", error);
+        showToast("Errore durante l'esportazione", "error");
+    }
+}
+
+// --- IMPORT (Carica dati da file) ---
+function setupImportListeners() {
+    setupSingleImport('import-filosofi-file', 'filosofi');
+    setupSingleImport('import-opere-file', 'opere');
+    setupSingleImport('import-concetti-file', 'concetti');
+}
+
+function setupSingleImport(inputId, collectionName) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    input.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        showToast("Lettura file in corso...", "info");
+        const reader = new FileReader();
+        
+        reader.onload = async (event) => {
+            try {
+                const text = event.target.result;
+                const rows = text.split('\n');
+                const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                
+                const batch = window.db.batch();
+                let count = 0;
+                
+                for (let i = 1; i < rows.length; i++) {
+                    if (!rows[i].trim()) continue;
+                    // Regex per gestire CSV con virgolette
+                    const values = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                    const cleanValues = values.map(v => v ? v.replace(/^"|"$/g, '').trim() : '');
+                    
+                    const docData = {};
+                    headers.forEach((header, index) => {
+                        if (cleanValues[index]) docData[header] = cleanValues[index];
+                    });
+                    
+                    docData.createdAt = new Date().toISOString();
+                    // Crea un riferimento a un nuovo documento
+                    const docRef = window.db.collection(collectionName).doc();
+                    batch.set(docRef, docData);
+                    count++;
+                }
+
+                await batch.commit();
+                showToast(`Caricati ${count} elementi in ${collectionName}`, "success");
+                setTimeout(() => window.location.reload(), 1500);
+            } catch (error) {
+                console.error("Errore import:", error);
+                showToast("Errore nel file CSV", "error");
+            }
+        };
+        reader.readAsText(file);
+        e.target.value = ''; // Reset input
+    });
+}
 
 // ==================== ESPOSIZIONE GLOBALE ====================
 // Rende le funzioni accessibili all'HTML (onclick)
@@ -1238,6 +1349,10 @@ window.openComparativeAnalysis = openComparativeAnalysis;
 window.closeComparativeModal = closeComparativeModal;
 window.goToMapLocation = goToMapLocation;
 window.initConceptMap = initConceptMap;
+window.exportFilosofiToExcel = exportFilosofiToExcel;
+window.exportOpereToExcel = exportOpereToExcel;
+window.exportConcettiToExcel = exportConcettiToExcel;
+window.exportFullDataset = exportFullDataset;
 
 // Placeholder per funzioni admin mancanti (per evitare errori se chiamate)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ console.log("Funzione Admin Load mancante"); };
