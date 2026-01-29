@@ -816,20 +816,19 @@ function createFilosofoCard(filosofo) {
 }
 
 function createOperaCard(opera) {
+    // Crea elementi DOM invece di usare innerHTML
     const card = document.createElement('div');
     card.className = 'compact-item';
     card.classList.add(`border-${opera.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}`);
     
-    // Percorso dell'immagine di default
-    const defaultImage = "images/default-opera.jpg";
-    
-    // Crea l'elemento immagine separatamente
+    // 1. CONTAINER IMMAGINE
     const imgContainer = document.createElement('div');
     imgContainer.className = 'compact-item-image-container';
     imgContainer.style.position = 'relative';
     
+    // 2. IMMAGINE DEFAULT
     const img = document.createElement('img');
-    img.src = defaultImage;
+    img.src = "images/default-opera.jpg";
     img.alt = opera.titolo;
     img.className = 'opera-default-image';
     img.style.cssText = `
@@ -841,35 +840,54 @@ function createOperaCard(opera) {
         transition: transform 0.3s ease;
     `;
     
-    // Gestione errori
+    // Gestione errori immagine
     img.onerror = function() {
-        console.warn(`⚠️ Immagine non caricata per: ${opera.titolo}`);
+        console.warn(`⚠️ Immagine default non trovata per: ${opera.titolo}`);
         
-        // Crea fallback colorato
+        // Crea fallback grafico
         const fallback = document.createElement('div');
         fallback.style.cssText = `
             width: 100%;
             height: 120px;
             background: linear-gradient(135deg, ${opera.periodo === 'contemporaneo' ? '#f59e0b' : '#3b82f6'}, ${opera.periodo === 'contemporaneo' ? '#d97706' : '#1d4ed8'});
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             color: white;
             border-radius: 8px;
-            position: relative;
-            overflow: hidden;
+            text-align: center;
+            padding: 10px;
         `;
         
-        // Contenuto del fallback
-        fallback.innerHTML = `
-            <div style="text-align: center; padding: 10px;">
-                <div style="font-size: 2rem; margin-bottom: 5px;">📚</div>
-                <div style="font-size: 0.9rem; font-weight: bold;">${opera.titolo.substring(0, 25)}${opera.titolo.length > 25 ? '...' : ''}</div>
-                <div style="font-size: 0.7rem; margin-top: 3px; opacity: 0.9;">${opera.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Classico'}</div>
-            </div>
-        `;
+        // Icona
+        const icon = document.createElement('div');
+        icon.textContent = '📚';
+        icon.style.fontSize = '2rem';
+        icon.style.marginBottom = '5px';
         
-        // Sostituisci l'immagine con il fallback
+        // Titolo abbreviato
+        const titleShort = document.createElement('div');
+        titleShort.textContent = opera.titolo.length > 25 
+            ? opera.titolo.substring(0, 25) + '...' 
+            : opera.titolo;
+        titleShort.style.fontSize = '0.9rem';
+        titleShort.style.fontWeight = 'bold';
+        titleShort.style.lineHeight = '1.2';
+        
+        // Periodo
+        const periodoText = document.createElement('div');
+        periodoText.textContent = opera.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Classico';
+        periodoText.style.fontSize = '0.7rem';
+        periodoText.style.opacity = '0.9';
+        periodoText.style.marginTop = '3px';
+        
+        // Assembla fallback
+        fallback.appendChild(icon);
+        fallback.appendChild(titleShort);
+        fallback.appendChild(periodoText);
+        
+        // Sostituisci immagine
         imgContainer.innerHTML = '';
         imgContainer.appendChild(fallback);
     };
@@ -880,7 +898,7 @@ function createOperaCard(opera) {
     
     imgContainer.appendChild(img);
     
-    // Overlay
+    // 3. OVERLAY (solo se l'immagine carica)
     const overlay = document.createElement('div');
     overlay.style.cssText = `
         position: absolute;
@@ -894,49 +912,110 @@ function createOperaCard(opera) {
         font-size: 0.8rem;
         opacity: 0;
         transition: opacity 0.3s ease;
+        pointer-events: none;
     `;
-    overlay.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span><i class="fas fa-book"></i> ${opera.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Classico'}</span>
-            <span><i class="fas fa-calendar"></i> ${opera.anno || 'N/D'}</span>
-        </div>
-    `;
+    
+    // Contenuto overlay
+    const overlayContent = document.createElement('div');
+    overlayContent.style.display = 'flex';
+    overlayContent.style.justifyContent = 'space-between';
+    overlayContent.style.alignItems = 'center';
+    
+    // Icona libro + periodo
+    const periodoDiv = document.createElement('span');
+    const bookIcon = document.createElement('i');
+    bookIcon.className = 'fas fa-book';
+    periodoDiv.appendChild(bookIcon);
+    periodoDiv.appendChild(document.createTextNode(' '));
+    periodoDiv.appendChild(document.createTextNode(
+        opera.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Classico'
+    ));
+    
+    // Icona calendario + anno
+    const annoDiv = document.createElement('span');
+    const calendarIcon = document.createElement('i');
+    calendarIcon.className = 'fas fa-calendar';
+    annoDiv.appendChild(calendarIcon);
+    annoDiv.appendChild(document.createTextNode(' '));
+    annoDiv.appendChild(document.createTextNode(opera.anno || 'N/D'));
+    
+    // Assembla overlay
+    overlayContent.appendChild(periodoDiv);
+    overlayContent.appendChild(annoDiv);
+    overlay.appendChild(overlayContent);
     imgContainer.appendChild(overlay);
     
-    // Contenuto testuale
+    // 4. CONTENUTO TESTUALE
     const content = document.createElement('div');
     content.className = 'compact-item-content';
-    content.innerHTML = `
-        <div class="compact-item-header">
-            <h3 class="compact-item-name">${opera.titolo}</h3>
-        </div>
-        <div class="compact-item-autore"><i class="fas fa-user-pen"></i> ${opera.autore || 'Autore sconosciuto'}</div>
-        <div class="compact-item-footer">
-            <span class="compact-item-anno">${opera.anno || 'N/D'}</span>
-            <span class="compact-item-periodo periodo-${opera.periodo}">${opera.periodo === 'contemporaneo' ? 'CONTEMP.' : 'CLASSICO'}</span>
-        </div>
-    `;
     
-    // Assemblea la card
+    // Header con titolo
+    const header = document.createElement('div');
+    header.className = 'compact-item-header';
+    const title = document.createElement('h3');
+    title.className = 'compact-item-name';
+    title.textContent = opera.titolo;
+    header.appendChild(title);
+    
+    // Autore
+    const autoreDiv = document.createElement('div');
+    autoreDiv.className = 'compact-item-autore';
+    const userIcon = document.createElement('i');
+    userIcon.className = 'fas fa-user-pen';
+    autoreDiv.appendChild(userIcon);
+    autoreDiv.appendChild(document.createTextNode(' '));
+    autoreDiv.appendChild(document.createTextNode(opera.autore || 'Autore sconosciuto'));
+    
+    // Footer
+    const footer = document.createElement('div');
+    footer.className = 'compact-item-footer';
+    
+    // Anno
+    const annoSpan = document.createElement('span');
+    annoSpan.className = 'compact-item-anno';
+    annoSpan.textContent = opera.anno || 'N/D';
+    
+    // Periodo badge
+    const periodoSpan = document.createElement('span');
+    periodoSpan.className = `compact-item-periodo periodo-${opera.periodo}`;
+    periodoSpan.textContent = opera.periodo === 'contemporaneo' ? 'CONTEMP.' : 'CLASSICO';
+    
+    // Assembla footer
+    footer.appendChild(annoSpan);
+    footer.appendChild(periodoSpan);
+    
+    // Assembla contenuto
+    content.appendChild(header);
+    content.appendChild(autoreDiv);
+    content.appendChild(footer);
+    
+    // 5. ASSEMBLA CARD COMPLETA
     card.appendChild(imgContainer);
     card.appendChild(content);
     
-    // Eventi hover
+    // 6. EVENT LISTENERS
+    // Hover effetti
     card.addEventListener('mouseenter', function() {
-        if (img.parentNode === imgContainer) {
+        // Se c'è ancora l'immagine (non fallback), scala
+        if (img.parentNode === imgContainer && img.style.display !== 'none') {
             img.style.transform = 'scale(1.05)';
         }
         overlay.style.opacity = '1';
     });
     
     card.addEventListener('mouseleave', function() {
-        if (img.parentNode === imgContainer) {
+        if (img.parentNode === imgContainer && img.style.display !== 'none') {
             img.style.transform = 'scale(1)';
         }
         overlay.style.opacity = '0';
     });
     
-    card.addEventListener('click', () => showOperaDetail(opera.id));
+    // Click per dettagli
+    card.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showOperaDetail(opera.id);
+    });
+    
     return card;
 }
 // ==================== DETTAGLI ====================
