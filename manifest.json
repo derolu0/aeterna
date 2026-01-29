@@ -2,100 +2,79 @@
   "name": "Aeterna Lexicon in Motu",
   "short_name": "Lexicon Motu",
   "description": "Dataset per l'analisi delle trasformazioni del linguaggio filosofico tra classico e contemporaneo",
-  "start_url": "https://derolu0.github.io/aeterna/index.html",
-  "scope": "https://derolu0.github.io/aeterna/",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#3b82f6",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-72.png",
+      "src": "images/icona-avvio-72.png",
       "sizes": "72x72",
       "type": "image/png"
     },
     {
-      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-96.png",
+      "src": "images/icona-avvio-96.png",
       "sizes": "96x96",
       "type": "image/png"
     },
     {
-      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-128.png",
+      "src": "images/icona-avvio-128.png",
       "sizes": "128x128",
       "type": "image/png"
     },
     {
-      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-144.png",
+      "src": "images/icona-avvio-144.png",
       "sizes": "144x144",
       "type": "image/png"
     },
     {
-      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-192.png",
+      "src": "images/icona-avvio-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-384.png",
+      "src": "images/icona-avvio-384.png",
       "sizes": "384x384",
       "type": "image/png"
     },
     {
-      "src": "https://derolu0.github.io/aeterna/images/icona-avvio-512.png",
+      "src": "images/icona-avvio-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ],
   "categories": ["education", "books"],
-  "screenshots": [
-    {
-      "src": "https://derolu0.github.io/aeterna/images/screenshot-1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "Dataset Filosofico"
-    },
-    {
-      "src": "https://derolu0.github.io/aeterna/images/screenshot-2.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "Mappa Geografica Filosofi"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Filosofi",
       "short_name": "Filosofi",
       "description": "Visualizza tutti i filosofi",
-      "url": "https://derolu0.github.io/aeterna/index.html?screen=filosofi"
+      "url": "./index.html?screen=filosofi"
     },
     {
       "name": "Opere",
       "short_name": "Opere",
       "description": "Visualizza tutte le opere filosofiche",
-      "url": "https://derolu0.github.io/aeterna/index.html?screen=opere"
+      "url": "./index.html?screen=opere"
     },
     {
       "name": "Concetti",
       "short_name": "Concetti",
       "description": "Analizza i concetti filosofici",
-      "url": "https://derolu0.github.io/aeterna/index.html?screen=concetti"
+      "url": "./index.html?screen=concetti"
     },
     {
       "name": "Mappa Geografica",
       "short_name": "Mappa Geo",
       "description": "Esplora filosofi sulla mappa",
-      "url": "https://derolu0.github.io/aeterna/index.html?screen=mappa"
-    },
-    {
-      "name": "Analisi Comparativa",
-      "short_name": "Analisi",
-      "description": "Analizza evoluzione concetti",
-      "url": "https://derolu0.github.io/aeterna/index.html?screen=analisi"
+      "url": "./index.html?screen=mappa"
     }
   ],
   "prefer_related_applications": false,
-  "id": "https://derolu0.github.io/aeterna/index.html",
   "lang": "it",
   "dir": "ltr",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "author": "Salvatore De Rosa - Project Work Filosofico"
 }

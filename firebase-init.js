@@ -1,70 +1,10 @@
 /**
- * FIREBASE CONFIGURATION - Versione Semplificata
- * Per Aeterna Lexicon in Motu - Project Work Filosofico
- * Solo funzionalità essenziali: Firestore + Auth
+ * FIREBASE CONFIGURATION - Versione semplificata per dati integrati
+ * Aeterna Lexicon in Motu
+ * Modalità offline con dataset integrato
  */
 
-// ==================== INIZIALIZZAZIONE FIREBASE ====================
-if (!window.firebaseInitialized) {
-    console.log('🔥 Initializing Firebase per Aeterna Lexicon...');
-    
-    // Configurazione Firebase (usa i tuoi dati reali)
-    const firebaseConfig = {
-        apiKey: "AIzaSyBo-Fz2fb8KHlvuZmb23psKDT6QvrJowB8",
-        authDomain: "aeterna-lexicon-in-motu.firebaseapp.com",
-        projectId: "aeterna-lexicon-in-motu",
-        storageBucket: "aeterna-lexicon-in-motu.firebasestorage.app",
-        messagingSenderId: "928786632423",
-        appId: "1:928786632423:web:578d45e7d6961a298d5c42",
-        measurementId: "G-E70D7TDDV7"
-    };
-
-    // Verifica che Firebase sia disponibile
-    if (typeof firebase !== 'undefined') {
-        try {
-            // Inizializza solo se non già inizializzato
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-                console.log('✅ Firebase App inizializzato');
-            }
-            
-            // Inizializza servizi
-            window.db = firebase.firestore();
-            window.auth = firebase.auth();
-            
-            console.log('✅ Firestore e Auth pronti');
-            
-            // Persistenza offline (opzionale ma utile)
-            window.db.enablePersistence({ synchronizeTabs: true })
-                .then(() => {
-                    console.log('✅ Persistenza offline attivata');
-                })
-                .catch((err) => {
-                    if (err.code === 'failed-precondition') {
-                        console.warn('⚠️ Persistenza: Multiple tabs aperti');
-                    } else if (err.code === 'unimplemented') {
-                        console.warn('⚠️ Persistenza: Browser non supportato');
-                    } else {
-                        console.warn('⚠️ Persistenza non disponibile:', err.message);
-                    }
-                });
-            
-            // Segnala che Firebase è pronto
-            window.firebaseInitialized = true;
-            
-            // Emetti evento personalizzato
-            const event = new Event('firebase-ready');
-            window.dispatchEvent(event);
-            
-        } catch (error) {
-            console.error('❌ Errore inizializzazione Firebase:', error);
-            showFirebaseError(error);
-        }
-    } else {
-        console.error('❌ Firebase SDK non trovato');
-        showFirebaseError(new Error('Librerie Firebase non caricate'));
-    }
-}
+console.log('🔥 Firebase Init - Modalità dati integrati');
 
 // ==================== COLLEZIONI DATABASE ====================
 window.COLLECTIONS = {
@@ -74,202 +14,7 @@ window.COLLECTIONS = {
     SEGNALAZIONI: 'segnalazioni'
 };
 
-// ==================== FUNZIONI HELPER ====================
-
-/**
- * Mostra errore Firebase in modo user-friendly
- */
-function showFirebaseError(error) {
-    console.error('Firebase Error:', error);
-    
-    // Crea elemento errore se non esiste
-    let errorDiv = document.getElementById('firebase-error');
-    if (!errorDiv) {
-        errorDiv = document.createElement('div');
-        errorDiv.id = 'firebase-error';
-        errorDiv.style.cssText = `
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ef4444;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            z-index: 9999;
-            max-width: 90%;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        `;
-        document.body.appendChild(errorDiv);
-    }
-    
-    let message = 'Errore di connessione al database';
-    
-    if (error.code === 'permission-denied') {
-        message = 'Permessi insufficienti per accedere ai dati';
-    } else if (error.code === 'unavailable') {
-        message = 'Database non disponibile. Modalità offline attiva.';
-    }
-    
-    errorDiv.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <i class="fas fa-exclamation-triangle"></i>
-            <div>
-                <strong>${message}</strong>
-                <div style="font-size: 0.8em; margin-top: 4px;">
-                    Usando dati locali di esempio
-                </div>
-            </div>
-            <button onclick="this.parentElement.parentElement.style.display='none'" 
-                    style="background: none; border: none; color: white; cursor: pointer;">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-    `;
-    
-    // Rimuovi automaticamente dopo 10 secondi
-    setTimeout(() => {
-        if (errorDiv.parentElement) {
-            errorDiv.style.display = 'none';
-        }
-    }, 10000);
-}
-
-/**
- * Funzioni di utilità per Firestore
- */
-window.firebaseUtils = {
-    /**
-     * Salva un documento
-     */
-    async saveDocument(collection, data, id = null) {
-        try {
-            if (!window.db) throw new Error('Firestore non inizializzato');
-            
-            let docRef;
-            if (id) {
-                docRef = await window.db.collection(collection).doc(id).set(data);
-            } else {
-                docRef = await window.db.collection(collection).add(data);
-            }
-            
-            console.log(`✅ Documento salvato in ${collection}:`, id || docRef.id);
-            return { success: true, id: id || docRef.id };
-            
-        } catch (error) {
-            console.error(`❌ Errore salvataggio ${collection}:`, error);
-            return { success: false, error: error.message };
-        }
-    },
-    
-    /**
-     * Ottieni tutti i documenti di una collezione
-     */
-    async getDocuments(collection, filters = {}) {
-        try {
-            if (!window.db) {
-                console.warn('Firestore non disponibile, usando dati locali');
-                return { success: false, data: [], offline: true };
-            }
-            
-            let query = window.db.collection(collection);
-            
-            // Applica filtri
-            Object.entries(filters).forEach(([field, value]) => {
-                if (value !== undefined && value !== null) {
-                    query = query.where(field, '==', value);
-                }
-            });
-            
-            const snapshot = await query.get();
-            const documents = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            
-            console.log(`✅ ${documents.length} documenti da ${collection}`);
-            return { success: true, data: documents };
-            
-        } catch (error) {
-            console.error(`❌ Errore lettura ${collection}:`, error);
-            return { success: false, error: error.message, data: [] };
-        }
-    },
-    
-    /**
-     * Elimina un documento
-     */
-    async deleteDocument(collection, id) {
-        try {
-            if (!window.db) throw new Error('Firestore non inizializzato');
-            
-            await window.db.collection(collection).doc(id).delete();
-            console.log(`✅ Documento eliminato: ${collection}/${id}`);
-            return { success: true };
-            
-        } catch (error) {
-            console.error(`❌ Errore eliminazione ${collection}/${id}:`, error);
-            return { success: false, error: error.message };
-        }
-    },
-    
-    /**
-     * Aggiorna un documento
-     */
-    async updateDocument(collection, id, data) {
-        try {
-            if (!window.db) throw new Error('Firestore non inizializado');
-            
-            await window.db.collection(collection).doc(id).update(data);
-            console.log(`✅ Documento aggiornato: ${collection}/${id}`);
-            return { success: true };
-            
-        } catch (error) {
-            console.error(`❌ Errore aggiornamento ${collection}/${id}:`, error);
-            return { success: false, error: error.message };
-        }
-    }
-};
-
-/**
- * Inizializzazione ritardata per garantire che tutto sia pronto
- */
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        if (!window.firebaseInitialized && typeof firebase !== 'undefined') {
-            console.log('🔄 Re-inizializzazione Firebase...');
-            // Forza nuova inizializzazione se necessario
-            window.firebaseInitialized = false;
-            
-            // Rimuovi e ricrea
-            delete window.db;
-            delete window.auth;
-            
-            // Riavvia lo script
-            const script = document.createElement('script');
-            script.textContent = `
-                if (!window.firebaseInitialized && typeof firebase !== 'undefined') {
-                    try {
-                        if (!firebase.apps.length) {
-                            firebase.initializeApp(${JSON.stringify(firebaseConfig)});
-                        }
-                        window.db = firebase.firestore();
-                        window.auth = firebase.auth();
-                        window.firebaseInitialized = true;
-                        window.dispatchEvent(new Event('firebase-ready'));
-                        console.log('✅ Firebase re-inizializzato');
-                    } catch (error) {
-                        console.error('❌ Errore re-inizializzazione:', error);
-                    }
-                }
-            `;
-            document.head.appendChild(script);
-        }
-    }, 2000);
-});
-
-// ==================== GESTIONE OFFLINE ====================
+// ==================== UTILITY OFFLINE ====================
 
 /**
  * Salva dati localmente per uso offline
@@ -338,4 +83,134 @@ window.offlineStorage = {
     }
 };
 
-console.log('🔥 Firebase Init - Versione 3.1.0 - Pronto per Aeterna Lexicon');
+// ==================== FUNZIONI HELPER ====================
+
+/**
+ * Mostra errore in modo user-friendly
+ */
+function showFirebaseError(error) {
+    console.error('Errore:', error);
+    
+    // Crea elemento errore se non esiste
+    let errorDiv = document.getElementById('firebase-error');
+    if (!errorDiv) {
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'firebase-error';
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fef3c7;
+            color: #92400e;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 9999;
+            max-width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border: 1px solid #fbbf24;
+        `;
+        document.body.appendChild(errorDiv);
+    }
+    
+    let message = 'Modalità offline: utilizzo dati integrati';
+    
+    if (error.code === 'permission-denied') {
+        message = 'Permessi insufficienti per accedere ai dati';
+    } else if (error.code === 'unavailable') {
+        message = 'Database non disponibile. Modalità offline attiva.';
+    }
+    
+    errorDiv.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div>
+                <strong>${message}</strong>
+                <div style="font-size: 0.8em; margin-top: 4px;">
+                    Dataset integrato: 20 filosofi, 40 opere, 23 concetti
+                </div>
+            </div>
+            <button onclick="this.parentElement.parentElement.style.display='none'" 
+                    style="background: none; border: none; color: #92400e; cursor: pointer;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    // Rimuovi automaticamente dopo 10 secondi
+    setTimeout(() => {
+        if (errorDiv.parentElement) {
+            errorDiv.style.display = 'none';
+        }
+    }, 10000);
+}
+
+// ==================== SIMULAZIONE FIREBASE ====================
+
+// Per compatibilità con il codice esistente
+window.db = {
+    collection: function(name) {
+        console.log(`📁 Accesso a collezione: ${name}`);
+        return {
+            get: async function() {
+                return {
+                    docs: [],
+                    forEach: function() {}
+                };
+            },
+            add: async function(data) {
+                console.log('📝 Tentativo di aggiunta dati (modalità offline)');
+                return { id: 'offline_' + Date.now() };
+            },
+            doc: function(id) {
+                return {
+                    set: async function(data) {
+                        console.log('📝 Tentativo di salvataggio dati (modalità offline)');
+                        return { id: id };
+                    },
+                    update: async function(data) {
+                        console.log('📝 Tentativo di aggiornamento dati (modalità offline)');
+                        return { id: id };
+                    },
+                    delete: async function() {
+                        console.log('🗑️ Tentativo di eliminazione dati (modalità offline)');
+                        return { success: true };
+                    }
+                };
+            }
+        };
+    },
+    batch: function() {
+        return {
+            set: function() {},
+            commit: async function() {
+                console.log('📦 Batch commit (modalità offline)');
+                return { success: true };
+            }
+        };
+    }
+};
+
+window.auth = {
+    currentUser: null,
+    signInWithEmailAndPassword: async function(email, password) {
+        console.log('🔐 Tentativo di login (modalità offline)');
+        return Promise.reject(new Error('Modalità offline: login non disponibile'));
+    },
+    signOut: async function() {
+        console.log('🚪 Logout (modalità offline)');
+        return Promise.resolve();
+    }
+};
+
+window.firebaseInitialized = true;
+
+// Emetti evento personalizzato per compatibilità
+setTimeout(() => {
+    const event = new Event('firebase-ready');
+    window.dispatchEvent(event);
+    console.log('✅ Sistema dati integrato pronto');
+}, 1000);
+
+console.log('🔥 Sistema inizializzato in modalità dati integrati');

@@ -1,7 +1,7 @@
 /**
- * LINGUISTIC-ANALYSIS.JS - Versione Semplificata per Project Work
- * Analisi linguistica filosofica - Solo funzionalità essenziali
- * Versione 3.1.0 - Senza analytics e multilingua
+ * LINGUISTIC-ANALYSIS.JS - Versione per dataset integrato
+ * Analisi linguistica filosofica per Aeterna Lexicon
+ * Versione 4.0.0 - Compatibile con dati integrati
  */
 
 // ==================== ANALIZZATORE LINGUISTICO ====================
@@ -23,13 +23,11 @@ class LinguisticAnalyzer {
         const cleanedText = text.trim();
         const words = cleanedText.split(/\s+/).filter(w => w.length > 0);
         const sentences = cleanedText.split(/[.!?]+/).filter(s => s.trim().length > 0);
-        const paragraphs = cleanedText.split(/\n+/).filter(p => p.trim().length > 0);
 
         // Statistiche base
         const stats = {
             word_count: words.length,
             sentence_count: sentences.length,
-            paragraph_count: paragraphs.length,
             avg_words_per_sentence: words.length / Math.max(sentences.length, 1),
             avg_word_length: words.reduce((sum, w) => sum + w.length, 0) / Math.max(words.length, 1),
             
@@ -56,11 +54,11 @@ class LinguisticAnalyzer {
         return [
             // Ontologia
             'essere', 'essenza', 'esistenza', 'realtà', 'apparenza', 'verità',
-            'sostanza', 'accidente', 'essenza', 'esistenza', 'ente', 'ontologia',
+            'sostanza', 'accidente', 'ente', 'ontologia',
             
             // Epistemologia
-            'conoscenza', 'scienza', 'sapere', 'verità', 'certezza', 'dubbio',
-            'evidenza', 'prova', 'dimostrazione', 'ragione', 'intelletto', 'ragione',
+            'conoscenza', 'scienza', 'sapere', 'certezza', 'dubbio',
+            'evidenza', 'prova', 'dimostrazione', 'ragione', 'intelletto',
             
             // Etica
             'bene', 'male', 'giusto', 'ingiusto', 'virtù', 'vizio', 'dovere',
@@ -68,23 +66,19 @@ class LinguisticAnalyzer {
             
             // Estetica
             'bello', 'brutto', 'sublime', 'arte', 'creatività', 'genio',
-            'gusto', 'giudizio', 'esperienza', 'percezione', 'sensibilità',
+            'gusto', 'giudizio', 'esperienza', 'percezione',
             
             // Politica
             'potere', 'autorità', 'legge', 'giustizia', 'stato', 'società',
-            'comunità', 'individuo', 'collettivo', 'democrazia', 'tirannide',
+            'comunità', 'individuo', 'collettivo', 'democrazia',
             
             // Metafisica
             'anima', 'spirito', 'materia', 'forma', 'causa', 'effetto',
-            'finalità', 'mezzo', 'fine', 'possibilità', 'necessità', 'caso',
+            'finalità', 'mezzo', 'fine', 'possibilità', 'necessità',
             
             // Logica
             'concetto', 'giudizio', 'ragionamento', 'proposizione', 'argomento',
-            'premessa', 'conclusione', 'deduzione', 'induzione', 'sillogismo',
-            
-            // Fenomenologia
-            'coscienza', 'intenzionalità', 'esperienza', 'fenomeno', 'essenza',
-            'riduzione', 'epochè', 'lebenswelt', 'intersoggettività'
+            'premessa', 'conclusione', 'deduzione', 'induzione',
         ];
     }
 
@@ -93,14 +87,14 @@ class LinguisticAnalyzer {
      */
     getArgumentativeMarkers() {
         return {
-            causal: ['perché', 'poiché', 'dato che', 'siccome', 'in quanto', 'giacché'],
-            consecutive: ['quindi', 'dunque', 'pertanto', 'perciò', 'conseguentemente', 'dipoi'],
+            causal: ['perché', 'poiché', 'dato che', 'siccome', 'in quanto'],
+            consecutive: ['quindi', 'dunque', 'pertanto', 'perciò', 'conseguentemente'],
             adversative: ['tuttavia', 'però', 'ma', 'sebbene', 'anche se', 'nonostante'],
             additive: ['inoltre', 'altresì', 'parimenti', 'similmente', 'analogamente'],
             contrastive: ['invece', 'al contrario', 'viceversa', 'diversamente'],
-            exemplificative: ['ad esempio', 'per esempio', 'cioè', 'ovvero', 'in altri termini'],
-            conclusive: ['in conclusione', 'in sintesi', 'per riassumere', 'dunque', 'pertanto'],
-            emphatic: ['infatti', 'in effetti', 'effettivamente', 'realmente', 'certamente']
+            exemplificative: ['ad esempio', 'per esempio', 'cioè', 'ovvero'],
+            conclusive: ['in conclusione', 'in sintesi', 'per riassumere', 'dunque'],
+            emphatic: ['infatti', 'in effetti', 'effettivamente', 'realmente']
         };
     }
 
@@ -296,515 +290,218 @@ class LinguisticAnalyzer {
     }
 }
 
-// ==================== TIMELINE EVOLUTIVA ====================
-class PhilosophicalTimeline {
-    constructor() {
-        console.log('📈 Timeline filosofica inizializzata');
-    }
-
-    /**
-     * Crea timeline visiva
-     */
-    createTimeline(containerId, timelineData) {
-        const container = document.getElementById(containerId);
-        if (!container) {
-            console.error('Container timeline non trovato:', containerId);
-            return;
-        }
-
-        // Ordina dati per anno
-        const sortedData = [...timelineData].sort((a, b) => a.year - b.year);
-        
-        // Crea HTML timeline
-        container.innerHTML = this.generateTimelineHTML(sortedData);
-        
-        // Aggiungi event listener
-        this.addTimelineEventListeners();
-    }
-
-    /**
-     * Genera HTML timeline
-     */
-    generateTimelineHTML(data) {
-        if (!data || data.length === 0) {
-            return '<div class="empty-timeline">Nessun dato per la timeline</div>';
-        }
-
-        // Calcola range anni per scaling
-        const years = data.map(item => item.year);
-        const minYear = Math.min(...years);
-        const maxYear = Math.max(...years);
-        const yearRange = maxYear - minYear;
-
-        return `
-            <div class="timeline-container">
-                <div class="timeline-track">
-                    ${data.map((item, index) => this.createTimelineItem(item, index, minYear, yearRange)).join('')}
-                </div>
-                <div class="timeline-scale">
-                    <span>${minYear < 0 ? Math.abs(minYear) + ' a.C.' : minYear + ' d.C.'}</span>
-                    <span>${maxYear < 0 ? Math.abs(maxYear) + ' a.C.' : maxYear + ' d.C.'}</span>
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Crea singolo elemento timeline
-     */
-    createTimelineItem(item, index, minYear, yearRange) {
-        const year = item.year;
-        const position = yearRange > 0 ? ((year - minYear) / yearRange) * 90 + 5 : 50;
-        const yearLabel = year < 0 ? `${Math.abs(year)} a.C.` : `${year} d.C.`;
-        const periodClass = this.getPeriodClass(item.period);
-
-        return `
-            <div class="timeline-item ${periodClass}" 
-                 style="left: ${position}%;"
-                 data-index="${index}"
-                 data-year="${year}">
-                <div class="timeline-dot"></div>
-                <div class="timeline-content">
-                    <div class="timeline-year">${yearLabel}</div>
-                    ${item.philosopher ? `<div class="timeline-philosopher">${item.philosopher}</div>` : ''}
-                    ${item.work ? `<div class="timeline-work">${item.work}</div>` : ''}
-                    ${item.concept ? `<div class="timeline-concept">${item.concept}</div>` : ''}
-                    ${item.excerpt ? `<div class="timeline-excerpt">"${item.excerpt}"</div>` : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Ottiene classe CSS per periodo
-     */
-    getPeriodClass(period) {
-        const periodMap = {
-            'antico': 'period-antico',
-            'classico': 'period-classico',
-            'medioevale': 'period-medioevale',
-            'rinascimentale': 'period-rinascimentale',
-            'moderno': 'period-moderno',
-            'contemporaneo': 'period-contemporaneo',
-            'classico/contemporaneo': 'period-mixed'
-        };
-        return periodMap[period] || 'period-default';
-    }
-
-    /**
-     * Aggiunge interattività alla timeline
-     */
-    addTimelineEventListeners() {
-        document.querySelectorAll('.timeline-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showTimelineItemDetails(item);
-            });
-            
-            item.addEventListener('mouseenter', () => {
-                item.classList.add('timeline-item-hover');
-            });
-            
-            item.addEventListener('mouseleave', () => {
-                item.classList.remove('timeline-item-hover');
-            });
-        });
-    }
-
-    /**
-     * Mostra dettagli elemento timeline
-     */
-    showTimelineItemDetails(itemElement) {
-        const index = itemElement.getAttribute('data-index');
-        const year = itemElement.getAttribute('data-year');
-        
-        // Qui potresti mostrare un modal con più dettagli
-        console.log(`Selezionato elemento timeline: indice ${index}, anno ${year}`);
-        
-        // Per ora mostriamo un semplice alert
-        const content = itemElement.querySelector('.timeline-content').innerHTML;
-        alert(`Anno: ${year}\n\n${content}`);
-    }
-
-    /**
-     * Genera timeline da dati filosofici
-     */
-    generateFromPhilosophicalData(filosofiData, opereData, concettiData) {
-        const timelineItems = [];
-
-        // Aggiungi filosofi
-        filosofiData.forEach(filosofo => {
-            const birthYear = this.extractYearFromString(filosofo.anni, 'birth');
-            if (birthYear) {
-                timelineItems.push({
-                    year: birthYear,
-                    period: filosofo.periodo,
-                    philosopher: filosofo.nome,
-                    type: 'filosofo_birth',
-                    description: `Nascita di ${filosofo.nome}`
-                });
-            }
-        });
-
-        // Aggiugi opere
-        opereData.forEach(opera => {
-            const publicationYear = this.extractYearFromString(opera.anno);
-            if (publicationYear) {
-                timelineItems.push({
-                    year: publicationYear,
-                    period: opera.periodo,
-                    work: opera.titolo,
-                    philosopher: opera.autore,
-                    type: 'opera_publication',
-                    description: `Pubblicazione di "${opera.titolo}"`
-                });
-            }
-        });
-
-        // Aggiungi concetti importanti
-        concettiData.forEach(concetto => {
-            if (concetto.periodo === 'entrambi') {
-                timelineItems.push({
-                    year: 0, // Punto medio
-                    period: 'classico/contemporaneo',
-                    concept: concetto.parola,
-                    type: 'concept_evolution',
-                    description: `Evoluzione del concetto "${concetto.parola}"`
-                });
-            }
-        });
-
-        // Ordina per anno
-        return timelineItems.sort((a, b) => a.year - b.year);
-    }
-
-    /**
-     * Estrae anno da stringa
-     */
-    extractYearFromString(yearString, type = 'publication') {
-        if (!yearString) return null;
-        
-        const match = yearString.match(/(-?\d+)/);
-        if (match) {
-            let year = parseInt(match[1]);
-            
-            // Gestisce anni a.C.
-            if (yearString.toLowerCase().includes('a.c.')) {
-                year = -year;
-            }
-            
-            // Per nascita filosofi, aggiusta se necessario
-            if (type === 'birth' && year > 0 && year < 100) {
-                year = -year; // Assume filosofi antichi nati a.C.
-            }
-            
-            return year;
-        }
-        
-        return null;
-    }
-}
-
-// ==================== ANALISI COMPARATIVA ====================
-class ComparativeAnalysis {
-    constructor() {
-        console.log('🔍 Analisi comparativa filosofica inizializzata');
-        this.linguisticAnalyzer = new LinguisticAnalyzer();
-    }
-
-    /**
-     * Esegue analisi comparativa completa
-     */
-    performAnalysis(concept, classiciData, contemporaneiData) {
-        return {
-            concept: concept,
-            metadata: {
-                analysis_date: new Date().toISOString(),
-                classici_count: classiciData.length,
-                contemporanei_count: contemporaneiData.length
+// ==================== DATI PER ANALISI COMPARATIVA ====================
+window.comparativeData = {
+    // Testi per analisi linguistica comparativa
+    testiComparativi: {
+        'Essere': {
+            classico: {
+                autore: "Aristotele",
+                opera: "Metafisica",
+                testo: "L'essere si dice in molti modi, ma soprattutto in quattro: secondo le categorie, secondo la potenza e l'atto, secondo l'accidente, e secondo il vero e il falso. Tra tutti questi modi, il primo e principale è la sostanza, poiché tutto il resto si dice in riferimento ad essa.",
+                definizione: "Sostanza statica ed eterna, fondamento della realtà."
             },
-            linguistic_comparison: this.compareLinguisticFeatures(classiciData, contemporaneiData),
-            conceptual_evolution: this.analyzeConceptualEvolution(classiciData, contemporaneiData),
-            historical_transformations: this.identifyTransformations(classiciData, contemporaneiData),
-            key_insights: this.generateInsights(classiciData, contemporaneiData)
-        };
-    }
-
-    /**
-     * Confronta caratteristiche linguistiche
-     */
-    compareLinguisticFeatures(classiciData, contemporaneiData) {
-        // Estrai testi
-        const classiciText = this.extractTextForAnalysis(classiciData);
-        const contemporaneiText = this.extractTextForAnalysis(contemporaneiData);
-        
-        // Analisi linguistica
-        const classiciAnalysis = this.linguisticAnalyzer.analyzeText(classiciText);
-        const contemporaneiAnalysis = this.linguisticAnalyzer.analyzeText(contemporaneiText);
-        
-        return {
-            classici: classiciAnalysis,
-            contemporanei: contemporaneiAnalysis,
-            differences: {
-                word_count: contemporaneiAnalysis.word_count - classiciAnalysis.word_count,
-                conceptual_density: (contemporaneiAnalysis.philosophical_indicators.conceptual_density - 
-                                   classiciAnalysis.philosophical_indicators.conceptual_density).toFixed(2),
-                abstract_terms: contemporaneiAnalysis.philosophical_indicators.abstract_terms_count - 
-                              classiciAnalysis.philosophical_indicators.abstract_terms_count,
-                argumentative_markers: contemporaneiAnalysis.philosophical_indicators.argumentative_markers_count.total - 
-                                     classiciAnalysis.philosophical_indicators.argumentative_markers_count.total
+            contemporaneo: {
+                autore: "Martin Heidegger",
+                opera: "Essere e tempo",
+                testo: "L'essere non è un ente. La questione dell'essere è stata dimenticata dalla metafisica. L'essere si dà nell'evento appropriante, nella Lichtung, nel disvelamento. L'essere non è, ma dà sé. La differenza ontologica tra essere ed ente è fondamentale.",
+                definizione: "Evento storico e processuale che si dà nella temporalità."
             }
-        };
-    }
-
-    /**
-     * Estrae testo per analisi
-     */
-    extractTextForAnalysis(data) {
-        const texts = [];
-        
-        data.forEach(item => {
-            if (item.biografia) texts.push(item.biografia);
-            if (item.sintesi) texts.push(item.sintesi);
-            if (item.definizione) texts.push(item.definizione);
-            if (item.esempio) texts.push(item.esempio);
-        });
-        
-        return texts.join(' ');
-    }
-
-    /**
-     * Analizza evoluzione concettuale
-     */
-    analyzeConceptualEvolution(classiciData, contemporaneiData) {
-        const classiciConcepts = this.extractConcepts(classiciData);
-        const contemporaneiConcepts = this.extractConcepts(contemporaneiData);
-        
-        return {
-            classici_concepts: classiciConcepts,
-            contemporanei_concepts: contemporaneiConcepts,
-            common_concepts: this.findCommonConcepts(classiciConcepts, contemporaneiConcepts),
-            new_concepts: this.findNewConcepts(classiciConcepts, contemporaneiConcepts),
-            lost_concepts: this.findLostConcepts(classiciConcepts, contemporaneiConcepts)
-        };
-    }
-
-    /**
-     * Estrae concetti da dati
-     */
-    extractConcepts(data) {
-        const concepts = new Set();
-        
-        data.forEach(item => {
-            if (item.concetti_principali) {
-                item.concetti_principali.forEach(concetto => concepts.add(concetto));
+        },
+        'Verità': {
+            classico: {
+                autore: "Tommaso d'Aquino",
+                opera: "De Veritate",
+                testo: "Veritas est adaequatio rei et intellectus. La verità è la corrispondenza della cosa con l'intelletto. Questa adeguazione si realizza quando l'intelletto conosce la cosa così come essa è in se stessa.",
+                definizione: "Corrispondenza oggettiva tra pensiero e realtà."
+            },
+            contemporaneo: {
+                autore: "Friedrich Nietzsche",
+                opera: "Al di là del bene e del male",
+                testo: "Non ci sono fatti, solo interpretazioni. La verità è quella specie di errore senza la quale una determinata specie di esseri viventi non potrebbe vivere. Ciò che in un caso è verità, nell'altro è menzogna.",
+                definizione: "Costruzione storica e interpretativa, non corrispondenza oggettiva."
             }
-            if (item.concetti) {
-                item.concetti.forEach(concetto => concepts.add(concetto));
+        },
+        'Soggetto': {
+            classico: {
+                autore: "René Descartes",
+                opera: "Meditazioni metafisiche",
+                testo: "Cogito ergo sum. Penso, dunque sono. Questa verità è così ferma e sicura che nessuno scetticismo potrà mai scuoterla. Io sono, io esisto, è necessariamente vera tutte le volte che la pronuncio o la concepisco nel mio spirito.",
+                definizione: "Sostanza pensante autonoma, fondamento certo della conoscenza."
+            },
+            contemporaneo: {
+                autore: "Michel Foucault",
+                opera: "Sorvegliare e punire",
+                testo: "Il soggetto non è dato, ma prodotto attraverso pratiche discorsive e non discorsive. È un effetto del potere. Le tecniche disciplinari producono corpi docili e soggetti assoggettati.",
+                definizione: "Costruzione storica, effetto di pratiche discorsive e di potere."
             }
-        });
-        
-        return Array.from(concepts);
-    }
-
-    /**
-     * Trova concetti comuni
-     */
-    findCommonConcepts(classici, contemporanei) {
-        return classici.filter(concetto => contemporanei.includes(concetto));
-    }
-
-    /**
-     * Trova nuovi concetti
-     */
-    findNewConcepts(classici, contemporanei) {
-        return contemporanei.filter(concetto => !classici.includes(concetto));
-    }
-
-    /**
-     * Trova concetti persi
-     */
-    findLostConcepts(classici, contemporanei) {
-        return classici.filter(concetto => !contemporanei.includes(concetto));
-    }
-
-    /**
-     * Identifica trasformazioni storiche
-     */
-    identifyTransformations(classiciData, contemporaneiData) {
-        const transformations = [];
-        
-        // Analizza differenze semantiche
-        const semanticShifts = this.analyzeSemanticShifts(classiciData, contemporaneiData);
-        
-        // Aggiungi trasformazioni note
-        transformations.push({
-            dimension: 'ONTOLOGICA',
-            classico: 'Sostanza/Essenza',
-            contemporaneo: 'Relazione/Processo',
-            description: 'Da ontologia sostanzialista a ontologia relazionale',
-            key_philosophers: ['Aristotele', 'Heidegger', 'Whitehead']
-        });
-        
-        transformations.push({
-            dimension: 'EPISTEMOLOGICA',
-            classico: 'Verità come corrispondenza',
-            contemporaneo: 'Verità come costruzione',
-            description: 'Da epistemologia corrispondentista a costruttivista',
-            key_philosophers: ['Platone', 'Nietzsche', 'Foucault']
-        });
-        
-        transformations.push({
-            dimension: 'ETICA',
-            classico: 'Universalità/Dovere',
-            contemporaneo: 'Singolarità/Responsabilità',
-            description: 'Da etica deontologica a etica della responsabilità',
-            key_philosophers: ['Kant', 'Levinas', 'Derrida']
-        });
-        
-        transformations.push({
-            dimension: 'POLITICA',
-            classico: 'Sovranità/Legge',
-            contemporaneo: 'Biopotere/Governamentalità',
-            description: 'Da teoria della sovranità a analitica del potere',
-            key_philosophers: ['Hobbes', 'Foucault', 'Agamben']
-        });
-        
-        return {
-            transformations: transformations,
-            semantic_shifts: semanticShifts,
-            summary: 'Trasformazione da paradigma metafisico-sostanzialista a paradigma storico-relazionale'
-        };
-    }
-
-    /**
-     * Analizza cambiamenti semantici
-     */
-    analyzeSemanticShifts(classiciData, contemporaneiData) {
-        // Implementazione semplificata
-        return [
-            'Da universale a particolare',
-            'Da necessario a contingente',
-            'Da eterno a storico',
-            'Da assoluto a relativo',
-            'Da sostanziale a processuale'
-        ];
-    }
-
-    /**
-     * Genera insight dall'analisi
-     */
-    generateInsights(classiciData, contemporaneiData) {
-        const insights = [];
-        
-        insights.push('Il pensiero contemporaneo privilegia la relazione sulla sostanza');
-        insights.push('Importanza crescente del contesto storico-culturale');
-        insights.push('Passaggio dalla metafisica alla critica');
-        insights.push('Centralità del linguaggio e del discorso');
-        insights.push('Attenzione alle dinamiche di potere');
-        
-        return insights;
-    }
-
-    /**
-     * Esporta risultati analisi
-     */
-    exportAnalysis(analysis, format = 'json') {
-        const timestamp = new Date().toISOString().split('T')[0];
-        const filename = `analisi-comparativa-${analysis.concept}-${timestamp}`;
-        
-        switch(format) {
-            case 'json':
-                return {
-                    filename: `${filename}.json`,
-                    content: JSON.stringify(analysis, null, 2),
-                    type: 'application/json'
-                };
-                
-            case 'txt':
-                const textContent = this.formatAsText(analysis);
-                return {
-                    filename: `${filename}.txt`,
-                    content: textContent,
-                    type: 'text/plain'
-                };
-                
-            default:
-                throw new Error(`Formato non supportato: ${format}`);
+        },
+        'Potere': {
+            classico: {
+                autore: "Thomas Hobbes",
+                opera: "Leviatano",
+                testo: "Il potere è il mezzo presente per ottenere qualche futuro apparente bene. L'uomo per natura ha un perpetuo e ininterrotto desiderio di potere, che cessa solo con la morte.",
+                definizione: "Diritto sovrano di vita e di morte, concentrato nello Stato."
+            },
+            contemporaneo: {
+                autore: "Michel Foucault",
+                opera: "Sorvegliare e punire",
+                testo: "Il potere è ovunque, non perché comprenda tutto, ma perché proviene da ogni parte. Il potere non è un'istituzione, non è una struttura, non è una certa potenza di cui alcuni sono dotati: è il nome che si dà a una situazione strategica complessa in una data società.",
+                definizione: "Rete diffusa e produttiva che crea saperi e soggetti."
+            }
+        },
+        'Libertà': {
+            classico: {
+                autore: "Immanuel Kant",
+                opera: "Critica della ragion pratica",
+                testo: "La volontà è una specie di causalità degli esseri viventi in quanto razionali, e la libertà sarebbe quella proprietà di questa causalità di poter agire indipendentemente da cause esterne che la determinino.",
+                definizione: "Autonomia della volontà come obbedienza alla legge morale che la ragione si dà."
+            },
+            contemporaneo: {
+                autore: "Jean-Paul Sartre",
+                opera: "L'essere e il nulla",
+                testo: "Siamo condannati a essere liberi. Condannati, perché non ci siamo creati da noi stessi, e tuttavia liberi, perché, una volta gettati nel mondo, siamo responsabili di tutto ciò che facciamo.",
+                definizione: "Condanna esistenziale, progetto che si realizza nelle scelte."
+            }
         }
+    },
+    
+    // Trasformazioni concettuali
+    trasformazioni: {
+        'Essere': [
+            "Da sostanza statica a evento dinamico",
+            "Da concetto univoco a differenza ontologica",
+            "Da oggetto di conoscenza a questione ermeneutica",
+            "Da fondamento metafisico a dono/storia"
+        ],
+        'Verità': [
+            "Da corrispondenza a costruzione",
+            "Da oggettività a interpretazione",
+            "Da certezza a probabilità",
+            "Da assoluto a storico"
+        ],
+        'Soggetto': [
+            "Da sostanza pensante a effetto discorsivo",
+            "Da autonomia a costruzione sociale",
+            "Da unità a molteplicità",
+            "Da fondamento a posizione linguistica"
+        ],
+        'Potere': [
+            "Da sovrano a diffuso",
+            "Da repressivo a produttivo",
+            "Da concentrato a capillare",
+            "Da giuridico a biopolitico"
+        ],
+        'Libertà': [
+            "Da autonomia razionale a condanna esistenziale",
+            "Da proprietà della volontà a situazione",
+            "Da universale a singolare",
+            "Da fondamento a progetto"
+        ]
+    },
+    
+    // Funzioni helper per l'analisi
+    getClassicalText: function(concetto) {
+        return this.testiComparativi[concetto]?.classico || {
+            testo: "Testo classico non disponibile per questo concetto.",
+            definizione: "Definizione classica non disponibile.",
+            autore: "Autore classico"
+        };
+    },
+    
+    getContemporaryText: function(concetto) {
+        return this.testiComparativi[concetto]?.contemporaneo || {
+            testo: "Testo contemporaneo non disponibile per questo concetto.",
+            definizione: "Definizione contemporanea non disponibile.",
+            autore: "Autore contemporaneo"
+        };
+    },
+    
+    getTransformations: function(concetto) {
+        return this.trasformazioni[concetto] || ["Trasformazione non disponibile"];
     }
-
-    /**
-     * Formatta analisi come testo
-     */
-    formatAsText(analysis) {
-        return `
-ANALISI COMPARATIVA FILOSOFICA
-==============================
-
-Concetto Analizzato: ${analysis.concept}
-Data Analisi: ${new Date().toLocaleDateString('it-IT')}
-
-METADATI:
----------
-Classici analizzati: ${analysis.metadata.classici_count}
-Contemporanei analizzati: ${analysis.metadata.contemporanei_count}
-
-TRASFORMAZIONI IDENTIFICATE:
----------------------------
-${analysis.historical_transformations.transformations.map(t => 
-    `• ${t.dimension}: ${t.classico} → ${t.contemporaneo}\n  ${t.description}`
-).join('\n\n')}
-
-INSIGHT PRINCIPALI:
-------------------
-${analysis.key_insights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
-
-NOTE METODOLOGICHE:
-------------------
-Analisi basata su dataset filosofico strutturato.
-Confronto sincronico e diacronico.
-Attenzione al contesto d'uso dei termini.
-        `.trim();
-    }
-}
+};
 
 // ==================== INIZIALIZZAZIONE GLOBALE ====================
 
-// Crea istanze globali
+// Crea istanza globale
 window.LinguisticAnalyzer = new LinguisticAnalyzer();
-window.PhilosophicalTimeline = new PhilosophicalTimeline();
-window.ComparativeAnalysis = new ComparativeAnalysis();
 
 // Funzioni helper globali
 window.analyzePhilosophicalText = function(text) {
     return window.LinguisticAnalyzer.analyzeText(text);
 };
 
-window.createPhilosophicalTimeline = function(containerId, data) {
-    return window.PhilosophicalTimeline.createTimeline(containerId, data);
+window.performComparativeStudy = function(concetto) {
+    const data = window.comparativeData;
+    const classico = data.getClassicalText(concetto);
+    const contemporaneo = data.getContemporaryText(concetto);
+    const trasformazioni = data.getTransformations(concetto);
+    
+    return {
+        concetto: concetto,
+        classico: classico,
+        contemporaneo: contemporaneo,
+        trasformazioni: trasformazioni,
+        analisi_linguistica: window.LinguisticAnalyzer.compareTexts(classico.testo, contemporaneo.testo)
+    };
 };
 
-window.performComparativeStudy = function(concept, classiciData, contemporaneiData) {
-    return window.ComparativeAnalysis.performAnalysis(concept, classiciData, contemporaneiData);
-};
+window.exportComparativeAnalysis = function(concetto) {
+    const analysis = window.performComparativeStudy(concetto);
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `analisi-${concetto}-${timestamp}.txt`;
+    
+    const content = `
+ANALISI COMPARATIVA FILOSOFICA
+==============================
 
-window.exportComparativeAnalysis = function(analysis, format) {
-    const result = window.ComparativeAnalysis.exportAnalysis(analysis, format);
+Concetto: ${analysis.concetto}
+Data Analisi: ${new Date().toLocaleDateString('it-IT')}
+
+TESTI ANALIZZATI:
+-----------------
+
+PERIODO CLASSICO:
+Autore: ${analysis.classico.autore}
+Opera: ${analysis.classico.opera}
+Testo: ${analysis.classico.testo}
+Definizione: ${analysis.classico.definizione}
+
+PERIODO CONTEMPORANEO:
+Autore: ${analysis.contemporaneo.autore}
+Opera: ${analysis.contemporaneo.opera}
+Testo: ${analysis.contemporaneo.testo}
+Definizione: ${analysis.contemporaneo.definizione}
+
+TRASFORMAZIONI IDENTIFICATE:
+---------------------------
+${analysis.trasformazioni.map((t, i) => `${i + 1}. ${t}`).join('\n')}
+
+ANALISI LINGUISTICA:
+-------------------
+- Differenza lunghezza testi: ${analysis.analisi_linguistica.comparison.word_count_diff.toFixed(2)}%
+- Differenza densità concettuale: ${analysis.analisi_linguistica.comparison.conceptual_density_diff.toFixed(2)}%
+- Complessità complessiva: ${analysis.analisi_linguistica.comparison.overall_complexity}
+
+INSIGHT:
+--------
+${analysis.analisi_linguistica.insights.map((insight, i) => `${i + 1}. ${insight}`).join('\n')}
+    `.trim();
     
     // Crea e scarica file
-    const blob = new Blob([result.content], { type: result.type });
+    const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     
     const a = document.createElement('a');
     a.href = url;
-    a.download = result.filename;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    return result.filename;
+    return filename;
 };
 
 console.log('✅ Moduli analisi linguistica filosofica caricati');

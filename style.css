@@ -1,23 +1,23 @@
 /**
- * AETERNA LEXICON IN MOTU - STYLE.CSS VERSIONE PULITA
- * Project Work Filosofico - Solo stili essenziali
- * Versione 3.1.0 - Senza analytics e multilingua
+ * AETERNA LEXICON IN MOTU - STYLE.CSS
+ * Project Work Filosofico - Stili completi per dataset integrato
+ * Versione 4.0.0 - Ottimizzato per 20 filosofi, 40 opere, 23 concetti
  */
 
 /* ==================== VARIABILI CSS ==================== */
 :root {
-    /* Colori principali filosofici */
-    --primary-blue: #3b82f6;      /* Filosofi - Blu intellettuale */
-    --primary-green: #10b981;     /* Opere - Verde conoscenza */
-    --primary-purple: #8b5cf6;    /* Concetti - Viola profondo */
-    --primary-orange: #f59e0b;    /* Mappa Concettuale - Arancio creativo */
-    --primary-red: #ef4444;       /* Errori/Alert - Rosso */
+    /* Colori principali */
+    --primary-blue: #3b82f6;
+    --primary-green: #10b981;
+    --primary-purple: #8b5cf6;
+    --primary-orange: #f59e0b;
+    --primary-red: #ef4444;
     
-    /* Colori periodi filosofici */
-    --classic-color: #10b981;     /* Verde per periodo classico */
-    --contemporary-color: #f59e0b; /* Arancione per periodo contemporaneo */
+    /* Colori periodi */
+    --classic-color: #10b981;
+    --contemporary-color: #f59e0b;
     
-    /* Palette di base */
+    /* Palette */
     --dark-text: #1f2937;
     --light-text: #6b7280;
     --background: #f8fafc;
@@ -90,8 +90,8 @@ html, body {
 }
 
 .splash-image {
-    width: 200px;
-    height: 267px;
+    width: 150px;
+    height: 150px;
     object-fit: contain;
     filter: drop-shadow(0 10px 20px rgba(0,0,0,0.2));
     animation: fadeInScale 1s ease-out;
@@ -110,7 +110,7 @@ html, body {
     background: #ffffff;
     border-radius: 2px;
     width: 0%;
-    transition: width 0.3s ease;
+    animation: progressLoad 2s ease-in-out forwards;
 }
 
 .splash-text {
@@ -122,6 +122,11 @@ html, body {
 @keyframes fadeInScale {
     0% { opacity: 0; transform: scale(0.9); }
     100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes progressLoad {
+    0% { width: 0%; }
+    100% { width: 100%; }
 }
 
 /* ==================== LAYOUT APP ==================== */
@@ -147,7 +152,7 @@ html, body {
 /* ==================== HOME SCREEN ==================== */
 #home-screen {
     background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)),
-                url('https://derolu0.github.io/aeterna/images/sfondo-home-mobile.jpg');
+                url('images/sfondo-home-mobile.jpg');
     background-size: cover;
     background-position: center;
     display: flex;
@@ -179,7 +184,7 @@ html, body {
 }
 
 .logo-with-image {
-    background: url('https://derolu0.github.io/aeterna/images/logo-app.png') center/contain no-repeat;
+    background: url('images/logo-app.png') center/contain no-repeat;
     background-size: 85%;
 }
 
@@ -187,7 +192,7 @@ html, body {
     width: 96px;
     height: 96px;
     border-radius: 50%;
-    background-image: url('https://derolu0.github.io/aeterna/images/logo-comune.png');
+    background-image: url('images/logo-comune.png');
     background-size: 85%;
     background-position: center;
     background-repeat: no-repeat;
@@ -554,6 +559,13 @@ html, body {
     }
 }
 
+@media (min-width: 1024px) {
+    .items-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+}
+
 .grid-item {
     background: var(--card-bg);
     border-radius: var(--radius-xl);
@@ -594,7 +606,7 @@ html, body {
     width: 100%;
     height: 180px;
     overflow: hidden;
-    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -617,7 +629,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #9ca3af;
+    color: white;
     font-size: 3rem;
 }
 
@@ -669,9 +681,36 @@ html, body {
     color: #92400e;
 }
 
-.periodo-altro {
+.periodo-entrambi {
     background: #e0e7ff;
     color: #3730a3;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.action-btn:hover {
+    background: #2563eb;
+}
+
+.action-btn.disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.map-btn {
+    background: var(--classic-color);
 }
 
 /* ==================== LISTA OPERE COMPATTA ==================== */
@@ -709,7 +748,7 @@ html, body {
     flex-shrink: 0;
     border-radius: var(--radius-lg) 0 0 var(--radius-lg);
     overflow: hidden;
-    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -721,7 +760,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #9ca3af;
+    color: white;
     font-size: 1.8rem;
 }
 
@@ -789,17 +828,12 @@ html, body {
     padding-bottom: 140px;
 }
 
-.detail-image {
-    width: 100%;
-    height: 250px;
-    border-radius: var(--radius-xl);
-    object-fit: cover;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-md);
+.detail-header {
+    margin-bottom: 25px;
 }
 
 .detail-name {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 700;
     margin-bottom: 15px;
     color: var(--dark-text);
@@ -813,39 +847,30 @@ html, body {
     box-shadow: var(--shadow-md);
 }
 
-.info-item {
-    display: flex;
-    align-items: flex-start;
-    margin-bottom: 12px;
-    font-size: 1rem;
-}
-
-.info-label {
-    font-weight: 600;
+.detail-info h3 {
+    font-size: 1.2rem;
     color: var(--dark-text);
-    min-width: 100px;
-    flex-shrink: 0;
-}
-
-.info-value {
-    color: var(--light-text);
-    flex: 1;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    white-space: pre-wrap;
-    min-width: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f3f4f6;
 }
 
 /* Griglia metadata */
 .detail-meta-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     margin-bottom: 25px;
     background: #f8fafc;
     padding: 15px;
     border-radius: var(--radius-md);
     border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 768px) {
+    .detail-meta-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .meta-item {
@@ -887,6 +912,35 @@ html, body {
     font-size: 0.85rem;
     font-weight: 500;
     box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
+}
+
+/* Lista opere nel dettaglio filosofo */
+.opere-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.opera-item {
+    background: #f8fafc;
+    padding: 12px 15px;
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-green);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.opera-item:hover {
+    background: #f1f5f9;
+    transform: translateX(5px);
+}
+
+.opera-sintesi {
+    font-size: 0.85rem;
+    color: var(--light-text);
+    margin-top: 5px;
+    line-height: 1.4;
 }
 
 /* ==================== CONCETTI ==================== */
@@ -974,48 +1028,61 @@ html, body {
     margin-bottom: 15px;
 }
 
-.concetto-esempio {
-    font-style: italic;
-    color: var(--light-text);
-    padding: 10px;
-    background: #f8fafc;
-    border-radius: var(--radius-sm);
-    border-left: 3px solid var(--primary-purple);
-    margin-bottom: 15px;
-}
-
-.concetto-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.8rem;
-    color: var(--light-text);
-    margin-bottom: 15px;
-}
-
-.concetto-autore {
-    font-style: italic;
-}
-
-.concetto-opera {
-    background: var(--primary-purple);
-    color: white;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-weight: 600;
-}
-
 .concetto-actions {
     display: flex;
     gap: 10px;
     margin-top: 15px;
 }
 
-.btn-analisi.small,
+.btn-analisi.small {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    background: var(--primary-purple);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-analisi.small:hover {
+    background: #7c3aed;
+}
+
 .btn-secondary.small {
     padding: 8px 12px;
     font-size: 0.8rem;
     border-radius: 8px;
+    background: #f3f4f6;
+    color: var(--dark-text);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-analisi {
+    background: linear-gradient(135deg, var(--primary-purple), #7c3aed);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-analisi:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(139, 92, 246, 0.4);
+}
+
+.btn-analisi:active {
+    transform: translateY(0);
 }
 
 /* ==================== MAPPA GEOGRAFICA ==================== */
@@ -1072,54 +1139,19 @@ html, body {
     background: #2563eb;
 }
 
-.search-results {
-    background: white;
-    border-radius: var(--radius-md);
-    margin-top: 10px;
-    max-height: 300px;
-    overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-    display: none;
-}
-
-.search-result-item {
-    padding: 12px 15px;
-    border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.search-result-item:hover {
-    background: #f3f4f6;
-}
-
-.search-result-item:last-child {
-    border-bottom: none;
-}
-
-.search-result-name {
-    font-weight: 600;
-    color: var(--dark-text);
-    margin-bottom: 4px;
-}
-
-.search-result-details {
-    font-size: 0.8rem;
-    color: var(--light-text);
-}
-
 /* Legenda mappa */
 .map-legend {
     position: absolute;
     top: 130px;
     right: 10px;
-    background: rgba(255,255,255,0.7);
+    background: rgba(255,255,255,0.9);
     padding: 10px;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
     z-index: 1000;
     max-width: 140px;
     font-size: 0.85rem;
+    backdrop-filter: blur(5px);
 }
 
 .legend-title {
@@ -1151,10 +1183,6 @@ html, body {
     background: var(--contemporary-color);
 }
 
-.icon-position {
-    background: var(--primary-red);
-}
-
 /* ==================== MAPPA CONCETTUALE ==================== */
 #mappa-concettuale-screen {
     background: var(--background);
@@ -1171,63 +1199,13 @@ html, body {
     box-shadow: var(--shadow-sm);
 }
 
-.search-concetto input {
-    width: 100%;
-    padding: 12px 20px;
-    border: 2px solid var(--border-color);
-    border-radius: var(--radius-md);
-    font-size: 1rem;
-    margin-top: 10px;
-}
-
-#concetto-network-container {
+#concept-network {
     width: 100%;
     height: 600px;
     background: white;
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
-}
-
-.concetto-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    background: #f8fafc;
-    padding: 15px;
-    border-radius: var(--radius-lg);
-    margin-top: 20px;
-}
-
-.legend-circle {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    margin-right: 8px;
-    display: inline-block;
-}
-
-.legend-circle.filosofo {
-    background: var(--primary-blue);
-}
-
-.legend-circle.concetto {
-    background: var(--primary-purple);
-}
-
-.legend-line {
-    width: 30px;
-    height: 3px;
-    margin-right: 8px;
-    display: inline-block;
-}
-
-.legend-line.classico {
-    background: var(--classic-color);
-}
-
-.legend-line.contemporaneo {
-    background: var(--contemporary-color);
 }
 
 /* ==================== FILTRI ==================== */
@@ -1267,25 +1245,20 @@ html, body {
 }
 
 .filter-btn.non-funzionante {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.filter-btn.manutenzione {
     background: #fef3c7;
     color: #92400e;
 }
 
 /* ==================== RICERCA ==================== */
 .search-container {
-    padding: 20px;
+    padding: 15px 20px;
     background: var(--card-bg);
     border-bottom: 1px solid var(--border-color);
 }
 
 .search-input {
     width: 100%;
-    padding: 15px 20px;
+    padding: 12px 20px;
     border: 2px solid var(--border-color);
     border-radius: var(--radius-lg);
     font-size: 1rem;
@@ -1445,13 +1418,7 @@ html, body {
 
 /* Menu Modal */
 .menu-modal-content {
-    animation: fadeInMenu 0.2s ease-out;
-    transform-origin: top right;
-}
-
-@keyframes fadeInMenu {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
+    max-width: 300px;
 }
 
 /* Bottoni menu specifici */
@@ -1488,31 +1455,6 @@ html, body {
 .modal-btn.btn-info i { color: #64748b; }
 
 /* ==================== BOTTONI AZIONE ==================== */
-.btn-analisi {
-    background: linear-gradient(135deg, var(--primary-purple), #7c3aed);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: var(--radius-md);
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: all 0.3s ease;
-    font-size: 0.95rem;
-}
-
-.btn-analisi:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(139, 92, 246, 0.4);
-}
-
-.btn-analisi:active {
-    transform: translateY(0);
-}
-
 .btn-secondary {
     background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
     color: var(--dark-text);
@@ -1544,139 +1486,218 @@ html, body {
 }
 
 /* ==================== PANNELLO AMMINISTRATORE ==================== */
-.admin-panel-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 3000;
-    padding: 20px;
-}
-
-.admin-panel-content {
-    background: white;
-    border-radius: var(--radius-xl);
-    width: 100%;
-    max-width: 1200px;
-    max-height: 90vh;
+#admin-panel.screen {
+    position: fixed !important;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #f8fafc !important;
+    z-index: 10002 !important;
     overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    color: #1e293b;
 }
 
-.admin-panel-header {
+.admin-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px 25px;
-    border-bottom: 1px solid var(--border-color);
-    background: linear-gradient(135deg, var(--primary-blue), #1d4ed8);
-    color: white;
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
 }
 
-.admin-panel-header h2 {
+.admin-header h2 {
     font-size: 1.5rem;
-    font-weight: 700;
+    color: var(--dark-text);
 }
 
-.close-admin-panel {
+.close-btn {
     background: none;
     border: none;
-    font-size: 1.2rem;
+    font-size: 1.5rem;
+    color: var(--light-text);
     cursor: pointer;
+}
+
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+}
+
+.stat-card h3 {
+    font-size: 0.9rem;
+    color: var(--light-text);
+    margin-bottom: 5px;
+}
+
+.stat-card span {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-blue);
+}
+
+.admin-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-primary {
+    background: var(--primary-blue);
     color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-danger {
+    background: var(--primary-red);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .admin-tabs {
     display: flex;
-    border-bottom: 1px solid var(--border-color);
-    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 20px;
 }
 
 .admin-tab-btn {
-    flex: 1;
-    padding: 12px;
+    padding: 12px 20px;
     background: none;
     border: none;
     cursor: pointer;
     font-weight: 600;
     color: var(--light-text);
-    transition: all 0.3s ease;
     border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
 }
 
 .admin-tab-btn.active {
     color: var(--primary-blue);
     border-bottom: 3px solid var(--primary-blue);
-    background: white;
 }
 
 .admin-tab-content {
     display: none;
-    padding: 20px;
 }
 
 .admin-tab-content.active {
     display: block;
 }
 
-/* Form admin */
-.form-group {
-    margin-bottom: 15px;
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    color: var(--dark-text);
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-sm);
-    font-size: 1rem;
-}
-
-.form-actions {
+.import-export-group {
     display: flex;
     gap: 10px;
-    margin-top: 20px;
+    flex-wrap: wrap;
 }
 
-.admin-btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: var(--radius-sm);
+.data-table-container {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    background: #f8fafc;
+    padding: 12px 15px;
+    text-align: left;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.admin-btn.primary {
-    background: var(--primary-blue);
-    color: white;
-}
-
-.admin-btn.secondary {
-    background: #f3f4f6;
     color: var(--dark-text);
+    border-bottom: 2px solid #e2e8f0;
 }
 
-.admin-btn:active {
-    transform: scale(0.98);
+.admin-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-table tr:hover {
+    background: #f8fafc;
+}
+
+.periodo-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.periodo-badge.periodo-classico {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.periodo-badge.periodo-contemporaneo {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.periodo-badge.periodo-entrambi {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin: 2px;
+}
+
+.btn-small.danger {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.btn-small.danger:hover {
+    background: #fecaca;
 }
 
 /* ==================== AUTH OVERLAY ==================== */
@@ -1686,7 +1707,7 @@ html, body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
     display: none;
     align-items: center;
     justify-content: center;
@@ -1745,6 +1766,11 @@ html, body {
     background: #2563eb;
 }
 
+.auth-btn.secondary {
+    background: #f3f4f6;
+    color: var(--dark-text);
+}
+
 .auth-error {
     color: var(--primary-red);
     font-size: 0.9rem;
@@ -1752,294 +1778,17 @@ html, body {
     display: none;
 }
 
-/* ==================== SCHERMATA SEGNALAZIONI ==================== */
-#segnalazioni-screen .app-header {
-    background: #ef4444 !important;
-}
-
-#segnalazioni-screen .screen-title,
-#segnalazioni-screen .screen-subtitle,
-#segnalazioni-screen .back-btn {
-    color: white !important;
-}
-
-#segnalazioni-screen .back-btn {
-    background: rgba(255, 255, 255, 0.2) !important;
-}
-
-#segnalazioni-screen .content-area {
-    color: #000000;
-}
-
-#segnalazioni-screen select,
-#segnalazioni-screen textarea {
-    background-color: #ffffff;
-    color: #000000;
-    border: 1px solid #ccc;
-}
-
-#segnalazioni-screen button[type="submit"] {
-    background-color: #ef4444;
-    color: white;
-    width: auto;
-    max-width: 250px;
-    padding: 12px 30px;
-    margin: 30px auto;
-    border-radius: 50px;
-    border: none;
-    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#segnalazioni-screen button[type="submit"] .btn-icon {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: none;
-    margin-right: 10px;
-}
-
 /* ==================== BANNER INSTALLAZIONE PWA ==================== */
-.install-banner {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 450px;
-    background: #1f2937;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 50px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    z-index: 9999;
-    display: none;
-    align-items: center;
-    justify-content: space-between;
-    animation: slideUp 0.5s ease-out;
-    gap: 15px;
-}
-
-.install-text {
-    display: flex;
-    flex-direction: column;
-}
-
-.install-title {
-    font-weight: 700;
-    font-size: 0.95rem;
-}
-
-.install-subtitle {
-    font-size: 0.75rem;
-    opacity: 0.8;
-}
-
-.install-action-btn {
-    background: var(--primary-green);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    cursor: pointer;
-    white-space: nowrap;
-    box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
-}
-
-.install-close-btn {
-    background: transparent;
-    border: none;
-    color: rgba(255,255,255,0.6);
-    cursor: pointer;
-    font-size: 1.1rem;
-    padding: 5px;
-}
-
-@keyframes slideUp {
-    from { transform: translate(-50%, 100px); opacity: 0; }
-    to { transform: translate(-50%, 0); opacity: 1; }
-}
-
-/* ==================== RESPONSIVE DESIGN ==================== */
-@media (min-width: 768px) {
-    .home-buttons {
-        max-width: 600px;
-    }
-    
-    .button-row {
-        gap: 20px;
-    }
-    
-    .home-btn {
-        padding: 20px 15px;
-        min-height: 100px;
-        font-size: 1rem;
-    }
-    
-    .btn-icon {
-        font-size: 2rem;
-        width: 60px;
-        height: 60px;
-    }
-    
-    .btn-text {
-        font-size: 1rem;
-    }
-    
-    .items-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 25px;
-    }
-    
-    .content-area {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 30px;
-        width: 100%;
-    }
-    
-    .tab-bar {
-        max-width: 1200px;
-        margin: 0 auto;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 20px;
-        width: calc(100% - 40px);
-    }
-    
-    .detail-content {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 30px;
-    }
-}
-
-@media (min-width: 1024px) {
-    #home-screen {
-        background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), 
-                          url('https://derolu0.github.io/aeterna/images/sfondo-home.jpg') !important;
-    }
-    
-    .logo-container {
-        max-width: 600px;
-        margin: 0 auto 30px;
-        justify-content: center;
-    }
-    
-    .home-title {
-        font-size: 2.5rem;
-        max-width: 600px;
-        margin: 0 auto 15px;
-    }
-    
-    .home-subtitle {
-        font-size: 1.1rem;
-        max-width: 500px;
-        margin: 0 auto 40px;
-    }
-    
-    .concetti-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* ==================== ACCESSIBILITÀ ==================== */
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-}
-
-/* ==================== PRINT STYLES ==================== */
-@media print {
-    .tab-bar,
-    .admin-icon-btn-container,
-    .install-banner {
-        display: none !important;
-    }
-    
-    .app-container {
-        box-shadow: none !important;
-    }
-}
-/* STILI PANNELLO ADMIN AGGIUNTIVI */
-.admin-panel-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.85);
-    z-index: 9999; /* Molto alto per stare sopra tutto */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.admin-panel-content {
-    background: white;
-    width: 90%; max-width: 1000px; height: 85vh;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-}
-
-.admin-panel-header {
-    background: #f1f5f9;
-    padding: 15px 20px;
-    display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid #ddd;
-}
-
-.admin-tabs {
-    display: flex;
-    background: #1e293b;
-}
-
-.admin-tab-btn {
-    flex: 1;
-    padding: 15px;
-    background: none; border: none;
-    color: #94a3b8;
-    font-weight: bold; cursor: pointer;
-    border-bottom: 3px solid transparent;
-}
-
-.admin-tab-btn.active {
-    color: white;
-    background: rgba(255,255,255,0.1);
-    border-bottom: 3px solid #3b82f6;
-}
-
-.admin-tab-content {
-    flex-grow: 1;
-    overflow-y: auto;
-    display: none; /* Fondamentale: nascosti di default */
-}
-
-.admin-tab-content.active {
-    display: block; /* Mostra solo quello attivo */
-}
-/* ==================== STILI PWA BANNER ==================== */
 .pwa-banner {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     background: white;
     padding: 15px;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.15); /* Ombra più visibile */
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    z-index: 10000; /* Altissimo per stare sopra a tutto, anche al pannello admin */
+    z-index: 10000;
     animation: slideUp 0.5s ease-out;
     border-top: 1px solid #eee;
 }
@@ -2080,7 +1829,7 @@ html, body {
     font-weight: bold;
     cursor: pointer;
     white-space: nowrap;
-    margin-left: auto; /* Spinge a destra */
+    margin-left: auto;
     margin-right: 10px;
 }
 
@@ -2099,103 +1848,144 @@ html, body {
     to { transform: translateY(0); } 
 }
 
-/* Adattamento Mobile */
-@media (max-width: 480px) {
-    .pwa-banner {
-        padding: 10px;
-        flex-wrap: wrap;
+/* ==================== RESPONSIVE DESIGN ==================== */
+@media (min-width: 768px) {
+    .home-buttons {
+        max-width: 600px;
     }
-    .pwa-text span {
-        display: none; /* Risparmia spazio su schermi piccoli */
+    
+    .button-row {
+        gap: 20px;
+    }
+    
+    .home-btn {
+        padding: 20px 15px;
+        min-height: 100px;
+        font-size: 1rem;
+    }
+    
+    .btn-icon {
+        font-size: 2rem;
+        width: 60px;
+        height: 60px;
+    }
+    
+    .btn-text {
+        font-size: 1rem;
+    }
+    
+    .content-area {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 30px;
+        width: 100%;
+    }
+    
+    .tab-bar {
+        max-width: 1200px;
+        margin: 0 auto;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 20px;
+        width: calc(100% - 40px);
+    }
+    
+    .detail-content {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 30px;
     }
 }
-/* GESTIONE SPLASH SCREEN - CORREZIONE */
-.splash-screen {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: var(--background, #f8fafc);
-    display: flex; /* Flex serve per centrare il logo */
-    justify-content: center;
-    align-items: center;
-    z-index: 99999; /* Sopra a tutto */
-    transition: opacity 0.5s ease-out, visibility 0.5s;
+
+@media (min-width: 1024px) {
+    #home-screen {
+        background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.7)), 
+                          url('images/sfondo-home.jpg') !important;
+    }
+    
+    .logo-container {
+        max-width: 600px;
+        margin: 0 auto 30px;
+        justify-content: center;
+    }
+    
+    .home-title {
+        font-size: 2.5rem;
+        max-width: 600px;
+        margin: 0 auto 15px;
+    }
+    
+    .home-subtitle {
+        font-size: 1.1rem;
+        max-width: 500px;
+        margin: 0 auto 40px;
+    }
+    
+    .concetti-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
-/* Questa è la classe che mancava o non funzionava */
-.splash-screen.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none; /* Permette di cliccare sotto anche se l'animazione si incanta */
+/* ==================== ACCESSIBILITÀ ==================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+/* ==================== RIDUZIONE SPAZIO HOME PAGE ==================== */
+#home-screen .home-title {
+    margin-bottom: 5px !important;
 }
 
-/* Animazioni estetiche */
-.splash-logo { font-size: 4rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
-.loader {
-    width: 40px; height: 40px;
-    border: 4px solid #e2e8f0;
-    border-top: 4px solid #3b82f6;
-    border-radius: 50%;
-    margin: 20px auto;
-    animation: spin 1s linear infinite;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-/* Forza il login a stare sopra a ogni altra cosa */
-#admin-auth {
-    position: fixed !important;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85) !important; /* Leggermente più scuro per coprire meglio */
-    z-index: 99999 !important; /* Massimo livello di altezza */
-    display: none; /* Inizialmente nascosto, attivato da JS con 'flex' */
-    align-items: center;
-    justify-content: center;
+#home-screen .home-subtitle {
+    margin-bottom: 10px !important;
+    font-size: 0.85rem !important; /* Rendi anche il testo un po' più piccolo */
 }
 
-.auth-modal {
-    background: white !important;
-    padding: 30px;
-    border-radius: 15px;
-    width: 90%;
-    max-width: 400px;
-    color: #333 !important; /* Forza il testo a essere scuro e leggibile */
-    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+#home-screen .home-buttons {
+    margin-top: 10px !important;
+    gap: 12px !important; /* Riduci anche lo spazio tra i bottoni */
+}
+
+/* Opzionale: riduci l'altezza dei bottoni */
+#home-screen .home-btn {
+    min-height: 75px !important; /* Ridotto da 85px */
+    padding: 14px 12px !important; /* Ridotto da 16px 12px */
+}
+
+#home-screen .btn-icon {
+    width: 40px !important; /* Ridotto da 48px */
+    height: 40px !important; /* Ridotto da 48px */
+    font-size: 1.4rem !important; /* Ridotto da 1.6rem */
+}
+/* ==================== FIX MODALE QR CENTRATA ==================== */
+#qr-modal .modal-content {
     text-align: center;
-}
-/* Stile base per il Pannello Admin */
-#admin-panel.screen {
-    position: fixed !important;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: #f8fafc !important; /* Grigio chiarissimo */
-    z-index: 10002 !important;
-    overflow-y: auto;
-    padding: 20px;
-    color: #1e293b;
-}
-
-.admin-header {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: center;
-    border-bottom: 2px solid #e2e8f0;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
 }
 
-.admin-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.stat-card {
-    background: white;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+#qr-modal .modal-title {
     text-align: center;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+#qrcode-container {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin: 15px 0 !important;
+    width: 100%;
+    min-height: 220px; /* Altezza minima per il QR */
+}
+
+#qr-modal .modal-btn {
+    margin-top: 15px;
+    width: 120px;
 }

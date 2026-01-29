@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Aeterna Lexicon in Motu</title>
+    <title>Aeterna Lexicon in Motu - Dataset Filosofico</title>
     
-    <!-- Metadati essenziali -->
+    <!-- Metadati -->
     <meta name="description" content="Dataset per l'analisi delle trasformazioni del linguaggio filosofico tra classico e contemporaneo">
     <meta name="theme-color" content="#3b82f6">
     
     <!-- Manifest PWA -->
-    <link rel="manifest" href="https://derolu0.github.io/aeterna/manifest.json">
+    <link rel="manifest" href="manifest.json">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="https://derolu0.github.io/aeterna/images/favicon.ico">
-    <link rel="apple-touch-icon" href="https://derolu0.github.io/aeterna/images/apple-touch-icon.png">
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
     
     <!-- Font e Librerie -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -22,42 +22,45 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Fogli di stile -->
-    <link rel="stylesheet" href="https://derolu0.github.io/aeterna/comparative-styles.css">
-    <link rel="stylesheet" href="https://derolu0.github.io/aeterna/style.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="comparative-styles.css">
     
     <!-- Script esterni -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <!-- Script dell'app -->
-    <script src="https://derolu0.github.io/aeterna/linguistic-analysis.js" defer></script>
-    
     <style>
         /* Smooth scroll per ancore */
         html {
             scroll-behavior: smooth;
         }
+        
+        /* Stili temporanei per le immagini mancanti */
+        .item-image {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+        }
+        
+        .compact-image-fallback {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
     </style>
 </head>
 <body>
-    <!-- ==================== OVERLAY MANUTENZIONE ==================== -->
-    <div id="maintenance-mode" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
-        <img src="https://derolu0.github.io/aeterna/images/logo-app.png" alt="Logo" style="width: 100px; margin-bottom: 20px; border-radius: 20px;">
-        <h1 style="color: #1f2937; margin-bottom: 10px; font-size: 1.5rem;">Sito in Manutenzione</h1>
-        <p style="color: #6b7280; font-size: 1rem; max-width: 300px; margin-bottom: 30px;">
-            Stiamo aggiornando il sistema per offrirti un servizio migliore.
-        </p>
-        <button onclick="document.getElementById('admin-auth').style.display='flex'" 
-                style="background: #f3f4f6; border: none; padding: 10px 20px; border-radius: 50px; color: #9ca3af; font-size: 0.8rem; cursor: pointer;">
-            <i class="fas fa-lock"></i> Area Riservata
-        </button>
-    </div>
-
     <!-- ==================== SPLASH SCREEN ==================== -->
     <div id="splash-screen">
         <div class="splash-container">
-            <img src="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png" alt="Aeterna Lexicon" class="splash-image">
+            <img src="images/icona-avvio-splash.png" alt="Aeterna Lexicon" class="splash-image">
             <div class="splash-progress">
                 <div class="splash-progress-bar"></div>
             </div>
@@ -85,23 +88,6 @@
     </div>
 
     <!-- ==================== MODALI VARIE ==================== -->
-    <div class="modal-overlay" id="navigation-modal">
-        <div class="modal-content">
-            <h3 class="modal-title">Scegli l'app di navigazione</h3>
-            <div class="modal-buttons">
-                <button class="modal-btn primary" onclick="openGoogleMaps()">
-                    <i class="fas fa-map-marked-alt"></i> Google Maps
-                </button>
-                <button class="modal-btn primary" onclick="openAppleMaps()">
-                    <i class="fas fa-map-marked-alt"></i> Apple Maps
-                </button>
-                <button class="modal-btn secondary" onclick="closeNavigationModal()">
-                    <i class="fas fa-times"></i> Annulla
-                </button>
-            </div>
-        </div>
-    </div>
-
     <div class="modal-overlay" id="info-modal">
         <div class="modal-content">
             <h3 class="modal-title">Informazioni</h3>
@@ -199,7 +185,6 @@
         </div>
     </div>
 
-   
     <!-- ==================== CONTAINER PRINCIPALE APP ==================== -->
     <div class="app-container">
         <!-- Pulsante Menu -->
@@ -253,7 +238,11 @@
                     </button>
                 </div>
             </div>
-        </div> <div class="screen list-screen" id="filosofi-screen"> <header class="app-header">
+        </div>
+
+        <!-- ============ SCHERMATA FILOSOFI ============ -->
+        <div class="screen list-screen" id="filosofi-screen">
+            <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
                 <h1 class="screen-title">Filosofi</h1>
                 <p class="screen-subtitle">Esplora i filosofi della storia</p>
@@ -434,7 +423,7 @@
                     </div>
                 </div>
 
-                <div id="concetto-network-container">
+                <div id="concept-network" style="width: 100%; height: 600px; border: 1px solid #e5e7eb; border-radius: 12px;">
                     <div class="loading">
                         <div class="loading-spinner"></div>
                         <p>Costruzione mappa concettuale...</p>
@@ -445,45 +434,45 @@
          
         <!-- ============ CREDITS ============ -->
         <div id="credits-screen" class="screen">
-            <div class="app-header">
+            <header class="app-header" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
                 <button class="back-btn" onclick="showScreen('home-screen')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <div class="screen-title">Info & Credits</div>
-            </div>
+                <div class="screen-title" style="color: white;">Info & Credits</div>
+            </header>
 
-            <div class="content-area" style="text-align: center; padding: 30px 20px;">
+            <div class="content-area" style="padding: 20px; display: flex; flex-direction: column; align-items: center;">
                 
-                <div style="margin-bottom: 30px;">
-                    <img src="https://derolu0.github.io/aeterna/images/logo-app.png" alt="Aeterna Lexicon" 
+                <div style="text-align: center; margin-bottom: 30px; max-width: 500px; width: 100%;">
+                    <img src="images/logo-app.png" alt="Aeterna Lexicon" 
                          style="width: 80px; height: 80px; border-radius: 20px; margin-bottom: 10px;">
-                    <h2 style="font-size: 1.3rem; color: var(--dark-text); margin-bottom: 5px;">
+                    <h2 style="font-size: 1.3rem; color: #1f2937; margin-bottom: 5px;">
                         Aeterna Lexicon in Motu
                     </h2>
-                    <p style="color: var(--light-text); font-size: 0.9rem;">v. 3.1.0</p>
+                    <p style="color: #6b7280; font-size: 0.9rem;">v. 4.0.0</p>
                 </div>
 
-                <hr style="margin: 20px 0;">
+                <hr style="margin: 20px 0; border-color: #e5e7eb; width: 100%; max-width: 500px;">
 
-                <div class="credit-section" style="margin-bottom: 30px;">
-                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; margin-bottom: 8px;">
+                <div class="credit-section" style="margin-bottom: 30px; max-width: 500px; width: 100%;">
+                    <h4 style="color: #3b82f6; font-size: 0.85rem; margin-bottom: 8px; font-weight: 600; text-align: center;">
                         AUTORE & PROJECT
                     </h4>
                     
-                    <p style="font-weight: 700; font-size: 1.1rem; color: #1f2937; margin-bottom: 4px;">
+                    <p style="font-weight: 700; font-size: 1.1rem; color: #1f2937; margin-bottom: 4px; text-align: center;">
                         De Rosa Salvatore
                     </p>
                     
-                    <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 2px;">
+                    <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 2px; text-align: center;">
                         Corso di Laurea in Filosofia ed Etica
                     </p>
                     
-                    <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 12px;">
+                    <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 12px; text-align: center;">
                         Università Telematica Pegaso (Unipegaso)<br>
                         Anno Accademico 2025/2026
                     </p>
 
-                    <div style="background-color: #f0f9ff; padding: 12px; border-radius: 8px;">
+                    <div style="background-color: #f0f9ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; text-align: center;">
                         <p style="font-size: 0.85rem; color: #334155; line-height: 1.5;">
                             "Project Work per l'analisi delle trasformazioni del linguaggio filosofico 
                             tra periodo classico e contemporaneo."
@@ -491,9 +480,9 @@
                     </div>
                 </div>
 
-                <hr style="margin: 20px 0;">
+                <hr style="margin: 20px 0; border-color: #e5e7eb; width: 100%; max-width: 500px;">
 
-                <div style="font-size: 0.75rem; color: #9ca3af; line-height: 1.5;">
+                <div style="font-size: 0.75rem; color: #9ca3af; line-height: 1.5; max-width: 500px; width: 100%; text-align: center;">
                     <p style="margin-bottom: 10px;">
                         Applicativo sviluppato per il <strong>Project Work Universitario</strong> 
                         sulla trasformazione del linguaggio filosofico.
@@ -502,7 +491,7 @@
                         Dataset filosofico comparativo Classico/Contemporaneo
                     </p>
                     
-                    <div style="background: #f3f4f6; padding: 12px; border-radius: 10px; margin-bottom: 15px;">
+                    <div style="background: #f3f4f6; padding: 12px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
                         <p style="font-weight: 600; margin-bottom: 8px; color: #4b5563;">
                             Tecnologie utilizzate:
                         </p>
@@ -514,31 +503,43 @@
                         Software © 2026 <strong>Salvatore De Rosa</strong>.<br>
                         Dataset © 2026 <strong>Project Work Aeterna Lexicon</strong>.
                     </p>
+                    
+                    <!-- Contatto generico (senza email specifica) -->
+                    <div style="background: #e0f2fe; padding: 12px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #0ea5e9; text-align: center;">
+                        <p style="font-weight: 600; margin-bottom: 5px; color: #0369a1;">
+                            <i class="fas fa-info-circle"></i> Informazioni
+                        </p>
+                        <p style="color: #0c4a6e; font-size: 0.8rem;">
+                            Per segnalazioni o informazioni, utilizzare il modulo dedicato nell'app.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- ============ SEGNALAZIONI ============ -->
         <div id="segnalazioni-screen" class="screen">
-            <header class="app-header">
+            <header class="app-header" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
                 <button class="back-btn" onclick="goBack()">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <h1 class="screen-title">Segnalazioni</h1>
-                <p class="screen-subtitle">Inviaci feedback sul dataset filosofico</p>
+                <h1 class="screen-title" style="color: white;">Segnalazioni</h1>
+                <p class="screen-subtitle" style="color: rgba(255,255,255,0.9);">Inviaci feedback sul dataset filosofico</p>
             </header>
 
             <div class="content-area">
-                <div class="report-container">
-                    <p style="margin-bottom: 20px; color: var(--light-text);">
+                <div class="report-container" style="padding: 20px;">
+                    <p style="margin-bottom: 20px; color: #6b7280;">
+                        <i class="fas fa-info-circle" style="color: #ef4444; margin-right: 5px;"></i>
                         Hai trovato un'inesattezza in un concetto o un problema nell'App? 
                         La tua segnalazione aiuterà a migliorare il dataset.
                     </p>
 
                     <form onsubmit="inviaSegnalazione(event)" class="report-form">
-                        <div class="form-group">
-                            <label>Tipo di Segnalazione</label>
-                            <select id="report-type" class="search-input" required>
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; color: #4b5563; font-weight: 500;">Tipo di Segnalazione</label>
+                            <select id="report-type" class="search-input" required 
+                                    style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; background: white;">
                                 <option value="Dato inesatto">Dato inesatto</option>
                                 <option value="Errore testo">Errore nel testo</option>
                                 <option value="Bug App">Problema tecnico</option>
@@ -546,18 +547,27 @@
                             </select>
                         </div>
 
-                        <div class="form-group">
-                            <label>Descrizione</label>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 5px; color: #4b5563; font-weight: 500;">Descrizione</label>
                             <textarea id="report-desc" class="search-input" rows="4"
-                                      placeholder="Descrivi il problema riscontrato..." required></textarea>
+                                      placeholder="Descrivi il problema riscontrato..." required
+                                      style="width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; background: white;"></textarea>
                         </div>
 
                         <button type="submit" class="home-btn network-btn" 
-                                style="width: 100%; margin-top: 20px;">
+                                style="width: 100%; margin-top: 20px; background: linear-gradient(135deg, #ef4444, #dc2626); border: none; color: white; padding: 15px; border-radius: 12px; font-weight: 600;">
                             <span class="btn-icon"><i class="fas fa-paper-plane"></i></span>
                             <span class="btn-text">Invia Segnalazione</span>
                         </button>
                     </form>
+                    
+                    <div style="margin-top: 25px; padding: 15px; background: #fef2f2; border-radius: 10px; border-left: 4px solid #ef4444;">
+                        <p style="color: #7f1d1d; font-size: 0.85rem; line-height: 1.5;">
+                            <i class="fas fa-clock" style="margin-right: 5px;"></i>
+                            Le segnalazioni vengono raccolte per migliorare il dataset. 
+                            Non possiamo garantire una risposta immediata, ma tutte le segnalazioni vengono esaminate.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -585,11 +595,6 @@
                 <span>Concetti</span>
             </button>
         </div>
-
-        <!-- Pulsante navigazione fisso -->
-        <button class="fixed-navigate-btn hidden" id="fixed-navigate-btn">
-            <i class="fas fa-map-marker-alt"></i> Naviga
-        </button>
     </div>
 
     <!-- ==================== MENU OVERLAY ==================== -->
@@ -598,14 +603,9 @@
             <h3 class="modal-title">Menu</h3>
             
             <div class="modal-buttons">
-                <button class="modal-btn btn-admin" onclick="openAdminPanel()">
-                    <i class="fas fa-lock"></i>
-                    <span>Area Riservata</span>
-                </button>
-
-                <button class="modal-btn btn-report" onclick="openReportScreen()">
-                    <i class="fas fa-bullhorn"></i>
-                    <span>Segnala Errore</span>
+                <button class="modal-btn btn-info" onclick="openCreditsScreen()">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Info & Crediti</span>
                 </button>
                 
                 <button class="modal-btn btn-qr" onclick="openQRModal()">
@@ -613,9 +613,9 @@
                     <span>Condividi App</span>
                 </button>
 
-                <button class="modal-btn btn-info" onclick="openCreditsScreen()">
-                    <i class="fas fa-info-circle"></i>
-                    <span>Info & Crediti</span>
+                <button class="modal-btn btn-report" onclick="openReportScreen()">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Segnala Errore</span>
                 </button>
 
                 <button class="modal-btn" onclick="closeMenuModal()">
@@ -644,19 +644,6 @@
     </div>
 
     <!-- ==================== BANNER INSTALLAZIONE PWA ==================== -->
-    <div id="smart-install-banner" class="install-banner">
-        <div class="install-text">
-            <span class="install-title">Installa Aeterna Lexicon</span>
-            <span class="install-subtitle">Per accesso offline al dataset</span>
-        </div>
-        <button class="install-action-btn" onclick="installPWA()">
-            Installa
-        </button>
-        <button class="install-close-btn" onclick="document.getElementById('smart-install-banner').style.display='none'">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
-
     <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
         <div class="pwa-content">
             <img src="images/icona-avvio-192.png" alt="Logo" class="pwa-icon" onerror="this.style.display='none'">
@@ -669,9 +656,10 @@
         <button onclick="document.getElementById('pwa-install-banner').style.display='none'" class="pwa-close">&times;</button>
     </div>
 
+    <!-- ==================== PANNELLO ADMIN (Semplificato per dati integrati) ==================== -->
     <div id="admin-panel" class="screen" style="display: none;">
         <div class="admin-header">
-            <h2><i class="fas fa-cogs"></i> Pannello Gestione Dataset</h2>
+            <h2><i class="fas fa-cogs"></i> Gestione Dataset</h2>
             <button class="close-btn" onclick="closeAdminPanel()"><i class="fas fa-times"></i></button>
         </div>
     
@@ -679,20 +667,19 @@
             <div class="admin-stats">
                 <div class="stat-card">
                     <h3>Filosofi</h3>
-                    <span id="total-filosofi">0</span>
+                    <span id="total-filosofi">20</span>
                 </div>
                 <div class="stat-card">
                     <h3>Opere</h3>
-                    <span id="total-opere">0</span>
+                    <span id="total-opere">40</span>
                 </div>
                 <div class="stat-card">
                     <h3>Concetti</h3>
-                    <span id="total-concetti">0</span>
+                    <span id="total-concetti">23</span>
                 </div>
             </div>
             
             <div class="admin-controls">
-                <button class="btn-danger" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 <button class="btn-primary" onclick="exportFullDataset()"><i class="fas fa-download"></i> Scarica Tutto (Backup)</button>
             </div>
     
@@ -704,147 +691,321 @@
     
             <div id="admin-filosofi" class="admin-tab-content active">
                 <div class="toolbar">
-                    <h3>Importa / Esporta CSV</h3>
+                    <h3>Esporta CSV</h3>
                     <div class="import-export-group">
-                        <input type="file" id="import-filosofi-file" accept=".csv" class="file-input-hidden">
-                        <label for="import-filosofi-file" class="btn-secondary"><i class="fas fa-file-upload"></i> Importa CSV</label>
                         <button class="btn-secondary" onclick="exportFilosofiToExcel()"><i class="fas fa-file-download"></i> Esporta CSV</button>
                     </div>
                 </div>
     
-                <form id="filosofo-form" class="admin-form" onsubmit="saveFilosofo(event)">
-                    <h3>Nuovo Filosofo</h3>
-                    <input type="hidden" id="filosofo-id"> 
-                    <div class="form-group">
-                        <input type="text" id="filosofo-nome" placeholder="Nome (es. Platone)" required>
-                        <select id="filosofo-periodo">
-                            <option value="classico">Classico</option>
-                            <option value="contemporaneo">Contemporaneo</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <input type="text" id="filosofo-scuola" placeholder="Scuola (es. Accademia)">
-                        <input type="text" id="filosofo-anni" placeholder="Anni (es. 428-348 a.C.)">
-                    </div>
-                    <div class="form-group">
-                        <input type="text" id="filosofo-citta" placeholder="Luogo Nascita">
-                        <input type="number" id="filosofo-lat" step="any" placeholder="Latitudine (es. 37.98)">
-                        <input type="number" id="filosofo-lng" step="any" placeholder="Longitudine (es. 23.72)">
-                    </div>
-                    <textarea id="filosofo-biografia" placeholder="Biografia breve..."></textarea>
-                    <input type="text" id="filosofo-concetti" placeholder="Concetti (separati da virgola)">
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="btn-submit">Salva Filosofo</button>
-                        <button type="button" class="btn-secondary" onclick="document.getElementById('filosofo-form').reset()">Pulisci</button>
-                    </div>
-                </form>
-    
                 <div class="data-table-container">
                     <table class="admin-table">
-                        <thead><tr><th>ID</th><th>Nome</th><th>Periodo</th><th>Scuola</th><th>Azioni</th></tr></thead>
-                        <tbody id="filosofi-table-body"></tbody>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Periodo</th>
+                                <th>Scuola</th>
+                                <th>Anni</th>
+                                <th>Opere</th>
+                            </tr>
+                        </thead>
+                        <tbody id="filosofi-table-body">
+                            <!-- Popolato da JavaScript -->
+                        </tbody>
                     </table>
-                    <button class="btn-secondary full-width" onclick="loadAdminFilosofi()">🔄 Aggiorna Lista</button>
                 </div>
             </div>
     
             <div id="admin-opere" class="admin-tab-content">
                 <div class="toolbar">
                     <div class="import-export-group">
-                        <input type="file" id="import-opere-file" accept=".csv" class="file-input-hidden">
-                        <label for="import-opere-file" class="btn-secondary"><i class="fas fa-file-upload"></i> Importa CSV</label>
-                        <button class="btn-secondary" onclick="exportOpereToExcel()"><i class="fas fa-file-download"></i> Esporta</button>
+                        <button class="btn-secondary" onclick="exportOpereToExcel()"><i class="fas fa-file-download"></i> Esporta CSV</button>
                     </div>
                 </div>
     
-                <form id="opera-form" class="admin-form" onsubmit="saveOpera(event)">
-                    <h3>Nuova Opera</h3>
-                    <input type="hidden" id="opera-id">
-                    <div class="form-group">
-                        <input type="text" id="opera-titolo" placeholder="Titolo Opera" required>
-                        <select id="opera-autore" required>
-                            <option value="">Seleziona Autore...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <input type="text" id="opera-anno" placeholder="Anno pubblicazione">
-                        <select id="opera-periodo">
-                            <option value="classico">Classico</option>
-                            <option value="contemporaneo">Contemporaneo</option>
-                        </select>
-                    </div>
-                    <textarea id="opera-sintesi" placeholder="Sintesi dell'opera..."></textarea>
-                    <button type="submit" class="btn-submit">Salva Opera</button>
-                </form>
-    
                 <div class="data-table-container">
                     <table class="admin-table">
-                        <thead><tr><th>ID</th><th>Titolo</th><th>Autore</th><th>Anno</th><th>Azioni</th></tr></thead>
-                        <tbody id="opere-table-body"></tbody>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Titolo</th>
+                                <th>Autore</th>
+                                <th>Anno</th>
+                                <th>Periodo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="opere-table-body">
+                            <!-- Popolato da JavaScript -->
+                        </tbody>
                     </table>
-                    <button class="btn-secondary full-width" onclick="loadAdminOpere()">🔄 Aggiorna Lista</button>
                 </div>
             </div>
     
             <div id="admin-concetti" class="admin-tab-content">
                 <div class="toolbar">
                     <div class="import-export-group">
-                        <input type="file" id="import-concetti-file" accept=".csv" class="file-input-hidden">
-                        <label for="import-concetti-file" class="btn-secondary"><i class="fas fa-file-upload"></i> Importa CSV</label>
-                        <button class="btn-secondary" onclick="exportConcettiToExcel()"><i class="fas fa-file-download"></i> Esporta</button>
+                        <button class="btn-secondary" onclick="exportConcettiToExcel()"><i class="fas fa-file-download"></i> Esporta CSV</button>
                     </div>
                 </div>
     
-                <form id="concetto-form" class="admin-form" onsubmit="saveConcetto(event)">
-                    <h3>Nuovo Concetto</h3>
-                    <input type="hidden" id="concetto-id">
-                    <div class="form-group">
-                        <input type="text" id="concetto-parola" placeholder="Parola Chiave" required>
-                        <select id="concetto-periodo">
-                            <option value="entrambi">Transperiodale (Entrambi)</option>
-                            <option value="classico">Classico</option>
-                            <option value="contemporaneo">Contemporaneo</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <select id="concetto-autore">
-                            <option value="">Autore di Riferimento (Opzionale)</option>
-                        </select>
-                    </div>
-                    <textarea id="concetto-definizione" placeholder="Definizione filosofica..."></textarea>
-                    <textarea id="concetto-evoluzione" placeholder="Evoluzione nel tempo (per analisi comparativa)..."></textarea>
-                    <button type="submit" class="btn-submit">Salva Concetto</button>
-                </form>
-    
                 <div class="data-table-container">
                     <table class="admin-table">
-                        <thead><tr><th>ID</th><th>Parola</th><th>Definizione</th><th>Periodo</th><th>Azioni</th></tr></thead>
-                        <tbody id="concetti-table-body"></tbody>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Parola</th>
+                                <th>Definizione</th>
+                                <th>Periodo</th>
+                                <th>Evoluzione</th>
+                            </tr>
+                        </thead>
+                        <tbody id="concetti-table-body">
+                            <!-- Popolato da JavaScript -->
+                        </tbody>
                     </table>
-                    <button class="btn-secondary full-width" onclick="loadAdminConcetti()">🔄 Aggiorna Lista</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- ==================== SCRIPT ==================== -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-
+    <!-- Script dell'app -->
     <script src="firebase-init.js"></script>
-    <script src="geocoding-manager.js"></script>
+    <script src="linguistic-analysis.js"></script>
     <script src="app.js"></script>
     
     <script>
+        // Funzioni admin semplificate per dati integrati
+        function loadAdminFilosofi() {
+            const tableBody = document.getElementById('filosofi-table-body');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = window.filosofiData ? window.filosofiData.map(f => {
+                // Conta opere di questo filosofo
+                const opereCount = window.opereData ? window.opereData.filter(o => o.autore_id === f.id).length : 0;
+                
+                return `
+                    <tr>
+                        <td>${f.id}</td>
+                        <td><strong>${f.nome}</strong></td>
+                        <td><span class="periodo-badge periodo-${f.periodo}">${f.periodo}</span></td>
+                        <td>${f.scuola || '-'}</td>
+                        <td>${f.anni || '-'}</td>
+                        <td>${opereCount} opere</td>
+                    </tr>
+                `;
+            }).join('') : '<tr><td colspan="6">Nessun dato disponibile</td></tr>';
+        }
+        
+        function loadAdminOpere() {
+            const tableBody = document.getElementById('opere-table-body');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = window.opereData ? window.opereData.map(o => {
+                return `
+                    <tr>
+                        <td>${o.id}</td>
+                        <td><strong>${o.titolo}</strong></td>
+                        <td>${o.autore}</td>
+                        <td>${o.anno}</td>
+                        <td><span class="periodo-badge periodo-${o.periodo}">${o.periodo}</span></td>
+                    </tr>
+                `;
+            }).join('') : '<tr><td colspan="5">Nessun dato disponibile</td></tr>';
+        }
+        
+        function loadAdminConcetti() {
+            const tableBody = document.getElementById('concetti-table-body');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = window.concettiData ? window.concettiData.map(c => {
+                const evoluzioneBreve = c.evoluzione ? (c.evoluzione.length > 50 ? c.evoluzione.substring(0, 50) + '...' : c.evoluzione) : '-';
+                
+                return `
+                    <tr>
+                        <td>${c.id}</td>
+                        <td><strong>${c.parola}</strong></td>
+                        <td>${c.definizione ? (c.definizione.length > 30 ? c.definizione.substring(0, 30) + '...' : c.definizione) : '-'}</td>
+                        <td><span class="periodo-badge periodo-${c.periodo}">${c.periodo}</span></td>
+                        <td>${evoluzioneBreve}</td>
+                    </tr>
+                `;
+            }).join('') : '<tr><td colspan="5">Nessun dato disponibile</td></tr>';
+        }
+        
+        function switchAdminTab(tabId) {
+            // Nascondi tutti i contenuti
+            document.querySelectorAll('.admin-tab-content').forEach(el => {
+                el.style.display = 'none';
+                el.classList.remove('active');
+            });
+            
+            // Disattiva tutti i bottoni
+            document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Mostra contenuto target
+            const target = document.getElementById(tabId);
+            if(target) {
+                target.style.display = 'block';
+                target.classList.add('active');
+            }
+
+            // Attiva bottone
+            const btns = document.querySelectorAll('.admin-tab-btn');
+            btns.forEach(btn => {
+                if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabId)) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Carica i dati della tab
+            switch(tabId) {
+                case 'admin-filosofi':
+                    loadAdminFilosofi();
+                    break;
+                case 'admin-opere':
+                    loadAdminOpere();
+                    break;
+                case 'admin-concetti':
+                    loadAdminConcetti();
+                    break;
+            }
+        }
+        
+        // Funzioni admin semplificate
+        function openAdminPanel() {
+            document.getElementById('top-menu-modal').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'flex';
+            switchAdminTab('admin-filosofi');
+        }
+        
+        function closeAdminPanel() {
+            document.getElementById('admin-panel').style.display = 'none';
+        }
+        
+        // Apri il menu modale
+        function toggleMenuModal() {
+            const modal = document.getElementById('top-menu-modal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+        
+        function closeMenuModal() {
+            document.getElementById('top-menu-modal').style.display = 'none';
+        }
+        
+        // QR Code
+        function openQRModal() {
+            document.getElementById('top-menu-modal').style.display = 'none';
+            const modal = document.getElementById('qr-modal');
+            const container = document.getElementById('qrcode-container');
+            
+            if (modal && container) {
+                container.innerHTML = '';
+                new QRCode(container, {
+                    text: window.location.href,
+                    width: 200,
+                    height: 200,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                modal.style.display = 'flex';
+            }
+        }
+        
+        function closeQRModal() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
+        
+        // Navigazione
+        function openCreditsScreen() {
+            document.getElementById('top-menu-modal').style.display = 'none';
+            showScreen('credits-screen');
+        }
+        
+        function openReportScreen() {
+            document.getElementById('top-menu-modal').style.display = 'none';
+            showScreen('segnalazioni-screen');
+        }
+        
+        function inviaSegnalazione(event) {
+            event.preventDefault();
+            const tipo = document.getElementById('report-type').value;
+            const descrizione = document.getElementById('report-desc').value;
+    
+            if (!descrizione.trim()) {
+                showToast('Per favore, inserisci una descrizione', 'warning');
+                return;
+         }
+    
+         // Crea il testo della segnalazione con l'email
+         const testoEmail = 
+             `Tipo: ${tipo}\n` +
+             `Descrizione: ${descrizione}\n` +
+             `Data: ${new Date().toLocaleString()}\n` +
+             `App: Aeterna Lexicon v4.0.0\n` +
+             `URL: https://derolu0.github.io/aeterna/`;
+    
+         // Crea link mailto con l'indirizzo email specificato
+         const mailtoLink = `mailto:derolu0@gmail.com?subject=Segnalazione Aeterna Lexicon&body=${encodeURIComponent(testoEmail)}`;
+    
+         // Mostra messaggio e apri client email
+         showToast('Apertura client email...', 'info');
+    
+         // Apri il client email
+         setTimeout(() => {
+             window.open(mailtoLink, '_blank');
+        
+         // Mostra conferma
+         setTimeout(() => {
+            showToast('Grazie per la tua segnalazione!', 'success');
+            
+            // Resetta il form
+            document.getElementById('report-desc').value = '';
+            
+            // Torna alla home dopo 3 secondi
+            setTimeout(() => {
+                showScreen('home-screen');
+            }, 3000);
+        }, 1000);
+    }, 500);
+}        
+        // PWA
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) {
+                banner.style.display = 'flex';
+            }
+        });
+        
+        function installPWA() {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                deferredPrompt = null;
+                
+                const banner = document.getElementById('pwa-install-banner');
+                if(banner) banner.style.display = 'none';
+            });
+        }
+        
+        // Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(registration => console.log('✅ Service Worker registrato correttamente'))
+                    .then(registration => console.log('✅ Service Worker registrato'))
                     .catch(error => console.warn('⚠️ Service Worker non registrato:', error));
             });
         }
