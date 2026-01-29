@@ -214,151 +214,155 @@ function closeQRModal() {
     if (modal) modal.style.display = 'none';
 }
 
-// ==================== GESTIONE ADMIN & AUTH (FIXED) ====================
+// ==================== GESTIONE ADMIN & AUTH (FIREBASE REALE) ====================
 
-// Apre il form di login (dal menu o dal maintenance mode)
+// 1. APERTURA PANNELLO
 function openAdminPanel() {
-    // Se sono già loggato, vai diretto al pannello
-    const auth = window.authUtils ? window.authUtils.isAdminLoggedIn() : { loggedIn: false };
+    // Chiudi il menu laterale se aperto
+    if (typeof closeMenuModal === 'function') closeMenuModal();
+
+    // Controlla se l'utente è già loggato in Firebase
+    const user = firebase.auth().currentUser;
     
-    if (auth.loggedIn) {
-        document.getElementById('top-menu-modal').style.display = 'none';
-        document.getElementById('admin-panel').style.display = 'flex';
-        updateAdminStats(); // Aggiorna statistiche
+    // Se sei loggato E la mail è quella dell'amministratore
+    if (user && user.email === 'derolu0@gmail.com') {
+        console.log("Utente già loggato, accesso diretto.");
+        showScreen('admin-panel');
+        
+        // Carica subito i dati e le statistiche
+        loadAllAdminData();
     } else {
-        // Altrimenti mostra login
-        document.getElementById('top-menu-modal').style.display = 'none';
-        document.getElementById('admin-auth').style.display = 'flex';
-        document.getElementById('auth-error').style.display = 'none';
-        document.getElementById('admin-password').value = '';
+        // Altrimenti apri la schermata di Login
+        const authScreen = document.getElementById('admin-auth');
+        if (authScreen) {
+            authScreen.style.display = 'flex';
+            // Pulisci i campi
+            document.getElementById('admin-email').value = ''; 
+            document.getElementById('admin-password').value = '';
+            document.getElementById('auth-error').style.display = 'none';
+        }
     }
 }
 
-// Chiude il pannello admin principale
-function closeAdminPanel() {
-    document.getElementById('admin-panel').style.display = 'none';
-}
-
-// Chiude il form di login
+// 2. CHIUSURA LOGIN (ANNULLA)
 function closeAdminAuth() {
-    document.getElementById('admin-auth').style.display = 'none';
+    const authScreen = document.getElementById('admin-auth');
+    if (authScreen) authScreen.style.display = 'none';
 }
 
-// ==========================================
-// GESTIONE ADMIN (SISTEMA REALE FIREBASE)
-// ==========================================
+// 3. CHIUSURA PANNELLO ADMIN
+function closeAdminPanel() {
+    showScreen('home-screen');
+}
 
-// Funzione di Login
-async function checkAdminAuth() {
-    const emailInput = document.getElementById('admin-email');
-    const passInput = document.getElementById('admin-password');
-    const errorElement = document.getElementById('auth-error');
+// 4. LOGIN CON FIREBASE (Click su "Accedi")
+function checkAdminAuth() {
+    const emailField = document.getElementById('admin-email');
+    const passField = document.getElementById('admin-password');
+    const errorMsg = document.getElementById('auth-error');
 
-    // Nascondi errori precedenti
-    if (errorElement) errorElement.style.display = 'none';
+    const email = emailField ? emailField.value.trim() : '';
+    const pass = passField ? passField.value : '';
 
-    const email = emailInput.value.trim();
-    const password = passInput.value;
-
-    if (!email || !password) {
-        if (errorElement) {
-            errorElement.textContent = "Inserisci email e password";
-            errorElement.style.display = 'block';
+    // Validazione base
+    if (!email || !pass) {
+        if(errorMsg) {
+            errorMsg.style.display = 'block';
+            errorMsg.textContent = "Inserisci email e password.";
         }
         return;
     }
 
-    try {
-        // Usa il VERO login di Firebase
-        await window.auth.signInWithEmailAndPassword(email, password);
-        
-        // Se non va in errore, il login è riuscito:
-        console.log("✅ Login Admin Firebase riuscito");
-        
-        // 1. Imposta le variabili globali
-        isAdminAuthenticated = true;
-        currentUserRole = 'admin';
-        
-        // 2. Salva la sessione nel browser
-        localStorage.setItem('abc_admin_logged', 'true');
-        localStorage.setItem('user_role', 'admin');
+    showToast("Verifica credenziali in corso...", "info");
 
-        // 3. Gestione Interfaccia (UI)
-        document.getElementById('admin-auth').style.display = 'none'; // Chiudi login
-        
-        // Se c'è la schermata manutenzione, toglila
-        const maintScreen = document.getElementById('maintenance-mode');
-        if (maintScreen) maintScreen.style.display = 'none';
-        document.body.style.overflow = 'auto';
+    // Login Reale Firebase
+    firebase.auth().signInWithEmailAndPassword(email, pass)
+        .then((userCredential) => {
+            const user = userCredential.user;
 
-        // Mostra il pannello admin
-        const adminPanel = document.getElementById('admin-panel');
-        if (adminPanel) {
-            adminPanel.style.display = 'flex';
-            // Se esiste la funzione per caricare i dati admin, usala
-            if (typeof showAdminPanel === 'function') showAdminPanel();
-        }
-
-        showToast('Benvenuto Amministratore', 'success');
-
-        // Pulisci i campi
-        emailInput.value = '';
-        passInput.value = '';
-
-    } catch (error) {
-        console.error("❌ Errore Login:", error);
-        if (errorElement) {
-            errorElement.style.display = 'block';
-            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                errorElement.textContent = "Email o password errati";
+            // CONTROLLO DI SICUREZZA: Solo la tua mail può entrare
+            if (user.email === 'derolu0@gmail.com') {
+                // Login OK
+                closeAdminAuth();
+                showScreen('admin-panel');
+                loadAllAdminData();
+                showToast("Bentornato Salvatore", "success");
             } else {
-                errorElement.textContent = "Errore: " + error.message;
+                // Intruso: Logout immediato
+                firebase.auth().signOut();
+                if(errorMsg) {
+                    errorMsg.style.display = 'block';
+                    errorMsg.textContent = "Accesso non autorizzato.";
+                }
+                showToast("Accesso Negato", "error");
             }
-        }
-    }
+        })
+        .catch((error) => {
+            console.error("Login Error:", error);
+            if(errorMsg) {
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = "Email o Password errata.";
+            }
+        });
 }
 
-// Funzione di Logout
-async function logoutAdmin() {
-    try {
-        // Logout reale da Firebase
-        await window.auth.signOut();
-        
-        // Pulisci variabili locali
-        isAdminAuthenticated = false;
-        currentUserRole = null;
-        localStorage.removeItem('abc_admin_logged');
-        localStorage.removeItem('user_role');
-        
-        // Chiudi pannello
-        const adminPanel = document.getElementById('admin-panel');
-        if (adminPanel) adminPanel.style.display = 'none';
-        
-        showToast('Logout effettuato', 'info');
-        
-        // Ricarica la pagina per sicurezza (pulisce la memoria)
-        setTimeout(() => window.location.reload(), 1000);
-        
-    } catch (error) {
-        console.error("Errore Logout:", error);
-        // Fallback locale in caso di errore di rete
-        localStorage.removeItem('abc_admin_logged');
-        window.location.reload();
-    }
+// 5. LOGOUT
+function logoutAdmin() {
+    firebase.auth().signOut().then(() => {
+        showScreen('home-screen');
+        showToast("Logout effettuato", "info");
+    }).catch((error) => {
+        console.error("Errore logout", error);
+    });
 }
 
-// Aggiorna i contatori nel pannello admin
+// 6. FUNZIONI DI CARICAMENTO DATI ADMIN
+function loadAllAdminData() {
+    // Carica le tabelle se le funzioni esistono
+    if(typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
+    if(typeof loadAdminOpere === 'function') loadAdminOpere();
+    if(typeof loadAdminConcetti === 'function') loadAdminConcetti();
+    
+    // Aggiorna i contatori della Dashboard
+    updateAdminStats();
+}
+
 function updateAdminStats() {
-    document.getElementById('total-filosofi').textContent = filosofiData.length;
-    document.getElementById('filosofi-classici').textContent = filosofiData.filter(f => f.periodo === 'classico').length;
-    document.getElementById('filosofi-contemporanei').textContent = filosofiData.filter(f => f.periodo === 'contemporaneo').length;
-    
-    document.getElementById('total-opere').textContent = opereData.length;
-    document.getElementById('opere-classiche').textContent = opereData.filter(o => o.periodo === 'classico').length;
-    document.getElementById('opere-contemporanee').textContent = opereData.filter(o => o.periodo === 'contemporaneo').length;
-    
-    document.getElementById('total-concetti').textContent = concettiData.length;
+    // Aggiorna solo gli elementi che esistono davvero nell'HTML
+    const elFilosofi = document.getElementById('total-filosofi');
+    const elOpere = document.getElementById('total-opere');
+    const elConcetti = document.getElementById('total-concetti');
+
+    if (elFilosofi && typeof filosofiData !== 'undefined') elFilosofi.textContent = filosofiData.length;
+    if (elOpere && typeof opereData !== 'undefined') elOpere.textContent = opereData.length;
+    if (elConcetti && typeof concettiData !== 'undefined') elConcetti.textContent = concettiData.length;
 }
+
+// 7. GESTIONE TAB DEL PANNELLO
+function switchAdminTab(tabId) {
+    // Rimuovi classe active da tutti i bottoni e contenuti
+    document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
+    document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+
+    // Attiva quello giusto
+    const btn = document.querySelector(`button[onclick="switchAdminTab('${tabId}')"]`);
+    if(btn) btn.classList.add('active');
+
+    const content = document.getElementById(tabId);
+    if (content) {
+        content.style.display = 'block';
+        content.classList.add('active');
+    }
+}
+
+// Esposizione globale necessaria per l'HTML
+window.switchAdminTab = switchAdminTab;
+window.checkAdminAuth = checkAdminAuth;
+window.openAdminPanel = openAdminPanel;
+window.closeAdminPanel = closeAdminPanel;
+window.closeAdminAuth = closeAdminAuth;
+window.logoutAdmin = logoutAdmin;
 
 // ==================== DATI FILOSOFICI ====================
 
