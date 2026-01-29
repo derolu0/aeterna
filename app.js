@@ -823,111 +823,122 @@ function createOperaCard(opera) {
     // Percorso dell'immagine di default
     const defaultImage = "images/default-opera.jpg";
     
-    card.innerHTML = `
-        <div class="compact-item-image-container">
-            <img src="${defaultImage}" 
-                 alt="${opera.titolo}" 
-                 class="opera-default-image"
-                 onerror="
-                    // Se l'immagine default non carica, mostra un placeholder
-                    console.error('❌ Immagine default non trovata:', '${defaultImage}');
-                    this.style.display = 'none';
-                    this.parentElement.innerHTML = '<div style=\"width:100%;height:120px;background:linear-gradient(135deg,${opera.periodo === 'contemporaneo' ? '#f59e0b,#d97706' : '#3b82f6,#1d4ed8'});display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;border-radius:8px;font-weight:bold;\">${opera.titolo.substring(0, 20)}${opera.titolo.length > 20 ? '...' : ''}</div>';
-                 "
-                 onload="console.log('✅ Immagine default caricata per:', '${opera.titolo}')"
-                 style="
-                    width: 100%;
-                    height: 120px;
-                    object-fit: cover;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                    transition: transform 0.3s ease;
-                 ">
-                 
-            <!-- Overlay con informazioni -->
-            <div class="opera-image-overlay" style="
-                position: absolute;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
-                color: white;
-                padding: 8px;
-                border-radius: 0 0 8px 8px;
-                font-size: 0.8rem;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span><i class="fas fa-book"></i> ${opera.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Classico'}</span>
-                    <span><i class="fas fa-calendar"></i> ${opera.anno || 'N/D'}</span>
-                </div>
+    // Crea l'elemento immagine separatamente
+    const imgContainer = document.createElement('div');
+    imgContainer.className = 'compact-item-image-container';
+    imgContainer.style.position = 'relative';
+    
+    const img = document.createElement('img');
+    img.src = defaultImage;
+    img.alt = opera.titolo;
+    img.className = 'opera-default-image';
+    img.style.cssText = `
+        width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    `;
+    
+    // Gestione errori
+    img.onerror = function() {
+        console.warn(`⚠️ Immagine non caricata per: ${opera.titolo}`);
+        
+        // Crea fallback colorato
+        const fallback = document.createElement('div');
+        fallback.style.cssText = `
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(135deg, ${opera.periodo === 'contemporaneo' ? '#f59e0b' : '#3b82f6'}, ${opera.periodo === 'contemporaneo' ? '#d97706' : '#1d4ed8'});
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        `;
+        
+        // Contenuto del fallback
+        fallback.innerHTML = `
+            <div style="text-align: center; padding: 10px;">
+                <div style="font-size: 2rem; margin-bottom: 5px;">📚</div>
+                <div style="font-size: 0.9rem; font-weight: bold;">${opera.titolo.substring(0, 25)}${opera.titolo.length > 25 ? '...' : ''}</div>
+                <div style="font-size: 0.7rem; margin-top: 3px; opacity: 0.9;">${opera.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Classico'}</div>
             </div>
+        `;
+        
+        // Sostituisci l'immagine con il fallback
+        imgContainer.innerHTML = '';
+        imgContainer.appendChild(fallback);
+    };
+    
+    img.onload = function() {
+        console.log(`✅ Immagine caricata per: ${opera.titolo}`);
+    };
+    
+    imgContainer.appendChild(img);
+    
+    // Overlay
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+        color: white;
+        padding: 8px;
+        border-radius: 0 0 8px 8px;
+        font-size: 0.8rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    overlay.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span><i class="fas fa-book"></i> ${opera.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Classico'}</span>
+            <span><i class="fas fa-calendar"></i> ${opera.anno || 'N/D'}</span>
         </div>
-        <div class="compact-item-content">
-            <div class="compact-item-header">
-                <h3 class="compact-item-name">${opera.titolo}</h3>
-            </div>
-            <div class="compact-item-autore"><i class="fas fa-user-pen"></i> ${opera.autore || 'Autore sconosciuto'}</div>
-            <div class="compact-item-footer">
-                <span class="compact-item-anno">${opera.anno || 'N/D'}</span>
-                <span class="compact-item-periodo periodo-${opera.periodo}">${opera.periodo === 'contemporaneo' ? 'CONTEMP.' : 'CLASSICO'}</span>
-            </div>
+    `;
+    imgContainer.appendChild(overlay);
+    
+    // Contenuto testuale
+    const content = document.createElement('div');
+    content.className = 'compact-item-content';
+    content.innerHTML = `
+        <div class="compact-item-header">
+            <h3 class="compact-item-name">${opera.titolo}</h3>
+        </div>
+        <div class="compact-item-autore"><i class="fas fa-user-pen"></i> ${opera.autore || 'Autore sconosciuto'}</div>
+        <div class="compact-item-footer">
+            <span class="compact-item-anno">${opera.anno || 'N/D'}</span>
+            <span class="compact-item-periodo periodo-${opera.periodo}">${opera.periodo === 'contemporaneo' ? 'CONTEMP.' : 'CLASSICO'}</span>
         </div>
     `;
     
-    // Aggiungi effetti hover
+    // Assemblea la card
+    card.appendChild(imgContainer);
+    card.appendChild(content);
+    
+    // Eventi hover
     card.addEventListener('mouseenter', function() {
-        const img = this.querySelector('img');
-        if (img) img.style.transform = 'scale(1.05)';
-        
-        const overlay = this.querySelector('.opera-image-overlay');
-        if (overlay) overlay.style.opacity = '1';
+        if (img.parentNode === imgContainer) {
+            img.style.transform = 'scale(1.05)';
+        }
+        overlay.style.opacity = '1';
     });
     
     card.addEventListener('mouseleave', function() {
-        const img = this.querySelector('img');
-        if (img) img.style.transform = 'scale(1)';
-        
-        const overlay = this.querySelector('.opera-image-overlay');
-        if (overlay) overlay.style.opacity = '0';
+        if (img.parentNode === imgContainer) {
+            img.style.transform = 'scale(1)';
+        }
+        overlay.style.opacity = '0';
     });
     
     card.addEventListener('click', () => showOperaDetail(opera.id));
     return card;
 }
-
-function createConcettiSection(title, concetti, periodo) {
-    const section = document.createElement('div');
-    section.className = 'concetti-section';
-    
-    section.innerHTML = `
-        <div class="section-header"><h3>${title}</h3><span class="section-count">${concetti.length}</span></div>
-        <div class="concetti-grid">
-            ${concetti.map(c => createConcettoCardString(c)).join('')}
-        </div>
-    `;
-    return section;
-}
-
-function createConcettoCardString(concetto) {
-    return `
-    <div class="concetto-card border-${concetto.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}" 
-         onclick="showConcettoDetail('${concetto.id}')">
-        <div class="concetto-header">
-            <h3 class="concetto-parola">${concetto.parola}</h3>
-        </div>
-        <p class="concetto-definizione">${concetto.definizione ? (concetto.definizione.length > 150 ? concetto.definizione.substring(0, 150) + '...' : concetto.definizione) : ''}</p>
-        <div class="concetto-actions">
-            <button class="btn-analisi small" 
-                    onclick="event.stopPropagation(); openComparativeAnalysis('${concetto.parola}')">
-                Analisi
-            </button>
-        </div>
-    </div>
-    `;
-}
-
 // ==================== DETTAGLI ====================
 function showFilosofoDetail(id) {
     const filosofo = filosofiData.find(f => f.id === id);
