@@ -92,7 +92,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 47.2184, lng: -1.5536 },
         citta_nascita: "La Haye en Touraine",
         paese_nascita: "Francia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Frans_Hals_-_Portret_van_Ren%C3%A9_Descartes.jpg/220px-Frans_Hals_-_Portret_van_Ren%C3%A9_Descartes.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/descartes.jpg"
     },
     {
         id: "F6",
@@ -144,7 +144,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 49.4432, lng: 7.7689 },
         citta_nascita: "Treviri",
         paese_nascita: "Germania",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Karl_Marx_001.jpg/220px-Karl_Marx_001.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/marx.jpg"
     },
     {
         id: "F10",
