@@ -306,3 +306,34 @@
     animation: spin 1s linear infinite;
     margin-bottom: 15px;
 }
+
+/* ==================== BADGE PER TABELLA TRASFORMAZIONI ==================== */
+.badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-classico {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-transizione {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-contemporaneo {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+/* Animazione per lo spinner */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

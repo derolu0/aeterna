@@ -343,7 +343,7 @@ const OPERE_DATASET = [
     { id: "O24", titolo: "Ricerche filosofiche", autore: "Ludwig Wittgenstein", autore_id: "F12", anno: "1953", periodo: "contemporaneo", sintesi: "Critica della concezione del Tractatus. Teoria dei giochi linguistici e delle forme di vita. Analisi dell'uso del linguaggio.", concetti: ["Gioco linguistico", "Uso", "Forma di vita", "Regola", "Significato"] },
     
     // SARTRE
-    { id: "O25", titolo: "L'essere e il nulla", autore: "Jean-Paul Sartre", autore_id: "F13", anno: "1943", periodo: "contemporaneo", sintesi: "Esposizione dell'esistenzialismo ateo. Analisi della coscienza (per sé), della libertà radicale e della cattiva fede.", concetti: ["Esistenza/essenza", "Cattiva fede", "Libertà", "Néant", "Sguardo"] },
+    { id: "O25", titolo: "L'essere e il nulla", autore: "Jean-Paul Sartre", autore_id: "F13", anno: "1943", periodo: "contemporaneo", sintesi: "Esposizione dell'esistenzialismo ateo. Analizza la coscienza (per sé), della libertà radicale e della cattiva fede.", concetti: ["Esistenza/essenza", "Cattiva fede", "Libertà", "Néant", "Sguardo"] },
     { id: "O26", titolo: "L'esistenzialismo è un umanesimo", autore: "Jean-Paul Sartre", autore_id: "F13", anno: "1946", periodo: "contemporaneo", sintesi: "Difesa popolare dell'esistenzialismo come filosofia dell'impegno e della responsabilità. Conferenza del 1945.", concetti: ["Impegno", "Responsabilità", "Umanesimo", "Progetto", "Angoscia"] },
     
     // FOUCAULT
@@ -854,13 +854,17 @@ function createConcettiSection(title, concetti, periodo) {
 
 function createConcettoCardString(concetto) {
     return `
-    <div class="concetto-card border-${concetto.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}" onclick="showConcettoDetail('${concetto.id}')">
+    <div class="concetto-card border-${concetto.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}" 
+         onclick="showConcettoDetail('${concetto.id}')">
         <div class="concetto-header">
             <h3 class="concetto-parola">${concetto.parola}</h3>
         </div>
         <p class="concetto-definizione">${concetto.definizione ? (concetto.definizione.length > 150 ? concetto.definizione.substring(0, 150) + '...' : concetto.definizione) : ''}</p>
         <div class="concetto-actions">
-            <button class="btn-analisi small" onclick="event.stopPropagation(); openComparativeAnalysis('${concetto.parola}')">Analisi</button>
+            <button class="btn-analisi small" 
+                    onclick="event.stopPropagation(); openComparativeAnalysis('${concetto.parola}')">
+                Analisi
+            </button>
         </div>
     </div>
     `;
@@ -1042,7 +1046,7 @@ function openQRModal() {
     if (modal && container) {
         container.innerHTML = '';
         new QRCode(container, {
-            text: 'https://derolu0.github.io/aeterna/',  // NUOVO LINK
+            text: 'https://derolu0.github.io/aeterna/',
             width: 200,
             height: 200,
             colorDark: "#000000",
@@ -1052,6 +1056,7 @@ function openQRModal() {
         modal.style.display = 'flex';
     }
 }
+
 function closeQRModal() {
     const modal = document.getElementById('qr-modal');
     if (modal) {
@@ -1359,6 +1364,13 @@ function openComparativeAnalysis(termine) {
     modal.style.display = 'flex';
 }
 
+function closeComparativeModal() {
+    const modal = document.getElementById('comparative-analysis-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
 function updateEvolutionTimeline(concetto) {
     const timelineContainer = document.getElementById('evolution-timeline');
     
@@ -1394,144 +1406,160 @@ function updateEvolutionTimeline(concetto) {
 }
 
 function updateComparativeTexts(concetto) {
-    // Testo classico
-    const classicalText = getClassicalTextForConcept(concetto.parola);
-    document.getElementById('classical-original-text').textContent = classicalText.texto;
-    document.getElementById('classical-definition').textContent = classicalText.definizione;
+    console.log(`📖 Caricamento testi per: ${concetto.parola}`);
     
-    // Testo contemporaneo
-    const contemporaryText = getContemporaryTextForConcept(concetto.parola);
-    document.getElementById('contemporary-original-text').textContent = contemporaryText.texto;
-    document.getElementById('contemporary-definition').textContent = contemporaryText.definizione;
+    // Usa i dati da comparative-data.js
+    if (window.comparativeData && window.comparativeData.testiComparativi) {
+        const concettoNome = concetto.parola;
+        const dati = window.comparativeData.testiComparativi[concettoNome];
+        
+        if (dati) {
+            // Testo classico
+            document.getElementById('classical-original-text').textContent = 
+                dati.classico.testo || "Testo classico non disponibile";
+            document.getElementById('classical-definition').textContent = 
+                dati.classico.definizione || "Definizione classica non disponibile";
+            
+            // Testo contemporaneo
+            document.getElementById('contemporary-original-text').textContent = 
+                dati.contemporaneo.testo || "Testo contemporaneo non disponibile";
+            document.getElementById('contemporary-definition').textContent = 
+                dati.contemporaneo.definizione || "Definizione contemporanea non disponibile";
+            
+            console.log(`✅ Testi caricati da comparative-data.js per: ${concettoNome}`);
+            
+            // Aggiorna anche le metriche
+            updateMetrics(dati.classico.testo, dati.contemporaneo.testo);
+            return;
+        }
+    }
     
-    // Analisi linguistica (semplificata)
-    const classicalAnalysis = analyzeText(classicalText.texto);
-    const contemporaryAnalysis = analyzeText(contemporaryText.texto);
+    // FALLBACK: Se non trova i dati
+    const testiFallback = {
+        'Essere': {
+            classico: {
+                testo: "L'essere si dice in molti modi. Tra questi, il primo e principale è la sostanza, che è ciò che esiste di per sé.",
+                definizione: "Sostanza statica ed eterna, fondamento della realtà."
+            },
+            contemporaneo: {
+                testo: "L'essere non è un ente, ma ciò che si dà nell'evento. La questione dell'essere è stata dimenticata dalla metafisica.",
+                definizione: "Evento storico e processuale che si dà nella temporalità."
+            }
+        },
+        'Verità': {
+            classico: {
+                testo: "Veritas est adaequatio rei et intellectus. La verità è la corrispondenza della cosa con l'intelletto.",
+                definizione: "Corrispondenza oggettiva tra pensiero e realtà."
+            },
+            contemporaneo: {
+                testo: "Non ci sono fatti, solo interpretazioni. La verità è quella specie di errore senza la quale una determinata specie di esseri viventi non potrebbe vivere.",
+                definizione: "Costruzione storica e interpretativa, non corrispondenza oggettiva."
+            }
+        }
+    };
     
-    document.getElementById('classical-metrics').innerHTML = `
-        <div class="metric-item">
-            <span class="metric-label">Parole:</span>
-            <span class="metric-value">${classicalAnalysis.word_count}</span>
-        </div>
-        <div class="metric-item">
-            <span class="metric-label">Complessità:</span>
-            <span class="metric-value">${classicalAnalysis.complexity}</span>
-        </div>
-        <div class="metric-item">
-            <span class="metric-label">Termini astratti:</span>
-            <span class="metric-value">${classicalAnalysis.abstract_terms}</span>
-        </div>
-    `;
+    const concettoNome = concetto.parola;
+    const datiFallback = testiFallback[concettoNome] || {
+        classico: {
+            testo: `Testo originale classico per "${concettoNome}"`,
+            definizione: `Definizione canonica classica per "${concettoNome}"`
+        },
+        contemporaneo: {
+            testo: `Testo originale contemporaneo per "${concettoNome}"`,
+            definizione: `Definizione canonica contemporanea per "${concettoNome}"`
+        }
+    };
     
-    document.getElementById('contemporary-metrics').innerHTML = `
-        <div class="metric-item">
-            <span class="metric-label">Parole:</span>
-            <span class="metric-value">${contemporaryAnalysis.word_count}</span>
-        </div>
-        <div class="metric-item">
-            <span class="metric-label">Complessità:</span>
-            <span class="metric-value">${contemporaryAnalysis.complexity}</span>
-        </div>
-        <div class="metric-item">
-            <span class="metric-label">Termini astratti:</span>
-            <span class="metric-value">${contemporaryAnalysis.abstract_terms}</span>
-        </div>
-    `;
+    document.getElementById('classical-original-text').textContent = datiFallback.classico.testo;
+    document.getElementById('classical-definition').textContent = datiFallback.classico.definizione;
+    document.getElementById('contemporary-original-text').textContent = datiFallback.contemporaneo.testo;
+    document.getElementById('contemporary-definition').textContent = datiFallback.contemporaneo.definizione;
+    
+    console.log(`⚠️ Usati dati di fallback per: ${concettoNome}`);
+    updateMetrics(datiFallback.classico.testo, datiFallback.contemporaneo.testo);
 }
 
 function updateTransformationsTable(concetto) {
-    const transformationsBody = document.getElementById('transformations-body');
+    const tableBody = document.getElementById('transformations-body');
+    if (!tableBody) return;
     
-    const transformations = [
-        {
-            dimensione: 'ONTOLOGICA',
-            classico: getClassicalAspect(concetto.parola, 'ontologico'),
-            contemporaneo: getContemporaryAspect(concetto.parola, 'ontologico'),
-            svolta: getTransformation(concetto.parola, 'ontologico')
-        },
-        {
-            dimensione: 'EPISTEMOLOGICA',
-            classico: getClassicalAspect(concetto.parola, 'epistemologico'),
-            contemporaneo: getContemporaryAspect(concetto.parola, 'epistemologico'),
-            svolta: getTransformation(concetto.parola, 'epistemologico')
-        },
-        {
-            dimensione: 'ETICA',
-            classico: getClassicalAspect(concetto.parola, 'etico'),
-            contemporaneo: getContemporaryAspect(concetto.parola, 'etico'),
-            svolta: getTransformation(concetto.parola, 'etico')
-        }
+    // Ottieni trasformazioni da comparativeData
+    const trasformazioni = window.comparativeData?.trasformazioni?.[concetto.parola] || [
+        "Trasformazione ontologica: da sostanza statica a evento dinamico",
+        "Trasformazione epistemologica: da oggetto di conoscenza a interpretazione",
+        "Trasformazione etica: da fondamento assoluto a costruzione storica"
     ];
     
-    transformationsBody.innerHTML = transformations.map(t => `
-        <tr>
-            <td><strong>${t.dimensione}</strong></td>
-            <td>${t.classico} → ${t.contemporaneo}</td>
-            <td>${t.svolta}</td>
-        </tr>
-    `).join('');
-}
-
-// Funzioni helper per analisi comparativa
-function getClassicalTextForConcept(concetto) {
-    const testiClassici = {
-        'Essere': { 
-            texto: 'L\'essere si dice in molti modi. Tra questi, il più importante è la sostanza, che è ciò che esiste di per sé.', 
-            definizione: 'Fondamento della realtà come sostanza statica ed eterna.',
-            autore: 'Aristotele'
-        },
-        'Verità': { 
-            texto: 'Veritas est adaequatio rei et intellectus. La verità è la corrispondenza della cosa con l\'intelletto.', 
-            definizione: 'Corrispondenza oggettiva tra pensiero e realtà.',
-            autore: 'Tommaso d\'Aquino'
-        },
-        'Soggetto': { 
-            texto: 'Cogito ergo sum. Penso, dunque sono. Questa verità è così ferma e sicura che nessuno scetticismo potrà mai scuoterla.', 
-            definizione: 'Sostanza pensante, fondamento certo della conoscenza.',
-            autore: 'René Descartes'
-        }
-    };
+    const aspetti = ['Ontologica', 'Epistemologica', 'Etica', 'Politica'];
     
-    return testiClassici[concetto] || { 
-        texto: 'Testo classico non disponibile per questo concetto.', 
-        definizione: 'Definizione classica non disponibile.',
-        autore: 'Autore classico'
-    };
+    tableBody.innerHTML = trasformazioni.map((trasformazione, index) => {
+        const aspetto = aspetti[index] || 'Generale';
+        
+        return `
+            <tr>
+                <td><strong>${aspetto}</strong></td>
+                <td>${trasformazione}</td>
+                <td>
+                    <span class="badge ${
+                        index % 3 === 0 ? 'badge-classico' : 
+                        index % 3 === 1 ? 'badge-transizione' : 'badge-contemporaneo'
+                    }">
+                        ${index % 3 === 0 ? 'IV sec. a.C.' : 
+                          index % 3 === 1 ? 'XIX sec.' : 'XX sec.'}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
 }
 
-function getContemporaryTextForConcept(concetto) {
-    const testiContemporanei = {
-        'Essere': { 
-            texto: 'L\'essere non è un ente, ma ciò che si dà nell\'evento. La questione dell\'essere è stata dimenticata dalla metafisica.', 
-            definizione: 'Evento storico e processuale che si dà nella temporalità.',
-            autore: 'Martin Heidegger'
-        },
-        'Verità': { 
-            texto: 'Non ci sono fatti, solo interpretazioni. La verità è una menzogna di cui si è dimenticata la natura di menzogna.', 
-            definizione: 'Costruzione storica e interpretativa, non corrispondenza oggettiva.',
-            autore: 'Friedrich Nietzsche'
-        },
-        'Soggetto': { 
-            texto: 'Il soggetto non è dato, ma prodotto attraverso pratiche discorsive e non discorsive. È un effetto del potere.', 
-            definizione: 'Costruzione storica, effetto di pratiche discorsive e di potere.',
-            autore: 'Michel Foucault'
-        }
-    };
+function updateMetrics(testoClassico, testoContemporaneo) {
+    // Analisi semplice
+    const paroleClassico = testoClassico.split(' ').length;
+    const paroleContemporaneo = testoContemporaneo.split(' ').length;
     
-    return testiContemporanei[concetto] || { 
-        texto: 'Testo contemporaneo non disponibile per questo concetto.', 
-        definizione: 'Definizione contemporanea non disponibile.',
-        autore: 'Autore contemporaneo'
-    };
+    // Aggiorna metriche classiche
+    document.getElementById('classical-metrics').innerHTML = `
+        <div class="metric-item">
+            <span class="metric-label">Parole:</span>
+            <span class="metric-value">${paroleClassico}</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Complessità:</span>
+            <span class="metric-value">${paroleClassico > 50 ? 'alta' : 'media'}</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Struttura:</span>
+            <span class="metric-value">sistematica</span>
+        </div>
+    `;
+    
+    // Aggiorna metriche contemporanee
+    document.getElementById('contemporary-metrics').innerHTML = `
+        <div class="metric-item">
+            <span class="metric-label">Parole:</span>
+            <span class="metric-value">${paroleContemporaneo}</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Complessità:</span>
+            <span class="metric-value">${paroleContemporaneo > 60 ? 'molto alta' : 'alta'}</span>
+        </div>
+        <div class="metric-item">
+            <span class="metric-label">Struttura:</span>
+            <span class="metric-value">ermeneutica</span>
+        </div>
+    `;
 }
 
+// Funzioni per definizioni brevi
 function getClassicalDefinition(concetto) {
     const defs = {
         'Essere': 'Sostanza statica ed eterna',
         'Verità': 'Corrispondenza tra pensiero e realtà',
         'Soggetto': 'Sostanza pensante autonoma',
         'Bene': 'Idea trascendente e oggettiva',
-        'Potere': 'Diritto sovrano di vita e di morte'
+        'Potere': 'Diritto sovrano di vita e di morte',
+        'Libertà': 'Autonomia della volontà razionale'
     };
     return defs[concetto] || 'Definizione classica';
 }
@@ -1542,60 +1570,10 @@ function getContemporaryDefinition(concetto) {
         'Verità': 'Costruzione discorsiva e interpretativa',
         'Soggetto': 'Effetto di pratiche discorsive',
         'Bene': 'Relazione etica con l\'altro',
-        'Potere': 'Rete diffusa e produttiva'
+        'Potere': 'Rete diffusa e produttiva',
+        'Libertà': 'Condizione esistenziale e progetto'
     };
     return defs[concetto] || 'Definizione contemporanea';
-}
-
-function getClassicalAspect(concetto, aspetto) {
-    const aspetti = {
-        'Essere': { ontologico: 'Sostanza', epistemologico: 'Oggetto di conoscenza', etico: 'Fondamento dell\'ordine' },
-        'Verità': { ontologico: 'Adeguazione', epistemologico: 'Certezza', etico: 'Bene intellettuale' }
-    };
-    return aspetti[concetto]?.[aspetto] || 'Aspetto classico';
-}
-
-function getContemporaryAspect(concetto, aspetto) {
-    const aspetti = {
-        'Essere': { ontologico: 'Evento', epistemologico: 'Interpretazione', etico: 'Responsabilità' },
-        'Verità': { ontologico: 'Costruzione', epistemologico: 'Interpretazione', etico: 'Potere' }
-    };
-    return aspetti[concetto]?.[aspetto] || 'Aspetto contemporaneo';
-}
-
-function getTransformation(concetto, aspetto) {
-    const trasformazioni = {
-        'Essere': { 
-            ontologico: 'Da sostanza a evento',
-            epistemologico: 'Da oggetto a interpretazione', 
-            etico: 'Da ordine a responsabilità'
-        },
-        'Verità': { 
-            ontologico: 'Da adeguazione a costruzione',
-            epistemologico: 'Da certezza a interpretazione', 
-            etico: 'Da bene a potere'
-        }
-    };
-    return trasformazioni[concetto]?.[aspetto] || 'Trasformazione storica';
-}
-
-function analyzeText(text) {
-    const words = text.split(' ').length;
-    const abstractTerms = (text.match(/\b(essere|verità|sostanza|bene|male|giusto|ingiusto|anima|corpo|potere|libertà)\b/gi) || []).length;
-    
-    let complexity = 'medio';
-    if (words > 50) complexity = 'alto';
-    if (words < 20) complexity = 'basso';
-    
-    return {
-        word_count: words,
-        abstract_terms: abstractTerms,
-        complexity: complexity
-    };
-}
-
-function closeComparativeModal() {
-    document.getElementById('comparative-analysis-modal').style.display = 'none';
 }
 
 // ==================== UTILITY ====================
@@ -1828,5 +1806,24 @@ window.showScreen = function(screenId) {
     // Dopo aver cambiato schermata, applica il fix
     setTimeout(fixTabBarSpacing, 100);
 };
+
+// ==================== DEBUG E VERIFICA ====================
+
+// Debug: verifica caricamento dati analisi comparativa
+console.log("🔍 ANALISI CARICAMENTO DATI:");
+console.log("comparativeData caricato?", !!window.comparativeData);
+if (window.comparativeData) {
+    console.log("Concetti disponibili:", Object.keys(window.comparativeData.testiComparativi || {}));
+    
+    // Test di funzionamento per un concetto specifico
+    if (window.comparativeData.testiComparativi && window.comparativeData.testiComparativi['Essere']) {
+        console.log("✅ Dati per 'Essere' presenti:", {
+            autoreClassico: window.comparativeData.testiComparativi['Essere'].classico.autore,
+            autoreContemporaneo: window.comparativeData.testiComparativi['Essere'].contemporaneo.autore
+        });
+    }
+}
+
+// ==================== FINE APP.JS ====================
 
 console.log('📚 Aeterna Lexicon App.js v4.0.0 - DATASET COMPLETO INTEGRATO - READY');
