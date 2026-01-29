@@ -1989,3 +1989,34 @@ html, body {
     margin-top: 15px;
     width: 120px;
 }
+/* RIDUCI SPAZIO TRA AETERNA E TITOLO */
+.home-welcome-animated {
+    margin-bottom: 0 !important;
+}
+
+.home-title {
+    margin-top: 0 !important;
+    margin-bottom: 5px !important;
+}
+/* ============ FORZA RIDUZIONE SPAZI HOME ============ */
+#home-screen .home-welcome-animated {
+    margin: 0 !important;
+    padding: 0 !important;
+    margin-bottom: -5px !important; /* Negativo per avvicinare */
+}
+
+#home-screen .home-title {
+    margin: 0 !important;
+    padding: 0 !important;
+    margin-top: -10px !important; /* Sovrapponi leggermente */
+}
+
+#home-screen .home-subtitle {
+    margin: 0 !important;
+    padding: 0 !important;
+    margin-top: -5px !important;
+}
+
+#home-screen .home-buttons {
+    margin-top: 30px !important;
+}
