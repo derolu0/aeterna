@@ -216,50 +216,36 @@ function closeQRModal() {
 
 // ==================== GESTIONE ADMIN & AUTH (FIREBASE REALE) ====================
 
-// 1. APERTURA PANNELLO
 function openAdminPanel() {
-    // Chiudi il menu laterale se aperto
+    // 1. Forza la chiusura del menu immediatamente
+    const menu = document.getElementById('top-menu-modal');
+    if (menu) menu.style.display = 'none'; // Chiude l'overlay del menu 
+    
+    // Se hai una funzione specifica per il menu, usala per pulire le classi
     if (typeof closeMenuModal === 'function') closeMenuModal();
 
-    // Controlla se l'utente è già loggato in Firebase
+    // 2. Verifica se l'utente è già loggato con Firebase
     const user = firebase.auth().currentUser;
-    
-    // Se sei loggato E la mail è quella dell'amministratore
+
     if (user && user.email === 'derolu0@gmail.com') {
-        console.log("Utente già loggato, accesso diretto.");
+        // Già loggato: vai al pannello usando la tua funzione showScreen
         showScreen('admin-panel');
-        
-        // Carica subito i dati e le statistiche
-        loadAllAdminData();
+        if (typeof loadAllAdminData === 'function') loadAllAdminData();
     } else {
-        // Altrimenti apri la schermata di Login
+        // 3. NON loggato: mostra il blocco Login (admin-auth)
         const authScreen = document.getElementById('admin-auth');
         if (authScreen) {
-            authScreen.style.display = 'flex';
+            authScreen.style.display = 'flex'; // Mostra l'overlay del login 
+            // Assicuriamoci che sia sopra a tutto
+            authScreen.style.zIndex = '10001'; 
+            
             // Pulisci i campi
-            document.getElementById('admin-email').value = ''; 
+            document.getElementById('admin-email').value = '';
             document.getElementById('admin-password').value = '';
-            document.getElementById('auth-error').style.display = 'none';
         }
     }
 }
-
-// 2. CHIUSURA LOGIN (ANNULLA)
-function closeAdminAuth() {
-    const authScreen = document.getElementById('admin-auth');
-    if (authScreen) authScreen.style.display = 'none';
-}
-
-function closeAdminPanel() {
-    // 1. Disconnetti l'utente da Firebase (così la prossima volta chiederà la password)
-    firebase.auth().signOut().then(() => {
-        console.log("Admin disconnesso alla chiusura pannello");
-    });
-
-    // 2. Torna alla Home
-    showScreen('home-screen');
-}
-// 4. LOGIN CON FIREBASE (Click su "Accedi")
+// 4. LOGIN CON FIREBASE (Azionato dal tasto "Accedi")
 function checkAdminAuth() {
     const emailField = document.getElementById('admin-email');
     const passField = document.getElementById('admin-password');
@@ -268,7 +254,6 @@ function checkAdminAuth() {
     const email = emailField ? emailField.value.trim() : '';
     const pass = passField ? passField.value : '';
 
-    // Validazione base
     if (!email || !pass) {
         if(errorMsg) {
             errorMsg.style.display = 'block';
@@ -279,20 +264,19 @@ function checkAdminAuth() {
 
     showToast("Verifica credenziali in corso...", "info");
 
-    // Login Reale Firebase
+    // Autenticazione reale tramite Firebase
     firebase.auth().signInWithEmailAndPassword(email, pass)
         .then((userCredential) => {
             const user = userCredential.user;
 
-            // CONTROLLO DI SICUREZZA: Solo la tua mail può entrare
+            // Controllo sicurezza: permette l'accesso solo alla tua email specifica
             if (user.email === 'derolu0@gmail.com') {
-                // Login OK
                 closeAdminAuth();
                 showScreen('admin-panel');
                 loadAllAdminData();
-                showToast("Bentornato Salvatore", "success");
+                showToast("Accesso Amministratore autorizzato", "success");
             } else {
-                // Intruso: Logout immediato
+                // Se la mail non corrisponde, effettua il logout immediato
                 firebase.auth().signOut();
                 if(errorMsg) {
                     errorMsg.style.display = 'block';
@@ -310,29 +294,28 @@ function checkAdminAuth() {
         });
 }
 
-// 5. LOGOUT
+// 5. LOGOUT MANUALE
 function logoutAdmin() {
     firebase.auth().signOut().then(() => {
         showScreen('home-screen');
-        showToast("Logout effettuato", "info");
+        showToast("Logout effettuato correttamente", "info");
     }).catch((error) => {
-        console.error("Errore logout", error);
+        console.error("Errore durante il logout:", error);
     });
 }
 
-// 6. FUNZIONI DI CARICAMENTO DATI ADMIN
+// 6. CARICAMENTO DATI E STATISTICHE DASHBOARD
 function loadAllAdminData() {
-    // Carica le tabelle se le funzioni esistono
+    // Esegue il caricamento delle tabelle
     if(typeof loadAdminFilosofi === 'function') loadAdminFilosofi();
     if(typeof loadAdminOpere === 'function') loadAdminOpere();
     if(typeof loadAdminConcetti === 'function') loadAdminConcetti();
     
-    // Aggiorna i contatori della Dashboard
+    // Aggiorna i contatori numerici della Dashboard
     updateAdminStats();
 }
 
 function updateAdminStats() {
-    // Aggiorna solo gli elementi che esistono davvero nell'HTML
     const elFilosofi = document.getElementById('total-filosofi');
     const elOpere = document.getElementById('total-opere');
     const elConcetti = document.getElementById('total-concetti');
@@ -342,14 +325,16 @@ function updateAdminStats() {
     if (elConcetti && typeof concettiData !== 'undefined') elConcetti.textContent = concettiData.length;
 }
 
-// 7. GESTIONE TAB DEL PANNELLO
+// 7. GESTIONE TAB INTERNE AL PANNELLO
 function switchAdminTab(tabId) {
-    // Rimuovi classe active da tutti i bottoni e contenuti
+    // Gestione stati attivi dei bottoni
     document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.admin-tab-content').forEach(c => c.style.display = 'none');
-    document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
+    // Gestione visibilità dei contenuti
+    document.querySelectorAll('.admin-tab-content').forEach(c => {
+        c.style.display = 'none';
+        c.classList.remove('active');
+    });
 
-    // Attiva quello giusto
     const btn = document.querySelector(`button[onclick="switchAdminTab('${tabId}')"]`);
     if(btn) btn.classList.add('active');
 
@@ -360,14 +345,13 @@ function switchAdminTab(tabId) {
     }
 }
 
-// Esposizione globale necessaria per l'HTML
+// Collegamento delle funzioni all'oggetto window per l'accessibilità dall'HTML
 window.switchAdminTab = switchAdminTab;
 window.checkAdminAuth = checkAdminAuth;
 window.openAdminPanel = openAdminPanel;
 window.closeAdminPanel = closeAdminPanel;
 window.closeAdminAuth = closeAdminAuth;
 window.logoutAdmin = logoutAdmin;
-
 // ==================== DATI FILOSOFICI ====================
 
 async function loadPhilosophicalData() {

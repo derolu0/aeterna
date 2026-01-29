@@ -2140,3 +2140,27 @@ html, body {
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+/* Forza il login a stare sopra a ogni altra cosa */
+#admin-auth {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85) !important; /* Leggermente più scuro per coprire meglio */
+    z-index: 99999 !important; /* Massimo livello di altezza */
+    display: none; /* Inizialmente nascosto, attivato da JS con 'flex' */
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-modal {
+    background: white !important;
+    padding: 30px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 400px;
+    color: #333 !important; /* Forza il testo a essere scuro e leggibile */
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    text-align: center;
+}
