@@ -250,11 +250,15 @@ function closeAdminAuth() {
     if (authScreen) authScreen.style.display = 'none';
 }
 
-// 3. CHIUSURA PANNELLO ADMIN
 function closeAdminPanel() {
+    // 1. Disconnetti l'utente da Firebase (così la prossima volta chiederà la password)
+    firebase.auth().signOut().then(() => {
+        console.log("Admin disconnesso alla chiusura pannello");
+    });
+
+    // 2. Torna alla Home
     showScreen('home-screen');
 }
-
 // 4. LOGIN CON FIREBASE (Click su "Accedi")
 function checkAdminAuth() {
     const emailField = document.getElementById('admin-email');
