@@ -820,9 +820,49 @@ function createOperaCard(opera) {
     card.className = 'compact-item';
     card.classList.add(`border-${opera.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}`);
     
+    // Percorso dell'immagine di default
+    const defaultImage = "images/default-opera.jpg";
+    
     card.innerHTML = `
         <div class="compact-item-image-container">
-            <div class="compact-image-fallback">📖</div>
+            <img src="${defaultImage}" 
+                 alt="${opera.titolo}" 
+                 class="opera-default-image"
+                 onerror="
+                    // Se l'immagine default non carica, mostra un placeholder
+                    console.error('❌ Immagine default non trovata:', '${defaultImage}');
+                    this.style.display = 'none';
+                    this.parentElement.innerHTML = '<div style=\"width:100%;height:120px;background:linear-gradient(135deg,${opera.periodo === 'contemporaneo' ? '#f59e0b,#d97706' : '#3b82f6,#1d4ed8'});display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;border-radius:8px;font-weight:bold;\">${opera.titolo.substring(0, 20)}${opera.titolo.length > 20 ? '...' : ''}</div>';
+                 "
+                 onload="console.log('✅ Immagine default caricata per:', '${opera.titolo}')"
+                 style="
+                    width: 100%;
+                    height: 120px;
+                    object-fit: cover;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    transition: transform 0.3s ease;
+                 ">
+                 
+            <!-- Overlay con informazioni -->
+            <div class="opera-image-overlay" style="
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+                color: white;
+                padding: 8px;
+                border-radius: 0 0 8px 8px;
+                font-size: 0.8rem;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            ">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-book"></i> ${opera.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Classico'}</span>
+                    <span><i class="fas fa-calendar"></i> ${opera.anno || 'N/D'}</span>
+                </div>
+            </div>
         </div>
         <div class="compact-item-content">
             <div class="compact-item-header">
@@ -835,6 +875,24 @@ function createOperaCard(opera) {
             </div>
         </div>
     `;
+    
+    // Aggiungi effetti hover
+    card.addEventListener('mouseenter', function() {
+        const img = this.querySelector('img');
+        if (img) img.style.transform = 'scale(1.05)';
+        
+        const overlay = this.querySelector('.opera-image-overlay');
+        if (overlay) overlay.style.opacity = '1';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        const img = this.querySelector('img');
+        if (img) img.style.transform = 'scale(1)';
+        
+        const overlay = this.querySelector('.opera-image-overlay');
+        if (overlay) overlay.style.opacity = '0';
+    });
+    
     card.addEventListener('click', () => showOperaDetail(opera.id));
     return card;
 }
