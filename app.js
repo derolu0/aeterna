@@ -233,49 +233,108 @@ function closeAdminAuth() {
     document.getElementById('admin-auth').style.display = 'none';
 }
 
-// Verifica credenziali
+// ==========================================
+// GESTIONE ADMIN (SISTEMA REALE FIREBASE)
+// ==========================================
+
+// Funzione di Login
 async function checkAdminAuth() {
-    const email = document.getElementById('admin-email').value;
-    const password = document.getElementById('admin-password').value;
-    const errorMsg = document.getElementById('auth-error');
-    
-    if (!window.authUtils) {
-        // Fallback se authUtils non caricato
-        if (password === 'admin123') { // Password di emergenza
-             successLogin();
-             return;
+    const emailInput = document.getElementById('admin-email');
+    const passInput = document.getElementById('admin-password');
+    const errorElement = document.getElementById('auth-error');
+
+    // Nascondi errori precedenti
+    if (errorElement) errorElement.style.display = 'none';
+
+    const email = emailInput.value.trim();
+    const password = passInput.value;
+
+    if (!email || !password) {
+        if (errorElement) {
+            errorElement.textContent = "Inserisci email e password";
+            errorElement.style.display = 'block';
         }
-        errorMsg.textContent = "Sistema Auth non caricato.";
-        errorMsg.style.display = 'block';
         return;
     }
 
-    const result = await window.authUtils.loginAdmin(email, password);
-    
-    if (result.success) {
-        successLogin();
-    } else {
-        errorMsg.textContent = "Credenziali errate.";
-        errorMsg.style.display = 'block';
+    try {
+        // Usa il VERO login di Firebase
+        await window.auth.signInWithEmailAndPassword(email, password);
+        
+        // Se non va in errore, il login è riuscito:
+        console.log("✅ Login Admin Firebase riuscito");
+        
+        // 1. Imposta le variabili globali
+        isAdminAuthenticated = true;
+        currentUserRole = 'admin';
+        
+        // 2. Salva la sessione nel browser
+        localStorage.setItem('abc_admin_logged', 'true');
+        localStorage.setItem('user_role', 'admin');
+
+        // 3. Gestione Interfaccia (UI)
+        document.getElementById('admin-auth').style.display = 'none'; // Chiudi login
+        
+        // Se c'è la schermata manutenzione, toglila
+        const maintScreen = document.getElementById('maintenance-mode');
+        if (maintScreen) maintScreen.style.display = 'none';
+        document.body.style.overflow = 'auto';
+
+        // Mostra il pannello admin
+        const adminPanel = document.getElementById('admin-panel');
+        if (adminPanel) {
+            adminPanel.style.display = 'flex';
+            // Se esiste la funzione per caricare i dati admin, usala
+            if (typeof showAdminPanel === 'function') showAdminPanel();
+        }
+
+        showToast('Benvenuto Amministratore', 'success');
+
+        // Pulisci i campi
+        emailInput.value = '';
+        passInput.value = '';
+
+    } catch (error) {
+        console.error("❌ Errore Login:", error);
+        if (errorElement) {
+            errorElement.style.display = 'block';
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                errorElement.textContent = "Email o password errati";
+            } else {
+                errorElement.textContent = "Errore: " + error.message;
+            }
+        }
     }
 }
 
-function successLogin() {
-    document.getElementById('admin-auth').style.display = 'none';
-    document.getElementById('admin-panel').style.display = 'flex';
-    // Rimuovi overlay manutenzione se presente
-    const maintenance = document.getElementById('maintenance-mode');
-    if(maintenance) maintenance.style.display = 'none';
-    showToast('Login effettuato con successo', 'success');
-    updateAdminStats();
+// Funzione di Logout
+async function logoutAdmin() {
+    try {
+        // Logout reale da Firebase
+        await window.auth.signOut();
+        
+        // Pulisci variabili locali
+        isAdminAuthenticated = false;
+        currentUserRole = null;
+        localStorage.removeItem('abc_admin_logged');
+        localStorage.removeItem('user_role');
+        
+        // Chiudi pannello
+        const adminPanel = document.getElementById('admin-panel');
+        if (adminPanel) adminPanel.style.display = 'none';
+        
+        showToast('Logout effettuato', 'info');
+        
+        // Ricarica la pagina per sicurezza (pulisce la memoria)
+        setTimeout(() => window.location.reload(), 1000);
+        
+    } catch (error) {
+        console.error("Errore Logout:", error);
+        // Fallback locale in caso di errore di rete
+        localStorage.removeItem('abc_admin_logged');
+        window.location.reload();
+    }
 }
-
-function logoutAdmin() {
-    if (window.authUtils) window.authUtils.logoutAdmin();
-    document.getElementById('admin-panel').style.display = 'none';
-    showToast('Logout effettuato');
-}
-
 // Aggiorna i contatori nel pannello admin
 function updateAdminStats() {
     document.getElementById('total-filosofi').textContent = filosofiData.length;
