@@ -1193,31 +1193,103 @@ function initConceptMap() {
     if (!container) return;
 
     try {
+        // Variabili per gestione click
+        let clickTimer = null;
+        let lastClickTime = 0;
+        let lastClickNode = null;
+        
         // Prepara nodi e collegamenti
         const nodes = new vis.DataSet();
         const edges = new vis.DataSet();
         
-        // Aggiungi filosofi come nodi
+        // Aggiungi filosofi come nodi con colori distinti
         filosofiData.forEach(f => {
+            const isClassico = f.periodo === 'classico';
+            const textColor = isClassico ? '#ffffff' : '#ffffff'; // Testo bianco per entrambi (sarà su sfondo colorato)
+            const borderColor = isClassico ? '#047857' : '#d97706';
+            const bgColor = isClassico ? '#10b981' : '#f59e0b';
+            
             nodes.add({
                 id: f.id,
-                label: f.nome.split(' ')[0], // Solo nome
+                label: f.nome,
                 group: f.periodo,
-                title: `${f.nome}\n${f.scuola || ''}`,
-                value: 15,
-                shape: 'dot'
+                title: `${f.nome}\n${f.scuola || ''}\n${f.anni || ''}`,
+                value: 25,
+                shape: 'dot',
+                color: {
+                    background: bgColor,
+                    border: borderColor,
+                    highlight: {
+                        background: isClassico ? '#34d399' : '#fbbf24',
+                        border: isClassico ? '#059669' : '#f59e0b'
+                    },
+                    hover: {
+                        background: isClassico ? '#34d399' : '#fbbf24',
+                        border: isClassico ? '#059669' : '#f59e0b'
+                    }
+                },
+                font: {
+                    size: 12,
+                    color: textColor,
+                    face: 'Inter',
+                    strokeWidth: 2,
+                    strokeColor: 'rgba(0,0,0,0.5)',
+                    align: 'center',
+                    bold: {
+                        color: textColor,
+                        size: 12,
+                        vadjust: 0,
+                        mod: 'bold'
+                    }
+                },
+                borderWidth: 2,
+                borderWidthSelected: 4
             });
         });
         
         // Aggiungi concetti come nodi
         concettiData.forEach(c => {
+            const isBothPeriods = c.periodo === 'entrambi';
+            const bgColor = isBothPeriods ? '#8b5cf6' : 
+                          (c.periodo === 'classico' ? '#10b981' : '#f59e0b');
+            const borderColor = isBothPeriods ? '#7c3aed' : 
+                              (c.periodo === 'classico' ? '#047857' : '#d97706');
+            
             nodes.add({
                 id: 'C_' + c.id,
                 label: c.parola,
                 group: 'concetto',
-                title: `${c.parola}\n${c.definizione ? (c.definizione.substring(0, 100) + '...') : ''}`,
-                value: 10,
-                shape: 'diamond'
+                title: `${c.parola}\n${c.definizione ? (c.definizione.substring(0, 120) + '...') : ''}`,
+                value: 20,
+                shape: 'diamond',
+                color: {
+                    background: bgColor,
+                    border: borderColor,
+                    highlight: {
+                        background: '#a78bfa',
+                        border: '#8b5cf6'
+                    },
+                    hover: {
+                        background: '#a78bfa',
+                        border: '#8b5cf6'
+                    }
+                },
+                font: {
+                    size: 11,
+                    color: '#ffffff',
+                    face: 'Inter',
+                    strokeWidth: 2,
+                    strokeColor: 'rgba(0,0,0,0.5)',
+                    align: 'center',
+                    bold: {
+                        color: '#ffffff',
+                        size: 11,
+                        vadjust: 0,
+                        mod: 'bold'
+                    }
+                },
+                borderWidth: 2,
+                borderWidthSelected: 4
             });
         });
         
@@ -1230,8 +1302,18 @@ function initConceptMap() {
                         edges.add({
                             from: filosofo.id,
                             to: 'C_' + concetto.id,
-                            arrows: 'to',
-                            color: { color: filosofo.periodo === 'contemporaneo' ? '#f59e0b' : '#10b981' }
+                            arrows: {
+                                to: {
+                                    enabled: true,
+                                    scaleFactor: 0.8
+                                }
+                            },
+                            color: {
+                                color: filosofo.periodo === 'contemporaneo' ? '#f59e0b' : '#10b981',
+                                opacity: 0.7,
+                                highlight: '#ef4444'
+                            },
+                            width: 1.5
                         });
                     }
                 });
@@ -1248,60 +1330,219 @@ function initConceptMap() {
                         edges.add({
                             from: 'C_' + concetto.id,
                             to: id,
-                            arrows: 'to',
-                            color: { color: '#8b5cf6' }
+                            arrows: {
+                                to: {
+                                    enabled: true,
+                                    scaleFactor: 0.8
+                                }
+                            },
+                            color: {
+                                color: '#8b5cf6',
+                                opacity: 0.7,
+                                highlight: '#ef4444'
+                            },
+                            width: 1.5
                         });
                     }
                 });
             }
         });
         
-        // Configurazione
+        // Configurazione ottimizzata per leggibilità
         const data = { nodes: nodes, edges: edges };
         const options = {
             nodes: {
-                shape: 'dot',
-                font: { size: 14, color: '#1f2937', face: 'Inter' },
+                shapeProperties: {
+                    useBorderWithImage: true,
+                    interpolation: false
+                },
                 borderWidth: 2,
-                size: 20
+                borderWidthSelected: 4,
+                size: 30,
+                scaling: {
+                    min: 25,
+                    max: 40,
+                    label: {
+                        enabled: true,
+                        min: 10,
+                        max: 14,
+                        maxVisible: 1000,
+                        drawThreshold: 0
+                    }
+                },
+                shadow: {
+                    enabled: true,
+                    color: 'rgba(0,0,0,0.3)',
+                    size: 8,
+                    x: 3,
+                    y: 3
+                },
+                chosen: {
+                    node: function(values, id, selected, hovering) {
+                        if (hovering) {
+                            values.size = 35;
+                            values.font.size = 13;
+                            values.borderWidth = 3;
+                        }
+                    }
+                }
             },
             edges: {
-                width: 2,
-                smooth: true
+                width: 1.5,
+                smooth: {
+                    type: 'continuous',
+                    roundness: 0.5
+                },
+                color: {
+                    inherit: 'from',
+                    opacity: 0.6
+                },
+                arrows: {
+                    to: {
+                        enabled: true,
+                        scaleFactor: 0.7,
+                        type: 'arrow'
+                    }
+                },
+                hoverWidth: 2.5,
+                selectionWidth: 2.5
             },
             groups: {
                 classico: { 
-                    color: { background: '#10b981', border: '#059669' },
-                    font: { color: '#ffffff' }
+                    color: { 
+                        background: '#10b981', 
+                        border: '#047857',
+                        highlight: { background: '#34d399', border: '#059669' },
+                        hover: { background: '#34d399', border: '#059669' }
+                    },
+                    font: { 
+                        color: '#ffffff',
+                        size: 12,
+                        face: 'Inter',
+                        strokeWidth: 2,
+                        strokeColor: 'rgba(0,0,0,0.4)',
+                        bold: {
+                            color: '#ffffff',
+                            size: 12,
+                            vadjust: 0,
+                            mod: 'bold'
+                        }
+                    },
+                    shape: 'dot',
+                    size: 30
                 },
                 contemporaneo: { 
-                    color: { background: '#f59e0b', border: '#d97706' },
-                    font: { color: '#ffffff' }
+                    color: { 
+                        background: '#f59e0b', 
+                        border: '#d97706',
+                        highlight: { background: '#fbbf24', border: '#f59e0b' },
+                        hover: { background: '#fbbf24', border: '#f59e0b' }
+                    },
+                    font: { 
+                        color: '#ffffff',
+                        size: 12,
+                        face: 'Inter',
+                        strokeWidth: 2,
+                        strokeColor: 'rgba(0,0,0,0.4)',
+                        bold: {
+                            color: '#ffffff',
+                            size: 12,
+                            vadjust: 0,
+                            mod: 'bold'
+                        }
+                    },
+                    shape: 'dot',
+                    size: 30
                 },
                 concetto: { 
-                    color: { background: '#8b5cf6', border: '#7c3aed' },
-                    font: { color: '#ffffff' },
-                    shape: 'diamond'
+                    color: { 
+                        background: '#8b5cf6', 
+                        border: '#7c3aed',
+                        highlight: { background: '#a78bfa', border: '#8b5cf6' },
+                        hover: { background: '#a78bfa', border: '#8b5cf6' }
+                    },
+                    font: { 
+                        color: '#ffffff',
+                        size: 11,
+                        face: 'Inter',
+                        strokeWidth: 2,
+                        strokeColor: 'rgba(0,0,0,0.4)',
+                        bold: {
+                            color: '#ffffff',
+                            size: 11,
+                            vadjust: 0,
+                            mod: 'bold'
+                        }
+                    },
+                    shape: 'diamond',
+                    size: 35
                 }
             },
             physics: {
                 enabled: true,
                 stabilization: {
-                    iterations: 100,
-                    updateInterval: 50
+                    iterations: 200,
+                    updateInterval: 25,
+                    onlyDynamicEdges: false,
+                    fit: true
                 },
                 barnesHut: {
-                    gravitationalConstant: -2000,
-                    springConstant: 0.04,
-                    springLength: 150,
-                    damping: 0.09
+                    gravitationalConstant: -1800,
+                    centralGravity: 0.3,
+                    springLength: 200,
+                    springConstant: 0.05,
+                    damping: 0.12,
+                    avoidOverlap: 0.9
+                },
+                solver: 'barnesHut',
+                timestep: 0.5,
+                adaptiveTimestep: true
+            },
+            interaction: {
+                hover: true,
+                hoverConnectedEdges: true,
+                selectable: true,
+                selectConnectedEdges: true,
+                zoomView: true,
+                dragView: true,
+                navigationButtons: {
+                    enabled: true,
+                    zoomIn: {
+                        cssClass: 'custom-zoom-in',
+                        title: 'Zoom In'
+                    },
+                    zoomOut: {
+                        cssClass: 'custom-zoom-out',
+                        title: 'Zoom Out'
+                    },
+                    reset: {
+                        cssClass: 'custom-reset',
+                        title: 'Reset View'
+                    }
+                },
+                keyboard: {
+                    enabled: true,
+                    speed: { x: 10, y: 10, zoom: 0.02 },
+                    bindToWindow: true
+                },
+                tooltipDelay: 150,
+                multiselect: false,
+                zoomSpeed: 0.5,
+                dragSpeed: 0.5
+            },
+            layout: {
+                randomSeed: 42,
+                improvedLayout: true,
+                hierarchical: {
+                    enabled: false,
+                    direction: 'UD',
+                    sortMethod: 'hubsize'
                 }
             },
-            interaction: { 
-                hover: true, 
-                tooltipDelay: 200,
-                navigationButtons: true,
-                keyboard: true
+            configure: {
+                enabled: false,
+                filter: 'nodes,edges',
+                showButton: false
             }
         };
 
@@ -1311,30 +1552,325 @@ function initConceptMap() {
         }
         networkInstance = new vis.Network(container, data, options);
         
-        // Eventi
+        // Aggiungi stili CSS per le animazioni
+        const animationStyle = document.createElement('style');
+        animationStyle.textContent = `
+            @keyframes slideUp {
+                from { 
+                    opacity: 0; 
+                    transform: translateX(-50%) translateY(20px); 
+                }
+                to { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(0); 
+                }
+            }
+            
+            @keyframes slideDown {
+                from { 
+                    opacity: 1; 
+                    transform: translateX(-50%) translateY(0); 
+                }
+                to { 
+                    opacity: 0; 
+                    transform: translateX(-50%) translateY(20px); 
+                }
+            }
+            
+            .network-info-box {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(59, 130, 246, 0.95);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 10px;
+                z-index: 10000;
+                font-size: 14px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                max-width: 90%;
+                animation: slideUp 0.3s ease-out;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.2);
+            }
+            
+            .network-info-box strong {
+                font-weight: 700;
+                color: #ffffff;
+            }
+            
+            .network-info-box small {
+                opacity: 0.9;
+                font-size: 12px;
+            }
+            
+            .custom-zoom-in, .custom-zoom-out, .custom-reset {
+                background-color: #3b82f6 !important;
+                color: white !important;
+                border-radius: 6px !important;
+                margin: 5px !important;
+                padding: 8px !important;
+                font-size: 16px !important;
+                cursor: pointer !important;
+                border: none !important;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+                font-weight: bold !important;
+            }
+            .custom-zoom-in:hover, .custom-zoom-out:hover, .custom-reset:hover {
+                background-color: #2563eb !important;
+                transform: translateY(-1px) !important;
+            }
+        `;
+        document.head.appendChild(animationStyle);
+        
+        // Evento click migliorato
         networkInstance.on("click", function (params) {
+            const currentTime = new Date().getTime();
+            const timeDiff = currentTime - lastClickTime;
+            
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                
+                // Doppio click (entro 400ms)
+                if (timeDiff < 400 && lastClickNode === nodeId) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                    lastClickTime = 0;
+                    lastClickNode = null;
+                    
+                    // Rimuovi eventuali info box
+                    const existingInfoBox = document.querySelector('.network-info-box');
+                    if (existingInfoBox) {
+                        existingInfoBox.remove();
+                    }
+                    
+                    if (nodeId.startsWith('C_')) {
+                        const concettoId = nodeId.substring(2);
+                        console.log(`🎯 Doppio click su concetto: ${concettoId}`);
+                        showConcettoDetail(concettoId);
+                    } else {
+                        console.log(`🎯 Doppio click su filosofo: ${nodeId}`);
+                        showFilosofoDetail(nodeId);
+                    }
+                    return;
+                }
+                
+                // Single click
+                lastClickNode = nodeId;
+                
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                }
+                
+                clickTimer = setTimeout(function() {
+                    const node = nodes.get(nodeId);
+                    if (node) {
+                        // Evidenzia il nodo
+                        networkInstance.selectNodes([nodeId]);
+                        networkInstance.focus(nodeId, {
+                            scale: 1.3,
+                            animation: {
+                                duration: 600,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                        
+                        // Determina colore in base al tipo di nodo
+                        let bgColor = '#3b82f6'; // Default blu
+                        if (nodeId.startsWith('C_')) {
+                            bgColor = '#8b5cf6'; // Viola per concetti
+                        } else {
+                            // Per filosofi, usa il colore del periodo
+                            const filosofo = filosofiData.find(f => f.id === nodeId);
+                            bgColor = filosofo && filosofo.periodo === 'classico' ? '#10b981' : '#f59e0b';
+                        }
+                        
+                        // Mostra messaggio chiaro sul doppio click
+                        const message = `Click su: <strong>${node.label}</strong><br>
+                                        <small>Doppio click per aprire i dettagli completi</small>`;
+                        
+                        // Rimuovi eventuali info box precedenti
+                        const existingInfoBox = document.querySelector('.network-info-box');
+                        if (existingInfoBox) {
+                            existingInfoBox.remove();
+                        }
+                        
+                        // Crea un messaggio temporaneo
+                        const infoBox = document.createElement('div');
+                        infoBox.className = 'network-info-box';
+                        infoBox.innerHTML = message;
+                        infoBox.style.background = `rgba(${hexToRgb(bgColor)}, 0.95)`;
+                        infoBox.style.border = `2px solid ${bgColor}`;
+                        
+                        document.body.appendChild(infoBox);
+                        
+                        // Rimuovi dopo 2.5 secondi
+                        setTimeout(() => {
+                            if (infoBox.parentNode) {
+                                infoBox.style.animation = 'slideDown 0.3s ease-out';
+                                setTimeout(() => {
+                                    if (infoBox.parentNode) {
+                                        infoBox.parentNode.removeChild(infoBox);
+                                    }
+                                }, 300);
+                            }
+                        }, 2500);
+                    }
+                    
+                    lastClickTime = 0;
+                    lastClickNode = null;
+                    clickTimer = null;
+                    
+                }, 300); // Ritardo per distinguere da doppio click
+                
+                lastClickTime = currentTime;
+                
+            } else if (params.edges.length > 0) {
+                // Click su un collegamento
+                const edgeId = params.edges[0];
+                networkInstance.selectEdges([edgeId]);
+                
+                // Mostra informazioni sul collegamento
+                const edge = edges.get(edgeId);
+                if (edge) {
+                    const fromNode = nodes.get(edge.from);
+                    const toNode = nodes.get(edge.to);
+                    
+                    if (fromNode && toNode) {
+                        const fromLabel = fromNode.label;
+                        const toLabel = toNode.label;
+                        const isFilosofoToConcetto = !edge.from.startsWith('C_') && edge.to.startsWith('C_');
+                        const relation = isFilosofoToConcetto 
+                            ? `${fromLabel} → sviluppa il concetto → ${toLabel}`
+                            : `Il concetto ${fromLabel} → è riferito a → ${toLabel}`;
+                        
+                        showToast(relation, 'info', 2500);
+                    }
+                }
+                
+                // Reset click tracking
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                }
+                lastClickTime = 0;
+                lastClickNode = null;
+                
+            } else {
+                // Click su area vuota
+                if (clickTimer) {
+                    clearTimeout(clickTimer);
+                    clickTimer = null;
+                }
+                lastClickTime = 0;
+                lastClickNode = null;
+                networkInstance.unselectAll();
+                
+                // Rimuovi eventuali info box
+                const existingInfoBox = document.querySelector('.network-info-box');
+                if (existingInfoBox) {
+                    existingInfoBox.remove();
+                }
+            }
+        });
+        
+        // Evento doppio click diretto (fallback)
+        networkInstance.on("doubleClick", function (params) {
             if (params.nodes.length > 0) {
                 const nodeId = params.nodes[0];
                 
                 if (nodeId.startsWith('C_')) {
-                    // È un concetto
                     const concettoId = nodeId.substring(2);
                     showConcettoDetail(concettoId);
                 } else {
-                    // È un filosofo
                     showFilosofoDetail(nodeId);
                 }
             }
         });
         
+        // Zoom automatico dopo stabilizzazione
+        networkInstance.on("stabilizationIterationsDone", function() {
+            networkInstance.fit({
+                animation: {
+                    duration: 1200,
+                    easingFunction: 'easeInOutCubic'
+                }
+            });
+            
+            // Aggiungi istruzioni iniziali
+            setTimeout(() => {
+                const welcomeBox = document.createElement('div');
+                welcomeBox.className = 'network-info-box';
+                welcomeBox.innerHTML = `
+                    <strong>Mappa Concettuale Filosofica</strong><br>
+                    <small>• Click singolo: seleziona e zoomma<br>
+                    • Doppio click: apri dettagli completi<br>
+                    • Drag: sposta la mappa<br>
+                    • Scroll: zoom avanti/indietro</small>
+                `;
+                welcomeBox.style.background = 'rgba(59, 130, 246, 0.95)';
+                welcomeBox.style.zIndex = '10001';
+                
+                document.body.appendChild(welcomeBox);
+                
+                // Rimuovi dopo 5 secondi
+                setTimeout(() => {
+                    if (welcomeBox.parentNode) {
+                        welcomeBox.style.animation = 'slideDown 0.3s ease-out';
+                        setTimeout(() => {
+                            if (welcomeBox.parentNode) {
+                                welcomeBox.parentNode.removeChild(welcomeBox);
+                            }
+                        }, 300);
+                    }
+                }, 5000);
+            }, 1500);
+        });
+        
         console.log("✅ Mappa concettuale generata con", nodes.length, "nodi e", edges.length, "collegamenti");
+        
+        // Funzione helper per convertire hex a rgb
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            return `${r}, ${g}, ${b}`;
+        }
         
     } catch (error) {
         console.error("❌ Errore generazione mappa concettuale:", error);
-        container.innerHTML = '<p style="color:red; text-align:center; padding: 20px;">Errore nella visualizzazione della mappa concettuale.</p>';
+        container.innerHTML = `
+            <div style="
+                color: #dc2626;
+                text-align: center;
+                padding: 40px 20px;
+                background: #fef2f2;
+                border-radius: 12px;
+                border: 2px dashed #fca5a5;
+            ">
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 15px;"></i>
+                <h3 style="margin-bottom: 10px;">Errore nella visualizzazione della mappa concettuale</h3>
+                <p style="color: #7f1d1d; font-size: 0.9rem;">${error.message || 'Errore sconosciuto'}</p>
+                <button onclick="initConceptMap()" style="
+                    margin-top: 20px;
+                    padding: 10px 20px;
+                    background: #3b82f6;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">
+                    <i class="fas fa-redo"></i> Riprova
+                </button>
+            </div>
+        `;
     }
 }
-
 // ==================== ANALISI COMPARATIVA ====================
 function openComparativeAnalysis(termine) {
     const modal = document.getElementById('comparative-analysis-modal');
