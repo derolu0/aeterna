@@ -1,312 +1,148 @@
 /**
- * SERVICE WORKER - AETERNA LEXICON (Versione Semplificata)
- * Versione 6.7.3 - Allineato con app senza analytics/multilingua
+ * SERVICE WORKER - AETERNA LEXICON IN MOTU
+ * Versione 5.0.0 - FIXED (Icone & Percorsi corretti)
  */
 
-const APP_VERSION = '4.0.0';
+const APP_VERSION = '5.0.0';
 const CACHE_NAME = `aeterna-lexicon-${APP_VERSION}`;
+// Usa il percorso base corretto per GitHub Pages
 const BASE_URL = 'https://derolu0.github.io/aeterna/';
 
-// Asset essenziali (SOLO quelli che esistono davvero)
+// Lista ASSET ESSENZIALI da scaricare subito
+// Se uno di questi manca, l'installazione fallisce.
 const ESSENTIAL_ASSETS = [
-  // HTML e entry point
-  BASE_URL,
-  BASE_URL + 'index.html',
-  
-  // CSS
-  BASE_URL + 'style.css',
-  BASE_URL + 'comparative-styles.css',
-  
-  // JavaScript CORE (senza analytics/translations)
-  BASE_URL + 'app.js',
-  BASE_URL + 'firebase-init.js',
-  BASE_URL + 'geocoding-manager.js',
-  BASE_URL + 'linguistic-analysis.js',
-  BASE_URL + 'analytics.js', // Solo stub per compatibilità
-  
-  // Workers
-  BASE_URL + 'workers/geocoding-worker.js',
-  BASE_URL + 'workers/excel-worker.js',
-  
-  // Manifest e icon
-  BASE_URL + 'manifest.json',
-  
-  // Immagini ESSENZIALI
-  BASE_URL + 'images/logo-app.png',
-  BASE_URL + 'images/default-filosofo.jpg',
-  BASE_URL + 'images/default-opera.jpg',
-  BASE_URL + 'images/icona-avvio-192.png',
-  
-  // Marker mappa
-  BASE_URL + 'images/marker-green.png',
-  BASE_URL + 'images/marker-orange.png',
-  BASE_URL + 'images/marker-red.png'
+    // 1. Pagine e Stili
+    BASE_URL,
+    BASE_URL + 'index.html',
+    BASE_URL + 'style.css',
+    BASE_URL + 'comparative-styles.css',
+
+    // 2. JavaScript Core (I file che hai caricato)
+    BASE_URL + 'app.js',
+    BASE_URL + 'firebase-init.js',
+    BASE_URL + 'geocoding-manager.js',
+    BASE_URL + 'linguistic-analysis.js',
+    // Nota: analytics.js rimosso perché mancante
+
+    // 3. Workers (Assumiamo siano nella root, non in /workers/)
+    BASE_URL + 'excel-worker.js',
+    // BASE_URL + 'geocoding-worker.js', // Scommenta solo se hai caricato questo file
+
+    // 4. Configurazione
+    BASE_URL + 'manifest.json',
+
+    // 5. IMMAGINI DI BASE
+    BASE_URL + 'images/favicon.ico',
+    BASE_URL + 'images/logo-app.png',
+    BASE_URL + 'images/apple-touch-icon.png',
+    BASE_URL + 'images/default-filosofo.jpg',
+    BASE_URL + 'images/default-opera.jpg',
+    BASE_URL + 'images/sfondo-home.jpg',
+
+    // 6. ICONE PWA (Tutte le dimensioni standard)
+    BASE_URL + 'images/icona-avvio-72.png',
+    BASE_URL + 'images/icona-avvio-96.png',
+    BASE_URL + 'images/icona-avvio-128.png',
+    BASE_URL + 'images/icona-avvio-144.png',
+    BASE_URL + 'images/icona-avvio-152.png',
+    BASE_URL + 'images/icona-avvio-192.png',
+    BASE_URL + 'images/icona-avvio-384.png',
+    BASE_URL + 'images/icona-avvio-512.png'
 ];
 
-// Asset esterni (CDN)
-const EXTERNAL_ASSETS = [
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css'
-];
+// ==================== INSTALLAZIONE ====================
+self.addEventListener('install', (event) => {
+    console.log(`[SW ${APP_VERSION}] Installazione in corso...`);
+    self.skipWaiting(); // Forza l'attivazione immediata
 
-// ==================== INSTALL ====================
-self.addEventListener('install', event => {
-  console.log(`[SW ${APP_VERSION}] Installazione app filosofica...`);
-  
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('[SW] Caching asset essenziali...');
-        
-        // Cache asset locali
-        const localPromises = ESSENTIAL_ASSETS.map(url => {
-          return fetch(url, { mode: 'no-cors' })
-            .then(response => {
-              if (response.ok || response.type === 'opaque') {
-                return cache.put(url, response);
-              }
-              console.warn(`[SW] Asset non trovato: ${url}`);
-              return Promise.resolve();
-            })
-            .catch(err => {
-              console.warn(`[SW] Errore caching ${url}:`, err.message);
-              return Promise.resolve();
-            });
-        });
-        
-        // Cache asset esterni
-        const externalPromises = EXTERNAL_ASSETS.map(url => {
-          return fetch(url)
-            .then(response => {
-              if (response.ok) {
-                return cache.put(url, response);
-              }
-              return Promise.resolve();
-            })
-            .catch(err => {
-              console.warn(`[SW] Errore caching esterno ${url}:`, err.message);
-              return Promise.resolve();
-            });
-        });
-        
-        return Promise.all([...localPromises, ...externalPromises]);
-      })
-      .then(() => {
-        console.log('[SW] Installazione completata');
-        return self.skipWaiting();
-      })
-      .catch(error => {
-        console.error('[SW] Errore installazione:', error);
-        return self.skipWaiting();
-      })
-  );
-});
-
-// ==================== ACTIVATE ====================
-self.addEventListener('activate', event => {
-  console.log(`[SW ${APP_VERSION}] Attivazione...`);
-  
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          // Cancella cache vecchie
-          if (cacheName !== CACHE_NAME && cacheName.startsWith('aeterna-lexicon')) {
-            console.log('[SW] Cancellazione cache vecchia:', cacheName);
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-    .then(() => {
-      console.log('[SW] Cache pulita, prendo controllo');
-      return self.clients.claim();
-    })
-  );
-});
-
-// ==================== FETCH ====================
-self.addEventListener('fetch', event => {
-  // Solo richieste GET
-  if (event.request.method !== 'GET') return;
-  
-  const url = new URL(event.request.url);
-  
-  // Skip protocolli speciali
-  if (url.protocol === 'chrome-extension:' || 
-      url.protocol === 'data:' ||
-      url.protocol === 'blob:') {
-    return;
-  }
-  
-  // Per il nostro dominio
-  if (url.href.includes('derolu0.github.io/aeterna/')) {
-    
-    // Firebase/API - sempre network
-    if (url.href.includes('firebase') ||
-        url.href.includes('googleapis.com') ||
-        url.href.includes('/filosofi/') ||
-        url.href.includes('/opere/') ||
-        url.href.includes('/concetti/')) {
-      
-      event.respondWith(
-        fetch(event.request)
-          .catch(() => {
-            // Offline fallback per dati filosofici
-            return caches.match(BASE_URL + 'index.html')
-              .then(response => response || offlineFallback());
-          })
-      );
-      return;
-    }
-    
-    // Risorse statiche - Cache First
-    event.respondWith(
-      caches.match(event.request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            // Aggiorna cache in background
-            fetchAndCache(event.request);
-            return cachedResponse;
-          }
-          
-          return fetchAndCache(event.request)
-            .catch(() => {
-              // Fallback generico
-              if (event.request.destination === 'image') {
-                return caches.match(BASE_URL + 'images/logo-app.png');
-              }
-              if (event.request.headers.get('accept')?.includes('text/html')) {
-                return caches.match(BASE_URL + 'index.html');
-              }
-              return offlineFallback();
-            });
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(async (cache) => {
+            console.log(`[SW] Caching di ${ESSENTIAL_ASSETS.length} file essenziali...`);
+            
+            // Tentativo di caching robusto: se un file manca, non blocca tutto
+            // (Utile se manca qualche icona specifica)
+            try {
+                // Proviamo a scaricare tutto in blocco
+                return await cache.addAll(ESSENTIAL_ASSETS);
+            } catch (error) {
+                console.warn('[SW] Caching in blocco fallito, provo singolarmente...', error);
+                
+                // Fallback: scarica uno per uno e ignora gli errori sui file mancanti
+                return Promise.all(
+                    ESSENTIAL_ASSETS.map(url => {
+                        return cache.add(url).catch(e => {
+                            console.warn(`[SW] Impossibile trovare: ${url} (Ignorato)`);
+                        });
+                    })
+                );
+            }
         })
     );
-  }
 });
 
-// ==================== FUNZIONI HELPER ====================
-function fetchAndCache(request) {
-  return fetch(request)
-    .then(response => {
-      if (!response.ok) throw new Error('Network response not ok');
-      
-      const responseToCache = response.clone();
-      caches.open(CACHE_NAME)
-        .then(cache => cache.put(request, responseToCache))
-        .catch(err => console.warn('[SW] Cache put error:', err));
-      
-      return response;
-    });
-}
-
-function offlineFallback() {
-  return new Response(`
-    <!DOCTYPE html>
-    <html lang="it">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Aeterna Lexicon - Offline</title>
-      <style>
-        body {
-          font-family: 'Inter', sans-serif;
-          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-          color: white;
-          height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          padding: 20px;
-        }
-        .offline-container {
-          max-width: 400px;
-          background: rgba(255,255,255,0.1);
-          padding: 30px;
-          border-radius: 20px;
-          backdrop-filter: blur(10px);
-        }
-        h1 { margin-bottom: 20px; }
-        p { margin-bottom: 20px; opacity: 0.9; }
-        button {
-          background: white;
-          color: #3b82f6;
-          border: none;
-          padding: 12px 24px;
-          border-radius: 50px;
-          font-weight: bold;
-          cursor: pointer;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="offline-container">
-        <h1>📚 Modalità Offline</h1>
-        <p>L'app Aeterna Lexicon è disponibile con funzionalità limitate.</p>
-        <p>Riprova quando la connessione sarà disponibile.</p>
-        <button onclick="location.reload()">Ricarica</button>
-      </div>
-    </body>
-    </html>
-  `, {
-    headers: { 'Content-Type': 'text/html; charset=utf-8' }
-  });
-}
-
-// ==================== SYNC ====================
-self.addEventListener('sync', event => {
-  if (event.tag === 'sync-philosophy-data') {
-    console.log('[SW] Sync dati filosofici...');
-    event.waitUntil(syncData());
-  }
+// ==================== ATTIVAZIONE ====================
+self.addEventListener('activate', (event) => {
+    console.log(`[SW ${APP_VERSION}] Attivazione...`);
+    
+    event.waitUntil(
+        caches.keys().then((keyList) => {
+            return Promise.all(
+                keyList.map((key) => {
+                    // Cancella tutte le cache vecchie diverse da quella attuale
+                    if (key !== CACHE_NAME) {
+                        console.log('[SW] Rimozione vecchia cache:', key);
+                        return caches.delete(key);
+                    }
+                })
+            );
+        })
+    );
+    return self.clients.claim();
 });
 
-async function syncData() {
-  // Sincronizza dati offline
-  const clients = await self.clients.matchAll();
-  clients.forEach(client => {
-    client.postMessage({
-      type: 'DATA_SYNCED',
-      timestamp: new Date().toISOString()
-    });
-  });
-}
+// ==================== GESTIONE RICHIESTE (FETCH) ====================
+self.addEventListener('fetch', (event) => {
+    // Ignora richieste non http (es. chrome-extension)
+    if (!event.request.url.startsWith('http')) return;
 
-// ==================== MESSAGES ====================
-self.addEventListener('message', event => {
-  const { data } = event;
-  
-  switch(data?.type) {
-    case 'GET_VERSION':
-      event.ports?.[0]?.postMessage({
-        version: APP_VERSION,
-        cache: CACHE_NAME,
-        assets: ESSENTIAL_ASSETS.length
-      });
-      break;
-      
-    case 'CLEAR_CACHE':
-      caches.delete(CACHE_NAME)
-        .then(() => {
-          event.ports?.[0]?.postMessage({ success: true });
-        });
-      break;
-      
-    case 'CHECK_UPDATE':
-      self.registration.update()
-        .then(() => {
-          event.ports?.[0]?.postMessage({ updateAvailable: true });
-        });
-      break;
-  }
+    // Strategia: Stale-While-Revalidate per file statici
+    // (Usa la cache subito, ma aggiorna in background)
+    event.respondWith(
+        caches.match(event.request).then((cachedResponse) => {
+            // Se c'è in cache, usalo
+            if (cachedResponse) {
+                // Aggiorna la cache in background per la prossima volta (opzionale)
+                // fetch(event.request).then(response => {
+                //    caches.open(CACHE_NAME).then(cache => cache.put(event.request, response));
+                // });
+                return cachedResponse;
+            }
+
+            // Altrimenti scarica dalla rete
+            return fetch(event.request)
+                .then((networkResponse) => {
+                    // Se la risposta è valida, salvala in cache dinamica
+                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+                        return networkResponse;
+                    }
+
+                    // Clona la risposta per salvarla
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseToCache);
+                    });
+
+                    return networkResponse;
+                })
+                .catch(() => {
+                    // Se siamo offline e la risorsa manca...
+                    // Se è una pagina HTML, mostra la pagina offline (se esiste) o la home
+                    if (event.request.headers.get('accept').includes('text/html')) {
+                        return caches.match(BASE_URL + 'index.html');
+                    }
+                    // Se è un'immagine, mostra un placeholder (se vuoi)
+                    return null;
+                });
+        })
+    );
 });
-
-console.log(`[SW ${APP_VERSION}] Service Worker pronto - App filosofica`);

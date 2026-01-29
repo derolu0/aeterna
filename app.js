@@ -950,43 +950,6 @@ function checkMaintenanceMode() {
         element.style.display = maintenance === 'true' ? 'flex' : 'none';
     }
 }
-
-// ==================== PWA INSTALLATION ====================
-let deferredPrompt; // Variabile globale fondamentale
-
-// Listener che parte in automatico (senza wrapper setupPWA)
-window.addEventListener('beforeinstallprompt', (e) => {
-    // 1. Impedisci al browser di mostrare il banner standard subito
-    e.preventDefault();
-    // 2. Salva l'evento per usarlo dopo
-    deferredPrompt = e;
-    
-    // 3. Mostra il TUO banner personalizzato
-    const installBanner = document.getElementById('pwa-install-banner');
-    if (installBanner) {
-        installBanner.style.display = 'flex';
-        console.log("📲 Banner PWA mostrato");
-    }
-});
-
-// Funzione chiamata dal bottone "Installa"
-window.installPWA = async function() {
-    if (!deferredPrompt) return;
-    
-    // Mostra il prompt nativo
-    deferredPrompt.prompt();
-    
-    // Attendi la scelta dell'utente
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to the install prompt: ${outcome}`);
-    
-    deferredPrompt = null;
-    
-    // Nascondi il banner
-    const banner = document.getElementById('pwa-install-banner');
-    if(banner) banner.style.display = 'none';
-};
-
 // ==================== DATI DI ESEMPIO (FALLBACK) ====================
 function getSampleFilosofi() {
     return [
