@@ -2029,3 +2029,83 @@ html, body {
 .admin-tab-content.active {
     display: block; /* Mostra solo quello attivo */
 }
+/* ==================== STILI PWA BANNER ==================== */
+.pwa-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: white;
+    padding: 15px;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.15); /* Ombra più visibile */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 10000; /* Altissimo per stare sopra a tutto, anche al pannello admin */
+    animation: slideUp 0.5s ease-out;
+    border-top: 1px solid #eee;
+}
+
+.pwa-content { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+}
+
+.pwa-icon { 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 8px; 
+}
+
+.pwa-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.pwa-text strong {
+    font-size: 0.95rem;
+    color: var(--dark-text);
+}
+
+.pwa-text span {
+    font-size: 0.8rem;
+    color: var(--light-text);
+}
+
+.pwa-btn {
+    background: var(--primary-blue);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    margin-left: auto; /* Spinge a destra */
+    margin-right: 10px;
+}
+
+.pwa-close {
+    background: none; 
+    border: none; 
+    font-size: 28px; 
+    color: #999; 
+    cursor: pointer; 
+    padding: 0 10px;
+    line-height: 1;
+}
+
+@keyframes slideUp { 
+    from { transform: translateY(100%); } 
+    to { transform: translateY(0); } 
+}
+
+/* Adattamento Mobile */
+@media (max-width: 480px) {
+    .pwa-banner {
+        padding: 10px;
+        flex-wrap: wrap;
+    }
+    .pwa-text span {
+        display: none; /* Risparmia spazio su schermi piccoli */
+    }
+}

@@ -797,41 +797,43 @@
         </button>
     </div>
 
-    <!-- ==================== SCRIPT ESTERNI ==================== -->
+    <div id="pwa-install-banner" class="pwa-banner" style="display: none;">
+        <div class="pwa-content">
+            <img src="images/icona-avvio-96.png" alt="Logo" class="pwa-icon" onerror="this.style.display='none'">
+            <div class="pwa-text">
+                <strong>Installa Aeterna Lexicon</strong>
+                <span>Accedi al dataset offline</span>
+            </div>
+        </div>
+        <button onclick="installPWA()" class="pwa-btn">Installa</button>
+        <button onclick="document.getElementById('pwa-install-banner').style.display='none'" class="pwa-close">&times;</button>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
-    <!-- Script dell'app -->
-    <script src="https://derolu0.github.io/aeterna/firebase-init.js"></script>
-    <script src="https://derolu0.github.io/aeterna/geocoding-manager.js"></script>
-    <script src="https://derolu0.github.io/aeterna/app.js"></script>
+    <script src="firebase-init.js"></script>
+    <script src="geocoding-manager.js"></script>
+    <script src="app.js"></script>
     
-    <!-- Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                const swUrl = 'https://derolu0.github.io/aeterna/sw.js';
-                navigator.serviceWorker.register(swUrl)
+                // Anche qui usiamo il percorso locale sw.js
+                navigator.serviceWorker.register('sw.js')
                     .then(registration => {
-                        console.log('✅ Service Worker registrato');
+                        console.log('✅ Service Worker registrato correttamente');
                     })
                     .catch(error => {
-                        console.warn('Service Worker non registrato:', error);
+                        console.warn('⚠️ Service Worker non registrato:', error);
                     });
             });
         }
-        
-        // Gestione installazione PWA
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            window.deferredPrompt = e;
-        });
     </script>
 </body>
 </html>

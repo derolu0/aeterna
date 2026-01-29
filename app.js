@@ -1,7 +1,7 @@
 /**
  * AETERNA LEXICON IN MOTU - APP.JS (FIXED UI)
  * Project Work Filosofico - Dataset per analisi trasformazioni linguistiche
- * Versione 3.1.1 - Fix Menu, Admin, Back Button e QR Code
+ * Versione 3.2.0 - Fix Mappa, Pulsanti Luogo e Banner PWA
  */
 
 // ==================== VARIABILI DI STATO ====================
@@ -16,6 +16,12 @@ let currentFilter = 'all';
 
 // Mappa Filosofica
 let philosophicalMap = null;
+
+// Mappa Concettuale
+let networkInstance = null;
+
+// PWA Installation
+let deferredPrompt = null;
 
 // ==================== INIZIALIZZAZIONE APP ====================
 document.addEventListener('DOMContentLoaded', async function() {
@@ -335,6 +341,7 @@ async function logoutAdmin() {
         window.location.reload();
     }
 }
+
 // Aggiorna i contatori nel pannello admin
 function updateAdminStats() {
     document.getElementById('total-filosofi').textContent = filosofiData.length;
@@ -421,18 +428,22 @@ function renderFilosofiList() {
     });
 }
 
-function setFilter(filter) {
-    currentFilter = filter;
-    // Aggiorna UI bottoni
-    document.querySelectorAll('#filosofi-screen .filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if ((filter === 'all' && btn.classList.contains('all')) || 
-            (filter === 'classico' && btn.classList.contains('funzionante')) ||
-            (filter === 'contemporaneo' && btn.classList.contains('non-funzionante'))) {
-            btn.classList.add('active');
-        }
-    });
-    renderFilosofiList();
+// FUNZIONE AGGIUNTA/AGGIORNATA: Genera il pulsante della mappa nella card
+function generateMapButton(filosofo) {
+    // Controllo rigoroso se le coordinate esistono
+    if (filosofo.coordinate && 
+        typeof filosofo.coordinate.lat !== 'undefined' && 
+        typeof filosofo.coordinate.lng !== 'undefined') {
+        
+        // Passiamo i dati grezzi alla funzione, non l'oggetto, per evitare errori di stringify
+        return `
+            <button class="action-btn map-btn" 
+                onclick="goToMapLocation(${filosofo.coordinate.lat}, ${filosofo.coordinate.lng}, '${filosofo.nome.replace(/'/g, "\\'")}')">
+                <i class="fas fa-map-marker-alt"></i> Vedi Luogo
+            </button>
+        `;
+    }
+    return '<button class="action-btn disabled" disabled><i class="fas fa-map-slash"></i> Luogo non disponibile</button>';
 }
 
 function createFilosofoCard(filosofo) {
@@ -458,12 +469,27 @@ function createFilosofoCard(filosofo) {
                 <span class="item-periodo periodo-${filosofo.periodo}">
                     ${filosofo.periodo === 'contemporaneo' ? 'CONTEMPORANEO' : 'CLASSICO'}
                 </span>
+                ${generateMapButton(filosofo)}
             </div>
         </div>
     `;
     
     card.addEventListener('click', () => showFilosofoDetail(filosofo.id));
     return card;
+}
+
+function setFilter(filter) {
+    currentFilter = filter;
+    // Aggiorna UI bottoni
+    document.querySelectorAll('#filosofi-screen .filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if ((filter === 'all' && btn.classList.contains('all')) || 
+            (filter === 'classico' && btn.classList.contains('funzionante')) ||
+            (filter === 'contemporaneo' && btn.classList.contains('non-funzionante'))) {
+            btn.classList.add('active');
+        }
+    });
+    renderFilosofiList();
 }
 
 function showFilosofoDetail(id) {
@@ -493,10 +519,63 @@ function showFilosofoDetail(id) {
                 ${filosofo.concetti_principali.map(c => `<span class="tag-chip">${c}</span>`).join('')}
             </div>
         </div>` : ''}
+        ${filosofo.coordinate && typeof filosofo.coordinate.lat !== 'undefined' ? `
+        <div class="action-buttons-container">
+            <button class="btn-analisi" onclick="goToMapLocation(${filosofo.coordinate.lat}, ${filosofo.coordinate.lng}, '${filosofo.nome.replace(/'/g, "\\'")}')">
+                <i class="fas fa-map-marker-alt"></i> Vedi sulla Mappa
+            </button>
+        </div>` : ''}
     `;
     
     showScreen('filosofo-detail-screen');
 }
+
+// ==================== FUNZIONE GLOBALE PER NAVIGAZIONE MAPPA ====================
+// FUNZIONE AGGIUNTA: Naviga alla mappa con coordinate specifiche
+window.goToMapLocation = function(lat, lng, nome) {
+    console.log(`🗺️ Navigazione verso: ${nome} [${lat}, ${lng}]`);
+    
+    // 1. Cambia schermata (attiva il tab mappa o nasconde le altre sezioni)
+    // Sostituisci 'mappa-screen' con l'ID reale del tuo div mappa se diverso
+    if (typeof showScreen === 'function') {
+        showScreen('mappa-screen'); 
+    } else {
+        // Fallback manuale se showScreen non esiste
+        document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+        document.getElementById('mappa-screen').style.display = 'block';
+    }
+
+    // 2. Chiudi eventuali modali aperti (dettagli filosofo)
+    const detailModal = document.getElementById('detail-modal');
+    if (detailModal) detailModal.style.display = 'none';
+
+    // 3. Muovi la mappa
+    // Assumiamo che la variabile globale della mappa si chiami 'map' o 'window.map'
+    const mapInstance = window.map || window.philosophicalMap;
+    
+    if (mapInstance) {
+        // Leaflet: flyTo crea un'animazione fluida
+        mapInstance.flyTo([lat, lng], 10, {
+            duration: 1.5 // Durata animazione in secondi
+        });
+
+        // 4. Apri il popup del marker corrispondente (opzionale ma professionale)
+        // Cerca tra i marker quello con le stesse coordinate
+        if (window.markersLayer) { // Se usi un LayerGroup
+            window.markersLayer.eachLayer(function(layer) {
+                const lLat = layer.getLatLng().lat;
+                const lLng = layer.getLatLng().lng;
+                // Confronto approssimato per float
+                if (Math.abs(lLat - lat) < 0.0001 && Math.abs(lLng - lng) < 0.0001) {
+                    layer.openPopup();
+                }
+            });
+        }
+    } else {
+        console.error("❌ Errore: Istanza mappa non trovata. Controlla inizializzazione Leaflet.");
+        alert("Errore: Mappa non inizializzata correttamente.");
+    }
+};
 
 // ==================== GESTIONE OPERE ====================
 async function loadOpere() {
@@ -673,14 +752,131 @@ function initPhilosophicalMap() {
 function updateMapWithPhilosophers() {
     if (!philosophicalMap) return;
     
+    // Crea un layer per i marker
+    window.markersLayer = L.layerGroup().addTo(philosophicalMap);
+    
     filosofiData.forEach(filosofo => {
-        if (filosofo.luogo_nascita?.coordinate) {
-            const { lat, lng } = filosofo.luogo_nascita.coordinate;
-            L.marker([lat, lng])
-             .addTo(philosophicalMap)
-             .bindPopup(`<b>${filosofo.nome}</b><br>${filosofo.luogo_nascita.citta}`);
+        if (filosofo.coordinate && filosofo.coordinate.lat && filosofo.coordinate.lng) {
+            const { lat, lng } = filosofo.coordinate;
+            const marker = L.marker([lat, lng])
+                .addTo(window.markersLayer)
+                .bindPopup(`<b>${filosofo.nome}</b><br>${filosofo.scuola || ''}<br>${filosofo.anni || ''}`);
+            
+            // Aggiungi gestore click per aprire dettaglio
+            marker.on('click', () => {
+                showFilosofoDetail(filosofo.id);
+            });
         }
     });
+}
+
+// ==================== MAPPA CONCETTUALE (FIXED) ====================
+// FUNZIONE SOSTITUITA: Inizializzazione mappa concettuale robusta
+async function initConceptMap() {
+    const container = document.getElementById('concept-network');
+    const loadingEl = document.getElementById('map-loading'); // Assicurati di avere questo ID nell'HTML o rimuovi la riga
+    
+    if (!container) return; // Se non siamo nella schermata giusta, esci
+
+    if(loadingEl) loadingEl.style.display = 'flex';
+
+    try {
+        // 1. RECUPERO DATI (Fondamentale per la traccia: deve essere dinamico)
+        // Se hai già concettiData caricato globalmente usalo, altrimenti fetch
+        let concetti = window.concettiData || [];
+        if (concetti.length === 0 && window.db) {
+            console.log("📥 Caricamento concetti da Firebase per la mappa...");
+            const snapshot = await window.db.collection('concetti').get();
+            concetti = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        }
+
+        if (concetti.length === 0) {
+            if(loadingEl) loadingEl.style.display = 'none';
+            container.innerHTML = '<p style="text-align:center; padding:20px;">Nessun concetto nel dataset per generare la mappa.</p>';
+            return;
+        }
+
+        // 2. CREAZIONE NODI E CONNESSIONI (Logica Filosofica)
+        const nodes = new vis.DataSet();
+        const edges = new vis.DataSet();
+        
+        concetti.forEach(c => {
+            // Nodo Concetto
+            nodes.add({
+                id: c.id,
+                label: c.parola,
+                group: c.periodo || 'undefined', // Colorazione per periodo (richiesta traccia)
+                title: `Definizione: ${c.definizione || 'N/D'}`, // Tooltip
+                value: 20 // Grandezza base
+            });
+
+            // Se il concetto ha un autore di riferimento, crea un collegamento
+            if (c.autore_riferimento) {
+                // Cerchiamo se esiste già un nodo autore, altrimenti lo creiamo (opzionale, per ora colleghiamo solo concetti)
+                // Per la traccia, è utile collegare concetti dello stesso autore o periodo
+            }
+        });
+
+        // Creiamo collegamenti fittizi basati sul periodo per mostrare "Relazioni" (Critico per la traccia)
+        // Collega concetti dello stesso periodo
+        for (let i = 0; i < concetti.length; i++) {
+            for (let j = i + 1; j < concetti.length; j++) {
+                if (concetti[i].periodo === concetti[j].periodo) {
+                    edges.add({
+                        from: concetti[i].id,
+                        to: concetti[j].id,
+                        arrows: false,
+                        color: { opacity: 0.2 } // Collegamento tenue
+                    });
+                }
+            }
+        }
+
+        // 3. CONFIGURAZIONE VIS.JS (Non semplificata)
+        const data = { nodes: nodes, edges: edges };
+        const options = {
+            nodes: {
+                shape: 'dot',
+                font: { size: 14, color: '#1f2937', face: 'Inter' },
+                borderWidth: 2
+            },
+            groups: {
+                classico: { color: { background: '#10b981', border: '#059669' } },
+                contemporaneo: { color: { background: '#f59e0b', border: '#d97706' } },
+                entrambi: { color: { background: '#8b5cf6', border: '#7c3aed' } }
+            },
+            physics: {
+                stabilization: false, // Disattivato per caricamento veloce, poi si muove
+                barnesHut: {
+                    gravitationalConstant: -2000,
+                    springConstant: 0.04,
+                    springLength: 95
+                }
+            },
+            interaction: { hover: true, tooltipDelay: 200 }
+        };
+
+        // 4. DISEGNO
+        if (networkInstance) networkInstance.destroy(); // Pulisci vecchia istanza
+        networkInstance = new vis.Network(container, data, options);
+        
+        // Evento Click (per aprire dettaglio concetto)
+        networkInstance.on("click", function (params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                // Qui dovresti chiamare la funzione che apre il dettaglio concetto
+                if(window.openConcettoDetail) window.openConcettoDetail(nodeId);
+            }
+        });
+
+        console.log("✅ Mappa concettuale generata con nodi:", nodes.length);
+
+    } catch (error) {
+        console.error("❌ Errore generazione mappa:", error);
+        container.innerHTML = '<p style="color:red; text-align:center;">Errore visualizzazione mappa.</p>';
+    } finally {
+        if(loadingEl) loadingEl.style.display = 'none';
+    }
 }
 
 // ==================== ANALISI COMPARATIVA ====================
@@ -743,7 +939,7 @@ function loadScreenData(screenId) {
     if (screenId === 'mappa-screen') {
         setTimeout(initPhilosophicalMap, 200);
     } else if (screenId === 'mappa-concettuale-screen') {
-        // initNetworkMap(); // Se implementata
+        setTimeout(initConceptMap, 200);
     }
 }
 
@@ -755,73 +951,89 @@ function checkMaintenanceMode() {
     }
 }
 
-// ==================== PWA ====================
-function setupPWA() {
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        window.deferredPrompt = e;
-        const banner = document.getElementById('smart-install-banner');
-        if (banner) banner.style.display = 'flex';
-    });
-}
+// ==================== PWA INSTALLATION ====================
+let deferredPrompt; // Variabile globale fondamentale
 
-function installPWA() {
-    if (window.deferredPrompt) {
-        window.deferredPrompt.prompt();
-        window.deferredPrompt = null;
-        document.getElementById('smart-install-banner').style.display = 'none';
+// Listener che parte in automatico (senza wrapper setupPWA)
+window.addEventListener('beforeinstallprompt', (e) => {
+    // 1. Impedisci al browser di mostrare il banner standard subito
+    e.preventDefault();
+    // 2. Salva l'evento per usarlo dopo
+    deferredPrompt = e;
+    
+    // 3. Mostra il TUO banner personalizzato
+    const installBanner = document.getElementById('pwa-install-banner');
+    if (installBanner) {
+        installBanner.style.display = 'flex';
+        console.log("📲 Banner PWA mostrato");
     }
-}
+});
 
-function setupConnectionListeners() {
-    window.addEventListener('online', () => document.getElementById('offline-indicator').style.display = 'none');
-    window.addEventListener('offline', () => document.getElementById('offline-indicator').style.display = 'block');
-}
+// Funzione chiamata dal bottone "Installa"
+window.installPWA = async function() {
+    if (!deferredPrompt) return;
+    
+    // Mostra il prompt nativo
+    deferredPrompt.prompt();
+    
+    // Attendi la scelta dell'utente
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    
+    deferredPrompt = null;
+    
+    // Nascondi il banner
+    const banner = document.getElementById('pwa-install-banner');
+    if(banner) banner.style.display = 'none';
+};
 
 // ==================== DATI DI ESEMPIO (FALLBACK) ====================
 function getSampleFilosofi() {
     return [
-        { id: "F1", nome: "Platone", periodo: "classico", scuola: "Accademia", anni: "428-348 a.C.", biografia: "Filosofo greco...", concetti_principali: ["Idea", "Bene"] },
-        { id: "F2", nome: "Nietzsche", periodo: "contemporaneo", scuola: "Continental", anni: "1844-1900", biografia: "Filosofo tedesco...", concetti_principali: ["Oltreuomo"] }
+        { 
+            id: "F1", 
+            nome: "Platone", 
+            periodo: "classico", 
+            scuola: "Accademia", 
+            anni: "428-348 a.C.", 
+            biografia: "Filosofo greco...", 
+            concetti_principali: ["Idea", "Bene"],
+            coordinate: { lat: 37.9838, lng: 23.7275 } // Atene
+        },
+        { 
+            id: "F2", 
+            nome: "Nietzsche", 
+            periodo: "contemporaneo", 
+            scuola: "Continental", 
+            anni: "1844-1900", 
+            biografia: "Filosofo tedesco...", 
+            concetti_principali: ["Oltreuomo"],
+            coordinate: { lat: 51.2277, lng: 6.7735 } // Röcken
+        }
     ];
 }
+
 function getSampleOpere() {
     return [
         { id: "O1", title: "Repubblica", autore: "Platone", periodo: "classico" }
     ];
 }
+
 function getSampleConcetti() {
     return [
         { id: "C1", parola: "Verità", periodo: "entrambi", definizione: "Corrispondenza..." }
     ];
 }
 
-// ==================== ESPOSIZIONE GLOBALE ====================
-// Rende le funzioni accessibili all'HTML (onclick)
-window.showScreen = showScreen;
-window.goBack = goBack;
-window.toggleMenuModal = toggleMenuModal;
-window.closeMenuModal = closeMenuModal; // Era mancante!
-window.openCreditsScreen = openCreditsScreen;
-window.openReportScreen = openReportScreen;
-window.openQRModal = openQRModal; // Era mancante!
-window.closeQRModal = closeQRModal; // Era mancante!
-window.openAdminPanel = openAdminPanel; // Era mancante!
-window.closeAdminPanel = closeAdminPanel; // Era mancante!
-window.checkAdminAuth = checkAdminAuth; // Era mancante!
-window.closeAdminAuth = closeAdminAuth; // Era mancante!
-window.logoutAdmin = logoutAdmin;
-window.installPWA = installPWA;
-window.searchFilosofi = searchFilosofi;
-window.searchOpere = searchOpere;
-window.setFilter = setFilter;
-window.showFilosofoDetail = showFilosofoDetail;
-window.showOperaDetail = showOperaDetail;
-window.showConcettoDetail = showConcettoDetail;
-window.openComparativeAnalysis = openComparativeAnalysis;
-window.closeComparativeModal = closeComparativeModal;
+function loadSampleData() {
+    filosofiData = getSampleFilosofi();
+    opereData = getSampleOpere();
+    concettiData = getSampleConcetti();
+    renderFilosofiList();
+    renderOpereList();
+    renderConcettiList();
+}
 
-console.log('📚 Aeterna Lexicon App.js (Fixed UI) - READY');
 // ==========================================
 // LOGICA PANNELLO ADMIN (COPIA-INCOLLA TOTALE)
 // ==========================================
@@ -1003,3 +1215,32 @@ async function saveConcetto(e) {
         updateAdminStats();
     } catch(err) { alert("Errore: " + err.message); }
 }
+
+// ==================== ESPOSIZIONE GLOBALE ====================
+// Rende le funzioni accessibili all'HTML (onclick)
+window.showScreen = showScreen;
+window.goBack = goBack;
+window.toggleMenuModal = toggleMenuModal;
+window.closeMenuModal = closeMenuModal; // Era mancante!
+window.openCreditsScreen = openCreditsScreen;
+window.openReportScreen = openReportScreen;
+window.openQRModal = openQRModal; // Era mancante!
+window.closeQRModal = closeQRModal; // Era mancante!
+window.openAdminPanel = openAdminPanel; // Era mancante!
+window.closeAdminPanel = closeAdminPanel; // Era mancante!
+window.checkAdminAuth = checkAdminAuth; // Era mancante!
+window.closeAdminAuth = closeAdminAuth; // Era mancante!
+window.logoutAdmin = logoutAdmin;
+window.installPWA = installPWA;
+window.searchFilosofi = searchFilosofi;
+window.searchOpere = searchOpere;
+window.setFilter = setFilter;
+window.showFilosofoDetail = showFilosofoDetail;
+window.showOperaDetail = showOperaDetail;
+window.showConcettoDetail = showConcettoDetail;
+window.openComparativeAnalysis = openComparativeAnalysis;
+window.closeComparativeModal = closeComparativeModal;
+window.goToMapLocation = goToMapLocation;
+window.initConceptMap = initConceptMap;
+
+console.log('📚 Aeterna Lexicon App.js (Fixed UI v3.2.0) - READY');
