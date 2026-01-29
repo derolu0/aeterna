@@ -5,127 +5,86 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Aeterna Lexicon in Motu</title>
     
-    <meta name="application-name" content="Aeterna Lexicon in Motu">
-    <meta name="description" content="Dataset per l'analisi delle trasformazioni del linguaggio filosofico">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Aeterna Lexicon">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
+    <!-- Metadati essenziali -->
+    <meta name="description" content="Dataset per l'analisi delle trasformazioni del linguaggio filosofico tra classico e contemporaneo">
     <meta name="theme-color" content="#3b82f6">
-    <meta name="msapplication-TileColor" content="#3b82f6">
     
-    <meta name="display" content="standalone">
-    <meta name="orientation" content="portrait">
-    
+    <!-- Manifest PWA -->
     <link rel="manifest" href="https://derolu0.github.io/aeterna/manifest.json">
     
+    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="https://derolu0.github.io/aeterna/images/favicon.ico">
-    <link rel="icon" type="image/png" sizes="16x16" href="https://derolu0.github.io/aeterna/images/favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="https://derolu0.github.io/aeterna/images/favicon-32x32.png">
-    
     <link rel="apple-touch-icon" href="https://derolu0.github.io/aeterna/images/apple-touch-icon.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="https://derolu0.github.io/aeterna/images/icona-avvio-144.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="https://derolu0.github.io/aeterna/images/icona-avvio-192.png">
-    <link rel="apple-touch-icon" sizes="512x512" href="https://derolu0.github.io/aeterna/images/icona-avvio-512.png">
     
-    <link rel="apple-touch-startup-image" 
-          href="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png"
-          media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" 
-          href="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png"
-          media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" 
-          href="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png"
-          media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" 
-          href="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png"
-          media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)">
-    <link rel="apple-touch-startup-image" 
-          href="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png"
-          media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3)">
-    <link rel="apple-touch-startup-image" 
-          href="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png"
-          media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)">
-    
+    <!-- Font e Librerie -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis-network.min.js"></script>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
-    <script src="https://derolu0.github.io/aeterna/linguistic-analysis.js" defer></script>
-    <script src="https://derolu0.github.io/aeterna/timeline-evolution.js" defer></script>
-    
+    <!-- Fogli di stile -->
     <link rel="stylesheet" href="https://derolu0.github.io/aeterna/comparative-styles.css">
-    
     <link rel="stylesheet" href="https://derolu0.github.io/aeterna/style.css">
-
-    <script>
-        // Gestione scroll per ancore
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-                anchor.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    const targetId = this.getAttribute('href');
-                    const targetElement = document.querySelector(targetId);
-                    if (targetElement) {
-                        const headerHeight = document.querySelector('header') ? document.querySelector('header').offsetHeight : 0;
-                        const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - headerHeight;
-                        window.scrollTo({
-                            top: targetPosition,
-                            behavior: 'smooth'
-                        });
-                    }
-                });
-            });
-        });
-    </script>
+    
+    <!-- Script esterni -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Script dell'app -->
+    <script src="https://derolu0.github.io/aeterna/linguistic-analysis.js" defer></script>
+    
+    <style>
+        /* Smooth scroll per ancore */
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
 </head>
 <body>
+    <!-- ==================== OVERLAY MANUTENZIONE ==================== -->
     <div id="maintenance-mode" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 99999; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;">
-        <img src="https://derolu0.github.io/aeterna/images/logo-app.png" alt="Logo" style="width: 100px; margin-bottom: 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+        <img src="https://derolu0.github.io/aeterna/images/logo-app.png" alt="Logo" style="width: 100px; margin-bottom: 20px; border-radius: 20px;">
         <h1 style="color: #1f2937; margin-bottom: 10px; font-size: 1.5rem;">Sito in Manutenzione</h1>
-        <p style="color: #6b7280; font-size: 1rem; max-width: 300px; margin-bottom: 30px; line-height: 1.5;">
-            Stiamo aggiornando il sistema per offrirti un servizio migliore. Torneremo online a breve.
+        <p style="color: #6b7280; font-size: 1rem; max-width: 300px; margin-bottom: 30px;">
+            Stiamo aggiornando il sistema per offrirti un servizio migliore.
         </p>
-        <button onclick="const auth=document.getElementById('admin-auth'); auth.style.display='flex'; auth.style.zIndex='100000';" style="background: #f3f4f6; border: none; padding: 10px 20px; border-radius: 50px; color: #9ca3af; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        <button onclick="document.getElementById('admin-auth').style.display='flex'" 
+                style="background: #f3f4f6; border: none; padding: 10px 20px; border-radius: 50px; color: #9ca3af; font-size: 0.8rem; cursor: pointer;">
             <i class="fas fa-lock"></i> Area Riservata
         </button>
     </div>
+
+    <!-- ==================== SPLASH SCREEN ==================== -->
     <div id="splash-screen">
         <div class="splash-container">
             <img src="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png" alt="Aeterna Lexicon" class="splash-image">
             <div class="splash-progress">
                 <div class="splash-progress-bar"></div>
             </div>
-            <p class="splash-text">Caricamento in corso...</p>
+            <p class="splash-text">Caricamento dataset filosofico...</p>
         </div>
     </div>
-    
+
+    <!-- ==================== INDICATORI ==================== -->
     <div class="offline-indicator" id="offline-indicator">
         <i class="fas fa-wifi"></i> Connessione assente
     </div>
+    
     <div class="toast" id="toast"></div>
 
+    <!-- ==================== AUTENTICAZIONE ADMIN ==================== -->
     <div class="auth-overlay" id="admin-auth">
         <div class="auth-modal">
             <h2 class="auth-title">Accesso Amministratore</h2>
             <input type="email" class="auth-input" id="admin-email" placeholder="Email">
             <input type="password" class="auth-input" id="admin-password" placeholder="Password" autocomplete="off">
             <button class="auth-btn" onclick="checkAdminAuth()">Accedi</button>
-            <div class="auth-error" id="auth-error">Credenziali non valide</div>
-            <button class="auth-btn secondary" onclick="closeAdminAuth()" style="background: #6b7280;">Annulla</button>
+            <div class="auth-error" id="auth-error" style="display: none;">Credenziali non valide</div>
+            <button class="auth-btn secondary" onclick="closeAdminAuth()">Annulla</button>
         </div>
     </div>
 
+    <!-- ==================== MODALI VARIE ==================== -->
     <div class="modal-overlay" id="navigation-modal">
         <div class="modal-content">
             <h3 class="modal-title">Scegli l'app di navigazione</h3>
@@ -145,7 +104,7 @@
 
     <div class="modal-overlay" id="info-modal">
         <div class="modal-content">
-            <h3 class="modal-title" id="info-modal-title">Informazioni</h3>
+            <h3 class="modal-title">Informazioni</h3>
             <p id="info-modal-message"></p>
             <div class="modal-buttons">
                 <button class="modal-btn primary" onclick="closeInfoModal()">OK</button>
@@ -153,27 +112,23 @@
         </div>
     </div>
 
-    <!-- NUOVA MODALE PER ANALISI COMPARATIVA -->
-    <div class="modal-overlay" id="comparative-analysis-modal" style="display: none;">
+    <!-- ==================== MODALE ANALISI COMPARATIVA ==================== -->
+    <div class="modal-overlay" id="comparative-analysis-modal">
         <div class="modal-content comparative-modal">
             <div class="comparative-header">
-                <h2 id="comparative-term-title">VERITÀ</h2>
+                <h2 id="comparative-term-title">CONCETTO</h2>
                 <div class="term-origins">
-                    <span class="origin-badge" data-lang="grc">ἀλήθεια (aletheia)</span>
+                    <span class="origin-badge">Origine Classica</span>
                     <span class="origin-arrow">→</span>
-                    <span class="origin-badge" data-lang="la">veritas</span>
-                    <span class="origin-arrow">→</span>
-                    <span class="origin-badge" data-lang="de">Wahrheit</span>
-                    <span class="origin-arrow">→</span>
-                    <span class="origin-badge" data-lang="it">Verità</span>
+                    <span class="origin-badge">Evoluzione Contemporanea</span>
                 </div>
             </div>
             
             <div class="timeline-container" id="evolution-timeline">
-                <!-- Timeline verrà popolata dinamicamente -->
+                <!-- Timeline dinamica -->
                 <div class="analisi-loading">
                     <div class="analisi-spinner"></div>
-                    <p>Caricamento timeline evolutiva...</p>
+                    <p>Caricamento evoluzione storica...</p>
                 </div>
             </div>
             
@@ -182,25 +137,16 @@
                     <h3><i class="fas fa-columns"></i> PERIODO CLASSICO</h3>
                     <div class="text-analysis">
                         <h4>Testo Originale</h4>
-                        <div class="original-text" lang="grc" id="classical-original-text">
-                            "τό γὰρ αὐτὸ νοεῖν ἐστίν τε καὶ εἶναι"
+                        <div class="original-text" id="classical-original-text">
+                            Testo in caricamento...
                         </div>
-                        
                         <h4>Analisi Linguistica</h4>
                         <div class="linguistic-metrics" id="classical-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Contesto d'uso:</span>
-                                <span class="metric-value">Ontologico-Metafisico</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Frequenza:</span>
-                                <span class="metric-value">87 occorrenze</span>
-                            </div>
+                            <!-- Metriche dinamiche -->
                         </div>
-                        
                         <h4>Definizione Canonica</h4>
                         <p class="definition" id="classical-definition">
-                            "Corrispondenza dell'intelletto con la cosa (adaequatio intellectus et rei)"
+                            Definizione in caricamento...
                         </p>
                     </div>
                 </div>
@@ -209,25 +155,16 @@
                     <h3><i class="fas fa-bolt"></i> PERIODO CONTEMPORANEO</h3>
                     <div class="text-analysis">
                         <h4>Testo Originale</h4>
-                        <div class="original-text" lang="fr" id="contemporary-original-text">
-                            "La vérité n'est pas en dehors du pouvoir"
+                        <div class="original-text" id="contemporary-original-text">
+                            Testo in caricamento...
                         </div>
-                        
                         <h4>Analisi Linguistica</h4>
                         <div class="linguistic-metrics" id="contemporary-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Contesto d'uso:</span>
-                                <span class="metric-value">Politico-Discorsivo</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Frequenza:</span>
-                                <span class="metric-value">42 occorrenze</span>
-                            </div>
+                            <!-- Metriche dinamiche -->
                         </div>
-                        
                         <h4>Definizione Canonica</h4>
                         <p class="definition" id="contemporary-definition">
-                            "Costruzione discorsiva prodotta da regimi di verità"
+                            Definizione in caricamento...
                         </p>
                     </div>
                 </div>
@@ -241,20 +178,11 @@
                             <tr>
                                 <th>Dimensione</th>
                                 <th>Classico → Contemporaneo</th>
-                                <th>Tipping Point</th>
+                                <th>Svolta Storica</th>
                             </tr>
                         </thead>
                         <tbody id="transformations-body">
-                            <tr>
-                                <td>ONTOLOGICA</td>
-                                <td>Sostanza → Costruzione</td>
-                                <td>Nietzsche (1880)</td>
-                            </tr>
-                            <tr>
-                                <td>EPISTEMICA</td>
-                                <td>Corrispondenza → Performatività</td>
-                                <td>Foucault (1970)</td>
-                            </tr>
+                            <!-- Trasformazioni dinamiche -->
                         </tbody>
                     </table>
                 </div>
@@ -271,25 +199,25 @@
         </div>
     </div>
 
+    <!-- ==================== PANNELLO ADMIN ==================== -->
     <div class="admin-panel-overlay" id="admin-panel">
         <div class="admin-panel-content">
             <header class="admin-panel-header">
-                <h2>Pannello di Controllo</h2>
+                <h2>Pannello di Controllo Dataset</h2>
                 <button class="close-admin-panel" onclick="closeAdminPanel()">
                     <i class="fas fa-times"></i>
                 </button>
             </header>
-
             
             <div class="admin-tabs">
                 <button class="admin-tab-btn active" data-tab="dashboard-admin">Dashboard</button>
                 <button class="admin-tab-btn" data-tab="filosofi-admin">Filosofi</button>
                 <button class="admin-tab-btn" data-tab="opere-admin">Opere</button>
                 <button class="admin-tab-btn" data-tab="concetti-admin">Concetti</button>
-                <button class="admin-tab-btn" data-tab="analytics-admin">Analytics</button>
                 <button class="admin-tab-btn" data-tab="config-admin">Configurazione</button>
             </div>
 
+            <!-- Dashboard Admin -->
             <div class="admin-tab-content active" id="dashboard-admin">
                 <div class="dashboard-stats">
                     <div class="stat-card filosofi">
@@ -303,10 +231,6 @@
                             <div class="stat-detail">
                                 <div class="detail-value status-non-funzionante" id="filosofi-contemporanei">0</div>
                                 <div class="detail-label">Contemporanei</div>
-                            </div>
-                            <div class="stat-detail">
-                                <div class="detail-value status-manutenzione" id="filosofi-altri">0</div>
-                                <div class="detail-label">Altri Periodi</div>
                             </div>
                         </div>
                     </div>
@@ -323,10 +247,6 @@
                                 <div class="detail-value status-non-funzionante" id="opere-contemporanee">0</div>
                                 <div class="detail-label">Contemporanee</div>
                             </div>
-                            <div class="stat-detail">
-                                <div class="detail-value status-manutenzione" id="opere-altre">0</div>
-                                <div class="detail-label">Altre</div>
-                            </div>
                         </div>
                     </div>
 
@@ -338,29 +258,27 @@
 
                 <div class="recent-activity">
                     <div class="activity-title">
-                        <span>Attività Recenti</span>
-                        <button class="admin-btn secondary" onclick="clearActivityLog()">
-                            <i class="fas fa-trash"></i> Pulisci
-                        </button>
+                        <span>Azioni Recenti</span>
                     </div>
                     <div class="activity-list" id="activity-list">
+                        <p style="color: var(--light-text); text-align: center; padding: 20px;">
+                            Nessuna attività recente
+                        </p>
                     </div>
                 </div>
             </div>
 
+            <!-- Gestione Filosofi -->
             <div class="admin-tab-content" id="filosofi-admin">
                 <div class="import-export-section">
                     <h4>Import/Export Filosofi</h4>
                     <div class="import-options">
-                        <input type="file" id="import-filosofi-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('filosofi', this.files)">
+                        <input type="file" id="import-filosofi-file" accept=".xlsx, .csv" style="display: none;">
                         <button class="admin-btn secondary" onclick="document.getElementById('import-filosofi-file').click()">
-                            <i class="fas fa-file-import"></i> Importa Filosofi
+                            <i class="fas fa-file-import"></i> Importa
                         </button>
-                        <button class="admin-btn secondary" onclick="exportDataToExcel('filosofi')">
-                            <i class="fas fa-file-export"></i> Esporta Filosofi
-                        </button>
-                        <button class="admin-btn secondary" onclick="downloadTemplate('filosofi')">
-                            <i class="fas fa-download"></i> Template Filosofi
+                        <button class="admin-btn secondary" onclick="exportFilosofiToExcel()">
+                            <i class="fas fa-file-export"></i> Esporta
                         </button>
                     </div>
                 </div>
@@ -369,18 +287,11 @@
                 <form id="filosofo-form" onsubmit="saveFilosofo(event)">
                     <input type="hidden" id="filosofo-id">
                     <div class="form-group">
-                        <label for="filosofo-nome">Nome Completo</label>
+                        <label for="filosofo-nome">Nome Completo *</label>
                         <input type="text" id="filosofo-nome" required>
                     </div>
                     <div class="form-group">
-                        <label for="filosofo-nome-en" style="color: #3b82f6; font-style: italic;">Nome (Inglese)</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="text" id="filosofo-nome-en" placeholder="Name in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('filosofo-nome', 'filosofo-nome-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="filosofo-periodo">Periodo:</label>
+                        <label for="filosofo-periodo">Periodo Storico *</label>
                         <select id="filosofo-periodo" required>
                             <option value="classico">Classico/Antico</option>
                             <option value="medioevale">Medioevale</option>
@@ -390,111 +301,67 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="filosofo-scuola">Scuola/Corrente:</label>
+                        <label for="filosofo-scuola">Scuola/Corrente *</label>
                         <input type="text" id="filosofo-scuola" required>
                     </div>
                     <div class="form-group">
-                        <label for="filosofo-anni">Anni (Nascita-Morte):</label>
-                        <input type="text" id="filosofo-anni" placeholder="es: 1844-1900">
+                        <label for="filosofo-anni">Anni di Vita</label>
+                        <input type="text" id="filosofo-anni" placeholder="es: 428-347 a.C.">
                     </div>
                     <div class="form-group">
                         <label for="filosofo-biografia">Biografia</label>
                         <textarea id="filosofo-biografia" rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="filosofo-biografia-en" style="color: #3b82f6; font-style: italic;">Biografia (Inglese)</label>
-                        <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="filosofo-biografia-en" rows="3" placeholder="Biography in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('filosofo-biografia', 'filosofo-biografia-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
+                        <label for="filosofo-concetti">Concetti Principali</label>
+                        <textarea id="filosofo-concetti" rows="2" placeholder="Separati da virgola"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="filosofo-concetti">Concetti Principali:</label>
-                        <textarea id="filosofo-concetti" rows="3" placeholder="Separati da virgola"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="filosofo-luogo-nascita">Luogo di Nascita:</label>
+                        <label for="filosofo-luogo-nascita">Luogo di Nascita</label>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <label style="font-size: 0.8rem; color: var(--light-text);">Città</label>
-                                <input type="text" id="filosofo-citta-nascita" placeholder="es: Königsberg">
-                            </div>
-                            <div>
-                                <label style="font-size: 0.8rem; color: var(--light-text);">Paese</label>
-                                <input type="text" id="filosofo-paese-nascita" placeholder="es: Germania">
-                            </div>
+                            <input type="text" id="filosofo-citta" placeholder="Città">
+                            <input type="text" id="filosofo-paese" placeholder="Paese">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="filosofo-coordinate">Coordinate Geografiche:</label>
-                        <div style="margin-bottom: 8px;">
-                            <div class="location-buttons">
-                                <button type="button" class="location-btn primary" onclick="cercaCoordinateFilosofo()">
-                                    <i class="fas fa-search-location"></i> Cerca Coordinate
-                                </button>
-                            </div>
-                        </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <div>
-                                <label style="font-size: 0.8rem; color: var(--light-text);">Latitudine</label>
-                                <input type="text" id="filosofo-latitudine" placeholder="54.7167">
-                            </div>
-                            <div>
-                                <label style="font-size: 0.8rem; color: var(--light-text);">Longitudine</label>
-                                <input type="text" id="filosofo-longitudine" placeholder="20.5">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="filosofo-immagine">URL Ritratto/Immagine:</label>
+                        <label for="filosofo-immagine">URL Immagine</label>
                         <input type="text" id="filosofo-immagine" placeholder="https://...">
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="admin-btn primary">Salva</button>
+                        <button type="submit" class="admin-btn primary">Salva Filosofo</button>
                         <button type="button" class="admin-btn secondary" onclick="resetFilosofoForm()">Annulla</button>
                     </div>
                 </form>
-
-                <div class="admin-table-actions" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
-                    <button id="btn-delete-sel-filosofi" class="delete-selected-btn" onclick="deleteSelectedItems('filosofi')" disabled>
-                        <i class="fas fa-trash"></i> Elimina Selezionati (0)
-                    </button>
-                </div>
 
                 <div class="admin-table-container">
                     <table class="admin-table" id="filosofi-table">
                         <thead>
                             <tr>
-                                <th style="width: 40px; text-align: center;">
-                                    <input type="checkbox" onchange="toggleSelectAll('filosofi', this)">
-                                </th>
                                 <th>ID</th>
                                 <th>Nome</th>
                                 <th>Periodo</th>
                                 <th>Scuola</th>
-                                <th>Anni</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
                         <tbody id="filosofi-table-body">
+                            <!-- Filosofi dinamici -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- Gestione Opere -->
             <div class="admin-tab-content" id="opere-admin">
                 <div class="import-export-section">
                     <h4>Import/Export Opere</h4>
                     <div class="import-options">
-                        <input type="file" id="import-opere-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('opere', this.files)">
+                        <input type="file" id="import-opere-file" accept=".xlsx, .csv" style="display: none;">
                         <button class="admin-btn secondary" onclick="document.getElementById('import-opere-file').click()">
-                            <i class="fas fa-file-import"></i> Importa Opere
+                            <i class="fas fa-file-import"></i> Importa
                         </button>
-                        <button class="admin-btn secondary" onclick="exportDataToExcel('opere')">
-                            <i class="fas fa-file-export"></i> Esporta Opere
-                        </button>
-                        <button class="admin-btn secondary" onclick="downloadTemplate('opere')">
-                            <i class="fas fa-download"></i> Template Opere
+                        <button class="admin-btn secondary" onclick="exportOpereToExcel()">
+                            <i class="fas fa-file-export"></i> Esporta
                         </button>
                     </div>
                 </div>
@@ -503,106 +370,72 @@
                 <form id="opera-form" onsubmit="saveOpera(event)">
                     <input type="hidden" id="opera-id">
                     <div class="form-group">
-                        <label for="opera-titolo">Titolo:</label>
+                        <label for="opera-titolo">Titolo *</label>
                         <input type="text" id="opera-titolo" required>
                     </div>
                     <div class="form-group">
-                        <label for="opera-titolo-en" style="color: #3b82f6; font-style: italic;">Titolo (Inglese)</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="text" id="opera-titolo-en" placeholder="Title in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('opera-titolo', 'opera-titolo-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-autore">Autore:</label>
+                        <label for="opera-autore">Autore *</label>
                         <select id="opera-autore" required>
-                            <option value="">Seleziona un filosofo...</option>
+                            <option value="">Seleziona filosofo...</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="opera-anno">Anno Pubblicazione:</label>
+                        <label for="opera-anno">Anno Pubblicazione *</label>
                         <input type="text" id="opera-anno" required>
                     </div>
                     <div class="form-group">
-                        <label for="opera-periodo">Periodo Storico:</label>
+                        <label for="opera-periodo">Periodo Storico *</label>
                         <select id="opera-periodo" required>
-                            <option value="classico">Classico/Antico</option>
+                            <option value="classico">Classico</option>
                             <option value="medioevale">Medioevale</option>
                             <option value="rinascimentale">Rinascimentale</option>
                             <option value="moderno">Moderno</option>
                             <option value="contemporaneo">Contemporaneo</option>
                         </select>
                     </div>
-                    
                     <div class="form-group">
-                        <label for="opera-sintesi">Sintesi/Abstract:</label>
+                        <label for="opera-sintesi">Sintesi</label>
                         <textarea id="opera-sintesi" rows="3"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="opera-sintesi-en" style="color: #3b82f6; font-style: italic;">Sintesi (Inglese)</label>
-                        <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="opera-sintesi-en" rows="3" placeholder="Summary in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('opera-sintesi', 'opera-sintesi-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-concetti">Concetti Trattati:</label>
-                        <textarea id="opera-concetti" rows="3" placeholder="Separati da virgola"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-lingua">Lingua Originale:</label>
-                        <input type="text" id="opera-lingua" value="Italiano">
-                    </div>
-                    <div class="form-group">
-                        <label for="opera-pdf">URL PDF/Testo Completo:</label>
-                        <input type="text" id="opera-pdf" placeholder="https://...">
+                        <label for="opera-concetti">Concetti Trattati</label>
+                        <textarea id="opera-concetti" rows="2" placeholder="Separati da virgola"></textarea>
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="admin-btn primary">Salva</button>
+                        <button type="submit" class="admin-btn primary">Salva Opera</button>
                         <button type="button" class="admin-btn secondary" onclick="resetOperaForm()">Annulla</button>
                     </div>
                 </form>
-
-                <div class="admin-table-actions" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
-                    <button id="btn-delete-sel-opere" class="delete-selected-btn" onclick="deleteSelectedItems('opere')" disabled>
-                        <i class="fas fa-trash"></i> Elimina Selezionati (0)
-                    </button>
-                </div>
 
                 <div class="admin-table-container">
                     <table class="admin-table" id="opere-table">
                         <thead>
                             <tr>
-                                <th style="width: 40px; text-align: center;">
-                                    <input type="checkbox" onchange="toggleSelectAll('opere', this)">
-                                </th>
                                 <th>ID</th>
                                 <th>Titolo</th>
                                 <th>Autore</th>
                                 <th>Anno</th>
-                                <th>Periodo</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
                         <tbody id="opere-table-body">
+                            <!-- Opere dinamiche -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
+            <!-- Gestione Concetti -->
             <div class="admin-tab-content" id="concetti-admin">
                 <div class="import-export-section">
                     <h4>Import/Export Concetti</h4>
                     <div class="import-options">
-                        <input type="file" id="import-concetti-file" accept=".xlsx, .xls, .csv" style="display: none;" onchange="handleFileImport('concetti', this.files)">
+                        <input type="file" id="import-concetti-file" accept=".xlsx, .csv" style="display: none;">
                         <button class="admin-btn secondary" onclick="document.getElementById('import-concetti-file').click()">
-                            <i class="fas fa-file-import"></i> Importa Concetti
+                            <i class="fas fa-file-import"></i> Importa
                         </button>
-                        <button class="admin-btn secondary" onclick="exportDataToExcel('concetti')">
-                            <i class="fas fa-file-export"></i> Esporta Concetti
-                        </button>
-                        <button class="admin-btn secondary" onclick="downloadTemplate('concetti')">
-                            <i class="fas fa-download"></i> Template Concetti
+                        <button class="admin-btn secondary" onclick="exportConcettiToExcel()">
+                            <i class="fas fa-file-export"></i> Esporta
                         </button>
                     </div>
                 </div>
@@ -611,350 +444,99 @@
                 <form id="concetto-form" onsubmit="saveConcetto(event)">
                     <input type="hidden" id="concetto-id">
                     <div class="form-group">
-                        <label for="concetto-parola">Parola Chiave:</label>
+                        <label for="concetto-parola">Parola Chiave *</label>
                         <input type="text" id="concetto-parola" required>
                     </div>
                     <div class="form-group">
-                        <label for="concetto-parola-en" style="color: #3b82f6; font-style: italic;">Parola (Inglese)</label>
-                        <div style="display: flex; gap: 5px;">
-                            <input type="text" id="concetto-parola-en" placeholder="Keyword in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;">
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('concetto-parola', 'concetto-parola-en')" style="padding: 0 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="concetto-definizione">Definizione:</label>
-                        <textarea id="concetto-definizione" rows="4" required></textarea>
+                        <label for="concetto-definizione">Definizione *</label>
+                        <textarea id="concetto-definizione" rows="3" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="concetto-definizione-en" style="color: #3b82f6; font-style: italic;">Definizione (Inglese)</label>
-                        <div style="display: flex; gap: 5px; align-items: flex-start;">
-                            <textarea id="concetto-definizione-en" rows="5" placeholder="Definition in English" style="background: #f0f9ff; border-color: #bae6fd; flex: 1;"></textarea>
-                            <button type="button" class="admin-btn secondary" onclick="autoTranslate('concetto-definizione', 'concetto-definizione-en')" style="padding: 10px;" title="Traduci automaticamente">✨</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="concetto-esempio">Citazione/Estratto (Esempio):</label>
-                        <textarea id="concetto-esempio" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="concetto-autore">Autore Riferimento:</label>
-                        <select id="concetto-autore">
-                            <option value="">Seleziona un filosofo...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="concetto-opera">Opera di Riferimento:</label>
-                        <select id="concetto-opera">
-                            <option value="">Seleziona un'opera...</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="concetto-periodo">Periodo Storico:</label>
+                        <label for="concetto-periodo">Periodo Storico *</label>
                         <select id="concetto-periodo" required>
                             <option value="classico">Classico</option>
                             <option value="contemporaneo">Contemporaneo</option>
-                            <option value="entrambi">Entrambi</option>
+                            <option value="entrambi">Entrambi (Transperiodale)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="concetto-evoluzione">Evoluzione Storica:</label>
-                        <textarea id="concetto-evoluzione" rows="3" placeholder="Come il concetto è cambiato nel tempo..."></textarea>
+                        <label for="concetto-esempio">Esempio/Citazione</label>
+                        <textarea id="concetto-esempio" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="concetto-evoluzione">Evoluzione Storica</label>
+                        <textarea id="concetto-evoluzione" rows="2" placeholder="Come il concetto è cambiato nel tempo..."></textarea>
                     </div>
                     <div class="form-actions">
-                        <button type="submit" class="admin-btn primary">Salva</button>
+                        <button type="submit" class="admin-btn primary">Salva Concetto</button>
                         <button type="button" class="admin-btn secondary" onclick="resetConcettoForm()">Annulla</button>
                     </div>
                 </form>
-
-                <div class="admin-table-actions" style="margin-bottom: 10px; display: flex; justify-content: flex-end;">
-                    <button id="btn-delete-sel-concetti" class="delete-selected-btn" onclick="deleteSelectedItems('concetti')" disabled>
-                        <i class="fas fa-trash"></i> Elimina Selezionati (0)
-                    </button>
-                </div>
 
                 <div class="admin-table-container">
                     <table class="admin-table" id="concetti-table">
                         <thead>
                             <tr>
-                                <th style="width: 40px; text-align: center;">
-                                    <input type="checkbox" onchange="toggleSelectAll('concetti', this)">
-                                </th>
                                 <th>ID</th>
-                                <th>Parola Chiave</th>
-                                <th>Definizione Breve</th>
+                                <th>Parola</th>
+                                <th>Definizione</th>
                                 <th>Periodo</th>
                                 <th>Azioni</th>
                             </tr>
                         </thead>
                         <tbody id="concetti-table-body">
+                            <!-- Concetti dinamici -->
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            <div class="admin-tab-content" id="analytics-admin">
-                <div class="analytics-header">
-                    <h3>Dashboard Analytics</h3>
-                    <p>Monitora le attività degli utenti e le prestazioni dell'app</p>
-                </div>
-                
-                <div class="analytics-stats-grid">
-                    <div class="analytics-stat-card">
-                        <div class="analytics-stat-icon" style="background: var(--primary-blue);">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="analytics-stat-value" id="analytics-session-count">0</div>
-                        <div class="analytics-stat-label">Sessioni Oggi</div>
-                    </div>
-                    <div class="analytics-stat-card">
-                        <div class="analytics-stat-icon" style="background: var(--primary-green);">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="analytics-stat-value" id="analytics-events-count">0</div>
-                        <div class="analytics-stat-label">Eventi Oggi</div>
-                    </div>
-                    <div class="analytics-stat-card">
-                        <div class="analytics-stat-icon" style="background: var(--primary-purple);">
-                            <i class="fas fa-eye"></i>
-                        </div>
-                        <div class="analytics-stat-value" id="analytics-pageviews-count">0</div>
-                        <div class="analytics-stat-label">Page Views</div>
-                    </div>
-                    <div class="analytics-stat-card">
-                        <div class="analytics-stat-icon" style="background: var(--primary-red);">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="analytics-stat-value" id="analytics-errors-count">0</div>
-                        <div class="analytics-stat-label">Errori Oggi</div>
-                    </div>
-                </div>
-                
-                <div class="analytics-charts-section">
-                    <div class="analytics-chart-container">
-                        <h4>Attività Utenti (Ultimi 7 giorni)</h4>
-                        <canvas id="activity-chart"></canvas>
-                        <div class="performance-metrics">
-                            <div class="performance-metric">
-                                <span class="metric-label">Tempo medio caricamento pagine:</span>
-                                <span class="metric-value" id="metric-page-load">0ms</span>
-                            </div>
-                            <div class="performance-metric">
-                                <span class="metric-label">Tempo medio caricamento immagini:</span>
-                                <span class="metric-value" id="metric-image-load">0ms</span>
-                            </div>
-                            <div class="performance-metric">
-                                <span class="metric-label">Tempo medio caricamento dati:</span>
-                                <span class="metric-value" id="metric-data-load">0ms</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="analytics-chart-container">
-                        <h4>Stato Sistema</h4>
-                        <div class="analytics-status">
-                            <div class="status-indicator" id="analytics-status-indicator">
-                                <i class="fas fa-circle"></i>
-                                <span id="analytics-status-text">Analytics Attivo</span>
-                            </div>
-                            <div class="session-info">
-                                <div>Session ID: <code id="current-session-id">...</code></div>
-                                <div>User ID: <code id="current-user-id">...</code></div>
-                                <div>Ultimo sync: <span id="last-sync-time">Mai</span></div>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 10px;">
-                            <h5 style="margin-bottom: 10px;">Storage Utilizzato</h5>
-                            <div class="performance-metric">
-                                <span class="metric-label">Eventi archiviati:</span>
-                                <span class="metric-value" id="storage-events">0</span>
-                            </div>
-                            <div class="performance-metric">
-                                <span class="metric-label">Errori archiviati:</span>
-                                <span class="metric-value" id="storage-errors">0</span>
-                            </div>
-                            <div class="performance-metric">
-                                <span class="metric-label">Storage totale:</span>
-                                <span class="metric-value" id="storage-used">0 KB</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="analytics-tables-section">
-                    <div class="analytics-table-container">
-                        <h4>Errori Recenti</h4>
-                        <div class="analytics-table">
-                            <table style="width: 100%;">
-                                <thead>
-                                    <tr>
-                                        <th>Data/Ora</th>
-                                        <th>Contesto</th>
-                                        <th>Messaggio</th>
-                                        <th>Severità</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="analytics-errors-table">
-                                    </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="analytics-table-container">
-                        <h4>Eventi Più Frequenti</h4>
-                        <div class="analytics-table">
-                            <table style="width: 100%;">
-                                <thead>
-                                    <tr>
-                                        <th>Categoria</th>
-                                        <th>Azione</th>
-                                        <th>Conteggio</th>
-                                        <th>Ultimo</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="analytics-events-table">
-                                    </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="analytics-actions-section">
-                    <h4>Azioni Analytics</h4>
-                    <div class="analytics-actions">
-                        <button class="admin-btn primary" onclick="refreshAnalyticsDashboard()">
-                            <i class="fas fa-sync-alt"></i> Aggiorna Dashboard
-                        </button>
-                        <button class="admin-btn secondary" onclick="exportAnalyticsData()">
-                            <i class="fas fa-download"></i> Esporta Dati
-                        </button>
-                        <button class="admin-btn secondary" onclick="toggleAnalyticsTracking()">
-                            <i class="fas fa-toggle-on"></i> Attiva/Disattiva
-                        </button>
-                        <button class="admin-btn danger" onclick="resetAnalyticsData()">
-                            <i class="fas fa-trash"></i> Resetta Dati
-                        </button>
-                    </div>
-                    
-                    <div class="sync-section">
-                        <h4>Stato Sincronizzazione</h4>
-                        <div id="sync-status">
-                            <div class="analytics-status">
-                                <div class="status-indicator" id="sync-status-indicator">
-                                    <i class="fas fa-check-circle"></i>
-                                    <span id="sync-status-text">Sincronizzato</span>
-                                </div>
-                                <div class="session-info">
-                                    <div>Eventi in coda: <span id="pending-events-count">0</span></div>
-                                    <div>Ultimo invio: <span id="last-send-time">Mai</span></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="sync-actions" style="margin-top: 10px;">
-                            <button class="admin-btn primary" onclick="forceSyncAnalytics()">
-                                <i class="fas fa-sync"></i> Forza Sincronizzazione
-                            </button>
-                            <button class="admin-btn secondary" onclick="clearAnalyticsErrors()">
-                                <i class="fas fa-broom"></i> Pulisci Errori
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="analytics-debug-section">
-                    <h4>Debug & Test</h4>
-                    <div class="debug-controls">
-                        <button class="admin-btn secondary" onclick="testAnalyticsEvent()">
-                            <i class="fas fa-vial"></i> Test Evento
-                        </button>
-                        <button class="admin-btn secondary" onclick="testAnalyticsError()">
-                            <i class="fas fa-bug"></i> Test Errore
-                        </button>
-                        <button class="admin-btn secondary" onclick="testPerformanceMetric()">
-                            <i class="fas fa-tachometer-alt"></i> Test Performance
-                        </button>
-                    </div>
-                    
-                    <div class="debug-info">
-                        <div class="info-item">
-                            <span>Analytics Inizializzato:</span>
-                            <span id="debug-initialized">No</span>
-                        </div>
-                        <div class="info-item">
-                            <span>Firebase Analytics:</span>
-                            <span id="debug-firebase">No</span>
-                        </div>
-                        <div class="info-item">
-                            <span>Modalità PWA:</span>
-                            <span id="debug-pwa">No</span>
-                        </div>
-                        <div class="info-item">
-                            <span>Connessione:</span>
-                            <span id="debug-online">No</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Configurazione -->
             <div class="admin-tab-content" id="config-admin">
-                <div class="config-section" style="border: 2px solid #ef4444; background: #fff1f2; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
-                    <h4 style="color: #be123c; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 1.1rem;">
-                        <i class="fas fa-satellite-dish"></i> Centro di Controllo Remoto
-                    </h4>
+                <div class="config-section">
+                    <h4>Centro di Controllo</h4>
                     
-                    <div class="config-item" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #fecdd3;">
+                    <div class="config-item">
                         <div>
-                            <label style="font-weight: bold; color: #881337; font-size: 1rem;">Modalità Manutenzione</label>
-                            <p style="font-size: 0.85rem; color: #9f1239; margin-top: 4px;">Blocca l'app a tutti (tranne Admin).</p>
-                        </div>
-                        <label class="switch" style="position: relative; display: inline-block; width: 60px; height: 34px;">
-                            <input type="checkbox" id="global-maintenance-toggle" onchange="toggleGlobalMaintenance(this)">
-                            <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
-                            <style>.slider:before {position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;} input:checked + .slider {background-color: #ef4444;} input:checked + .slider:before {transform: translateX(26px);}</style>
-                        </label>
-                    </div>
-
-                    <div class="config-item" style="display: flex; justify-content: space-between; align-items: center; padding-top: 15px;">
-                        <div>
-                            <label style="font-weight: bold; color: #1e3a8a; font-size: 1rem;">Analytics & Privacy</label>
-                            <p style="font-size: 0.85rem; color: #1e40af; margin-top: 4px;">
-                                Stato: <span id="privacy-status-text" style="font-weight: bold;">Caricamento...</span>
+                            <label style="font-weight: bold;">Modalità Manutenzione</label>
+                            <p style="font-size: 0.9rem; color: var(--light-text);">
+                                Blocca l'app a tutti tranne l'amministratore
                             </p>
                         </div>
-                        <label class="switch" style="position: relative; display: inline-block; width: 60px; height: 34px;">
-                            <input type="checkbox" id="global-privacy-toggle" checked onchange="toggleGlobalAnalytics(this)">
-                            <span class="slider round" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;"></span>
-                            <style>input:checked + .slider {background-color: #3b82f6;}</style>
+                        <label class="switch">
+                            <input type="checkbox" id="maintenance-toggle" onchange="toggleMaintenance(this)">
+                            <span class="slider round"></span>
                         </label>
                     </div>
                 </div>
 
                 <div class="backup-section">
-                    <h4>Sicurezza Account</h4>
+                    <h4>Sicurezza</h4>
                     <button class="admin-btn secondary" onclick="logoutAdmin()">
                         <i class="fas fa-sign-out-alt"></i> Logout Amministratore
                     </button>
                 </div>
                 
                 <div class="import-export-section">
-                    <h4>Export Dati Completo</h4>
-                    <button class="admin-btn primary" onclick="exportAllDataToExcel()">
-                        <i class="fas fa-file-excel"></i> Esporta Tutto in Excel
+                    <h4>Export Completo Dataset</h4>
+                    <button class="admin-btn primary" onclick="exportFullDataset()">
+                        <i class="fas fa-database"></i> Esporta Tutto
                     </button>
                 </div>
             </div>
-            </div>
+        </div>
     </div>
 
+    <!-- ==================== CONTAINER PRINCIPALE APP ==================== -->
     <div class="app-container">
+        <!-- Pulsante Menu -->
         <div class="admin-icon-btn-container">
             <button class="admin-icon-btn" onclick="toggleMenuModal()">
                 <i class="fas fa-ellipsis-v"></i>
             </button>
         </div>
 
+        <!-- ============ SCHERMATA HOME ============ -->
         <div class="screen active" id="home-screen">
             <div class="logo-container">
                 <div class="app-logo logo-with-image"></div>
@@ -963,35 +545,34 @@
             
             <p class="home-welcome-animated">AETERNA</p>
     
-            <h1 class="home-title" id="home-title">Lexicon in Motu</h1>
+            <h1 class="home-title">Lexicon in Motu</h1>
     
-            <p class="home-subtitle" id="home-subtitle">
-                App per l'analisi delle trasformazioni del linguaggio filosofico<br>
-                tra classico e contemporaneo
+            <p class="home-subtitle">
+                Dataset per l'analisi delle trasformazioni<br>
+                del linguaggio filosofico tra classico e contemporaneo
             </p>   
     
             <div class="home-buttons">
                 <div class="button-row">
                     <button class="home-btn filosofi-btn" onclick="showScreen('filosofi-screen')">
                         <span class="btn-icon"><i class="fas fa-user-graduate"></i></span>
-                        <span class="btn-text" id="nav-filosofi">Filosofi</span>
+                        <span class="btn-text">Filosofi</span>
                     </button>
                     <button class="home-btn opere-btn" onclick="showScreen('opere-screen')">
                         <span class="btn-icon"><i class="fas fa-book"></i></span>
-                        <span class="btn-text" id="nav-opere">Opere</span>
+                        <span class="btn-text">Opere</span>
                     </button>
                 </div>
                 <div class="button-row">
                     <button class="home-btn mappa-btn" onclick="showScreen('mappa-screen')">
                         <span class="btn-icon"><i class="fas fa-map-marked-alt"></i></span>
-                        <span class="btn-text" id="nav-map">Mappa Geografica</span>
+                        <span class="btn-text">Mappa Geografica</span>
                     </button>
                     <button class="home-btn concetti-btn" onclick="showScreen('concetti-screen')">
                         <span class="btn-icon"><i class="fas fa-brain"></i></span>
-                        <span class="btn-text" id="nav-concetti">Concetti</span>
+                        <span class="btn-text">Concetti</span>
                     </button>
                 </div>
-                <!-- NUOVA RIGA PER MAPPA CONCETTUALE -->
                 <div class="button-row">
                     <button class="home-btn network-btn" onclick="showScreen('mappa-concettuale-screen')">
                         <span class="btn-icon"><i class="fas fa-project-diagram"></i></span>
@@ -1005,79 +586,67 @@
         <div class="screen list-screen" id="filosofi-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-        
-                <h1 class="screen-title" id="filosofi-title">Filosofi</h1>
-        
-                <p class="screen-subtitle" id="filosofi-subtitle">Esplora i filosofi della storia</p>
+                <h1 class="screen-title">Filosofi</h1>
+                <p class="screen-subtitle">Esplora i filosofi della storia</p>
             </header>
     
             <div class="search-container">
-                <input type="text" id="search-input" class="search-input" placeholder="🔍 Cerca filosofi..." onkeyup="debouncedFilter('filosofi', this.value)">
+                <input type="text" class="search-input" placeholder="🔍 Cerca filosofi..." 
+                       onkeyup="searchFilosofi(this.value)">
             </div>
     
             <div class="content-area">
                 <div class="filter-buttons">
-                    <button class="filter-btn all active" onclick="setFilter('filosofi', 'all')">
+                    <button class="filter-btn all active" onclick="setFilter('all')">
                         <i class="fas fa-layer-group"></i> Tutti
                     </button>
-            
-                    <button class="filter-btn funzionante" onclick="setFilter('filosofi', 'classico')">
+                    <button class="filter-btn funzionante" onclick="setFilter('classico')">
                         <i class="fas fa-columns"></i> Classici
                     </button>
-            
-                    <button class="filter-btn non-funzionante" onclick="setFilter('filosofi', 'contemporaneo')">
+                    <button class="filter-btn non-funzionante" onclick="setFilter('contemporaneo')">
                         <i class="fas fa-bolt"></i> Contemporanei
-                    </button>
-            
-                    <button class="filter-btn manutenzione" onclick="setFilter('filosofi', 'altro')">
-                        <i class="fas fa-history"></i> Altri Periodi
                     </button>
                 </div>
         
-               <div class="items-grid" id="filosofi-list">
+                <div class="items-grid" id="filosofi-list">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                    <p>Caricamento filosofi in corso...</p>
+                        <p>Caricamento filosofi...</p>
+                    </div>
                 </div>
-            </div> </div> </div>
+            </div>
+        </div>
 
         <!-- ============ SCHERMATA OPERE ============ -->
         <div class="screen list-screen" id="opere-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-    
-                <h1 class="screen-title" id="opere-title">Opere</h1>
-    
-                <p class="screen-subtitle" id="opere-subtitle">Scopri le opere filosofiche</p>
+                <h1 class="screen-title">Opere</h1>
+                <p class="screen-subtitle">Scopri le opere filosofiche</p>
             </header>
     
             <div class="search-container">
-                <input type="text" class="search-input" placeholder="🔍 Cerca opere..." onkeyup="debouncedFilter('opere', this.value)">
+                <input type="text" class="search-input" placeholder="🔍 Cerca opere..." 
+                       onkeyup="searchOpere(this.value)">
             </div>
     
             <div class="content-area">
                 <div class="filter-buttons">
-                    <button class="filter-btn all active" onclick="setFilter('opere', 'all')">
+                    <button class="filter-btn all active" onclick="setFilterOpere('all')">
                         <i class="fas fa-layer-group"></i> Tutte
                     </button>
-            
-                    <button class="filter-btn funzionante" onclick="setFilter('opere', 'classico')">
+                    <button class="filter-btn funzionante" onclick="setFilterOpere('classico')">
                         <i class="fas fa-columns"></i> Classiche
                     </button>
-            
-                    <button class="filter-btn non-funzionante" onclick="setFilter('opere', 'contemporaneo')">
+                    <button class="filter-btn non-funzionante" onclick="setFilterOpere('contemporaneo')">
                         <i class="fas fa-bolt"></i> Contemporanee
-                    </button>
-            
-                    <button class="filter-btn manutenzione" onclick="setFilter('opere', 'altro')">
-                        <i class="fas fa-history"></i> Altri Periodi
                     </button>
                 </div>
         
                 <div class="compact-items-list" id="opere-list">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                        <p>Caricamento opere in corso...</p>
+                        <p>Caricamento opere...</p>
                     </div>
                 </div>
             </div>
@@ -1087,17 +656,15 @@
         <div class="screen list-screen" id="concetti-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                
-                <h1 class="screen-title" id="concetti-title">Concetti</h1>
-                
-                <p class="screen-subtitle" id="concetti-subtitle">Analizza le parole chiave della filosofia</p>
+                <h1 class="screen-title">Concetti</h1>
+                <p class="screen-subtitle">Analizza le parole chiave della filosofia</p>
             </header>
             
             <div class="content-area">
                 <div class="concetti-container" id="concetti-list">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                        <p>Caricamento concetti in corso...</p>
+                        <p>Caricamento concetti...</p>
                     </div>
                 </div>
             </div>
@@ -1107,7 +674,7 @@
         <div class="screen detail-screen" id="filosofo-detail-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                <h1 class="screen-title" id="filosofo-detail-title">Filosofo</h1>
+                <h1 class="screen-title">Filosofo</h1>
             </header>
             <div class="detail-content" id="filosofo-detail-content">
                 <div class="loading">
@@ -1120,7 +687,7 @@
         <div class="screen detail-screen" id="opera-detail-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                <h1 class="screen-title" id="opera-detail-title">Opera</h1>
+                <h1 class="screen-title">Opera</h1>
             </header>
             <div class="detail-content" id="opera-detail-content">
                 <div class="loading">
@@ -1133,7 +700,7 @@
         <div class="screen detail-screen" id="concetto-detail-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                <h1 class="screen-title" id="concetto-detail-title">Concetto</h1>
+                <h1 class="screen-title">Concetto</h1>
             </header>
             <div class="detail-content" id="concetto-detail-content">
                 <div class="loading">
@@ -1142,16 +709,16 @@
             </div>
         </div>
 
-        <!-- ============ MAPPA GEOGRAFICA (ESISTENTE MODIFICATA) ============ -->
+        <!-- ============ MAPPA GEOGRAFICA ============ -->
         <div class="screen" id="mappa-screen">
-            <header class="app-header" style="position: absolute; top: 0; left: 0; right: 0; z-index: 1000; padding: 15px 20px;">
+            <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
-                <h1 class="screen-title" id="map-title" style="font-size: 1.4rem;">Mappa Geografica</h1>
+                <h1 class="screen-title">Mappa Geografica</h1>
             </header>
     
             <div class="map-search-container">
                 <div class="map-search-box">
-                    <input type="text" id="map-search-input" placeholder="🔍 Cerca filosofo o luogo di nascita..."
+                    <input type="text" id="map-search-input" placeholder="🔍 Cerca filosofo o luogo..."
                            onkeypress="handleMapSearch(event)">
                     <button class="map-search-btn" onclick="performMapSearch()">
                         <i class="fas fa-search"></i>
@@ -1163,30 +730,19 @@
             <div id="map" class="map-container"></div>
     
             <div class="map-legend">
-                <div class="legend-title" id="legend-title">Legenda</div>
-        
+                <div class="legend-title">Legenda</div>
                 <div class="legend-item">
                     <div class="legend-icon icon-filosofo-classico"></div>
-                    <span id="legend-filosofo-classico">Filosofo Classico</span>
+                    <span>Filosofo Classico</span>
                 </div>
-        
                 <div class="legend-item">
                     <div class="legend-icon icon-filosofo-contemporaneo"></div>
-                    <span id="legend-filosofo-contemporaneo">Filosofo Contemporaneo</span>
+                    <span>Filosofo Contemporaneo</span>
                 </div>
-        
-                <div class="legend-item">
-                    <div class="legend-icon icon-position"></div>
-                    <span id="legend-pos">La tua posizione</span>
-                </div>
-            </div>
-    
-            <div style="position: absolute; bottom: 10px; left: 10px; background: rgba(255,255,255,0.8); padding: 5px 10px; border-radius: 5px; font-size: 0.7rem; z-index: 1000;">
-                © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors
             </div>
         </div>
 
-        <!-- ============ NUOVA SCHERMATA: MAPPA CONCETTUALE ============ -->
+        <!-- ============ MAPPA CONCETTUALE ============ -->
         <div class="screen" id="mappa-concettuale-screen">
             <header class="app-header">
                 <button class="back-btn" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
@@ -1195,80 +751,59 @@
             </header>
 
             <div class="content-area">
-                <!-- Controlli della mappa concettuale -->
                 <div class="concetto-controls">
                     <div class="filter-buttons">
-                        <button class="filter-btn all active" onclick="filterConcetti('tutti')">
-                            <i class="fas fa-layer-group"></i> Tutti i Concetti
+                        <button class="filter-btn all active" onclick="filterConceptMap('tutti')">
+                            <i class="fas fa-layer-group"></i> Tutti
                         </button>
-                        <button class="filter-btn funzionante" onclick="filterConcetti('classico')">
-                            <i class="fas fa-columns"></i> Periodo Classico
+                        <button class="filter-btn funzionante" onclick="filterConceptMap('classico')">
+                            <i class="fas fa-columns"></i> Classici
                         </button>
-                        <button class="filter-btn non-funzionante" onclick="filterConcetti('contemporaneo')">
-                            <i class="fas fa-bolt"></i> Periodo Contemporaneo
+                        <button class="filter-btn non-funzionante" onclick="filterConceptMap('contemporaneo')">
+                            <i class="fas fa-bolt"></i> Contemporanei
                         </button>
-                    </div>
-                    
-                    <div class="search-concetto">
-                        <input type="text" id="search-concetto" 
-                               placeholder="🔍 Cerca concetto (es: Verità, Potere...)"
-                               onkeyup="searchConcetti(this.value)">
                     </div>
                 </div>
 
-                <!-- Container per la mappa concettuale -->
-                <div id="concetto-network-container" style="width: 100%; height: 600px; border-radius: 15px; overflow: hidden;">
+                <div id="concetto-network-container">
                     <div class="loading">
                         <div class="loading-spinner"></div>
-                        <p>Caricamento mappa concettuale...</p>
-                    </div>
-                </div>
-
-                <!-- Legenda mappa concettuale -->
-                <div class="concetto-legend">
-                    <div class="legend-item">
-                        <div class="legend-circle filosofo"></div>
-                        <span>Filosofo</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-circle concetto"></div>
-                        <span>Concetto</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-line classico"></div>
-                        <span>Relazione Classica</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-line contemporaneo"></div>
-                        <span>Relazione Contemporanea</span>
+                        <p>Costruzione mappa concettuale...</p>
                     </div>
                 </div>
             </div>
         </div>                 
          
-
+        <!-- ============ CREDITS ============ -->
         <div id="credits-screen" class="screen">
-            <div class="app-header" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+            <div class="app-header">
                 <button class="back-btn" onclick="showScreen('home-screen')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
-                <div class="screen-title" style="font-size: 1.4rem;">Info & Credits</div>
+                <div class="screen-title">Info & Credits</div>
             </div>
 
             <div class="content-area" style="text-align: center; padding: 30px 20px;">
                 
                 <div style="margin-bottom: 30px;">
-                    <img src="https://derolu0.github.io/aeterna/images/logo-app.png" alt="Aeterna Lexicon" style="width: 80px; height: 80px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 10px;">
-                    <h2 style="font-size: 1.3rem; color: var(--dark-text); margin-bottom: 5px;">Aeterna Lexicon in Motu</h2>
-                    <p style="color: var(--light-text); font-size: 0.9rem;">v. 2.0.0</p>
+                    <img src="https://derolu0.github.io/aeterna/images/logo-app.png" alt="Aeterna Lexicon" 
+                         style="width: 80px; height: 80px; border-radius: 20px; margin-bottom: 10px;">
+                    <h2 style="font-size: 1.3rem; color: var(--dark-text); margin-bottom: 5px;">
+                        Aeterna Lexicon in Motu
+                    </h2>
+                    <p style="color: var(--light-text); font-size: 0.9rem;">v. 3.1.0</p>
                 </div>
 
-                <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+                <hr style="margin: 20px 0;">
 
                 <div class="credit-section" style="margin-bottom: 30px;">
-                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">AUTHOR & PROJECT</h4>
+                    <h4 style="color: var(--primary-blue); font-size: 0.85rem; margin-bottom: 8px;">
+                        AUTORE & PROJECT
+                    </h4>
                     
-                    <p style="font-weight: 700; font-size: 1.1rem; color: #1f2937; margin-bottom: 4px;">De Rosa Salvatore</p>
+                    <p style="font-weight: 700; font-size: 1.1rem; color: #1f2937; margin-bottom: 4px;">
+                        De Rosa Salvatore
+                    </p>
                     
                     <p style="font-size: 0.95rem; color: #4b5563; margin-bottom: 2px;">
                         Corso di Laurea in Filosofia ed Etica
@@ -1279,42 +814,90 @@
                         Anno Accademico 2025/2026
                     </p>
 
-                    <div style="background-color: #f0f9ff; padding: 12px; border-radius: 8px; border-left: 3px solid var(--primary-blue);">
-                        <p style="font-size: 0.85rem; color: #334155; line-height: 1.5; font-style: italic;">
-                            "Questo project work è stato realizzato come elaborato pratico per la prova finale del corso di laurea."
+                    <div style="background-color: #f0f9ff; padding: 12px; border-radius: 8px;">
+                        <p style="font-size: 0.85rem; color: #334155; line-height: 1.5;">
+                            "Project Work per l'analisi delle trasformazioni del linguaggio filosofico 
+                            tra periodo classico e contemporaneo."
                         </p>
                     </div>
                 </div>
-                <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+
+                <hr style="margin: 20px 0;">
 
                 <div style="font-size: 0.75rem; color: #9ca3af; line-height: 1.5;">
-                    <p style="margin-bottom: 10px;">Applicativo sviluppato per il <strong>Project Work Universitario</strong> sulla trasformazione del linguaggio filosofico.</p>
-                    <p style="font-weight: 600; color: #3b82f6; margin-bottom: 15px;">Dataset filosofico comparativo Classico/Contemporaneo.</p>
+                    <p style="margin-bottom: 10px;">
+                        Applicativo sviluppato per il <strong>Project Work Universitario</strong> 
+                        sulla trasformazione del linguaggio filosofico.
+                    </p>
+                    <p style="font-weight: 600; color: #3b82f6; margin-bottom: 15px;">
+                        Dataset filosofico comparativo Classico/Contemporaneo
+                    </p>
                     
                     <div style="background: #f3f4f6; padding: 12px; border-radius: 10px; margin-bottom: 15px;">
-                        <p style="font-weight: 600; margin-bottom: 8px; color: #4b5563;">Technologies & Services:</p>
-                        <p>Leaflet Maps, OpenStreetMap Data, vis.js Networks</p>
-                        <p>Google Firebase, Google Analytics, Google Fonts</p>
-                        <p>Dev & Version Control: <strong>GitHub</strong></p>
-                        <p>Data Hosting: <strong>Firebase Firestore</strong></p>
+                        <p style="font-weight: 600; margin-bottom: 8px; color: #4b5563;">
+                            Tecnologie utilizzate:
+                        </p>
+                        <p>Leaflet Maps, OpenStreetMap, vis.js</p>
+                        <p>Firebase Firestore, GitHub Pages</p>
                     </div>
                     
                     <p style="margin-top: 15px; line-height: 1.4;">
                         Software © 2026 <strong>Salvatore De Rosa</strong>.<br>
-                        Dataset © 2026 <strong>Project Work Aeterna Lexicon</strong>.<br>
-                        <span style="font-size: 0.85em; opacity: 0.8; font-weight: 400;">Per uso accademico e di ricerca.</span>
+                        Dataset © 2026 <strong>Project Work Aeterna Lexicon</strong>.
                     </p>
                 </div>
-
-                <div style="height: 120px;"></div>
             </div>
         </div>
-        
 
+        <!-- ============ SEGNALAZIONI ============ -->
+        <div id="segnalazioni-screen" class="screen">
+            <header class="app-header">
+                <button class="back-btn" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 class="screen-title">Segnalazioni</h1>
+                <p class="screen-subtitle">Inviaci feedback sul dataset filosofico</p>
+            </header>
+
+            <div class="content-area">
+                <div class="report-container">
+                    <p style="margin-bottom: 20px; color: var(--light-text);">
+                        Hai trovato un'inesattezza in un concetto o un problema nell'App? 
+                        La tua segnalazione aiuterà a migliorare il dataset.
+                    </p>
+
+                    <form onsubmit="inviaSegnalazione(event)" class="report-form">
+                        <div class="form-group">
+                            <label>Tipo di Segnalazione</label>
+                            <select id="report-type" class="search-input" required>
+                                <option value="Dato inesatto">Dato inesatto</option>
+                                <option value="Errore testo">Errore nel testo</option>
+                                <option value="Bug App">Problema tecnico</option>
+                                <option value="Suggerimento">Suggerimento</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Descrizione</label>
+                            <textarea id="report-desc" class="search-input" rows="4"
+                                      placeholder="Descrivi il problema riscontrato..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="home-btn network-btn" 
+                                style="width: 100%; margin-top: 20px;">
+                            <span class="btn-icon"><i class="fas fa-paper-plane"></i></span>
+                            <span class="btn-text">Invia Segnalazione</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============ TAB BAR ============ -->
         <div class="tab-bar">
             <button class="tab-btn active" data-target="home-screen" onclick="showScreen('home-screen')">
                 <span class="tab-icon"><i class="fas fa-home"></i></span>
-                <span data-i18n="tab_home">Home</span>
+                <span>Home</span>
             </button>
             <button class="tab-btn" data-target="filosofi-screen" onclick="showScreen('filosofi-screen')">
                 <span class="tab-icon"><i class="fas fa-user-graduate"></i></span>
@@ -1334,435 +917,70 @@
             </button>
         </div>
 
-        <button class="fixed-navigate-btn hidden" id="fixed-navigate-btn" onclick="navigateToFixed()">
-            <i class="fas fa-map-marker-alt"></i> <span id="nav-btn-text">Naviga Verso</span>
+        <!-- Pulsante navigazione fisso -->
+        <button class="fixed-navigate-btn hidden" id="fixed-navigate-btn">
+            <i class="fas fa-map-marker-alt"></i> Naviga
         </button>
-       
-       <div class="screen list-screen" id="segnalazioni-screen" style="display: none;">
-           <header class="app-header">
-               <button class="back-btn" onclick="goBack()">
-                   <i class="fas fa-arrow-left"></i>
-               </button>
-               <h1 class="screen-title">Segnalazioni</h1>
-               <p class="screen-subtitle">Inviaci un feedback sul Project Work</p>
-            </header>
+    </div>
 
-            <div class="content-area">
-                <div class="report-container" style="padding: 20px;">
-                    <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.9rem;">
-                        Hai trovato un'inesattezza in un concetto o un bug nell'App? 
-                        La tua segnalazione aiuterà a migliorare il dataset.
-                    </p>
-
-                    <form onsubmit="inviaSegnalazione(event)" class="report-form">
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Tipo di Segnalazione</label>
-                            <select id="report-type" class="search-input" style="width: 100%; height: 50px;" required>
-                                <option value="Dato inesatto">Dato inesatto (Data/Nome)</option>
-                                <option value="Errore testo">Errore nel testo/biografia</option>
-                                <option value="Bug App">Problema tecnico App</option>
-                                <option value="Suggerimento">Suggerimento didattico</option>
-                                <option value="Altro">Altro</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group" style="margin-bottom: 20px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Descrizione</label>
-                            <textarea id="report-desc" class="search-input" style="width: 100%; height: 150px; padding: 12px; resize: none;" 
-                                      placeholder="Descrivi il problema riscontrato..." required></textarea>
-                        </div>
-
-                        <button type="submit" class="home-btn network-btn" style="width: 100%; justify-content: center; margin-top: 20px; border: none; cursor: pointer;">
-                            <span class="btn-icon"><i class="fas fa-paper-plane"></i></span>
-                            <span class="btn-text">Invia Segnalazione</span>
-                        </button>
-                    </form>
-            </div> </div> <div class="tab-bar">
-            <button class="tab-btn" onclick="showScreen('home-screen')">
-                <span class="tab-icon"><i class="fas fa-home"></i></span><span>Home</span>
-            </button>
-            <button class="tab-btn" onclick="showScreen('filosofi-screen')">
-                <span class="tab-icon"><i class="fas fa-user-graduate"></i></span><span>Filosofi</span>
-            </button>
-            <button class="tab-btn" onclick="showScreen('opere-screen')">
-                <span class="tab-icon"><i class="fas fa-book"></i></span><span>Opere</span>
-            </button>
-            <button class="tab-btn" onclick="showScreen('mappa-screen')">
-                <span class="tab-icon"><i class="fas fa-map-marked-alt"></i></span><span>Mappa</span>
-            </button>
-        </div>
-    </div> </div> 
-
-    <div id="top-menu-modal" class="modal-overlay" onclick="closeMenuModal(event)" style="z-index: 9999; display: none;">
+    <!-- ==================== MENU OVERLAY ==================== -->
+    <div id="top-menu-modal" class="modal-overlay" onclick="closeMenuModal(event)">
         <div class="modal-content menu-modal-content" onclick="event.stopPropagation()">
-            <h3 class="modal-title" style="margin-bottom: 20px;">Menu</h3>
+            <h3 class="modal-title">Menu</h3>
             
             <div class="modal-buttons">
-                <button class="modal-btn lang-switch" onclick="window.toggleLanguage()" style="background: #f8fafc; border: 1px solid #e2e8f0; color: #333;">
-                    <span id="lang-flag">🇬🇧</span>
-                    <span id="lang-label">Switch to English</span>
-                </button>
-
-                <button class="modal-btn btn-admin" onclick="goToAdmin()">
+                <button class="modal-btn btn-admin" onclick="openAdminPanel()">
                     <i class="fas fa-lock"></i>
-                    <span data-i18n="admin_btn">Area Riservata</span>
+                    <span>Area Riservata</span>
                 </button>
 
                 <button class="modal-btn btn-report" onclick="openReportScreen()">
                     <i class="fas fa-bullhorn"></i>
-                    <span data-i18n="report_btn">Segnala Errore</span>
+                    <span>Segnala Errore</span>
                 </button>
                 
                 <button class="modal-btn btn-qr" onclick="openQRModal()">
                     <i class="fas fa-qrcode"></i>
-                    <span data-i18n="btn_qr">Condividi App</span>
+                    <span>Condividi App</span>
                 </button>
 
                 <button class="modal-btn btn-info" onclick="openCreditsScreen()">
                     <i class="fas fa-info-circle"></i>
-                    <span data-i18n="info_btn">Info & Crediti</span>
-                </button>
-                
-                <button id="menu-install-btn" class="modal-btn primary" onclick="installPWA()" style="display: none; background-color: #10b981; color: white;">
-                    <i class="fas fa-download"></i>
-                    <span data-i18n="install_btn">Installa App</span>
+                    <span>Info & Crediti</span>
                 </button>
 
-                <button class="modal-btn" onclick="document.getElementById('top-menu-modal').style.display='none'" style="margin-top: 10px; border: 1px solid #ef4444; color: #ef4444; background: transparent;">
+                <button class="modal-btn" onclick="closeMenuModal()">
                     <i class="fas fa-times"></i>
-                    <span data-i18n="close_btn">Chiudi</span>
+                    <span>Chiudi</span>
                 </button>
             </div>
         </div>
     </div>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    
-    <script src="https://derolu0.github.io/aeterna/translations.js"></script>
-    
-    <script src="https://derolu0.github.io/aeterna/app.js"></script>
-    
-    <script src="https://derolu0.github.io/aeterna/analytics.js" defer></script>
-    
-    <script>
-        // SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                const swUrl = 'https://derolu0.github.io/aeterna/sw.js';
-                fetch(swUrl, { mode: 'no-cors' })
-                  .then(response => {
-                      return navigator.serviceWorker.register(swUrl)
-                          .then(registration => {
-                              console.log('✅ Service Worker registrato:', registration.scope);
-                              registration.addEventListener('updatefound', () => {
-                                  const newWorker = registration.installing;
-                                  newWorker.addEventListener('statechange', () => {
-                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
-                                      }
-                                  });
-                              });
-                              return registration;
-                          });
-                  })
-                  .catch(error => {
-                      console.warn('⚠️ Registrazione SW fallita:', error.message);
-                  });
-            });
-        }
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            window.deferredPrompt = e;
-        });
-        
-        // FUNZIONI ANALYTICS
-        function refreshAnalyticsDashboard() {
-            if (window.Analytics) {
-                const summary = window.Analytics.getAnalyticsSummary();
-                document.getElementById('analytics-session-count').textContent = summary.sessions.today || '0';
-                document.getElementById('analytics-events-count').textContent = summary.events.today || '0';
-                document.getElementById('analytics-pageviews-count').textContent = summary.pageViews.today || '0';
-                document.getElementById('analytics-errors-count').textContent = summary.errors.today || '0';
-                document.getElementById('metric-page-load').textContent = Math.round(summary.metrics.performance.average || 0) + 'ms';
-                document.getElementById('metric-image-load').textContent = Math.round(summary.metrics.performance.imageLoad || 0) + 'ms';
-                document.getElementById('metric-data-load').textContent = '0ms';
-                document.getElementById('storage-events').textContent = summary.events.total || '0';
-                document.getElementById('storage-errors').textContent = summary.errors.total || '0';
-                document.getElementById('storage-used').textContent = Math.round(summary.metrics.storage.eventsSize / 1024) + ' KB';
-                document.getElementById('current-session-id').textContent = summary.sessions.current.id.substring(0, 15) + '...';
-                document.getElementById('current-user-id').textContent = summary.user.id.substring(0, 15) + '...';
-                
-                const statusIndicator = document.getElementById('analytics-status-indicator');
-                const statusText = document.getElementById('analytics-status-text');
-                
-                if (window.Analytics.config.trackingEnabled) {
-                    statusIndicator.classList.remove('inactive');
-                    statusIndicator.classList.add('active');
-                    statusText.textContent = 'Analytics Attivo';
-                    statusText.className = 'status-active';
-                } else {
-                    statusIndicator.classList.remove('active');
-                    statusIndicator.classList.add('inactive');
-                    statusText.textContent = 'Analytics Disattivo';
-                    statusText.className = 'status-inactive';
-                }
-                
-                document.getElementById('debug-initialized').textContent = window.Analytics.isInitialized ? 'Si' : 'No';
-                document.getElementById('debug-firebase').textContent = window.firebaseAnalytics ? 'Si' : 'No';
-                document.getElementById('debug-pwa').textContent = window.matchMedia('(display-mode: standalone)').matches ? 'Si' : 'No';
-                document.getElementById('debug-online').textContent = navigator.onLine ? 'Si' : 'No';
-                
-                showToast('Dashboard analytics aggiornata', 'success');
-                window.Analytics.trackEvent('analytics', 'dashboard_refreshed');
-            } else {
-                showToast('Analytics non inizializzato', 'error');
-            }
-        }
-        
-        function exportAnalyticsData() {
-            if (window.Analytics) {
-                const filename = window.Analytics.exportAnalyticsData();
-                showToast(`Dati analytics esportati in ${filename}`, 'success');
-                window.Analytics.trackEvent('analytics', 'data_exported');
-            }
-        }
-        
-        function resetAnalyticsData() {
-            if (confirm('Sei sicuro di voler resettare tutti i dati analytics?')) {
-                if (window.Analytics) {
-                    window.Analytics.resetUserData();
-                    refreshAnalyticsDashboard();
-                    showToast('Dati analytics resettati', 'success');
-                    window.Analytics.trackEvent('analytics', 'data_reset');
-                }
-            }
-        }
-        
-        function toggleAnalyticsTracking() {
-            if (window.Analytics) {
-                const newState = !window.Analytics.config.trackingEnabled;
-                window.Analytics.setTrackingEnabled(newState);
-                refreshAnalyticsDashboard();
-            }
-        }
-        
-        function forceSyncAnalytics() {
-            if (window.Analytics && window.Analytics.flushQueue) {
-                window.Analytics.flushQueue(true);
-                localStorage.setItem('analytics_last_sync', new Date().toISOString());
-                refreshAnalyticsDashboard();
-                showToast('Sync analytics forzato', 'info');
-            }
-        }
-        
-        function clearAnalyticsErrors() {
-            if (confirm('Cancellare tutti gli errori registrati?')) {
-                localStorage.removeItem('analytics_errors');
-                refreshAnalyticsDashboard();
-                showToast('Errori cancellati', 'success');
-            }
-        }
-        
-        function testAnalyticsEvent() {
-            if (window.Analytics) {
-                window.Analytics.trackEvent('test', 'manual_event', 'Test manuale', 1, { test_mode: true });
-                showToast('Evento test registrato', 'info');
-                refreshAnalyticsDashboard();
-            }
-        }
-        
-        function testAnalyticsError() {
-            if (window.Analytics) {
-                const testError = new Error('Errore di test manuale');
-                window.Analytics.trackError(testError, 'test_manual', 'low', { test_mode: true });
-                showToast('Errore test registrato', 'info');
-                refreshAnalyticsDashboard();
-            }
-        }
-        
-        function testPerformanceMetric() {
-            if (window.Analytics) {
-                const loadTime = Math.random() * 1000 + 500;
-                window.Analytics.trackPerformance('test_manual_load', loadTime);
-                showToast(`Metrica test: ${Math.round(loadTime)}ms`, 'info');
-                refreshAnalyticsDashboard();
-            }
-        }
-        
-        // FUNZIONI PER MAPPA CONCETTUALE
-        function filterConcetti(periodo) {
-            console.log(`Filtra concetti per periodo: ${periodo}`);
-            // Implementa logica di filtraggio
-            showToast(`Filtro attivo: ${periodo}`, 'info');
-        }
-        
-        function searchConcetti(query) {
-            console.log(`Cerca concetto: ${query}`);
-            // Implementa ricerca
-            if (query.length > 2) {
-                showToast(`Ricerca: ${query}`, 'info');
-            }
-        }
-        
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const tabId = this.getAttribute('data-tab');
-                if (tabId === 'analytics-admin') {
-                    setTimeout(() => {
-                        refreshAnalyticsDashboard();
-                        setTimeout(createActivityChart, 500);
-                    }, 100);
-                }
-            });
-        });
-        
-        function createActivityChart() {
-            const canvas = document.getElementById('activity-chart');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-            if (window.activityChart) window.activityChart.destroy();
-            const labels = [];
-            const data = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                labels.push(date.toLocaleDateString('it-IT', { weekday: 'short' }));
-                data.push(Math.floor(Math.random() * 50) + 20);
-            }
-            window.activityChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Eventi',
-                        data: data,
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(0, 0, 0, 0.05)' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
-        
-        // NUOVE FUNZIONI PER ANALISI COMPARATIVA
-        function openComparativeAnalysis(termine) {
-            console.log('Avvio analisi comparativa per:', termine);
-            
-            // Mostra la modale
-            const modal = document.getElementById('comparative-analysis-modal');
-            modal.style.display = 'flex';
-            
-            // Aggiorna titolo
-            document.getElementById('comparative-term-title').textContent = termine.toUpperCase();
-            
-            // Simula caricamento dati
-            setTimeout(() => {
-                // Popola con dati di esempio
-                populateComparativeAnalysis(termine);
-                showToast(`Analisi comparativa per "${termine}" completata`, 'success');
-            }, 1500);
-        }
-        
-        function populateComparativeAnalysis(termine) {
-            // Dati di esempio per test
-            const timelineData = [
-                { anno: -400, periodo: 'classico', autore: 'Platone', opera: 'La Repubblica', estratto: 'La verità come idea eterna...' },
-                { anno: -350, periodo: 'classico', autore: 'Aristotele', opera: 'Metafisica', estratto: 'Verità come corrispondenza...' },
-                { anno: 1250, periodo: 'medioevale', autore: 'Tommaso d\'Aquino', opera: 'Summa Theologica', estratto: 'Verità come adaequatio...' },
-                { anno: 1781, periodo: 'moderno', autore: 'Kant', opera: 'Critica della ragion pura', estratto: 'Verità come giudizio sintetico...' },
-                { anno: 1971, periodo: 'contemporaneo', autore: 'Foucault', opera: 'L\'ordine del discorso', estratto: 'Verità come costruzione discorsiva...' }
-            ];
-            
-            // Inizializza timeline
-            if (window.TimelineEvolution) {
-                window.TimelineEvolution.init('evolution-timeline', timelineData);
-            }
-            
-            // Popola metriche
-            document.getElementById('classical-metrics').innerHTML = `
-                <div class="metric">
-                    <span class="metric-label">Contesto d'uso:</span>
-                    <span class="metric-value">Ontologico-Metafisico</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Frequenza:</span>
-                    <span class="metric-value">87 occorrenze</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Autori principali:</span>
-                    <span class="metric-value">Platone, Aristotele</span>
-                </div>
-            `;
-            
-            document.getElementById('contemporary-metrics').innerHTML = `
-                <div class="metric">
-                    <span class="metric-label">Contesto d'uso:</span>
-                    <span class="metric-value">Politico-Discorsivo</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Frequenza:</span>
-                    <span class="metric-value">42 occorrenze</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Autori principali:</span>
-                    <span class="metric-value">Foucault, Derrida</span>
-                </div>
-            `;
-        }
-        
-        function closeComparativeModal() {
-            document.getElementById('comparative-analysis-modal').style.display = 'none';
-        }
-        
-        function exportComparativeAnalysis() {
-            // Implementazione esportazione
-            showToast('Funzione di esportazione in sviluppo', 'info');
-        }
-        
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {
-                    refreshAnalyticsDashboard();
-                }
-            }, 2000);
-        });
-    </script>
 
-    <div id="qr-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 10000;">
-        <div class="modal-content" style="text-align: center; max-width: 300px; padding: 25px; border-radius: 20px;">
-            <h3 class="modal-title" data-i18n="qr_title" style="margin-bottom: 15px;">Scarica l'App</h3>
+    <!-- ==================== MODALE QR ==================== -->
+    <div id="qr-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="modal-title">Condividi l'App</h3>
             
-            <div id="qrcode-container" style="display: flex; justify-content: center; margin: 20px auto; padding: 10px; background: white; border-radius: 10px;"></div>
+            <div id="qrcode-container" style="margin: 20px auto; padding: 10px; background: white;"></div>
             
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px; line-height: 1.4;" data-i18n="qr_subtitle">
-                Fai scansionare questo codice per aprire l'app.
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">
+                Scansiona per aprire l'app Aeterna Lexicon
             </p>
             
-            <button class="modal-btn" onclick="closeQRModal()" style="width: 100%; padding: 12px; background: #e2e8f0; border: none; border-radius: 12px; font-weight: 600;">
-                <span data-i18n="btn_close">Chiudi</span>
+            <button class="modal-btn" onclick="closeQRModal()">
+                Chiudi
             </button>
         </div>
     </div>
 
-    <div id="smart-install-banner" class="install-banner" style="display: none;">
+    <!-- ==================== BANNER INSTALLAZIONE PWA ==================== -->
+    <div id="smart-install-banner" class="install-banner">
         <div class="install-text">
-            <span class="install-title" data-i18n="install_title">Installa Aeterna Lexicon</span>
-            <span class="install-subtitle" data-i18n="install_subtitle">Per dataset offline e analisi</span>
+            <span class="install-title">Installa Aeterna Lexicon</span>
+            <span class="install-subtitle">Per accesso offline al dataset</span>
         </div>
-        <button id="smart-install-btn" class="install-action-btn" data-i18n="install_btn" onclick="installPWA()">
+        <button class="install-action-btn" onclick="installPWA()">
             Installa
         </button>
         <button class="install-close-btn" onclick="document.getElementById('smart-install-banner').style.display='none'">
@@ -1770,136 +988,41 @@
         </button>
     </div>
 
+    <!-- ==================== SCRIPT ESTERNI ==================== -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
+    
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics-compat.js"></script>
 
-    <script src="./translations.js"></script>       <script src="./firebase-init.js"></script>      <script src="./geocoding-manager.js"></script>
-    <script src="./linguistic-analysis.js"></script>
-    <script src="./timeline-evolution.js"></script>
-    <script src="./excel-worker.js"></script>
-    <script src="./analytics.js"></script>
-
-    <script src="./app.js"></script>
-
+    <!-- Script dell'app -->
+    <script src="https://derolu0.github.io/aeterna/firebase-init.js"></script>
+    <script src="https://derolu0.github.io/aeterna/geocoding-manager.js"></script>
+    <script src="https://derolu0.github.io/aeterna/app.js"></script>
+    
+    <!-- Service Worker -->
     <script>
-        // SERVICE WORKER REGISTRATION
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 const swUrl = 'https://derolu0.github.io/aeterna/sw.js';
-                fetch(swUrl, { mode: 'no-cors' })
-                  .then(response => {
-                      return navigator.serviceWorker.register(swUrl)
-                          .then(registration => {
-                              console.log('✅ Service Worker registrato:', registration.scope);
-                              registration.addEventListener('updatefound', () => {
-                                  const newWorker = registration.installing;
-                                  newWorker.addEventListener('statechange', () => {
-                                      if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                          showToast('Nuova versione disponibile! Ricarica la pagina.', 'info');
-                                      }
-                                  });
-                              });
-                              return registration;
-                          });
-                  })
-                  .catch(error => {
-                      console.warn('⚠️ Registrazione SW fallita:', error.message);
-                  });
+                navigator.serviceWorker.register(swUrl)
+                    .then(registration => {
+                        console.log('✅ Service Worker registrato');
+                    })
+                    .catch(error => {
+                        console.warn('Service Worker non registrato:', error);
+                    });
             });
         }
         
+        // Gestione installazione PWA
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             window.deferredPrompt = e;
         });
-
-        // INIZIALIZZAZIONE ANALYTICS E DASHBOARD
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                if (window.Analytics && typeof refreshAnalyticsDashboard === 'function') {
-                    refreshAnalyticsDashboard();
-                }
-            }, 2000);
-        });
     </script>
-<div id="admin-modal-filosofo" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; align-items:center; justify-content:center;">
-    <div class="modal-container" style="background:white; width:90%; max-width:600px; max-height:90vh; overflow-y:auto; border-radius:15px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.2); position:relative; margin: 20px auto;">
-        
-        <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
-            <h3 style="margin:0; color:var(--primary-blue);">Gestione Filosofo</h3>
-            <button class="btn-close" onclick="closeModal('admin-modal-filosofo')" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
-        </div>
-
-        <div class="modal-body">
-            <input type="hidden" id="filosofo-id"> 
-
-            <div class="form-group" style="margin-bottom:15px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">Nome Filosofo</label>
-                <input type="text" id="filosofo-nome" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. Platone" required>
-            </div>
-
-            <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
-                <div class="form-group">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Periodo</label>
-                    <select id="filosofo-periodo" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;">
-                        <option value="classico">Classico</option>
-                        <option value="contemporaneo">Contemporaneo</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Scuola</label>
-                    <input type="text" id="filosofo-scuola" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. Accademia">
-                </div>
-            </div>
-
-            <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
-                <div class="form-group">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Anni di Vita</label>
-                    <input type="text" id="filosofo-anni" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. 427-347 a.C.">
-                </div>
-                <div class="form-group">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Luogo di Nascita</label>
-                    <input type="text" id="filosofo-luogo" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. Atene">
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom:15px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">URL Ritratto/Immagine</label>
-                <input type="text" id="filosofo-ritratto" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="https://... o images/nome.jpg">
-            </div>
-
-            <div class="form-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-bottom:15px;">
-                <div class="form-group">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Latitudine</label>
-                    <input type="number" step="any" id="filosofo-lat" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. 37.98">
-                </div>
-                <div class="form-group">
-                    <label style="display:block; font-weight:bold; margin-bottom:5px;">Longitudine</label>
-                    <input type="number" step="any" id="filosofo-lng" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. 23.72">
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom:15px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">Concetti Principali (separati da virgola)</label>
-                <input type="text" id="filosofo-concetti" class="form-control" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px;" placeholder="Es. Iperuranio, Reminiscenza">
-            </div>
-
-            <div class="form-group" style="margin-bottom:20px;">
-                <label style="display:block; font-weight:bold; margin-bottom:5px;">Biografia Completa</label>
-                <textarea id="filosofo-biografia" class="form-control" rows="5" style="width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; font-family:inherit;" placeholder="Inserisci la biografia qui..."></textarea>
-            </div>
-            
-            <button onclick="saveFilosofo()" class="btn-primary" style="width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer; font-size:1rem;">SALVA FILOSOFO</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
