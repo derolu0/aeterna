@@ -1972,3 +1972,60 @@ html, body {
         box-shadow: none !important;
     }
 }
+/* STILI PANNELLO ADMIN AGGIUNTIVI */
+.admin-panel-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 9999; /* Molto alto per stare sopra tutto */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.admin-panel-content {
+    background: white;
+    width: 90%; max-width: 1000px; height: 85vh;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.admin-panel-header {
+    background: #f1f5f9;
+    padding: 15px 20px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.admin-tabs {
+    display: flex;
+    background: #1e293b;
+}
+
+.admin-tab-btn {
+    flex: 1;
+    padding: 15px;
+    background: none; border: none;
+    color: #94a3b8;
+    font-weight: bold; cursor: pointer;
+    border-bottom: 3px solid transparent;
+}
+
+.admin-tab-btn.active {
+    color: white;
+    background: rgba(255,255,255,0.1);
+    border-bottom: 3px solid #3b82f6;
+}
+
+.admin-tab-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: none; /* Fondamentale: nascosti di default */
+}
+
+.admin-tab-content.active {
+    display: block; /* Mostra solo quello attivo */
+}

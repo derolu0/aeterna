@@ -1,6 +1,6 @@
 /**
  * SERVICE WORKER - AETERNA LEXICON (Versione Semplificata)
- * Versione 6.7.1 - Allineato con app senza analytics/multilingua
+ * Versione 6.7.2 - Allineato con app senza analytics/multilingua
  */
 
 const APP_VERSION = '4.0.0';

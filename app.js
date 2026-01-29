@@ -822,3 +822,184 @@ window.openComparativeAnalysis = openComparativeAnalysis;
 window.closeComparativeModal = closeComparativeModal;
 
 console.log('📚 Aeterna Lexicon App.js (Fixed UI) - READY');
+// ==========================================
+// LOGICA PANNELLO ADMIN (COPIA-INCOLLA TOTALE)
+// ==========================================
+
+// 1. APERTURA E CHIUSURA PANNELLO
+function showAdminPanel() {
+    const panel = document.getElementById('admin-panel');
+    if(panel) {
+        panel.style.display = 'flex';
+        // Aggiorna statistiche
+        updateAdminStats();
+        // Aggiorna liste a tendina
+        updateAllSelects();
+    }
+}
+// Alias per compatibilità
+window.openAdminPanel = showAdminPanel;
+
+function closeAdminPanel() {
+    const panel = document.getElementById('admin-panel');
+    if(panel) panel.style.display = 'none';
+}
+
+// 2. CAMBIO SCHEDE (TABS)
+function switchAdminTab(tabId) {
+    // Nascondi tutti i contenuti
+    document.querySelectorAll('.admin-tab-content').forEach(el => {
+        el.style.display = 'none';
+        el.classList.remove('active');
+    });
+    
+    // Disattiva tutti i bottoni
+    document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Mostra contenuto target
+    const target = document.getElementById(tabId);
+    if(target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+    }
+
+    // Attiva bottone (cerchiamo quello che ha l'onclick corrispondente)
+    const btns = document.querySelectorAll('.admin-tab-btn');
+    btns.forEach(btn => {
+        if(btn.getAttribute('onclick').includes(tabId)) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+// 3. AGGIORNAMENTO STATISTICHE DASHBOARD
+async function updateAdminStats() {
+    if(!window.db) return;
+    try {
+        const fil = await window.db.collection('filosofi').get();
+        const op = await window.db.collection('opere').get();
+        const conc = await window.db.collection('concetti').get();
+        
+        document.getElementById('total-filosofi').innerText = fil.size;
+        document.getElementById('total-opere').innerText = op.size;
+        document.getElementById('total-concetti').innerText = conc.size;
+    } catch(e) { console.log("Statistiche non disponibili offline"); }
+}
+
+// 4. POPOLAMENTO MENU A TENDINA (AUTORI)
+async function updateAllSelects() {
+    const selects = ['opera-autore', 'concetto-autore'];
+    if(!window.db) return;
+    
+    try {
+        const snapshot = await window.db.collection('filosofi').get();
+        const filosofi = [];
+        snapshot.forEach(doc => filosofi.push({id: doc.id, ...doc.data()}));
+        
+        // Ordina A-Z
+        filosofi.sort((a,b) => a.nome.localeCompare(b.nome));
+        
+        selects.forEach(id => {
+            const select = document.getElementById(id);
+            if(select) {
+                select.innerHTML = '<option value="">Seleziona...</option>';
+                filosofi.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.id; // Salviamo l'ID del documento
+                    opt.textContent = f.nome;
+                    select.appendChild(opt);
+                });
+            }
+        });
+    } catch(e) { console.error("Errore caricamento select", e); }
+}
+
+// 5. SALVATAGGIO FILOSOFO
+async function saveFilosofo(e) {
+    e.preventDefault();
+    const nome = document.getElementById('filosofo-nome').value;
+    if(!nome) return alert("Inserisci almeno il nome!");
+
+    const data = {
+        nome: nome,
+        periodo: document.getElementById('filosofo-periodo').value,
+        scuola: document.getElementById('filosofo-scuola').value,
+        anni_vita: document.getElementById('filosofo-anni').value,
+        luogo_nascita: document.getElementById('filosofo-citta').value, // Semplificato
+        biografia: document.getElementById('filosofo-biografia').value,
+        concetti_principali: document.getElementById('filosofo-concetti').value.split(','),
+        createdAt: new Date().toISOString()
+    };
+    
+    // Gestione coordinate se inserite
+    const lat = document.getElementById('filosofo-lat').value;
+    const lng = document.getElementById('filosofo-lng').value;
+    if(lat && lng) {
+        data.coordinate = { lat: parseFloat(lat), lng: parseFloat(lng) };
+    }
+
+    try {
+        await window.db.collection('filosofi').add(data);
+        alert("Filosofo salvato con successo!");
+        document.getElementById('filosofo-form').reset();
+        updateAdminStats(); // Aggiorna contatori
+        updateAllSelects(); // Aggiorna le tendine delle altre schede
+    } catch(err) {
+        alert("Errore salvataggio: " + err.message);
+    }
+}
+
+// 6. SALVATAGGIO OPERA
+async function saveOpera(e) {
+    e.preventDefault();
+    const titolo = document.getElementById('opera-titolo').value;
+    const autoreId = document.getElementById('opera-autore').value;
+    
+    if(!titolo || !autoreId) return alert("Titolo e Autore obbligatori!");
+    
+    // Recupera nome autore dalla select
+    const sel = document.getElementById('opera-autore');
+    const autoreNome = sel.options[sel.selectedIndex].text;
+
+    const data = {
+        titolo: titolo,
+        autore_id: autoreId,
+        autore_nome: autoreNome,
+        anno: document.getElementById('opera-anno').value,
+        periodo: document.getElementById('opera-periodo').value,
+        sintesi: document.getElementById('opera-sintesi').value,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await window.db.collection('opere').add(data);
+        alert("Opera salvata!");
+        document.getElementById('opera-form').reset();
+        updateAdminStats();
+    } catch(err) { alert("Errore: " + err.message); }
+}
+
+// 7. SALVATAGGIO CONCETTO
+async function saveConcetto(e) {
+    e.preventDefault();
+    const parola = document.getElementById('concetto-parola').value;
+    if(!parola) return alert("Parola chiave obbligatoria!");
+
+    const data = {
+        parola: parola,
+        periodo: document.getElementById('concetto-periodo').value,
+        autore_riferimento: document.getElementById('concetto-autore').value,
+        definizione: document.getElementById('concetto-definizione').value,
+        evoluzione: document.getElementById('concetto-evoluzione').value,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await window.db.collection('concetti').add(data);
+        alert("Concetto salvato!");
+        document.getElementById('concetto-form').reset();
+        updateAdminStats();
+    } catch(err) { alert("Errore: " + err.message); }
+}
