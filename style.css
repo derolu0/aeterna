@@ -2109,3 +2109,34 @@ html, body {
         display: none; /* Risparmia spazio su schermi piccoli */
     }
 }
+/* GESTIONE SPLASH SCREEN - CORREZIONE */
+.splash-screen {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--background, #f8fafc);
+    display: flex; /* Flex serve per centrare il logo */
+    justify-content: center;
+    align-items: center;
+    z-index: 99999; /* Sopra a tutto */
+    transition: opacity 0.5s ease-out, visibility 0.5s;
+}
+
+/* Questa è la classe che mancava o non funzionava */
+.splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Permette di cliccare sotto anche se l'animazione si incanta */
+}
+
+/* Animazioni estetiche */
+.splash-logo { font-size: 4rem; margin-bottom: 20px; animation: float 3s ease-in-out infinite; }
+.loader {
+    width: 40px; height: 40px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    margin: 20px auto;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }

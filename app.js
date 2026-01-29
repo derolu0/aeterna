@@ -1,7 +1,7 @@
 /**
- * AETERNA LEXICON IN MOTU - APP.JS (FIXED UI)
+ * AETERNA LEXICON IN MOTU - APP.JS (FIXED UI & ADMIN)
  * Project Work Filosofico - Dataset per analisi trasformazioni linguistiche
- * Versione 3.2.0 - Fix Mappa, Pulsanti Luogo e Banner PWA
+ * Versione 3.3.0 - Fix Splash Screen, PWA & Import/Export
  */
 
 // ==================== VARIABILI DI STATO ====================
@@ -22,6 +22,48 @@ let networkInstance = null;
 
 // PWA Installation
 let deferredPrompt = null;
+
+
+// ==================== INIZIALIZZAZIONE APP (FIXED) ====================
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('📚 Aeterna Lexicon - Avvio...');
+    
+    // 1. GESTIONE SPLASH SCREEN (Sblocco interfaccia)
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+            // Aggiunge la classe .hidden per l'animazione CSS
+            splash.classList.add('hidden');
+            
+            // Dopo 0.5s rimuove fisicamente l'elemento
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 500);
+        } else {
+            console.warn("Splash screen non trovato nell'HTML");
+        }
+        
+        // Controlli di avvio interfaccia
+        if(typeof checkMaintenanceMode === 'function') checkMaintenanceMode();
+        showScreen('home-screen');
+        if(typeof handleUrlParameters === 'function') handleUrlParameters();
+        
+        console.log('✅ Interfaccia Sbloccata');
+    }, 2000); // Attesa di 2 secondi per vedere il logo
+    
+    // 2. CARICAMENTO DATI FIREBASE
+    if (window.initializeFirebase) window.initializeFirebase();
+    
+    // Carica dataset
+    await loadPhilosophicalData();
+    
+    // Setup listeners di base
+    if (typeof setupConnectionListeners === 'function') setupConnectionListeners();
+    
+    // 3. ATTIVAZIONE IMPORT EXCEL (Fondamentale per Admin)
+    // Questo attiva i listener sui pulsanti di importazione file
+    if (typeof setupImportListeners === 'function') setupImportListeners();
+});
 
 
 // ==================== GESTIONE NAVIGAZIONE (FIXED) ====================
@@ -104,7 +146,6 @@ function handleUrlParameters() {
         }
     }
 }
-
 // ==================== GESTIONE MENU & MODALI (FIXED) ====================
 
 // Apre/Chiude il menu laterale

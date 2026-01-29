@@ -3,7 +3,7 @@
  * Versione 5.0.0 - FIXED (Icone & Percorsi corretti)
  */
 
-const APP_VERSION = '8.0.0';
+const APP_VERSION = '8.0.1';
 const CACHE_NAME = `aeterna-lexicon-${APP_VERSION}`;
 // Usa il percorso base corretto per GitHub Pages
 const BASE_URL = 'https://derolu0.github.io/aeterna/';
