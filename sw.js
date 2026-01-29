@@ -3,7 +3,7 @@
  * Versione 4.0.0 - Offline con dati integrati
  */
 
-const APP_VERSION = '9.1.4';
+const APP_VERSION = '9.1.5';
 const CACHE_NAME = `aeterna-lexicon-${APP_VERSION}`;
 
 // Lista asset essenziali
