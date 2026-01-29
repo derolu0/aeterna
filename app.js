@@ -40,7 +40,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 37.9838, lng: 23.7275 },
         citta_nascita: "Atene",
         paese_nascita: "Grecia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Plato_-_Platon.jpg/220px-Plato_-_Platon.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/platone.jpg"
     },
     {
         id: "F2",
@@ -66,7 +66,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 36.8625, lng: 10.1956 },
         citta_nascita: "Tagaste",
         paese_nascita: "Algeria",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Saint_Augustine_by_Philippe_de_Champaigne.jpg/220px-Saint_Augustine_by_Philippe_de_Champaigne.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/agostino.jpg"
     },
     {
         id: "F4",
@@ -79,7 +79,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 41.4664, lng: 12.6871 },
         citta_nascita: "Roccasecca",
         paese_nascita: "Italia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/78/Carlos_III_de_Espa%C3%B1a_por_Mengs.jpg/220px-Carlos_III_de_Espa%C3%B1a_por_Mengs.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/tommaso.jpg"
     },
     {
         id: "F5",
@@ -118,7 +118,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 48.7758, lng: 9.1829 },
         citta_nascita: "Stoccarda",
         paese_nascita: "Germania",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Georg_Wilhelm_Friedrich_Hegel.jpg/220px-Georg_Wilhelm_Friedrich_Hegel.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/hegel.jpg"
     },
     {
         id: "F8",
@@ -157,7 +157,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 55.6761, lng: 12.5683 },
         citta_nascita: "Copenaghen",
         paese_nascita: "Danimarca",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/S%C3%B8ren_Kierkegaard_%281813-1855%29.png/220px-S%C3%B8ren_Kierkegaard_%281813-1855%29.png"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/kierkegaard.jpg"
     },
     // ============ FILOSOFI CONTEMPORANEI ============
     {
@@ -171,7 +171,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 47.8667, lng: 8.2167 },
         citta_nascita: "Meßkirch",
         paese_nascita: "Germania",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Martin_Heidegger_2.jpg/220px-Martin_Heidegger_2.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/heidegger.jpg"
     },
     {
         id: "F12",
@@ -184,7 +184,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 48.2082, lng: 16.3738 },
         citta_nascita: "Vienna",
         paese_nascita: "Austria",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Ludwig_Wittgenstein_%281930s%29.jpg/220px-Ludwig_Wittgenstein_%281930s%29.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/wittgenstein.jpg"
     },
     {
         id: "F13",
@@ -210,7 +210,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 49.1829, lng: -0.3707 },
         citta_nascita: "Poitiers",
         paese_nascita: "Francia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Michel_Foucault.jpg/220px-Michel_Foucault.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/foucault.jpg"
     },
     {
         id: "F15",
@@ -223,7 +223,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 33.9716, lng: -6.8498 },
         citta_nascita: "El Biar",
         paese_nascita: "Algeria",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Jacques_Derrida.jpg/220px-Jacques_Derrida.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/derrida.jpg"
     },
     {
         id: "F16",
@@ -236,7 +236,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 39.9526, lng: -75.1652 },
         citta_nascita: "Cleveland",
         paese_nascita: "USA",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Judith_Butler_%28cropped%29.png/220px-Judith_Butler_%28cropped%29.png"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/butler.jpg"
     },
     {
         id: "F17",
@@ -249,7 +249,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 45.4408, lng: 12.3155 },
         citta_nascita: "Roma",
         paese_nascita: "Italia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Giorgio_Agamben_in_2009.jpg/220px-Giorgio_Agamben_in_2009.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/agamben.jpg"
     },
     {
         id: "F18",
@@ -262,7 +262,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 40.7128, lng: -74.0060 },
         citta_nascita: "New York",
         paese_nascita: "USA",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Martha_Nussbaum.jpg/220px-Martha_Nussbaum.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/nussbaum.jpg"
     },
     {
         id: "F19",
@@ -275,7 +275,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 46.0569, lng: 14.5058 },
         citta_nascita: "Lubiana",
         paese_nascita: "Slovenia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Slavoj_%C5%BDi%C5%BEek.jpg/220px-Slavoj_%C5%BDi%C5%BEek.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/zizek.jpg"
     },
     {
         id: "F20",
@@ -288,7 +288,7 @@ const FILOSOFI_DATASET = [
         coordinate: { lat: 37.5665, lng: 126.9780 },
         citta_nascita: "Seoul",
         paese_nascita: "Corea del Sud",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Byung-Chul_Han_%282022%29.jpg/220px-Byung-Chul_Han_%282022%29.jpg"
+        immagine: "https://derolu0.github.io/aeterna/images/filosofi/han.jpg"
     }
 ];
 
