@@ -818,7 +818,7 @@ function createFilosofoCard(filosofo) {
 function createOperaCard(opera) {
     const card = document.createElement('div');
     card.className = 'compact-item';
-    card.classList.add(`border-${opera.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}`);
+    card.classList.add(`border-${opera.periodo === 'contemporaneo' ? 'contemporaneo' : 'classico'}`);
     
     // Percorso immagine di default
     const defaultImage = "images/default-opera.jpg";
@@ -856,20 +856,7 @@ function createOperaCard(opera) {
                  "
                  onload="console.log('Immagine caricata per: ${opera.titolo}')">
             
-            <!-- Badge periodo in alto a destra -->
-            <div style="
-                position: absolute;
-                top: 8px;
-                right: 8px;
-                background: ${opera.periodo === 'contemporaneo' ? 'rgba(245, 158, 11, 0.9)' : 'rgba(59, 130, 246, 0.9)'};
-                color: white;
-                padding: 3px 8px;
-                border-radius: 12px;
-                font-size: 0.7rem;
-                font-weight: bold;
-            ">
-                ${opera.periodo === 'contemporaneo' ? 'CONTEMP.' : 'CLASSICO'}
-            </div>
+            <!-- NOTA: RIMOSSO IL BADGE PERIODO DALLA FOTO -->
         </div>
         <div class="compact-item-content">
             <div class="compact-item-header">
