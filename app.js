@@ -820,9 +820,56 @@ function createOperaCard(opera) {
     card.className = 'compact-item';
     card.classList.add(`border-${opera.periodo === 'contemporaneo' ? 'contemporary' : 'classic'}`);
     
+    // Percorso immagine di default
+    const defaultImage = "images/default-opera.jpg";
+    
+    // Colori per fallback
+    const fallbackColor = opera.periodo === 'contemporaneo' 
+        ? 'linear-gradient(135deg, #f59e0b, #d97706)' 
+        : 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
+    
     card.innerHTML = `
-        <div class="compact-item-image-container">
-            <div class="compact-image-fallback">📖</div>
+        <div class="compact-item-image-container" style="position: relative;">
+            <!-- IMMAGINE DI DEFAULT -->
+            <img src="${defaultImage}" 
+                 alt="${opera.titolo}"
+                 class="opera-default-image"
+                 style="
+                    width: 100%;
+                    height: 120px;
+                    object-fit: cover;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                 "
+                 onerror="
+                    // Se l'immagine non carica, mostra fallback colorato
+                    console.log('Usando fallback per: ${opera.titolo}');
+                    this.style.display = 'none';
+                    
+                    // Crea elemento fallback
+                    var fallback = document.createElement('div');
+                    fallback.style.cssText = 'width:100%;height:120px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:${fallbackColor};color:white;';
+                    fallback.innerHTML = '📚';
+                    
+                    // Sostituisci
+                    this.parentNode.appendChild(fallback);
+                 "
+                 onload="console.log('Immagine caricata per: ${opera.titolo}')">
+            
+            <!-- Badge periodo in alto a destra -->
+            <div style="
+                position: absolute;
+                top: 8px;
+                right: 8px;
+                background: ${opera.periodo === 'contemporaneo' ? 'rgba(245, 158, 11, 0.9)' : 'rgba(59, 130, 246, 0.9)'};
+                color: white;
+                padding: 3px 8px;
+                border-radius: 12px;
+                font-size: 0.7rem;
+                font-weight: bold;
+            ">
+                ${opera.periodo === 'contemporaneo' ? 'CONTEMP.' : 'CLASSICO'}
+            </div>
         </div>
         <div class="compact-item-content">
             <div class="compact-item-header">
@@ -835,6 +882,7 @@ function createOperaCard(opera) {
             </div>
         </div>
     `;
+    
     card.addEventListener('click', () => showOperaDetail(opera.id));
     return card;
 }
