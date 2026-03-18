@@ -1072,6 +1072,12 @@ function openReportScreen() {
     showScreen('segnalazioni-screen');
 }
 
+function openProjectWorkPDF() {
+    closeMenuModal();
+    // Apre il tuo pdf specifico in una nuova scheda
+    window.open('Project-work.pdf', '_blank'); 
+}
+
 function openQRModal() {
     closeMenuModal();
     
@@ -2321,6 +2327,7 @@ window.toggleMenuModal = toggleMenuModal;
 window.closeMenuModal = closeMenuModal;
 window.openCreditsScreen = openCreditsScreen;
 window.openReportScreen = openReportScreen;
+window.openProjectWorkPDF = openProjectWorkPDF;
 window.openQRModal = openQRModal;
 window.closeQRModal = closeQRModal;
 window.openAdminPanel = openAdminPanel;
