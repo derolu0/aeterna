@@ -1074,8 +1074,12 @@ function openReportScreen() {
 
 function openProjectWorkPDF() {
     closeMenuModal();
-    // Apre il tuo pdf specifico in una nuova scheda
-    window.open('Project-work.pdf', '_blank'); 
+    
+    // Il tuo link pubblico esatto su GitHub Pages
+    const urlDelMioPDF = 'https://derolu0.github.io/aeterna/Project-work.pdf';
+    
+    // Google Viewer forza la visualizzazione su tutti i telefoni (senza scaricare)
+    window.open('https://drive.google.com/viewerng/viewer?embedded=true&url=' + encodeURIComponent(urlDelMioPDF), '_blank'); 
 }
 
 function openQRModal() {

@@ -1,9 +1,9 @@
 /**
  * SERVICE WORKER - AETERNA LEXICON IN MOTU
- * Versione 4.0.1 - Offline con dati integrati
+ * Versione 4.0.2 - Offline con dati integrati
  */
 
-const APP_VERSION = '9.1.7';
+const APP_VERSION = '9.1.8';
 const CACHE_NAME = `aeterna-lexicon-${APP_VERSION}`;
 
 // Lista asset essenziali
