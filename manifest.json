@@ -1,7 +1,7 @@
 {
-  "name": "Aeterna Lexicon in Motu",
-  "short_name": "Lexicon Motu",
-  "description": "Dataset per l'analisi delle trasformazioni del linguaggio filosofico tra classico e contemporaneo",
+  "name": "Aeterna - Lexicon in Motu",
+  "short_name": "Aeterna",
+  "description": "Digital Humanities research tool for the computational analysis of philosophical concepts.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -45,7 +45,7 @@
       "type": "image/png"
     }
   ],
-  "categories": ["education", "books"],
+  "categories": ["education", "books", "philosophy", "research"],
   "shortcuts": [
     {
       "name": "Filosofi",
@@ -76,5 +76,5 @@
   "lang": "it",
   "dir": "ltr",
   "version": "4.0.0",
-  "author": "Salvatore De Rosa - Project Work Filosofico"
+  "author": "Salvatore De Rosa - Digital Humanities Research"
 }
