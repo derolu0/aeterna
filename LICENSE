@@ -1,45 +1,22 @@
-PROPRIETARY LICENSE & COPYRIGHT NOTICE - PROJECT AETERNA
+### 📄 LICENZA E COPYRIGHT – PROGETTO AETERNA
+**Copyright © 2026 Salvatore De Rosa. Tutti i diritti riservati.**
 
-Copyright (c) 2026 Salvatore De Rosa
+#### 1. PROPRIETÀ INTELLETTUALE
+Il software, il codice sorgente, l'architettura dei dati (JSON) e il design contenuti in questo repository sono di proprietà esclusiva di Salvatore De Rosa. Il progetto è il risultato di una ricerca accademica originale volta a integrare filosofia e informatica umanistica.
 
-ALL RIGHTS RESERVED.
+#### 2. FINALITÀ E ACCESSO (OPEN RESEARCH)
+In linea con i principi della Open Science, il codice è reso pubblico per:
+* Favorire la trasparenza metodologica e la peer-review accademica.
+* Promuovere lo studio personale e il libero scambio di conoscenze filosofiche.
+* Consentire la valutazione del progetto da parte di istituzioni di ricerca e aggregatori (es. DH Atlas).
 
-1. OWNERSHIP
-The software, source code, content, and design contained in this repository are the intellectual property of Salvatore De Rosa.
+#### 3. RESTRIZIONI E CONDIZIONI D'USO
+* USO NON COMMERCIALE: È severamente vietato l'utilizzo del software o di parte del codice per scopi di lucro, vendita, noleggio o inserimento in prodotti commerciali senza esplicita autorizzazione scritta dell'autore.
+* ATTRIBUZIONE: Qualsiasi riferimento o citazione del progetto in contesti accademici o divulgativi deve riportare obbligatoriamente il nome dell'autore: Salvatore De Rosa.
+* INTEGRITÀ: È consentito effettuare il "fork" del repository per soli scopi di studio. Non è consentita la distribuzione di versioni derivate che ne alterino la finalità originaria senza consenso dell'autore.
 
-2. PURPOSE & USAGE
-This software is developed for educational, philosophical, and non-profit purposes. It is intended to promote the free exchange of ideas and knowledge.
+#### 4. ESCLUSIONE DI RESPONSABILITÀ
+Il software viene fornito "così com'è", a scopo dimostrativo e di ricerca, senza garanzie di alcun tipo, esplicite o implicite.
 
-3. RESTRICTIONS
-- COMMERCIAL USE IS STRICTLY PROHIBITED.
-- You may NOT sell, resell, rent, or lease this software or any part of its source code.
-- You may view and fork this code for personal study or academic evaluation.
-- You may NOT use this code for any commercial product without explicit written permission from the author.
-
-4. DISCLAIMER
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
-
--------------------------------------------------------------------------
-
-VERSIONE ITALIANA / ITALIAN VERSION
-
-LICENZA PROPRIETARIA & AVVISO DI COPYRIGHT - PROGETTO AETERNA
-
-Copyright (c) 2026 Salvatore De Rosa
-
-TUTTI I DIRITTI RISERVATI.
-
-1. PROPRIETÀ
-Il software, il codice sorgente, i contenuti e il design contenuti in questo repository sono proprietà intellettuale di Salvatore De Rosa.
-
-2. FINALITÀ E USO
-Questo software è sviluppato per scopi educativi, filosofici e senza fini di lucro. L'intento è promuovere il libero scambio di idee e conoscenza.
-
-3. RESTRIZIONI
-- L'USO COMMERCIALE È SEVERAMENTE VIETATO.
-- NON è consentito vendere, rivendere, affittare o noleggiare questo software o parti del suo codice sorgente.
-- È consentito visionare e fare "fork" di questo codice per studio personale o valutazione accademica.
-- NON è consentito utilizzare questo codice per alcun prodotto commerciale senza esplicita autorizzazione scritta dell'autore.
-
-4. ESCLUSIONE DI RESPONSABILITÀ
-IL SOFTWARE È FORNITO "COSÌ COM'È", SENZA GARANZIA DI ALCUN TIPO, ESPRESSA O IMPLICITA.
+---
+*Per richieste di autorizzazione o collaborazioni accademiche, contattare l'autore tramite il profilo GitHub.*
