@@ -1,0 +1,234 @@
+{
+  "concepts": [
+    {
+      "id": "C1",
+      "parola": "Essere",
+      "dominio": "Ontologia",
+      "periodo": "entrambi",
+      "definizione": "Fondamento della realtà, ciò che esiste. In Aristotele: essere come sostanza. In Heidegger: essere come evento che si dà nella temporalità.",
+      "evoluzione": "CLASSICO: Sostanza statica ed eterna (Aristotele). CONTEMPORANEO: Evento storico e processuale (Heidegger). Trasformazione da ontologia sostanzialista a ontologia dell'evento.",
+      "esempio": "Aristotele: 'L'essere si dice in molti modi'. Heidegger: 'L'essere si dà nell'evento appropriante'.",
+      "autore_riferimento": "F2, F11"
+    },
+    {
+      "id": "C2",
+      "parola": "Sostanza",
+      "dominio": "Ontologia",
+      "periodo": "classico",
+      "definizione": "Ciò che esiste di per sé, soggetto di attributi. In Aristotele: sinolo di materia e forma. Ciò che permane nei cambiamenti.",
+      "evoluzione": "Concetto centrale nella metafisica classica, criticato e abbandonato nella filosofia contemporanea. Sostituito da relazione, processo, struttura.",
+      "esempio": "Aristotele: 'La sostanza è l'essere primo'. Deleuze: critica della sostanza a favore del divenire e della molteplicità.",
+      "autore_riferimento": "F2"
+    },
+    {
+      "id": "C3",
+      "parola": "Relazione",
+      "dominio": "Ontologia",
+      "periodo": "contemporaneo",
+      "definizione": "Modo di essere che implica connessione tra enti. Prioritaria rispetto alla sostanza nella filosofia contemporanea. Struttura ontologica fondamentale.",
+      "evoluzione": "Da categoria accidentale in Aristotele (relazione come uno dei nove accidenti) a struttura ontologica fondamentale nella filosofia contemporanea (Whitehead, Deleuze).",
+      "esempio": "Whitehead: 'L'attuale entità è un processo di relazioni'. Tutto ciò che è, è in relazione.",
+      "autore_riferimento": "F15"
+    },
+    {
+      "id": "C4",
+      "parola": "Verità",
+      "dominio": "Epistemologia",
+      "periodo": "entrambi",
+      "definizione": "Corrispondenza tra pensiero e realtà (adaequatio intellectus et rei) nella tradizione classica. Nella contemporaneità: costruzione discorsiva, evento, effetto di potere.",
+      "evoluzione": "CLASSICO: Verità come corrispondenza oggettiva (Tommaso). CONTEMPORANEO: Verità come costruzione storica (Nietzsche), evento di disvelamento (Heidegger), effetto di regimi discorsivi (Foucault).",
+      "esempio": "Tommaso: 'Veritas est adaequatio rei et intellectus'. Nietzsche: 'Non ci sono fatti, solo interpretazioni'.",
+      "autore_riferimento": "F4, F8"
+    },
+    {
+      "id": "C5",
+      "parola": "Conoscenza",
+      "dominio": "Epistemologia",
+      "periodo": "entrambi",
+      "definizione": "Possesso di informazioni vere e giustificate (episteme) nella tradizione classica. Nella contemporaneità: pratica situata, potere, costruzione storica.",
+      "evoluzione": "Da episteme come conoscenza certa e fondata a sapere come costruzione storica e strumento di potere. Passaggio da epistemologia a genealogia del sapere.",
+      "esempio": "Platone: conoscenza delle Idee (episteme) vs opinione (doxa). Foucault: 'Il sapere è potere', analisi delle formazioni discorsive.",
+      "autore_riferimento": "F1, F14"
+    },
+    {
+      "id": "C6",
+      "parola": "Ragione",
+      "dominio": "Epistemologia",
+      "periodo": "entrambi",
+      "definizione": "Facoltà di pensare, argomentare e conoscere. Da logos universale (classico) a ragione situata, incarnata, critica (contemporaneo).",
+      "evoluzione": "CLASSICO: Ragione come facoltà universale e autonoma (Kant). CONTEMPORANEO: Ragione come storicamente situata (Gadamer), strumentale (Horkheimer), incarnata (Merleau-Ponty).",
+      "esempio": "Kant: 'Sapere aude! Abbi il coraggio di servirti della tua propria intelligenza'. Horkheimer: critica della ragione strumentale.",
+      "autore_riferimento": "F6"
+    },
+    {
+      "id": "C7",
+      "parola": "Bene",
+      "dominio": "Etica",
+      "periodo": "entrambi",
+      "definizione": "Ciò che è desiderabile o perfettivo. Nella tradizione classica: Idea del Bene (Platone), bene oggettivo. Nella contemporaneità: bene situato, relazionale, contestuale.",
+      "evoluzione": "Da Bene trascendente e oggettivo a bene immanente e relazionale. Da etica delle virtù a etica della cura, della responsabilità, del riconoscimento.",
+      "esempio": "Platone: 'Il Bene è al di sopra dell'essere'. Levinas: l'Altro come orizzonte etico, responsabilità per l'altro.",
+      "autore_riferimento": "F1"
+    },
+    {
+      "id": "C8",
+      "parola": "Libertà",
+      "dominio": "Etica",
+      "periodo": "entrambi",
+      "definizione": "Capacità di agire senza costrizioni. Nella tradizione classica: libertà come autodeterminazione della volontà. Nella contemporaneità: libertà come responsabilità, situazione, progetto.",
+      "evoluzione": "Da libertà come proprietà della volontà (Kant) a libertà come condizione esistenziale (Sartre), situata e condizionata (Foucault).",
+      "esempio": "Kant: autonomia della volontà come obbedienza alla legge morale che la ragione si dà. Sartre: 'Siamo condannati a essere liberi'.",
+      "autore_riferimento": "F6, F13"
+    },
+    {
+      "id": "C9",
+      "parola": "Responsabilità",
+      "dominio": "Etica",
+      "periodo": "contemporaneo",
+      "definizione": "Rispondere dell'altro prima di ogni scelta. Concetto centrale nell'etica contemporanea, specialmente dopo Levinas e Jonas.",
+      "evoluzione": "Da responsabilità giuridica e limitata a responsabilità etica illimitata verso l'altro. Da responsabilità per le proprie azioni a responsabilità per l'altro, per le generazioni future, per il pianeta.",
+      "esempio": "Levinas: 'La responsabilità per l'altro mi costituisce come soggetto'. Jonas: principio responsabilità verso le generazioni future.",
+      "autore_riferimento": "F13"
+    },
+    {
+      "id": "C10",
+      "parola": "Potere",
+      "dominio": "Politica",
+      "periodo": "entrambi",
+      "definizione": "Capacità di influenzare il comportamento. Nella tradizione classica: potere sovrano, diritto di vita e di morte. Nella contemporaneità: potere diffuso, produttivo, capillare.",
+      "evoluzione": "Da potere sovrano (Hobbes) a potere disciplinare (Foucault) e biopotere. Da potere come repressione a potere come produzione di soggettività.",
+      "esempio": "Hobbes: potere come leviatano che garantisce sicurezza. Foucault: 'Il potere è ovunque', potere produttivo che crea saperi e soggetti.",
+      "autore_riferimento": "F14"
+    },
+    {
+      "id": "C11",
+      "parola": "Giustizia",
+      "dominio": "Politica",
+      "periodo": "entrambi",
+      "definizione": "Virtù che dà a ciascuno il suo. Da giustizia distributiva (Aristotele) a giustizia come equità (Rawls) o riconoscimento (Honneth).",
+      "evoluzione": "CLASSICO: Giustizia come proporzione e equità distributiva. CONTEMPORANEO: Giustizia come riconoscimento, capacità, riparazione. Allargamento della nozione oltre la distribuzione materiale.",
+      "esempio": "Aristotele: giustizia distributiva (secondo merito) e commutativa. Rawls: 'Giustizia come equità' con principi di libertà e differenza.",
+      "autore_riferimento": "F2, F18"
+    },
+    {
+      "id": "C12",
+      "parola": "Comunità",
+      "dominio": "Politica",
+      "periodo": "entrambi",
+      "definizione": "Insieme di individui legati da valori comuni. Da comunità organica (classico) a comunità senza identità, inoperosa, degli esclusi (contemporaneo).",
+      "evoluzione": "Da comunità come organismo unitario con identità forte a comunità come spazio di esposizione alla singolarità (Nancy), comunità degli esclusi (Agamben).",
+      "esempio": "Aristotele: 'L'uomo è animale politico' (zoon politikon). Nancy: 'Comunità inoperosa' come esposizione reciproca delle singolarità.",
+      "autore_riferimento": "F2, F17"
+    },
+    {
+      "id": "C13",
+      "parola": "Soggetto",
+      "dominio": "Antropologia",
+      "periodo": "entrambi",
+      "definizione": "Individuo cosciente e autonomo. Nella tradizione classica: soggetto sostanziale, cogito cartesiano. Nella contemporaneità: soggetto decentrato, costruito, effetto.",
+      "evoluzione": "Da soggetto come fondamento (Descartes) a soggetto come effetto del linguaggio (Wittgenstein), del potere (Foucault), dell'inconscio (Lacan). Soggetto come costruzione storica.",
+      "esempio": "Descartes: 'Cogito ergo sum'. Foucault: 'Il soggetto è un effetto del potere'. Butler: soggetto come performatività.",
+      "autore_riferimento": "F5, F14"
+    },
+    {
+      "id": "C14",
+      "parola": "Corpo",
+      "dominio": "Antropologia",
+      "periodo": "entrambi",
+      "definizione": "Realtà materiale dell'essere umano. Nella tradizione classica: prigione dell'anima, ostacolo alla conoscenza. Nella contemporaneità: luogo di espressione, medium della coscienza, oggetto di potere.",
+      "evoluzione": "Da corpo come ostacolo (Platone) a corpo come medium della coscienza (Merleau-Ponty) o superficie di iscrizione del potere (Foucault). Rivalutazione del corpo nella filosofia contemporanea.",
+      "esempio": "Platone: 'Il corpo è la tomba dell'anima'. Merleau-Ponty: 'Siamo il nostro corpo'. Foucault: corpo disciplinato.",
+      "autore_riferimento": "F1, F14"
+    },
+    {
+      "id": "C15",
+      "parola": "Desiderio",
+      "dominio": "Antropologia",
+      "periodo": "entrambi",
+      "definizione": "Tendenza verso un oggetto percepito come buono. Nella tradizione classica: desiderio come mancanza (Platone). Nella contemporaneità: desiderio come produzione, forza attiva.",
+      "evoluzione": "Da desiderio come mancanza da colmare a desiderio come produzione creativa (Deleuze). Da desiderio come passività a desiderio come attività, forza che produce realtà.",
+      "esempio": "Platone: Eros come desiderio dell'immortalità, del Bene. Deleuze e Guattari: 'Il desiderio produce la realtà sociale'.",
+      "autore_riferimento": "F1"
+    },
+    {
+      "id": "C16",
+      "parola": "Bello",
+      "dominio": "Estetica",
+      "periodo": "entrambi",
+      "definizione": "Ciò che suscita piacere disinteressato. Nella tradizione classica: bellezza come armonia, proporzione, riflesso dell'Idea. Nella contemporaneità: bellezza come inquietante, sublime, evento.",
+      "evoluzione": "Da bello come armonia e proporzione a sublime come esperienza del limite (Kant, Lyotard). Da bellezza ideale a bellezza come evento che dischiude verità (Heidegger).",
+      "esempio": "Platone: bellezza delle Idee. Kant: sublime come esperienza dell'illimitato. Heidegger: 'L'arte dischiude la verità'.",
+      "autore_riferimento": "F1, F6"
+    },
+    {
+      "id": "C17",
+      "parola": "Arte",
+      "dominio": "Estetica",
+      "periodo": "entrambi",
+      "definizione": "Produzione umana di opere significative. Nella tradizione classica: mimesi della natura (imitazione). Nella contemporaneità: espressione, creazione, evento di verità.",
+      "evoluzione": "Da arte come imitazione (mimesis) a arte come espressione (Croce), creazione (Bergson), evento di verità (Heidegger). Da arte come rappresentazione a arte come produzione di senso.",
+      "esempio": "Aristotele: 'L'arte imita la natura'. Heidegger: 'L'arte è il porre-in-opera della verità'.",
+      "autore_riferimento": "F2, F11"
+    },
+    {
+      "id": "C18",
+      "parola": "Tempo",
+      "dominio": "Metafisica",
+      "periodo": "entrambi",
+      "definizione": "Dimensione del divenire. Nella tradizione classica: tempo cosmico, misura del movimento. Nella contemporaneità: tempo esistenziale, cura, differimento.",
+      "evoluzione": "Da tempo come movimento circolare (Aristotele) a tempo come cura (Heidegger), differimento (Derrida), durata (Bergson). Temporalizzazione dell'essere.",
+      "esempio": "Agostino: 'Che cos'è dunque il tempo? Se nessuno me lo chiede, lo so; se voglio spiegarlo a chi me lo chiede, non lo so'. Heidegger: 'Il tempo è l'orizzonte dell'essere'.",
+      "autore_riferimento": "F3, F11"
+    },
+    {
+      "id": "C19",
+      "parola": "Causalità",
+      "dominio": "Metafisica",
+      "periodo": "classico",
+      "definizione": "Relazione tra causa ed effetto. Le quattro cause aristoteliche: materiale, formale, efficiente, finale. Concetto fondamentale nella scienza e metafisica classica.",
+      "evoluzione": "Criticata da Hume (nesso causale come abitudine) e dalla scienza moderna (sostituita da probabilità, relazione statistica). Nella filosofia contemporanea: sostituita da relazione, struttura, sistema.",
+      "esempio": "Aristotele: 'Tutto ciò che si muove è mosso da un altro'. Hume: critica del nesso causale come necessità logica.",
+      "autore_riferimento": "F2"
+    },
+    {
+      "id": "C20",
+      "parola": "Contingenza",
+      "dominio": "Metafisica",
+      "periodo": "contemporaneo",
+      "definizione": "Carattere di ciò che potrebbe non essere o essere altrimenti. Opposta alla necessità. Concetto centrale nella filosofia contemporanea.",
+      "evoluzione": "Da categoria marginale nella filosofia classica a principio ontologico fondamentale nella filosofia contemporanea. Affermazione della contingenza contro ogni necessità metafisica.",
+      "esempio": "Heidegger: 'L'Esserci è il fondamento di una nullità'. Vattimo: 'Pensiero debole' della contingenza contro i fondamenti forti.",
+      "autore_riferimento": "F11"
+    },
+    {
+      "id": "C21",
+      "parola": "Linguaggio",
+      "dominio": "Linguistica",
+      "periodo": "entrambi",
+      "definizione": "Sistema di segni per comunicare. Nella tradizione classica: strumento di rappresentazione della realtà. Nella contemporaneità: casa dell'essere, gioco, pratica sociale.",
+      "evoluzione": "Da linguaggio come copia della realtà a linguaggio come costituzione del mondo (Wittgenstein, Heidegger). Svolta linguistica nella filosofia del Novecento.",
+      "esempio": "Aristotele: 'Le parole sono simboli delle affezioni dell'anima'. Heidegger: 'Il linguaggio è la casa dell'essere'. Wittgenstein: 'I limiti del mio linguaggio sono i limiti del mio mondo'.",
+      "autore_riferimento": "F2, F11, F12"
+    },
+    {
+      "id": "C22",
+      "parola": "Interpretazione",
+      "dominio": "Linguistica",
+      "periodo": "contemporaneo",
+      "definizione": "Attività di attribuire significato. Da ermeneutica come metodo di interpretazione dei testi a condizione esistenziale dell'essere umano.",
+      "evoluzione": "Da interpretazione come accesso al senso del testo (esegesi) a interpretazione come modo di essere (Heidegger, Gadamer). Ermeneutica come filosofia prima.",
+      "esempio": "Gadamer: 'L'essere che può essere compreso è linguaggio'. L'interpretazione come fusione di orizzonti tra testo e interprete.",
+      "autore_riferimento": "F11"
+    },
+    {
+      "id": "C23",
+      "parola": "Dialogo",
+      "dominio": "Linguistica",
+      "periodo": "entrambi",
+      "definizione": "Scambio discorsivo tra interlocutori. Nella tradizione classica: metodo per raggiungere la verità (dialettica socratica). Nella contemporaneità: struttura ontologica, evento di verità.",
+      "evoluzione": "Da dialogo socratico come maieutica (far partorire la verità) a dialogo come evento di verità (Gadamer). Da dialogo come metodo a dialogo come ethos filosofico.",
+      "esempio": "Platone: dialoghi socratici come ricerca comune della verità. Gadamer: 'La comprensione è sempre fusione di orizzonti' nel dialogo.",
+      "autore_riferimento": "F1"
+    }
+  ]
+}

@@ -1,11 +1,11 @@
 /**
  * AETERNA - Lexicon in Motu
  * @serviceWorker PWA Offline Engine
- * @version 4.0.0
+ * @version 4.0.0 (Architettura JSON)
  * @author Dott. Salvatore De Rosa
  * @description Gestione cache e persistenza dati per navigazione senza rete
  */
-const APP_VERSION = '9.1.9';
+const APP_VERSION = '9.3.0'; // Versione aggiornata per forzare il download dei nuovi JSON
 const CACHE_NAME = `aeterna-lexicon-${APP_VERSION}`;
 
 // Lista asset essenziali
@@ -16,10 +16,20 @@ const ESSENTIAL_ASSETS = [
     './style.css',
     './comparative-styles.css',
     
-    // JavaScript
+    // JavaScript (Logica)
     './app.js',
-    './data-layer.js',
     './linguistic-analysis.js',
+    './geocoding-manager.js',
+        
+    // Workers
+    './workers/geocoding-worker.js',
+    './workers/excel-worker.js',
+        
+    // Dati JSON Modulari (Nuova Architettura)
+    './data/philosophers.json',
+    './data/works.json',
+    './data/concepts.json',
+    './data/comparative.json', 
     
     // Configurazione
     './manifest.json',

@@ -656,7 +656,7 @@
         <button onclick="document.getElementById('pwa-install-banner').style.display='none'" class="pwa-close">&times;</button>
     </div>
 
-    <!-- ==================== PANNELLO ADMIN (Semplificato per dati integrati) ==================== -->
+    <!-- ==================== PANNELLO ADMIN ==================== -->
     <div id="admin-panel" class="screen" style="display: none;">
         <div class="admin-header">
             <h2><i class="fas fa-cogs"></i> Gestione Dataset</h2>
@@ -774,9 +774,7 @@
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     
     <!-- Script dell'app -->
-    <script src="data-layer.js"></script>
     <script src="linguistic-analysis.js"></script>
-    <script src="comparative-data.js"></script>
     <script src="app.js"></script>
     
     <script>
@@ -943,40 +941,41 @@
             if (!descrizione.trim()) {
                 showToast('Per favore, inserisci una descrizione', 'warning');
                 return;
-         }
+            }
     
-         // Crea il testo della segnalazione con l'email
-         const testoEmail = 
-             `Tipo: ${tipo}\n` +
-             `Descrizione: ${descrizione}\n` +
-             `Data: ${new Date().toLocaleString()}\n` +
-             `App: Aeterna Lexicon v4.0.0\n` +
-             `URL: https://derolu0.github.io/aeterna/`;
-    
-         // Crea link mailto con l'indirizzo email specificato
-         const mailtoLink = `mailto:derolu0@gmail.com?subject=Segnalazione Aeterna Lexicon&body=${encodeURIComponent(testoEmail)}`;
-    
-         // Mostra messaggio e apri client email
-         showToast('Apertura client email...', 'info');
-    
-         // Apri il client email
-         setTimeout(() => {
-             window.open(mailtoLink, '_blank');
+            // Crea il testo della segnalazione con l'email
+            const testoEmail = 
+                `Tipo: ${tipo}\n` +
+                `Descrizione: ${descrizione}\n` +
+                `Data: ${new Date().toLocaleString()}\n` +
+                `App: Aeterna Lexicon v4.0.0\n` +
+                `URL: https://derolu0.github.io/aeterna/`;
         
-         // Mostra conferma
-         setTimeout(() => {
-            showToast('Grazie per la tua segnalazione!', 'success');
-            
-            // Resetta il form
-            document.getElementById('report-desc').value = '';
-            
-            // Torna alla home dopo 3 secondi
+            // Crea link mailto con l'indirizzo email specificato
+            const mailtoLink = `mailto:derolu0@gmail.com?subject=Segnalazione Aeterna Lexicon&body=${encodeURIComponent(testoEmail)}`;
+        
+            // Mostra messaggio e apri client email
+            showToast('Apertura client email...', 'info');
+        
+            // Apri il client email
             setTimeout(() => {
-                showScreen('home-screen');
-            }, 3000);
-        }, 1000);
-    }, 500);
-}        
+                window.open(mailtoLink, '_blank');
+            
+                // Mostra conferma
+                setTimeout(() => {
+                    showToast('Grazie per la tua segnalazione!', 'success');
+                    
+                    // Resetta il form
+                    document.getElementById('report-desc').value = '';
+                    
+                    // Torna alla home dopo 3 secondi
+                    setTimeout(() => {
+                        showScreen('home-screen');
+                    }, 3000);
+                }, 1000);
+            }, 500);
+        }        
+        
         // PWA
         let deferredPrompt;
         

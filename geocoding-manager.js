@@ -1,9 +1,9 @@
 /**
  * AETERNA - Lexicon in Motu
- * @module DataLayer (o AppCore, o LinguisticAnalyzer)
+ * @module GeocodingManager
  * @author Dott. Salvatore De Rosa
  * @license MIT
- * @description Sistema di analisi ermeneutica digitale - Framework scalabile
+ * @description Gestore geocoding dinamico - Lettura coordinate da JSON
  */
 
 class GeocodingManager {
@@ -13,40 +13,30 @@ class GeocodingManager {
         this.useWorker = typeof Worker !== 'undefined';
         this.worker = null;
         
-        // Database filosofico integrato
-        this.philosopherCoordinates = this.createPhilosopherDatabase();
-        
         // Inizializza se necessario
         this.init();
     }
     
     /**
-     * Database coordinate filosofi (aggiornato)
+     * Database coordinate filosofi (Generato dinamicamente dal JSON)
      */
-    createPhilosopherDatabase() {
-        return {
-            // FILOSOFI CLASSICI
-            'Platone': { lat: 37.9838, lng: 23.7275, citta: 'Atene', paese: 'Grecia', periodo: 'classico' },
-            'Aristotele': { lat: 40.6331, lng: 22.9482, citta: 'Stagira', paese: 'Grecia', periodo: 'classico' },
-            'Socrate': { lat: 37.9838, lng: 23.7275, citta: 'Atene', paese: 'Grecia', periodo: 'classico' },
-            'Epicuro': { lat: 37.9838, lng: 23.7275, citta: 'Atene', paese: 'Grecia', periodo: 'classico' },
-            
-            // FILOSOFI MODERNI
-            'René Descartes': { lat: 47.2184, lng: -1.5536, citta: 'La Haye', paese: 'Francia', periodo: 'moderno' },
-            'Immanuel Kant': { lat: 54.7065, lng: 20.511, citta: 'Königsberg', paese: 'Prussia', periodo: 'moderno' },
-            'John Locke': { lat: 51.7519, lng: -1.2578, citta: 'Wrington', paese: 'Inghilterra', periodo: 'moderno' },
-            
-            // FILOSOFI CONTEMPORANEI
-            'Friedrich Nietzsche': { lat: 51.2372, lng: 12.0914, citta: 'Röcken', paese: 'Germania', periodo: 'contemporaneo' },
-            'Michel Foucault': { lat: 46.5802, lng: 0.3404, citta: 'Poitiers', paese: 'Francia', periodo: 'contemporaneo' },
-            'Martin Heidegger': { lat: 47.8667, lng: 8.8167, citta: 'Meßkirch', paese: 'Germania', periodo: 'contemporaneo' },
-            'Ludwig Wittgenstein': { lat: 48.2082, lng: 16.3738, citta: 'Vienna', paese: 'Austria', periodo: 'contemporaneo' },
-            'Jacques Derrida': { lat: 36.7538, lng: 3.0588, citta: 'El Biar', paese: 'Algeria', periodo: 'contemporaneo' },
-            'Gilles Deleuze': { lat: 48.8566, lng: 2.3522, citta: 'Parigi', paese: 'Francia', periodo: 'contemporaneo' },
-            'Giorgio Agamben': { lat: 41.9028, lng: 12.4964, citta: 'Roma', paese: 'Italia', periodo: 'contemporaneo' },
-            'Slavoj Žižek': { lat: 46.0569, lng: 14.5058, citta: 'Lubiana', paese: 'Slovenia', periodo: 'contemporaneo' },
-            'Judith Butler': { lat: 39.9526, lng: -75.1652, citta: 'Cleveland', paese: 'USA', periodo: 'contemporaneo' }
-        };
+    getPhilosopherDatabase() {
+        const db = {};
+        // Legge le coordinate direttamente dal dataset globale caricato in app.js
+        if (typeof window !== 'undefined' && window.filosofiData) {
+            window.filosofiData.forEach(f => {
+                if (f.coordinate && f.coordinate.lat) {
+                    db[f.nome] = { 
+                        lat: f.coordinate.lat, 
+                        lng: f.coordinate.lng, 
+                        citta: f.citta_nascita || '', 
+                        paese: f.paese_nascita || '', 
+                        periodo: f.periodo 
+                    };
+                }
+            });
+        }
+        return db;
     }
     
     /**
@@ -114,11 +104,12 @@ class GeocodingManager {
         
         try {
             let result;
+            const philoDb = this.getPhilosopherDatabase();
             
-            // 1. PRIORITÀ: Filosofo conosciuto
-            if (filosofo && this.philosopherCoordinates[filosofo]) {
+            // 1. PRIORITÀ: Filosofo conosciuto nel JSON
+            if (filosofo && philoDb[filosofo]) {
                 result = {
-                    ...this.philosopherCoordinates[filosofo],
+                    ...philoDb[filosofo],
                     source: 'philosopher_database',
                     accuracy: 'high'
                 };
@@ -243,7 +234,7 @@ class GeocodingManager {
             `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query.join(', '))}&limit=1`,
             {
                 headers: {
-                    'User-Agent': 'AeternaLexicon/3.1.0 (Project Work Filosofico)',
+                    'User-Agent': 'AeternaLexicon/4.0.0',
                     'Accept': 'application/json'
                 }
             }
@@ -332,9 +323,10 @@ class GeocodingManager {
         
         const results = [];
         const queryLower = query.toLowerCase();
+        const philoDb = this.getPhilosopherDatabase();
         
-        // 1. Cerca filosofi
-        Object.entries(this.philosopherCoordinates).forEach(([nome, coord]) => {
+        // 1. Cerca filosofi dinamicamente
+        Object.entries(philoDb).forEach(([nome, coord]) => {
             if (nome.toLowerCase().includes(queryLower)) {
                 results.push({
                     type: 'filosofo',
@@ -388,7 +380,7 @@ class GeocodingManager {
                 `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
                 {
                     headers: {
-                        'User-Agent': 'AeternaLexicon/3.1.0',
+                        'User-Agent': 'AeternaLexicon/4.0.0',
                         'Accept': 'application/json'
                     }
                 }
@@ -485,60 +477,6 @@ class GeocodingManager {
     }
     
     /**
-     * Popola coordinate mancanti nei filosofi
-     */
-    async populateMissingCoordinates(filosofiList) {
-        const updated = [];
-        
-        for (const filosofo of filosofiList) {
-            // Se già ha coordinate, salta
-            if (filosofo.luogo_nascita?.coordinate?.lat && filosofo.luogo_nascita?.coordinate?.lng) {
-                updated.push(filosofo);
-                continue;
-            }
-            
-            try {
-                const citta = filosofo.luogo_nascita?.citta;
-                const paese = filosofo.luogo_nascita?.paese;
-                
-                if (!citta && !paese) {
-                    updated.push(filosofo);
-                    continue;
-                }
-                
-                const coordinates = await this.getCoordinates(filosofo.nome, citta, paese);
-                
-                if (coordinates && coordinates.lat && coordinates.lng) {
-                    const updatedFilosofo = {
-                        ...filosofo,
-                        luogo_nascita: {
-                            ...filosofo.luogo_nascita,
-                            citta: coordinates.citta || citta,
-                            paese: coordinates.paese || paese,
-                            coordinate: {
-                                lat: coordinates.lat,
-                                lng: coordinates.lng
-                            }
-                        },
-                        coordinate_source: coordinates.source,
-                        coordinate_accuracy: coordinates.accuracy
-                    };
-                    
-                    updated.push(updatedFilosofo);
-                } else {
-                    updated.push(filosofo);
-                }
-                
-            } catch (error) {
-                console.warn(`Errore coordinate per ${filosofo.nome}:`, error.message);
-                updated.push(filosofo);
-            }
-        }
-        
-        return updated;
-    }
-    
-    /**
      * Statistiche cache
      */
     getCacheStats() {
@@ -546,8 +484,7 @@ class GeocodingManager {
             size: this.cache.size,
             hits: this.cacheHits || 0,
             misses: this.cacheMisses || 0,
-            hit_rate: this.cacheHits / (this.cacheHits + this.cacheMisses) || 0,
-            philosopher_database_size: Object.keys(this.philosopherCoordinates).length
+            hit_rate: this.cacheHits / (this.cacheHits + this.cacheMisses) || 0
         };
     }
     

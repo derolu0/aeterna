@@ -3,14 +3,14 @@
  * @module DataLayer (o AppCore, o LinguisticAnalyzer)
  * @author Dott. Salvatore De Rosa
  * @license MIT
- * @description Sistema di analisi ermeneutica digitale - Framework scalabile
+ * @description Sistema di analisi ermeneutica digitale - Framework scalabile (Architettura JSON Modulare)
  */
 
 // ==================== VARIABILI DI STATO ====================
 let currentScreen = 'home-screen';
 let previousScreen = null;
 
-// Dati Filosofici COMPLETI (già definiti nel codice)
+// Dati Filosofici (Variabili globali vuote che verranno popolate dai file JSON)
 let filosofiData = [];
 let opereData = [];
 let concettiData = [];
@@ -26,586 +26,9 @@ let networkInstance = null;
 // PWA Installation
 let deferredPrompt = null;
 
-// ==================== DATASET COMPLETO ====================
-
-// 20 FILOSOFI COMPLETI
-const FILOSOFI_DATASET = [
-    // ============ FILOSOFI CLASSICI ============
-    {
-        id: "F1",
-        nome: "Platone",
-        periodo: "classico",
-        scuola: "Accademia",
-        anni: "428-348 a.C.",
-        biografia: "Fondatore dell'Accademia di Atene. Allievo di Socrate e maestro di Aristotele. La sua filosofia si concentra sulle Idee eterne e immutabili, distinguendo tra mondo sensibile e mondo intelligibile. Autore di dialoghi fondamentali come 'La Repubblica', 'Fedone' e 'Simposio'.",
-        concetti_principali: ["Idea", "Bene", "Anima", "Stato ideale", "Mito della caverna"],
-        coordinate: { lat: 37.9838, lng: 23.7275 },
-        citta_nascita: "Atene",
-        paese_nascita: "Grecia",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/platone.jpg"
-    },
-    {
-        id: "F2",
-        nome: "Aristotele",
-        periodo: "classico",
-        scuola: "Liceo",
-        anni: "384-322 a.C.",
-        biografia: "Allievo di Platone e maestro di Alessandro Magno. Fondatore del Liceo e padre della logica formale. Sviluppa una filosofia empirica basata sull'osservazione della natura. Autore di 'Metafisica', 'Etica Nicomachea' e 'Politica'.",
-        concetti_principali: ["Sostanza", "Atto/Potenza", "Causa", "Virtù", "Logica"],
-        coordinate: { lat: 40.6401, lng: 22.9444 },
-        citta_nascita: "Stagira",
-        paese_nascita: "Grecia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Aristotle_Altemps_Inv8575.jpg/220px-Aristotle_Altemps_Inv8575.jpg"
-    },
-    {
-        id: "F3",
-        nome: "Agostino d'Ippona",
-        periodo: "classico",
-        scuola: "Patristica",
-        anni: "354-430 d.C.",
-        biografia: "Teologo e filosofo cristiano. Sintetizza platonismo e cristianesimo. Le sue 'Confessioni' sono un capolavoro di introspezione psicologica. Sviluppa la dottrina della grazia e analizza il tempo e l'interiorità.",
-        concetti_principali: ["Grazia", "Peccato originale", "Città di Dio", "Tempo", "Interiorità"],
-        coordinate: { lat: 36.8625, lng: 10.1956 },
-        citta_nascita: "Tagaste",
-        paese_nascita: "Algeria",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/agostino.jpg"
-    },
-    {
-        id: "F4",
-        nome: "Tommaso d'Aquino",
-        periodo: "classico",
-        scuola: "Scolastica",
-        anni: "1225-1274",
-        biografia: "Teologo domenicano. Sintetizza aristotelismo e teologia cristiana nella 'Summa Theologiae'. Sviluppa le cinque vie per dimostrare l'esistenza di Dio e la teoria della legge naturale.",
-        concetti_principali: ["Atto/Potenza", "Essenza/Esistenza", "Legge naturale", "Bene comune", "Analogia"],
-        coordinate: { lat: 41.4664, lng: 12.6871 },
-        citta_nascita: "Roccasecca",
-        paese_nascita: "Italia",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/tommaso.jpg"
-    },
-    {
-        id: "F5",
-        nome: "René Descartes",
-        periodo: "classico",
-        scuola: "Razionalismo",
-        anni: "1596-1650",
-        biografia: "Padre della filosofia moderna. Noto per 'Cogito ergo sum'. Sviluppa un metodo basato sul dubbio metodico e la ragione matematica. Autore di 'Discorso sul metodo' e 'Meditazioni metafisiche'.",
-        concetti_principali: ["Cogito", "Dubbio metodico", "Sostanza", "Res cogitans", "Res extensa"],
-        coordinate: { lat: 47.2184, lng: -1.5536 },
-        citta_nascita: "La Haye en Touraine",
-        paese_nascita: "Francia",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/descartes.jpg"
-    },
-    {
-        id: "F6",
-        nome: "Immanuel Kant",
-        periodo: "classico",
-        scuola: "Idealismo tedesco",
-        anni: "1724-1804",
-        biografia: "Fondatore del criticismo. Opera la 'rivoluzione copernicana' in filosofia, ponendo l'accento sulle condizioni di possibilità della conoscenza. Autore delle tre Critiche: ragion pura, ragion pratica, giudizio.",
-        concetti_principali: ["Imperativo categorico", "Critica", "Trascendentale", "Noumeno", "Fenomeno"],
-        coordinate: { lat: 54.7065, lng: 20.5110 },
-        citta_nascita: "Königsberg",
-        paese_nascita: "Prussia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/43/Immanuel_Kant_%28painted_portrait%29.jpg/220px-Immanuel_Kant_%28painted_portrait%29.jpg"
-    },
-    {
-        id: "F7",
-        nome: "Georg Wilhelm Friedrich Hegel",
-        periodo: "classico",
-        scuola: "Idealismo tedesco",
-        anni: "1770-1831",
-        biografia: "Sviluppa la dialettica come motore della storia e del pensiero. La sua filosofia si articola in Fenomenologia, Logica e Filosofia dello Spirito. Autore di 'Fenomenologia dello Spirito' e 'Lineamenti di filosofia del diritto'.",
-        concetti_principali: ["Dialettica", "Spirito assoluto", "Aufhebung", "Storia", "Ragione"],
-        coordinate: { lat: 48.7758, lng: 9.1829 },
-        citta_nascita: "Stoccarda",
-        paese_nascita: "Germania",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/hegel.jpg"
-    },
-    {
-        id: "F8",
-        nome: "Friedrich Nietzsche",
-        periodo: "contemporaneo",
-        scuola: "Filosofia della vita",
-        anni: "1844-1900",
-        biografia: "Critico radicale della metafisica, della morale e della religione. Annuncia la 'morte di Dio' e propone la trasvalutazione di tutti i valori. Autore di 'Così parlò Zarathustra' e 'Genealogia della morale'.",
-        concetti_principali: ["Oltreuomo", "Volontà di potenza", "Eterno ritorno", "Apollineo/Dionisiaco", "Ressentiment"],
-        coordinate: { lat: 51.2277, lng: 6.7735 },
-        citta_nascita: "Röcken",
-        paese_nascita: "Germania",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Nietzsche187a.jpg/220px-Nietzsche187a.jpg"
-    },
-    {
-        id: "F9",
-        nome: "Karl Marx",
-        periodo: "contemporaneo",
-        scuola: "Marxismo",
-        anni: "1818-1883",
-        biografia: "Fondatore del materialismo storico. Analizza le strutture economiche e sociali, proponendo una critica radicale del capitalismo. Autore de 'Il Capitale' e 'Manifesto del Partito Comunista'.",
-        concetti_principali: ["Alienazione", "Plusvalore", "Lotta di classe", "Ideologia", "Materialismo storico"],
-        coordinate: { lat: 49.4432, lng: 7.7689 },
-        citta_nascita: "Treviri",
-        paese_nascita: "Germania",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/marx.jpg"
-    },
-    {
-        id: "F10",
-        nome: "Søren Kierkegaard",
-        periodo: "contemporaneo",
-        scuola: "Esistenzialismo",
-        anni: "1813-1855",
-        biografia: "Padre dell'esistenzialismo. Oppone la singolarità esistenziale all'astrazione hegeliana. Sottolinea l'importanza della scelta e dell'angoscia. Autore di 'Aut-Aut' e 'Il concetto dell'angoscia'.",
-        concetti_principali: ["Angoscia", "Singolo", "Salto", "Stadi esistenziali", "Paradosso"],
-        coordinate: { lat: 55.6761, lng: 12.5683 },
-        citta_nascita: "Copenaghen",
-        paese_nascita: "Danimarca",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/kierkegaard.jpg"
-    },
-    // ============ FILOSOFI CONTEMPORANEI ============
-    {
-        id: "F11",
-        nome: "Martin Heidegger",
-        periodo: "contemporaneo",
-        scuola: "Fenomenologia, Ermeneutica",
-        anni: "1889-1976",
-        biografia: "Autore di 'Essere e tempo'. Sviluppa l'analitica esistenziale e la questione del senso dell'essere, criticando la metafisica tradizionale. Studia la temporalità e l'evento.",
-        concetti_principali: ["Esserci", "Essere-nel-mondo", "Cura", "Temporalità", "Evento"],
-        coordinate: { lat: 47.8667, lng: 8.2167 },
-        citta_nascita: "Meßkirch",
-        paese_nascita: "Germania",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/heidegger.jpg"
-    },
-    {
-        id: "F12",
-        nome: "Ludwig Wittgenstein",
-        periodo: "contemporaneo",
-        scuola: "Filosofia analitica",
-        anni: "1889-1951",
-        biografia: "Autore del 'Tractatus logico-philosophicus' e delle 'Ricerche filosofiche'. Indaga i limiti del linguaggio e i giochi linguistici. Passa da una visione raffigurativa a una visione pragmatica del linguaggio.",
-        concetti_principali: ["Gioco linguistico", "Limite del linguaggio", "Forme di vita", "Mostrare vs Dire", "Uso"],
-        coordinate: { lat: 48.2082, lng: 16.3738 },
-        citta_nascita: "Vienna",
-        paese_nascita: "Austria",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/wittgenstein.jpg"
-    },
-    {
-        id: "F13",
-        nome: "Jean-Paul Sartre",
-        periodo: "contemporaneo",
-        scuola: "Esistenzialismo",
-        anni: "1905-1980",
-        biografia: "Filosofo, scrittore e drammaturgo. Sviluppa l'esistenzialismo ateo con concetti come libertà radicale e impegno. Autore de 'L'essere e il nulla' e 'L'esistenzialismo è un umanesimo'.",
-        concetti_principali: ["Esistenza precede essenza", "Libertà", "Cattiva fede", "Impegno", "Nausea"],
-        coordinate: { lat: 48.8566, lng: 2.3522 },
-        citta_nascita: "Parigi",
-        paese_nascita: "Francia",
-        immagine: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Sartre_1967_crop.jpg/220px-Sartre_1967_crop.jpg"
-    },
-    {
-        id: "F14",
-        nome: "Michel Foucault",
-        periodo: "contemporaneo",
-        scuola: "Post-strutturalismo",
-        anni: "1926-1984",
-        biografia: "Analizza i rapporti tra potere, sapere e soggettività. Studia istituzioni come la prigione, il manicomio, la sessualità. Autore di 'Sorvegliare e punire' e 'Storia della sessualità'.",
-        concetti_principali: ["Potere", "Sapere", "Soggettivazione", "Dispositivo", "Archeologia"],
-        coordinate: { lat: 49.1829, lng: -0.3707 },
-        citta_nascita: "Poitiers",
-        paese_nascita: "Francia",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/foucault.jpg"
-    },
-    {
-        id: "F15",
-        nome: "Jacques Derrida",
-        periodo: "contemporaneo",
-        scuola: "Decostruzionismo",
-        anni: "1930-2004",
-        biografia: "Fondatore della decostruzione. Critica il logocentrismo della metafisica occidentale e analizza le strutture testuali. Autore di 'Della grammatologia' e 'Margini della filosofia'.",
-        concetti_principali: ["Decostruzione", "Différance", "Traccia", "Logocentrismo", "Scrittura"],
-        coordinate: { lat: 33.9716, lng: -6.8498 },
-        citta_nascita: "El Biar",
-        paese_nascita: "Algeria",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/derrida.jpg"
-    },
-    {
-        id: "F16",
-        nome: "Judith Butler",
-        periodo: "contemporaneo",
-        scuola: "Teoria queer, Femminismo",
-        anni: "1956",
-        biografia: "Teorica del genere e della performatività. Sviluppa la critica alle categorie binarie di sesso e genere. Autrice di 'Questione di genere' e 'Vite precarie'.",
-        concetti_principali: ["Performatività", "Genere", "Agency", "Precarietà", "Corpi"],
-        coordinate: { lat: 39.9526, lng: -75.1652 },
-        citta_nascita: "Cleveland",
-        paese_nascita: "USA",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/butler.jpg"
-    },
-    {
-        id: "F17",
-        nome: "Giorgio Agamben",
-        periodo: "contemporaneo",
-        scuola: "Filosofia politica",
-        anni: "1942",
-        biografia: "Studia le forme di potere e di esclusione nella modernità, come lo stato di eccezione e la vita nuda. Autore di 'Homo sacer' e 'Quel che resta di Auschwitz'.",
-        concetti_principali: ["Homo sacer", "Stato di eccezione", "Vita nuda", "Dispositivo", "Forma-di-vita"],
-        coordinate: { lat: 45.4408, lng: 12.3155 },
-        citta_nascita: "Roma",
-        paese_nascita: "Italia",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/agamben.jpg"
-    },
-    {
-        id: "F18",
-        nome: "Martha Nussbaum",
-        periodo: "contemporaneo",
-        scuola: "Filosofia morale, Neo-aristotelismo",
-        anni: "1947",
-        biografia: "Sviluppa l'approccio delle capacità e un'etica delle virtù rivisitata in chiave contemporanea. Autrice di 'Giustizia sociale e dignità umana' e 'L'intelligenza delle emozioni'.",
-        concetti_principali: ["Capacità", "Fioritura umana", "Vulnerabilità", "Emozioni", "Giustizia"],
-        coordinate: { lat: 40.7128, lng: -74.0060 },
-        citta_nascita: "New York",
-        paese_nascita: "USA",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/nussbaum.jpg"
-    },
-    {
-        id: "F19",
-        nome: "Slavoj Žižek",
-        periodo: "contemporaneo",
-        scuola: "Psicoanalisi lacaniana, Marxismo",
-        anni: "1949",
-        biografia: "Unisce psicoanalisi lacaniana, marxismo e cultura pop. Critica l'ideologia e il capitalismo globale. Autore de 'Il soggetto scabroso' e 'Vivere alla fine dei tempi'.",
-        concetti_principali: ["Ideologia", "Reale", "Soggettività", "Fantasma", "Sinthome"],
-        coordinate: { lat: 46.0569, lng: 14.5058 },
-        citta_nascita: "Lubiana",
-        paese_nascita: "Slovenia",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/zizek.jpg"
-    },
-    {
-        id: "F20",
-        nome: "Byung-Chul Han",
-        periodo: "contemporaneo",
-        scuola: "Filosofia sociale",
-        anni: "1959",
-        biografia: "Critica della società della prestazione e della trasparenza. Analizza le patologie del capitalismo digitale. Autore di 'La società della stanchezza' e 'La società della trasparenza'.",
-        concetti_principali: ["Società della stanchezza", "Trasparenza", "Violenza psichica", "Burnout", "Digitale"],
-        coordinate: { lat: 37.5665, lng: 126.9780 },
-        citta_nascita: "Seoul",
-        paese_nascita: "Corea del Sud",
-        immagine: "https://derolu0.github.io/aeterna/images/filosofi/han.jpg"
-    }
-];
-
-// 40 OPERE COMPLETE (2 per filosofo)
-const OPERE_DATASET = [
-    // PLATONE
-    { id: "O1", titolo: "La Repubblica", autore: "Platone", autore_id: "F1", anno: "380 a.C.", periodo: "classico", sintesi: "Dialogo sulla giustizia e sull'organizzazione dello Stato ideale. Introduce il mito della caverna e la teoria delle Idee. Esplora la natura della giustizia, l'educazione dei guardiani e la struttura dello Stato perfetto.", concetti: ["Giustizia", "Idea del Bene", "Stato ideale", "Mito della caverna", "Educazione"] },
-    { id: "O2", titolo: "Fedone", autore: "Platone", autore_id: "F1", anno: "360 a.C.", periodo: "classico", sintesi: "Dialogo sull'immortalità dell'anima ambientato nelle ultime ore di vita di Socrate. Presenta le prove dell'immortalità dell'anima e la teoria della reminiscenza.", concetti: ["Anima", "Immortalità", "Reminiscenza", "Corpo", "Morte"] },
-    
-    // ARISTOTELE
-    { id: "O3", titolo: "Etica Nicomachea", autore: "Aristotele", autore_id: "F2", anno: "340 a.C.", periodo: "classico", sintesi: "Trattato sull'etica delle virtù. Definisce la felicità (eudaimonia) come attività dell'anima secondo virtù. Analizza le virtù etiche e dianoetiche.", concetti: ["Virtù", "Giusto mezzo", "Eudaimonia", "Prudenza", "Azione"] },
-    { id: "O4", titolo: "Metafisica", autore: "Aristotele", autore_id: "F2", anno: "335 a.C.", periodo: "classico", sintesi: "Studio dell'essere in quanto essere. Analizza le cause (materiale, formale, efficiente, finale), la sostanza e il motore immobile.", concetti: ["Sostanza", "Atto/Potenza", "Causa", "Motore immobile", "Essere"] },
-    
-    // AGOSTINO
-    { id: "O5", titolo: "Confessioni", autore: "Agostino d'Ippona", autore_id: "F3", anno: "397-400", periodo: "classico", sintesi: "Autobiografia espirituale in 13 libri. Analizza il percorso dalla conversione alla grazia divina. Riflette su tempo, memoria e interiorità.", concetti: ["Grazia", "Peccato", "Interiorità", "Tempo", "Conversione"] },
-    { id: "O6", titolo: "La città di Dio", autore: "Agostino d'Ippona", autore_id: "F3", anno: "413-426", periodo: "classico", sintesi: "Apologia del cristianesimo in 22 libri dopo il sacco di Roma del 410. Distingue città terrena (amor sui) e città celeste (amor Dei).", concetti: ["Città di Dio", "Città terrena", "Provvidenza", "Storia", "Grazia"] },
-    
-    // TOMMASO
-    { id: "O7", titolo: "Summa Theologiae", autore: "Tommaso d'Aquino", autore_id: "F4", anno: "1265-1274", periodo: "classico", sintesi: "Sintesi sistematica della teologia cristiana in tre parti. Espone le cinque vie per dimostrare l'esistenza di Dio e la legge naturale.", concetti: ["Legge naturale", "Cinque vie", "Essenza/Esistenza", "Bene", "Dio"] },
-    { id: "O8", titolo: "Summa contra Gentiles", autore: "Tommaso d'Aquino", autore_id: "F4", anno: "1259-1265", periodo: "classico", sintesi: "Apologia della fede cristiana contro i non credenti. Argomenti razionali per l'esistenza di Dio accessibili anche ai non cristiani.", concetti: ["Ragione/Fede", "Dio", "Creazione", "Provvidenza", "Argomento"] },
-    
-    // DESCARTES
-    { id: "O9", titolo: "Discorso sul metodo", autore: "René Descartes", autore_id: "F5", anno: "1637", periodo: "classico", sintesi: "Esposizione del metodo razionale per la ricerca della verità. Contiene 'Cogito ergo sum' e le quattro regole del metodo.", concetti: ["Cogito", "Dubbio metodico", "Ragione", "Metodo", "Certezza"] },
-    { id: "O10", titolo: "Meditazioni metafisiche", autore: "René Descartes", autore_id: "F5", anno: "1641", periodo: "classico", sintesi: "Indagine sulle basi della conoscenza in sei meditazioni. Dimostrazione dell'esistenza di Dio e della realtà del mondo esterno.", concetti: ["Dio garante", "Res cogitans", "Res extensa", "Idea innata", "Certezza"] },
-    
-    // KANT
-    { id: "O11", titolo: "Critica della ragion pura", autore: "Immanuel Kant", autore_id: "F6", anno: "1781", periodo: "classico", sintesi: "Analisi dei limiti e delle condizioni di possibilità della conoscenza. Distinzione fenomeno/noumeno e rivoluzione copernicana.", concetti: ["Trascendentale", "Fenomeno/Noumeno", "Categorie", "Rivoluzione copernicana", "Ragione"] },
-    { id: "O12", titolo: "Critica della ragion pratica", autore: "Immanuel Kant", autore_id: "F6", anno: "1788", periodo: "classico", sintesi: "Fondazione dell'etica sull'imperativo categorico e sull'autonomia della volontà. Analizza libertà, dovere e legge morale.", concetti: ["Imperativo categorico", "Autonomia", "Regno dei fini", "Libertà", "Dovere"] },
-    
-    // HEGEL
-    { id: "O13", titolo: "Fenomenologia dello Spirito", autore: "Georg Wilhelm Friedrich Hegel", autore_id: "F7", anno: "1807", periodo: "classico", sintesi: "Descrizione del percorso dello Spirito verso l'autocoscienza assoluta attraverso la dialettica. Include dialettica signoria/servitù.", concetti: ["Dialettica", "Autocoscienza", "Signoria/servitù", "Spirito assoluto", "Storia"] },
-    { id: "O14", titolo: "Lineamenti di filosofia del diritto", autore: "Georg Wilhelm Friedrich Hegel", autore_id: "F7", anno: "1820", periodo: "classico", sintesi: "Esposizione dell'eticità nelle sue forme: famiglia, società civile, Stato. Analizza diritto astratto, moralità, eticità.", concetti: ["Eticità", "Stato", "Diritto", "Libertà concreta", "Società civile"] },
-    
-    // NIETZSCHE
-    { id: "O15", titolo: "Così parlò Zarathustra", autore: "Friedrich Nietzsche", autore_id: "F8", anno: "1883-1885", periodo: "contemporaneo", sintesi: "Opera poetica in quattro parti che annuncia l'Oltreuomo e la morte di Dio. Critica della morale tradizionale e celebrazione della vita.", concetti: ["Oltreuomo", "Morte di Dio", "Volontà di potenza", "Eterno ritorno", "Trasvalutazione"] },
-    { id: "O16", titolo: "Genealogia della morale", autore: "Friedrich Nietzsche", autore_id: "F8", anno: "1887", periodo: "contemporaneo", sintesi: "Analisi genealogica della morale in tre trattati. Distinzione tra morale dei signori e morale degli schiavi. Concetto di ressentiment.", concetti: ["Genealogia", "Ressentiment", "Morale", "Trasvalutazione", "Volontà"] },
-    
-    // MARX
-    { id: "O17", titolo: "Il Capitale", autore: "Karl Marx", autore_id: "F9", anno: "1867", periodo: "contemporaneo", sintesi: "Analisi critica del modo di produzione capitalistico. Teoria del valore, del plusvalore e dell'accumulazione del capitale.", concetti: ["Plusvalore", "Alienazione", "Capitale", "Lotta di classe", "Valore"] },
-    { id: "O18", titolo: "Manifesto del Partito Comunista", autore: "Karl Marx", autore_id: "F9", anno: "1848", periodo: "contemporaneo", sintesi: "Programma politico del comunismo scritto con Engels. Analisi della storia come lotta di classe e critica del capitalismo.", concetti: ["Lotta di classe", "Borghesia/Proletariato", "Rivoluzione", "Comunismo", "Storia"] },
-    
-    // KIERKEGAARD
-    { id: "O19", titolo: "Aut-Aut", autore: "Søren Kierkegaard", autore_id: "F10", anno: "1843", periodo: "contemporaneo", sintesi: "Analisi degli stadi esistenziali: estetico (immediato), etico (universale), religioso (paradossale). Importanza della scelta.", concetti: ["Stadi esistenziali", "Scelta", "Angoscia", "Singolo", "Paradosso"] },
-    { id: "O20", titolo: "Il concetto dell'angoscia", autore: "Søren Kierkegaard", autore_id: "F10", anno: "1844", periodo: "contemporaneo", sintesi: "Studio psicologico dell'angoscia come presupposto del peccato e della libertà. Analisi del rapporto tra possibilità e realtà.", concetti: ["Angoscia", "Libertà", "Peccato", "Possibilità", "Salto"] },
-    
-    // HEIDEGGER
-    { id: "O21", titolo: "Essere e tempo", autore: "Martin Heidegger", autore_id: "F11", anno: "1927", periodo: "contemporaneo", sintesi: "Analitica esistenziale dell'Esserci (Dasein). Studio della temporalità come orizzonte dell'essere. Concetti di cura, essere-nel-mondo.", concetti: ["Esserci", "Cura", "Temporalità", "Essere-nel-mondo", "Autenticità"] },
-    { id: "O22", titolo: "Sentieri interrotti", autore: "Martin Heidegger", autore_id: "F11", anno: "1950", periodo: "contemporaneo", sintesi: "Raccolta di saggi sulla questione dell'essere, della tecnica e dell'arte. Include 'L'origine dell'opera d'arte'.", concetti: ["Evento", "Tecnica", "Arte", "Verità", "Essere"] },
-    
-    // WITTGENSTEIN
-    { id: "O23", titolo: "Tractatus logico-philosophicus", autore: "Ludwig Wittgenstein", autore_id: "F12", anno: "1921", periodo: "contemporaneo", sintesi: "Teoria raffigurativa del linguaggio. Distinzione tra ciò che può essere detto e ciò che può solo essere mostrato. Limiti del linguaggio.", concetti: ["Limite del linguaggio", "Mostrare/Dire", "Fatto", "Forma logica", "Mistico"] },
-    { id: "O24", titolo: "Ricerche filosofiche", autore: "Ludwig Wittgenstein", autore_id: "F12", anno: "1953", periodo: "contemporaneo", sintesi: "Critica della concezione del Tractatus. Teoria dei giochi linguistici e delle forme di vita. Analisi dell'uso del linguaggio.", concetti: ["Gioco linguistico", "Uso", "Forma di vita", "Regola", "Significato"] },
-    
-    // SARTRE
-    { id: "O25", titolo: "L'essere e il nulla", autore: "Jean-Paul Sartre", autore_id: "F13", anno: "1943", periodo: "contemporaneo", sintesi: "Esposizione dell'esistenzialismo ateo. Analizza la coscienza (per sé), della libertà radicale e della cattiva fede.", concetti: ["Esistenza/essenza", "Cattiva fede", "Libertà", "Néant", "Sguardo"] },
-    { id: "O26", titolo: "L'esistenzialismo è un umanesimo", autore: "Jean-Paul Sartre", autore_id: "F13", anno: "1946", periodo: "contemporaneo", sintesi: "Difesa popolare dell'esistenzialismo come filosofia dell'impegno e della responsabilità. Conferenza del 1945.", concetti: ["Impegno", "Responsabilità", "Umanesimo", "Progetto", "Angoscia"] },
-    
-    // FOUCAULT
-    { id: "O27", titolo: "Sorvegliare e punire", autore: "Michel Foucault", autore_id: "F14", anno: "1975", periodo: "contemporaneo", sintesi: "Genealogia del sistema carcerario moderno. Analisi del potere disciplinare e del panopticon. Nascita della prigione.", concetti: ["Potere disciplinare", "Panopticon", "Corpo", "Normalizzazione", "Sorveglianza"] },
-    { id: "O28", titolo: "Storia della sessualità", autore: "Michel Foucault", autore_id: "F14", anno: "1976-1984", periodo: "contemporaneo", sintesi: "Analisi del potere sui corpi e sulla sessualità. Concetti di biopotere, governo delle condotte, tecnologie del sé.", concetti: ["Biopotere", "Sessualità", "Soggettivazione", "Governamentalità", "Dispositivo"] },
-    
-    // DERRIDA
-    { id: "O29", titolo: "Della grammatologia", autore: "Jacques Derrida", autore_id: "F15", anno: "1967", periodo: "contemporaneo", sintesi: "Critica del logocentrismo della metafisica occidentale. Teoria della scrittura e della traccia. Decostruzione.", concetti: ["Decostruzione", "Logocentrismo", "Scrittura", "Traccia", "Différance"] },
-    { id: "O30", titolo: "Margini della filosofia", autore: "Jacques Derrida", autore_id: "F15", anno: "1972", periodo: "contemporaneo", sintesi: "Decostruzione dei concetti metafisici fondamentali. Analisi della différance e dei margini del testo filosofico.", concetti: ["Différance", "Margine", "Metafisica", "Testo", "Supplemento"] },
-    
-    // BUTLER
-    { id: "O31", titolo: "Questione di genere", autore: "Judith Butler", autore_id: "F16", anno: "1990", periodo: "contemporaneo", sintesi: "Teoria della performatività del genere. Critica del binarismo sessuale. Il genere come atto ripetuto e stilizzato.", concetti: ["Performatività", "Genere", "Agency", "Norma", "Corpo"] },
-    { id: "O32", titolo: "Vite precarie", autore: "Judith Butler", autore_id: "F16", anno: "2004", periodo: "contemporaneo", sintesi: "Analisi della vulnerabilità e del lutto come dimensioni politiche. Critica della guerra e della violenza dopo l'11 settembre.", concetti: ["Precarietà", "Lutto", "Vulnerabilità", "Riconoscimento", "Violenza"] },
-    
-    // AGAMBEN
-    { id: "O33", titolo: "Homo sacer", autore: "Giorgio Agamben", autore_id: "F17", anno: "1995", periodo: "contemporaneo", sintesi: "Studio della vita nuda (zoé) e dello stato di eccezione nella politica occidentale. Concetto di homo sacer.", concetti: ["Homo sacer", "Vita nuda", "Stato di eccezione", "Biopolitica", "Sovranità"] },
-    { id: "O34", titolo: "Quel che resta di Auschwitz", autore: "Giorgio Agamben", autore_id: "F17", anno: "1998", periodo: "contemporaneo", sintesi: "Analisi etica e politica del testimone e dell'indicibile dopo la Shoah. Concetto del 'musulmano' come testimone integrale.", concetti: ["Testimone", "Musulmano", "Sopravvissuto", "Etica", "Memoria"] },
-    
-    // NUSSBAUM
-    { id: "O35", titolo: "Giustizia sociale e dignità umana", autore: "Martha Nussbaum", autore_id: "F18", anno: "2006", periodo: "contemporaneo", sintesi: "Sviluppo dell'approccio delle capacità per valutare lo sviluppo umano e la giustizia sociale. Elenco delle capacità centrali.", concetti: ["Capacità", "Fioritura umana", "Giustizia", "Dignità", "Sviluppo"] },
-    { id: "O36", titolo: "L'intelligenza delle emozioni", autore: "Martha Nussbaum", autore_id: "F18", anno: "2001", periodo: "contemporaneo", sintesi: "Rivalutazione filosofica delle emozioni come elementi cruciali del ragionamento pratico. Analisi di rabbia, compassione, amore.", concetti: ["Emozioni", "Ragione pratica", "Vulnerabilità", "Compassione", "Giudizio"] },
-    
-    // ŽIŽEK
-    { id: "O37", titolo: "Il soggetto scabroso", autore: "Slavoj Žižek", autore_id: "F19", anno: "1999", periodo: "contemporaneo", sintesi: "Unione di psicoanalisi lacaniana e teoria politica. Analisi dell'ideologia contemporanea attraverso il cinema e la cultura pop.", concetti: ["Soggetto", "Ideologia", "Reale", "Fantasma", "Desiderio"] },
-    { id: "O38", titolo: "Vivere alla fine dei tempi", autore: "Slavoj Žižek", autore_id: "F19", anno: "2010", periodo: "contemporaneo", sintesi: "Critica ecologica e politica del capitalismo globale. Analisi delle apocalissi contemporanee: ecologica, sociale, simbolica.", concetti: ["Capitalismo", "Ecologia", "Apocalisse", "Psicoanalisi", "Crisi"] },
-    
-    // BYUNG-CHUL HAN
-    { id: "O39", titolo: "La società della stanchezza", autore: "Byung-Chul Han", autore_id: "F20", anno: "2010", periodo: "contemporaneo", sintesi: "Critica della società della prestazione e del burnout. Analisi delle patologie della positività: depressione, ADHD, burnout.", concetti: ["Società della stanchezza", "Burnout", "Prestazione", "Positività", "Depressione"] },
-    { id: "O40", titolo: "La società della trasparenza", autore: "Byung-Chul Han", autore_id: "F20", anno: "2012", periodo: "contemporaneo", sintesi: "Critica della trasparenza come ideologia del controllo. Analisi della società digitale e della perdita di intimità.", concetti: ["Trasparenza", "Controllo", "Digitale", "Intimità", "Informazione"] }
-];
-
-// 23 CONCETTI COMPLETI
-const CONCETTI_DATASET = [
-    // ============ CONCETTI ONTOLOGICI ============
-    {
-        id: "C1",
-        parola: "Essere",
-        periodo: "entrambi",
-        definizione: "Fondamento della realtà, ciò che esiste. In Aristotele: essere come sostanza. In Heidegger: essere come evento che si dà nella temporalità.",
-        evoluzione: "CLASSICO: Sostanza statica ed eterna (Aristotele). CONTEMPORANEO: Evento storico e processuale (Heidegger). Trasformazione da ontologia sostanzialista a ontologia dell'evento.",
-        esempio: "Aristotele: 'L'essere si dice in molti modi'. Heidegger: 'L'essere si dà nell'evento appropriante'.",
-        autore_riferimento: "F2, F11"
-    },
-    {
-        id: "C2",
-        parola: "Sostanza",
-        periodo: "classico",
-        definizione: "Ciò che esiste di per sé, soggetto di attributi. In Aristotele: sinolo di materia e forma. Ciò che permane nei cambiamenti.",
-        evoluzione: "Concetto centrale nella metafisica classica, criticato e abbandonato nella filosofia contemporanea. Sostituito da relazione, processo, struttura.",
-        esempio: "Aristotele: 'La sostanza è l'essere primo'. Deleuze: critica della sostanza a favore del divenire e della molteplicità.",
-        autore_riferimento: "F2"
-    },
-    {
-        id: "C3",
-        parola: "Relazione",
-        periodo: "contemporaneo",
-        definizione: "Modo di essere che implica connessione tra enti. Prioritaria rispetto alla sostanza nella filosofia contemporanea. Struttura ontologica fondamentale.",
-        evoluzione: "Da categoria accidentale in Aristotele (relazione come uno dei nove accidenti) a struttura ontologica fondamentale nella filosofia contemporanea (Whitehead, Deleuze).",
-        esempio: "Whitehead: 'L'attuale entità è un processo di relazioni'. Tutto ciò che è, è in relazione.",
-        autore_riferimento: "F15"
-    },
-    
-    // ============ CONCETTI EPISTEMOLOGICI ============
-    {
-        id: "C4",
-        parola: "Verità",
-        periodo: "entrambi",
-        definizione: "Corrispondenza tra pensiero e realtà (adaequatio intellectus et rei) nella tradizione classica. Nella contemporaneità: costruzione discorsiva, evento, effetto di potere.",
-        evoluzione: "CLASSICO: Verità come corrispondenza oggettiva (Tommaso). CONTEMPORANEO: Verità come costruzione storica (Nietzsche), evento di disvelamento (Heidegger), effetto di regimi discorsivi (Foucault).",
-        esempio: "Tommaso: 'Veritas est adaequatio rei et intellectus'. Nietzsche: 'Non ci sono fatti, solo interpretazioni'.",
-        autore_riferimento: "F4, F8"
-    },
-    {
-        id: "C5",
-        parola: "Conoscenza",
-        periodo: "entrambi",
-        definizione: "Possesso di informazioni vere e giustificate (episteme) nella tradizione classica. Nella contemporaneità: pratica situata, potere, costruzione storica.",
-        evoluzione: "Da episteme come conoscenza certa e fondata a sapere come costruzione storica e strumento di potere. Passaggio da epistemologia a genealogia del sapere.",
-        esempio: "Platone: conoscenza delle Idee (episteme) vs opinione (doxa). Foucault: 'Il sapere è potere', analisi delle formazioni discorsive.",
-        autore_riferimento: "F1, F14"
-    },
-    {
-        id: "C6",
-        parola: "Ragione",
-        periodo: "entrambi",
-        definizione: "Facoltà di pensare, argomentare e conoscere. Da logos universale (classico) a ragione situata, incarnata, critica (contemporaneo).",
-        evoluzione: "CLASSICO: Ragione come facoltà universale e autonoma (Kant). CONTEMPORANEO: Ragione come storicamente situata (Gadamer), strumentale (Horkheimer), incarnata (Merleau-Ponty).",
-        esempio: "Kant: 'Sapere aude! Abbi il coraggio di servirti della tua propria intelligenza'. Horkheimer: critica della ragione strumentale.",
-        autore_riferimento: "F6"
-    },
-    
-    // ============ CONCETTI ETICI ============
-    {
-        id: "C7",
-        parola: "Bene",
-        periodo: "entrambi",
-        definizione: "Ciò che è desiderabile o perfettivo. Nella tradizione classica: Idea del Bene (Platone), bene oggettivo. Nella contemporaneità: bene situato, relazionale, contestuale.",
-        evoluzione: "Da Bene trascendente e oggettivo a bene immanente e relazionale. Da etica delle virtù a etica della cura, della responsabilità, del riconoscimento.",
-        esempio: "Platone: 'Il Bene è al di sopra dell'essere'. Levinas: l'Altro come orizzonte etico, responsabilità per l'altro.",
-        autore_riferimento: "F1"
-    },
-    {
-        id: "C8",
-        parola: "Libertà",
-        periodo: "entrambi",
-        definizione: "Capacità di agire senza costrizioni. Nella tradizione classica: libertà come autodeterminazione della volontà. Nella contemporaneità: libertà come responsabilità, situazione, progetto.",
-        evoluzione: "Da libertà come proprietà della volontà (Kant) a libertà come condizione esistenziale (Sartre), situata e condizionata (Foucault).",
-        esempio: "Kant: autonomia della volontà come obbedienza alla legge morale che la ragione si dà. Sartre: 'Siamo condannati a essere liberi'.",
-        autore_riferimento: "F6, F13"
-    },
-    {
-        id: "C9",
-        parola: "Responsabilità",
-        periodo: "contemporaneo",
-        definizione: "Rispondere dell'altro prima di ogni scelta. Concetto centrale nell'etica contemporanea, specialmente dopo Levinas e Jonas.",
-        evoluzione: "Da responsabilità giuridica e limitata a responsabilità etica illimitata verso l'altro. Da responsabilità per le proprie azioni a responsabilità per l'altro, per le generazioni future, per il pianeta.",
-        esempio: "Levinas: 'La responsabilità per l'altro mi costituisce come soggetto'. Jonas: principio responsabilità verso le generazioni future.",
-        autore_riferimento: "F13"
-    },
-    
-    // ============ CONCETTI POLITICI ============
-    {
-        id: "C10",
-        parola: "Potere",
-        periodo: "entrambi",
-        definizione: "Capacità di influenzare il comportamento. Nella tradizione classica: potere sovrano, diritto di vita e di morte. Nella contemporaneità: potere diffuso, produttivo, capillare.",
-        evoluzione: "Da potere sovrano (Hobbes) a potere disciplinare (Foucault) e biopotere. Da potere come repressione a potere come produzione di soggettività.",
-        esempio: "Hobbes: potere come leviatano che garantisce sicurezza. Foucault: 'Il potere è ovunque', potere produttivo che crea saperi e soggetti.",
-        autore_riferimento: "F14"
-    },
-    {
-        id: "C11",
-        parola: "Giustizia",
-        periodo: "entrambi",
-        definizione: "Virtù che dà a ciascuno il suo. Da giustizia distributiva (Aristotele) a giustizia come equità (Rawls) o riconoscimento (Honneth).",
-        evoluzione: "CLASSICO: Giustizia come proporzione e equità distributiva. CONTEMPORANEO: Giustizia come riconoscimento, capacità, riparazione. Allargamento della nozione oltre la distribuzione materiale.",
-        esempio: "Aristotele: giustizia distributiva (secondo merito) e commutativa. Rawls: 'Giustizia come equità' con principi di libertà e differenza.",
-        autore_riferimento: "F2, F18"
-    },
-    {
-        id: "C12",
-        parola: "Comunità",
-        periodo: "entrambi",
-        definizione: "Insieme di individui legati da valori comuni. Da comunità organica (classico) a comunità senza identità, inoperosa, degli esclusi (contemporaneo).",
-        evoluzione: "Da comunità come organismo unitario con identità forte a comunità come spazio di esposizione alla singolarità (Nancy), comunità degli esclusi (Agamben).",
-        esempio: "Aristotele: 'L'uomo è animale politico' (zoon politikon). Nancy: 'Comunità inoperosa' come esposizione reciproca delle singolarità.",
-        autore_riferimento: "F2, F17"
-    },
-    
-    // ============ CONCETTI ANTROPOLOGICI ============
-    {
-        id: "C13",
-        parola: "Soggetto",
-        periodo: "entrambi",
-        definizione: "Individuo cosciente e autonomo. Nella tradizione classica: soggetto sostanziale, cogito cartesiano. Nella contemporaneità: soggetto decentrato, costruito, effetto.",
-        evoluzione: "Da soggetto come fondamento (Descartes) a soggetto come effetto del linguaggio (Wittgenstein), del potere (Foucault), dell'inconscio (Lacan). Soggetto come costruzione storica.",
-        esempio: "Descartes: 'Cogito ergo sum'. Foucault: 'Il soggetto è un effetto del potere'. Butler: soggetto come performatività.",
-        autore_riferimento: "F5, F14"
-    },
-    {
-        id: "C14",
-        parola: "Corpo",
-        periodo: "entrambi",
-        definizione: "Realtà materiale dell'essere umano. Nella tradizione classica: prigione dell'anima, ostacolo alla conoscenza. Nella contemporaneità: luogo di espressione, medium della coscienza, oggetto di potere.",
-        evoluzione: "Da corpo come ostacolo (Platone) a corpo come medium della coscienza (Merleau-Ponty) o superficie di iscrizione del potere (Foucault). Rivalutazione del corpo nella filosofia contemporanea.",
-        esempio: "Platone: 'Il corpo è la tomba dell'anima'. Merleau-Ponty: 'Siamo il nostro corpo'. Foucault: corpo disciplinato.",
-        autore_riferimento: "F1, F14"
-    },
-    {
-        id: "C15",
-        parola: "Desiderio",
-        periodo: "entrambi",
-        definizione: "Tendenza verso un oggetto percepito come buono. Nella tradizione classica: desiderio come mancanza (Platone). Nella contemporaneità: desiderio come produzione, forza attiva.",
-        evoluzione: "Da desiderio come mancanza da colmare a desiderio come produzione creativa (Deleuze). Da desiderio come passività a desiderio come attività, forza che produce realtà.",
-        esempio: "Platone: Eros come desiderio dell'immortalità, del Bene. Deleuze e Guattari: 'Il desiderio produce la realtà sociale'.",
-        autore_riferimento: "F1"
-    },
-    
-    // ============ CONCETTI ESTETICI ============
-    {
-        id: "C16",
-        parola: "Bello",
-        periodo: "entrambi",
-        definizione: "Ciò che suscita piacere disinteressato. Nella tradizione classica: bellezza come armonia, proporzione, riflesso dell'Idea. Nella contemporaneità: bellezza come inquietante, sublime, evento.",
-        evoluzione: "Da bello come armonia e proporzione a sublime come esperienza del limite (Kant, Lyotard). Da bellezza ideale a bellezza come evento che dischiude verità (Heidegger).",
-        esempio: "Platone: bellezza delle Idee. Kant: sublime come esperienza dell'illimitato. Heidegger: 'L'arte dischiude la verità'.",
-        autore_riferimento: "F1, F6"
-    },
-    {
-        id: "C17",
-        parola: "Arte",
-        periodo: "entrambi",
-        definizione: "Produzione umana di opere significative. Nella tradizione classica: mimesi della natura (imitazione). Nella contemporaneità: espressione, creazione, evento di verità.",
-        evoluzione: "Da arte come imitazione (mimesis) a arte come espressione (Croce), creazione (Bergson), evento di verità (Heidegger). Da arte come rappresentazione a arte come produzione di senso.",
-        esempio: "Aristotele: 'L'arte imita la natura'. Heidegger: 'L'arte è il porre-in-opera della verità'.",
-        autore_riferimento: "F2, F11"
-    },
-    
-    // ============ CONCETTI METAFISICI ============
-    {
-        id: "C18",
-        parola: "Tempo",
-        periodo: "entrambi",
-        definizione: "Dimensione del divenire. Nella tradizione classica: tempo cosmico, misura del movimento. Nella contemporaneità: tempo esistenziale, cura, differimento.",
-        evoluzione: "Da tempo come movimento circolare (Aristotele) a tempo come cura (Heidegger), differimento (Derrida), durata (Bergson). Temporalizzazione dell'essere.",
-        esempio: "Agostino: 'Che cos'è dunque il tempo? Se nessuno me lo chiede, lo so; se voglio spiegarlo a chi me lo chiede, non lo so'. Heidegger: 'Il tempo è l'orizzonte dell'essere'.",
-        autore_riferimento: "F3, F11"
-    },
-    {
-        id: "C19",
-        parola: "Causalità",
-        periodo: "classico",
-        definizione: "Relazione tra causa ed effetto. Le quattro cause aristoteliche: materiale, formale, efficiente, finale. Concetto fondamentale nella scienza e metafisica classica.",
-        evoluzione: "Criticata da Hume (nesso causale come abitudine) e dalla scienza moderna (sostituita da probabilità, relazione statistica). Nella filosofia contemporanea: sostituita da relazione, struttura, sistema.",
-        esempio: "Aristotele: 'Tutto ciò che si muove è mosso da un altro'. Hume: critica del nesso causale come necessità logica.",
-        autore_riferimento: "F2"
-    },
-    {
-        id: "C20",
-        parola: "Contingenza",
-        periodo: "contemporaneo",
-        definizione: "Carattere di ciò che potrebbe non essere o essere altrimenti. Opposta alla necessità. Concetto centrale nella filosofia contemporanea.",
-        evoluzione: "Da categoria marginale nella filosofia classica a principio ontologico fondamentale nella filosofia contemporanea. Affermazione della contingenza contro ogni necessità metafisica.",
-        exemplo: "Heidegger: 'L'Esserci è il fondamento di una nullità'. Vattimo: 'Pensiero debole' della contingenza contro i fondamenti forti.",
-        autore_riferimento: "F11"
-    },
-    
-    // ============ CONCETTI LINGUISTICI ============
-    {
-        id: "C21",
-        parola: "Linguaggio",
-        periodo: "entrambi",
-        definizione: "Sistema di segni per comunicare. Nella tradizione classica: strumento di rappresentazione della realtà. Nella contemporaneità: casa dell'essere, gioco, pratica sociale.",
-        evoluzione: "Da linguaggio come copia della realtà a linguaggio come costituzione del mondo (Wittgenstein, Heidegger). Svolta linguistica nella filosofia del Novecento.",
-        esempio: "Aristotele: 'Le parole sono simboli delle affezioni dell'anima'. Heidegger: 'Il linguaggio è la casa dell'essere'. Wittgenstein: 'I limiti del mio linguaggio sono i limiti del mio mondo'.",
-        autore_riferimento: "F2, F11, F12"
-    },
-    {
-        id: "C22",
-        parola: "Interpretazione",
-        periodo: "contemporaneo",
-        definizione: "Attività di attribuire significato. Da ermeneutica come metodo di interpretazione dei testi a condizione esistenziale dell'essere umano.",
-        evoluzione: "Da interpretazione come accesso al senso del testo (esegesi) a interpretazione come modo di essere (Heidegger, Gadamer). Ermeneutica come filosofia prima.",
-        esempio: "Gadamer: 'L'essere che può essere compreso è linguaggio'. L'interpretazione come fusione di orizzonti tra testo e interprete.",
-        autore_riferimento: "F11"
-    },
-    {
-        id: "C23",
-        parola: "Dialogo",
-        periodo: "entrambi",
-        definizione: "Scambio discorsivo tra interlocutori. Nella tradizione classica: metodo per raggiungere la verità (dialettica socratica). Nella contemporaneità: struttura ontologica, evento di verità.",
-        evoluzione: "Da dialogo socratico come maieutica (far partorire la verità) a dialogo come evento di verità (Gadamer). Da dialogo come metodo a dialogo come ethos filosofico.",
-        esempio: "Platone: dialoghi socratici come ricerca comune della verità. Gadamer: 'La comprensione è sempre fusione di orizzonti' nel dialogo.",
-        autore_riferimento: "F1"
-    }
-];
-
 // ==================== INIZIALIZZAZIONE APP ====================
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('📚 Aeterna Lexicon - Avvio con dataset completo...');
+    console.log('📚 Aeterna Lexicon - Avvio con dataset modulare...');
     
     // 1. SPLASH SCREEN
     setTimeout(() => {
@@ -624,51 +47,61 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('✅ Interfaccia Sbloccata');
     }, 2000);
     
-    // 2. CARICA DATI DAL DATASET COMPLETO (non più da Firebase)
+    // 2. CARICA DATI DAL DATASET MODULARE (File JSON Esterni)
     await loadPhilosophicalData();
     
     // 3. SETUP LISTENER DI BASE
     if (typeof setupConnectionListeners === 'function') setupConnectionListeners();
     if (typeof setupImportListeners === 'function') setupImportListeners();
     
-    console.log('✅ Dataset completo caricato:', {
-        filosofi: filosofiData.length,
-        opere: opereData.length,
-        concetti: concettiData.length
-    });
+    console.log('✅ Inizializzazione completata.');
 });
 
-// ==================== CARICAMENTO DATI COMPLETI ====================
+// ==================== CARICAMENTO DATI MODULARE DA JSON ====================
 async function loadPhilosophicalData() {
     try {
-        console.log('📖 Caricamento dataset filosofico completo...');
+        console.log('📖 Caricamento dataset filosofico modulare (JSON)...');
         
-        // Carica dai dataset integrati (non più da Firebase)
-        filosofiData = FILOSOFI_DATASET;
-        opereData = OPERE_DATASET;
-        concettiData = CONCETTI_DATASET;
+        // Effettua la richiesta Fetch simultanea per i 4 file JSON
+        const [resPhilo, resWorks, resConcepts, resComp] = await Promise.all([
+            fetch('data/philosophers.json'),
+            fetch('data/works.json'),
+            fetch('data/concepts.json'),
+            fetch('data/comparative.json')
+        ]);
+
+        if (!resPhilo.ok || !resWorks.ok || !resConcepts.ok || !resComp.ok) {
+            throw new Error("Impossibile caricare uno o più file JSON.");
+        }
+
+        const dataPhilo = await resPhilo.json();
+        const dataWorks = await resWorks.json();
+        const dataConcepts = await resConcepts.json();
+        const dataComp = await resComp.json();
+        
+        // Assegna i dati estratti alle variabili globali
+        filosofiData = dataPhilo.philosophers;
+        opereData = dataWorks.works;
+        concettiData = dataConcepts.concepts;
+
+        // Assegna i testi per l'analisi comparativa
+        window.comparativeData.testiComparativi = dataComp.testiComparativi;
+        window.comparativeData.trasformazioni = dataComp.trasformazioni;
         
         // Renderizza le liste
         renderFilosofiList();
         renderOpereList();
         renderConcettiList();
         
-        console.log('✅ Dataset caricato:', {
+        console.log('✅ Dataset modulare caricato:', {
             filosofi: filosofiData.length,
             opere: opereData.length,
             concetti: concettiData.length
         });
         
     } catch (error) {
-        console.error('❌ Errore caricamento dati:', error);
+        console.error('❌ Errore caricamento dati JSON:', error);
         showToast('Errore nel caricamento dei dati filosofici', 'error');
-        // Fallback: usa i dati integrati comunque
-        filosofiData = FILOSOFI_DATASET;
-        opereData = OPERE_DATASET;
-        concettiData = CONCETTI_DATASET;
-        renderFilosofiList();
-        renderOpereList();
-        renderConcettiList();
     }
 }
 
@@ -2410,4 +1843,4 @@ if (window.comparativeData) {
 
 // ==================== FINE APP.JS ====================
 
-console.log('📚 Aeterna Lexicon App.js v4.0.0 - DATASET COMPLETO INTEGRATO - READY');
+console.log('📚 Aeterna Lexicon App.js v4.0.0 - DATA LAYER ATTIVO - READY');
