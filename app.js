@@ -1905,7 +1905,7 @@ if (window.comparativeData) {
 console.log('📚 Aeterna Lexicon App.js v4.0.0 - Analisi del Lessico Filosofico - READY');
 // ==================== FUNZIONI DI CONDIVISIONE ====================
 function copyAppLink() {
-    const linkText = "https://derolu0.github.io/eterna/";
+    const linkText = "https://derolu0.github.io/aeterna/";
     navigator.clipboard.writeText(linkText).then(() => {
         if (typeof showToast === 'function') {
             showToast("Link copiato negli appunti!", "success");
