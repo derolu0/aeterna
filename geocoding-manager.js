@@ -1,7 +1,9 @@
 /**
- * GEOCODING-MANAGER.JS - Versione Semplificata
- * Gestore coordinate filosofiche per Aeterna Lexicon
- * Versione 3.1.0 - Allineato con nuova app
+ * AETERNA - Lexicon in Motu
+ * @module DataLayer (o AppCore, o LinguisticAnalyzer)
+ * @author Dott. Salvatore De Rosa
+ * @license MIT
+ * @description Sistema di analisi ermeneutica digitale - Framework scalabile
  */
 
 class GeocodingManager {

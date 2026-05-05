@@ -1,9 +1,11 @@
 /**
- * SERVICE WORKER - AETERNA LEXICON IN MOTU
- * Versione 4.0.3 - Offline con dati integrati
+ * AETERNA - Lexicon in Motu
+ * @serviceWorker PWA Offline Engine
+ * @version 4.0.0
+ * @author Dott. Salvatore De Rosa
+ * @description Gestione cache e persistenza dati per navigazione senza rete
  */
-
-const APP_VERSION = '9.1.8';
+const APP_VERSION = '9.1.9';
 const CACHE_NAME = `aeterna-lexicon-${APP_VERSION}`;
 
 // Lista asset essenziali
@@ -16,7 +18,7 @@ const ESSENTIAL_ASSETS = [
     
     // JavaScript
     './app.js',
-    './firebase-init.js',
+    './data-layer.js',
     './linguistic-analysis.js',
     
     // Configurazione

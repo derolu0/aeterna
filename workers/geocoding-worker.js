@@ -1,7 +1,10 @@
 /**
- * GEOCODING WORKER - workers/geocoding-worker.js
- * Worker per geocoding e gestione coordinate filosofiche
- * Versione 2.0.0 - Ottimizzato per GitHub Pages
+ * AETERNA - Lexicon in Motu
+ * @module GeocodingWorker
+ * @author Dott. Salvatore De Rosa
+ * @license MIT
+ * @description Worker per il geocoding asincrono e la gestione delle coordinate geofilosofiche.
+ * Ottimizzato per l'integrità dei dati geografici tra classico e contemporaneo su GitHub Pages.
  */
 
 // ==================== INIZIALIZZAZIONE WORKER ====================

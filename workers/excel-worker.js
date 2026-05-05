@@ -1,7 +1,10 @@
 /**
- * EXCEL WORKER - workers/excel-worker.js
- * Worker per import/export dati Excel per dataset filosofico
- * Versione 2.0.0 - Specializzato per dati filosofici
+ * AETERNA - Lexicon in Motu
+ * @module ExcelWorker
+ * @author Dott. Salvatore De Rosa
+ * @license MIT
+ * @description Worker specializzato per l'import/export asincrono di dataset filosofici (CSV/Excel).
+ * Garantisce alte prestazioni nella gestione di filosofi, opere e concetti.
  */
 
 // ==================== INIZIALIZZAZIONE WORKER ====================

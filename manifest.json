@@ -2,6 +2,10 @@
   "name": "Aeterna - Lexicon in Motu",
   "short_name": "Aeterna",
   "description": "Digital Humanities research tool for the computational analysis of philosophical concepts.",
+  "author": "Dott. Salvatore De Rosa - Digital Humanities Research",
+  "academic_context": "Università UniPegaso - Project Work (7/7)",
+  "license": "MIT License",
+  "version": "4.0.0",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -74,7 +78,5 @@
   ],
   "prefer_related_applications": false,
   "lang": "it",
-  "dir": "ltr",
-  "version": "4.0.0",
-  "author": "Salvatore De Rosa - Digital Humanities Research"
+  "dir": "ltr"
 }

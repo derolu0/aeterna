@@ -1,8 +1,10 @@
 /**
- * DATI PER ANALISI COMPARATIVA
- * Aeterna Lexicon in Motu - Dataset Completo
+ * AETERNA - Lexicon in Motu
+ * @module DataLayer (o AppCore, o LinguisticAnalyzer)
+ * @author Dott. Salvatore De Rosa
+ * @license MIT
+ * @description Sistema di analisi ermeneutica digitale - Framework scalabile
  */
-
 window.comparativeData = {
     // Testi per analisi linguistica comparativa
     testiComparativi: {

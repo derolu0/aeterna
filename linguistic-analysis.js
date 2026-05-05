@@ -1,7 +1,9 @@
 /**
- * LINGUISTIC-ANALYSIS.JS - Versione per dataset integrato
- * Analisi linguistica filosofica per Aeterna Lexicon
- * Versione 4.0.0 - Compatibile con dati integrati
+ * AETERNA - Lexicon in Motu
+ * @module DataLayer (o AppCore, o LinguisticAnalyzer)
+ * @author Dott. Salvatore De Rosa
+ * @license MIT
+ * @description Sistema di analisi ermeneutica digitale - Framework scalabile
  */
 
 // ==================== ANALIZZATORE LINGUISTICO ====================

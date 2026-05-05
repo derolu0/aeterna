@@ -1,7 +1,9 @@
 /**
- * AETERNA LEXICON IN MOTU - APP.JS COMPLETA CON DATASET INTEGRATO
- * Project Work Filosofico - Dataset per analisi trasformazioni linguistiche
- * Versione 4.0.0 - DATASET COMPLETO INTEGRATO (20 filosofi, 40 opere, 23 concetti)
+ * AETERNA - Lexicon in Motu
+ * @module DataLayer (o AppCore, o LinguisticAnalyzer)
+ * @author Dott. Salvatore De Rosa
+ * @license MIT
+ * @description Sistema di analisi ermeneutica digitale - Framework scalabile
  */
 
 // ==================== VARIABILI DI STATO ====================
@@ -1075,24 +1077,11 @@ function openReportScreen() {
 function openProjectWorkPDF() {
     closeMenuModal();
     
-    // Usiamo il percorso relativo: più veloce e sicuro per i permessi del browser
-    const pdfUrl = './Project-work.pdf';
-
-    // Creiamo un link temporaneo "fantasma"
-    const link = document.createElement('a');
-    link.href = pdfUrl;
+    // Il tuo link pubblico esatto su GitHub Pages
+    const urlDelMioPDF = 'https://derolu0.github.io/aeterna/Project-work.pdf';
     
-    // 'target _blank' apre una nuova scheda su Desktop
-    // Su Mobile attiva il visualizzatore di sistema (iOS/Android)
-    link.target = '_blank'; 
-    link.rel = 'noopener noreferrer';
-
-    // Eseguiamo il click forzato
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    console.log("📄 Apertura PDF ottimizzata (Desk/Mobile): " + pdfUrl);
+    // Google Viewer forza la visualizzazione su tutti i telefoni (senza scaricare)
+    window.open('https://drive.google.com/viewerng/viewer?embedded=true&url=' + encodeURIComponent(urlDelMioPDF), '_blank'); 
 }
 
 function openQRModal() {
