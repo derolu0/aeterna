@@ -634,7 +634,7 @@
         </div>
     </div>
 
-    <!-- ==================== MODALE QR ==================== -->
+    <!-- ==================== MODALE QR CON CONDIVISIONE NATIVA ==================== -->
     <div id="qr-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 class="modal-title">Condividi l'App</h3>
@@ -642,18 +642,21 @@
             <div id="qrcode-container" style="margin: 20px auto; padding: 10px; background: white; display: flex; justify-content: center;"></div>
         
             <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
-                Scansiona il codice o usa il link qui sotto:
+                Scansiona il codice o invia il link ai tuoi colleghi:
             </p>
 
-            <!-- LINK DI CONDIVISIONE -->
-            <div style="background: #f3f4f6; padding: 10px; border-radius: 8px; margin-bottom: 20px; word-break: break-all;">
-                <code id="app-share-url" style="font-size: 0.8rem; color: #3b82f6;">https://derolu0.github.io/aeterna/</code>
-                <button onclick="copyAppLink()" style="display: block; margin: 10px auto 0; background: #3b82f6; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
-                    <i class="fas fa-copy"></i> Copia Link
+            <!-- AREA LINK E CONDIVISIONE -->
+            <div style="background: #f3f4f6; padding: 15px; border-radius: 12px; margin-bottom: 20px; word-break: break-all; border: 1px solid #e5e7eb;">
+                <code id="app-share-url" style="font-size: 0.85rem; color: #3b82f6; display: block; margin-bottom: 15px; font-weight: bold;">
+                    https://derolu0.github.io/aeterna/
+                </code>
+            
+                <button onclick="shareAppLink()" style="display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: #3b82f6; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: background 0.3s;">
+                    <i class="fas fa-share-alt"></i> Condividi Link
                 </button>
             </div>
         
-            <button class="modal-btn" onclick="closeQRModal()">Chiudi</button>
+            <button class="modal-btn" onclick="closeQRModal()" style="background: #ef4444;">Chiudi</button>
         </div>
     </div>
 

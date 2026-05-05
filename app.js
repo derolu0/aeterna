@@ -1847,7 +1847,7 @@ window.exportConcettiToExcel = exportConcettiToExcel;
 window.exportFullDataset = exportFullDataset;
 window.setFilterOpere = setFilterOpere;
 window.searchConcetti = searchConcetti;
-window.copyAppLink = copyAppLink;
+window.shareAppLink = shareAppLink;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -1903,16 +1903,25 @@ if (window.comparativeData) {
 // ==================== FINE APP.JS ====================
 
 console.log('📚 Aeterna Lexicon App.js v4.0.0 - Analisi del Lessico Filosofico - READY');
-// ==================== FUNZIONI DI CONDIVISIONE ====================
-function copyAppLink() {
-    const linkText = "https://derolu0.github.io/aeterna/";
-    navigator.clipboard.writeText(linkText).then(() => {
-        if (typeof showToast === 'function') {
-            showToast("Link copiato negli appunti!", "success");
-        } else {
-            alert("Link copiato negli appunti!");
-        }
-    }).catch(err => {
-        console.error('Errore nella copia: ', err);
-    });
+// ==================== FUNZIONE CONDIVISIONE NATIVA ====================
+function shareAppLink() {
+    const shareData = {
+        title: 'Aeterna - Lexicon in Motu',
+        text: 'Analisi computazionale del lessico Filosofico tra Classico e Contemporaneo.',
+        url: 'https://derolu0.github.io/aeterna/'
+    };
+
+    // Verifica se il browser supporta la condivisione nativa
+    if (navigator.share) {
+        navigator.share(shareData)
+            .then(() => console.log('✅ Condivisione riuscita'))
+            .catch((error) => console.log('❌ Errore condivisione:', error));
+    } else {
+        // Fallback: se il browser non lo supporta (es. PC vecchi), copia il link
+        navigator.clipboard.writeText(shareData.url);
+        alert("Link copiato negli appunti! (Il tuo browser non supporta la condivisione diretta)");
+    }
 }
+
+// Ricorda di aggiornare il riferimento globale in fondo al file
+window.shareAppLink = shareAppLink;
