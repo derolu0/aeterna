@@ -13,8 +13,11 @@
     <title>Aeterna Lexicon in Motu - Dataset Filosofico</title>
     
     <!-- Metadati -->
-    <meta name="description" content="Dataset per l'analisi delle trasformazioni del linguaggio filosofico tra classico e contemporaneo">
+    <meta name="description" content="Aeterna: Dataset per l'analisi delle trasformazioni del linguaggio **Filosofico** tra **Classico** e **Contemporaneo**. Strumento di ricerca avanzato per le Digital Humanities.">
     <meta name="theme-color" content="#3b82f6">
+    <meta property="og:title" content="Aeterna - Lexicon in Motu">
+    <meta property="og:description" content="Analisi computazionale delle trasformazioni del linguaggio **Filosofico** tra **Classico** e **Contemporaneo**.">
+    <meta property="og:image" content="https://derolu0.github.io/aeterna/images/icona-avvio-splash.png">
     
     <!-- Manifest PWA -->
     <link rel="manifest" href="manifest.json">
@@ -486,8 +489,8 @@
 
                     <div style="background-color: #f0f9ff; padding: 12px; border-radius: 8px; border-left: 4px solid #3b82f6; text-align: center;">
                         <p style="font-size: 0.85rem; color: #334155; line-height: 1.5;">
-                            "Strumento di ricerca per l'analisi computazionale e l'interpretazione 
-                            delle trasformazioni del lessico filosofico."
+                            "Strumento di ricerca per **l'analisi computazionale** e 
+                            **l'interpretazione** delle trasformazioni del lessico **Filosofico**."
                         </p>
                     </div>
                 </div>
@@ -496,8 +499,8 @@
 
                 <div style="font-size: 0.75rem; color: #9ca3af; line-height: 1.5; max-width: 500px; width: 100%; text-align: center;">
                     <p style="margin-bottom: 10px;">
-                        Progetto sviluppato come <strong>Proof of Concept</strong> nell'ambito delle Digital Humanities 
-                        per l'analisi del lessico comparativo Classico/Contemporaneo.
+                        Progetto sviluppato come **Proof of Concept** nell'ambito delle Digital Humanities 
+                        per l'analisi del lessico comparativo **Classico**/**Contemporaneo**.
                     </p>
             
                     <div style="background: #f3f4f6; padding: 12px; border-radius: 10px; margin-bottom: 15px; text-align: center;">
@@ -511,7 +514,7 @@
                     <p style="margin-top: 15px; line-height: 1.4;">
                         Software & Dataset © 2026 <strong>Dott. Salvatore De Rosa</strong>.<br>
                         Licensed for academic and research evaluation. 
-                        <a href="https://github.com/derolu0/aeterna/blob/main/LICENSE.md" target="_blank" style="color: #3b82f6; text-decoration: none;">See License Details</a>
+                        <a href="https://github.com/derolu0/aeterna/blob/main/LICENSE" target="_blank" style="color: #3b82f6; text-decoration: none;">See License Details</a>
                     </p>
                 </div>
             </div>
@@ -635,16 +638,22 @@
     <div id="qr-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 class="modal-title">Condividi l'App</h3>
-            
-            <div id="qrcode-container" style="margin: 20px auto; padding: 10px; background: white;"></div>
-            
-            <p style="font-size: 0.9rem; color: #666; margin-bottom: 20px;">
-                Scansiona per aprire l'app Aeterna Lexicon
+        
+            <div id="qrcode-container" style="margin: 20px auto; padding: 10px; background: white; display: flex; justify-content: center;"></div>
+        
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 10px;">
+                Scansiona il codice o usa il link qui sotto:
             </p>
-            
-            <button class="modal-btn" onclick="closeQRModal()">
-                Chiudi
-            </button>
+
+            <!-- LINK DI CONDIVISIONE -->
+            <div style="background: #f3f4f6; padding: 10px; border-radius: 8px; margin-bottom: 20px; word-break: break-all;">
+                <code id="app-share-url" style="font-size: 0.8rem; color: #3b82f6;">https://derolu0.github.io/eterna/</code>
+                <button onclick="copyAppLink()" style="display: block; margin: 10px auto 0; background: #3b82f6; color: white; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 0.8rem;">
+                    <i class="fas fa-copy"></i> Copia Link
+                </button>
+            </div>
+        
+            <button class="modal-btn" onclick="closeQRModal()">Chiudi</button>
         </div>
     </div>
 

@@ -1847,6 +1847,7 @@ window.exportConcettiToExcel = exportConcettiToExcel;
 window.exportFullDataset = exportFullDataset;
 window.setFilterOpere = setFilterOpere;
 window.searchConcetti = searchConcetti;
+window.copyAppLink = copyAppLink;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -1901,4 +1902,17 @@ if (window.comparativeData) {
 
 // ==================== FINE APP.JS ====================
 
-console.log('📚 Aeterna Lexicon App.js v4.0.0 - DATA LAYER ATTIVO - READY');
+console.log('📚 Aeterna Lexicon App.js v4.0.0 - Analisi del Lessico Filosofico - READY');
+// ==================== FUNZIONI DI CONDIVISIONE ====================
+function copyAppLink() {
+    const linkText = "https://derolu0.github.io/eterna/";
+    navigator.clipboard.writeText(linkText).then(() => {
+        if (typeof showToast === 'function') {
+            showToast("Link copiato negli appunti!", "success");
+        } else {
+            alert("Link copiato negli appunti!");
+        }
+    }).catch(err => {
+        console.error('Errore nella copia: ', err);
+    });
+}
