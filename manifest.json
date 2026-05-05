@@ -6,8 +6,8 @@
   "academic_context": "Università UniPegaso - Project Work (7/7)",
   "license": "MIT License",
   "version": "4.0.0",
-  "start_url": "./index.html",
-  "scope": "./",
+  "start_url": "/aeterna/index.html",
+  "scope": "/aeterna/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#3b82f6",
@@ -36,7 +36,8 @@
     {
       "src": "images/icona-avvio-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "images/icona-avvio-384.png",
@@ -46,7 +47,8 @@
     {
       "src": "images/icona-avvio-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ],
   "categories": ["education", "books", "philosophy", "research"],
@@ -55,25 +57,25 @@
       "name": "Filosofi",
       "short_name": "Filosofi",
       "description": "Visualizza tutti i filosofi",
-      "url": "./index.html?screen=filosofi"
+      "url": "/aeterna/index.html?screen=filosofi"
     },
     {
       "name": "Opere",
       "short_name": "Opere",
       "description": "Visualizza tutte le opere filosofiche",
-      "url": "./index.html?screen=opere"
+      "url": "/aeterna/index.html?screen=opere"
     },
     {
       "name": "Concetti",
       "short_name": "Concetti",
       "description": "Analizza i concetti filosofici",
-      "url": "./index.html?screen=concetti"
+      "url": "/aeterna/index.html?screen=concetti"
     },
     {
       "name": "Mappa Geografica",
       "short_name": "Mappa Geo",
       "description": "Esplora filosofi sulla mappa",
-      "url": "./index.html?screen=mappa"
+      "url": "/aeterna/index.html?screen=mappa"
     }
   ],
   "prefer_related_applications": false,
