@@ -31,8 +31,11 @@
 * **PWA Core:** Advanced Service Workers for an **Offline-First** experience, ensuring data access regardless of connectivity.
 
 ## 👤 Author & Research
-Developed by **Salvatore De Rosa**.
-This project is the synthesis of original research academically validated with the maximum score (7/7) in the field of computational interpretation of philosophical texts.
+Developed by **Dott. Salvatore De Rosa**.
+This project is the synthesis of original research academically validated with the maximum score (**7/7**) in the field of computational interpretation of philosophical texts.
+
+**Contact:** [derolu0@gmail.com](mailto:derolu0@gmail.com)
 
 ## 📄 License
-Copyright (c) 2026 Salvatore De Rosa. All rights reserved. For academic use and research evaluation, please refer to the [LICENSE](./LICENSE) file.
+Copyright (c) 2026 Dott. Salvatore De Rosa. All rights reserved.
+For academic use, peer-review, and research evaluation, please refer to the [LICENSE.md](./LICENSE.md) file.
