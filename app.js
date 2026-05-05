@@ -63,7 +63,7 @@ async function loadPhilosophicalData() {
     try {
         console.log('📖 Caricamento dataset filosofico modulare (JSON)...');
         
-        // Effettua la richiesta Fetch simultanea per i 4 file JSON
+        // 1. Effettua la richiesta Fetch simultanea per i 4 file JSON
         const [resPhilo, resWorks, resConcepts, resComp] = await Promise.all([
             fetch('data/philosophers.json'),
             fetch('data/works.json'),
@@ -80,21 +80,23 @@ async function loadPhilosophicalData() {
         const dataConcepts = await resConcepts.json();
         const dataComp = await resComp.json();
         
-        // Assegna i dati estratti alle variabili globali
+        // 2. Assegna i dati estratti alle variabili globali
         filosofiData = dataPhilo.philosophers;
         opereData = dataWorks.works;
-        concettiData = dataConcepts.concepts;
+        concettiData = dataConcepts.concepts; // Carica correttamente l'array dei concetti[cite: 9]
 
-        // Assegna i testi per l'analisi comparativa
-        window.comparativeData.testiComparativi = dataComp.testiComparativi;
-        window.comparativeData.trasformazioni = dataComp.trasformazioni;
+        // 3. Assegna i testi per l'analisi comparativa[cite: 9]
+        if (window.comparativeData) {
+            window.comparativeData.testiComparativi = dataComp.testiComparativi;
+            window.comparativeData.trasformazioni = dataComp.trasformazioni;
+        }
         
-        // Renderizza le liste
+        // 4. RENDERIZZA LE LISTE (Rimuove gli spinner di caricamento e mostra i dati)
         renderFilosofiList();
         renderOpereList();
-        renderConcettiList();
+        renderConcettiList(); // Cruciale per visualizzare la sezione Concetti[cite: 9]
         
-        console.log('✅ Dataset modulare caricato:', {
+        console.log('✅ Dataset modulare caricato con successo:', {
             filosofi: filosofiData.length,
             opere: opereData.length,
             concetti: concettiData.length
@@ -215,6 +217,31 @@ function renderOpereList() {
     filtered.forEach(opera => {
         container.appendChild(createOperaCard(opera));
     });
+}
+function renderConcettiList() {
+    const container = document.getElementById('concetti-list');
+    if (!container) return;
+    
+    container.innerHTML = ''; // Questo rimuove lo spinner "Caricamento concetti..."
+    
+    if (!concettiData || concettiData.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p>Nessun concetto caricato</p></div>`;
+        return;
+    }
+
+    // Creiamo la griglia per le card
+    const grid = document.createElement('div');
+    grid.className = 'concetti-grid';
+    
+    concettiData.forEach(concetto => {
+        const wrapper = document.createElement('div');
+        // Usa la funzione createConcettoCardString che hai già nel file
+        wrapper.innerHTML = createConcettoCardString(concetto).trim();
+        grid.appendChild(wrapper.firstChild);
+    });
+    
+    container.appendChild(grid);
+    console.log("✅ Lista concetti renderizzata");
 }
 
 // ==================== CREAZIONE CARD ====================
@@ -1653,15 +1680,21 @@ function searchOpere(query) {
 }
 function searchConcetti(query) {
     const term = query.toLowerCase();
+    // Puntiamo alle card create dentro la griglia[cite: 9]
     const items = document.querySelectorAll('#concetti-list .concetto-card');
     
     items.forEach(item => {
-        // Usa la stessa esatta meccanica di filosofi e opere
         const title = item.querySelector('.concetto-parola').textContent.toLowerCase();
-        item.style.display = title.includes(term) ? 'flex' : 'none';
+        const definizione = item.querySelector('.concetto-definizione').textContent.toLowerCase();
+        
+        // Se il termine è nel titolo o nella definizione, mostra la card[cite: 9]
+        if (title.includes(term) || definizione.includes(term)) {
+            item.style.display = ''; // Ripristina lo stile CSS (flex/block)
+        } else {
+            item.style.display = 'none'; // Nasconde la card
+        }
     });
 }
-
 function getPeriodoLabel(periodo) {
     const labels = {
         'classico': 'Classico/Antico',
