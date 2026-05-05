@@ -324,6 +324,11 @@
                 <h1 class="screen-title">Concetti</h1>
                 <p class="screen-subtitle">Analizza le parole chiave della filosofia</p>
             </header>
+
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="🔍 Cerca concetto o definizione..." 
+                       onkeyup="searchConcetti(this.value)">
+            </div>
             
             <div class="content-area">
                 <div class="concetti-container" id="concetti-list">
