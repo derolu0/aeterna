@@ -15,6 +15,7 @@ let filosofiData = [];
 let opereData = [];
 let concettiData = [];
 let currentFilter = 'all';
+let currentFilterOpere = 'all';
 
 // Mappa Filosofica
 let philosophicalMap = null;
@@ -201,19 +202,19 @@ function renderOpereList() {
     if (!container) return;
     container.innerHTML = '';
     
-    opereData.forEach(opera => {
+    // Filtro a prova di errore: ignora maiuscole/minuscole e controlla se il periodo esiste
+    const filtered = currentFilterOpere === 'all' 
+        ? opereData 
+        : opereData.filter(o => o.periodo && o.periodo.toLowerCase() === currentFilterOpere.toLowerCase());
+        
+    if (filtered.length === 0) {
+        container.innerHTML = `<div class="empty-state"><p>Nessuna opera trovata</p></div>`;
+        return;
+    }
+    
+    filtered.forEach(opera => {
         container.appendChild(createOperaCard(opera));
     });
-}
-
-function renderConcettiList() {
-    const container = document.getElementById('concetti-list');
-    if (!container) return;
-    container.innerHTML = '';
-    
-    if (concettiData.length > 0) {
-        container.appendChild(createConcettiSection('Tutti i Concetti', concettiData, 'entrambi'));
-    }
 }
 
 // ==================== CREAZIONE CARD ====================
@@ -1620,6 +1621,18 @@ function setFilter(filter) {
     });
     renderFilosofiList();
 }
+function setFilterOpere(filter) {
+    currentFilterOpere = filter;
+    document.querySelectorAll('#opere-screen .filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if ((filter === 'all' && btn.classList.contains('all')) || 
+            (filter === 'classico' && btn.classList.contains('funzionante')) ||
+            (filter === 'contemporaneo' && btn.classList.contains('non-funzionante'))) {
+            btn.classList.add('active');
+        }
+    });
+    renderOpereList();
+}
 
 function searchFilosofi(query) {
     const term = query.toLowerCase();
@@ -1635,6 +1648,16 @@ function searchOpere(query) {
     const items = document.querySelectorAll('#opere-list .compact-item');
     items.forEach(item => {
         const title = item.querySelector('.compact-item-name').textContent.toLowerCase();
+        item.style.display = title.includes(term) ? 'flex' : 'none';
+    });
+}
+function searchConcetti(query) {
+    const term = query.toLowerCase();
+    const items = document.querySelectorAll('#concetti-list .concetto-card');
+    
+    items.forEach(item => {
+        // Usa la stessa esatta meccanica di filosofi e opere
+        const title = item.querySelector('.concetto-parola').textContent.toLowerCase();
         item.style.display = title.includes(term) ? 'flex' : 'none';
     });
 }
@@ -1789,6 +1812,8 @@ window.exportFilosofiToExcel = exportFilosofiToExcel;
 window.exportOpereToExcel = exportOpereToExcel;
 window.exportConcettiToExcel = exportConcettiToExcel;
 window.exportFullDataset = exportFullDataset;
+window.setFilterOpere = setFilterOpere;
+window.searchConcetti = searchConcetti;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
