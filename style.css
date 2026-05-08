@@ -2030,7 +2030,7 @@ html, body {
 #home-screen .home-buttons {
     margin-top: 30px !important;
 }
-* ==================== PUNTO 1: BOTTONE TEI EXPORT ==================== */
+/* ==================== PUNTO 1: BOTTONE TEI EXPORT ==================== */
 .btn-tei {
     background: linear-gradient(135deg, #2c3e50, #1a252f);
     color: white;
@@ -2059,9 +2059,9 @@ html, body {
     font-size: 1rem;
 }
 
-/* ==================== PUNTO 2: BOTTONE CITAZIONE ==================== */
+/* ==================== PUNTO 2: BOTTONE CITAZIONE (stile coerente nero sfumato) ==================== */
 .btn-cite {
-    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    background: linear-gradient(135deg, #3d4b5e, #2c3e50);
     color: white;
     border: none;
     padding: 10px 20px;
@@ -2075,9 +2075,9 @@ html, body {
 }
 
 .btn-cite:hover {
-    background: linear-gradient(135deg, #6d28d9, #5b21b6);
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .btn-cite:active {
