@@ -51,6 +51,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 2. CARICA DATI DAL DATASET MODULARE (File JSON Esterni)
     await loadPhilosophicalData();
     
+    // ===== PUNTO 4: CARICA STATO DA URL =====
+    loadStateFromURL();
+    // ========================================
+    
     // 3. SETUP LISTENER DI BASE
     if (typeof setupConnectionListeners === 'function') setupConnectionListeners();
     if (typeof setupImportListeners === 'function') setupImportListeners();
@@ -1890,6 +1894,10 @@ window.exportCurrentToTEI = exportCurrentToTEI;
 window.exportComparativeToTEI = exportComparativeToTEI;
 window.citeComparativeAnalysis = citeComparativeAnalysis;
 window.updateJSONLD = updateJSONLD;
+window.saveCurrentStateToURL = saveCurrentStateToURL;
+window.loadStateFromURL = loadStateFromURL;
+window.shareResearchLink = shareResearchLink;
+window.generateResearchQRCode = generateResearchQRCode;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -2375,4 +2383,189 @@ function updateJSONLD() {
     setTimeout(() => {
         generateJSONLD();
     }, 100);
+}
+// ==================== PUNTO 4: COLLABORATIVE LINK SHARING ====================
+
+/**
+ * Salva lo stato attuale dell'app nell'URL
+ * Permette di condividere la ricerca con i colleghi
+ */
+function saveCurrentStateToURL() {
+    const state = {
+        screen: currentScreen,
+        v: '5.0.0', // versione per compatibilità futura
+        t: Date.now() // timestamp per evitare cache
+    };
+    
+    // Aggiungi ID dell'entità se siamo in un dettaglio
+    if (currentScreen === 'concetto-detail-screen' && window.currentConcettoId) {
+        state.c = window.currentConcettoId; // c = concept
+    } else if (currentScreen === 'filosofo-detail-screen' && window.currentFilosofoId) {
+        state.p = window.currentFilosofoId; // p = philosopher
+    } else if (currentScreen === 'opera-detail-screen' && window.currentOperaId) {
+        state.w = window.currentOperaId; // w = work
+    }
+    
+    // Salva i filtri attivi
+    if (currentFilter && currentFilter !== 'all') {
+        state.f = currentFilter;
+    }
+    
+    if (currentFilterOpere && currentFilterOpere !== 'all') {
+        state.fo = currentFilterOpere;
+    }
+    
+    // Salva le modalità visive
+    if (document.body.classList.contains('quantum-mode')) {
+        state.q = true;
+    }
+    
+    if (document.body.classList.contains('dream-mode')) {
+        state.d = true;
+    }
+    
+    // Comprimi e codifica lo stato
+    const compressed = btoa(JSON.stringify(state));
+    
+    // Crea nuovo URL senza ricaricare la pagina
+    const url = new URL(window.location.href);
+    url.searchParams.set('aeterna', compressed);
+    
+    // Aggiorna l'URL nella barra (senza ricaricare)
+    window.history.pushState(state, '', url);
+    
+    return url.toString();
+}
+
+/**
+ * Carica lo stato dall'URL (all'avvio o quando si apre un link condiviso)
+ */
+function loadStateFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const encodedState = urlParams.get('aeterna');
+    
+    if (!encodedState) return false;
+    
+    try {
+        const state = JSON.parse(atob(encodedState));
+        
+        // Verifica compatibilità versione
+        if (state.v !== '5.0.0') {
+            console.warn('Versione stato non compatibile:', state.v);
+            return false;
+        }
+        
+        // Reindirizza alla schermata corretta
+        if (state.screen) {
+            showScreen(state.screen);
+        }
+        
+        // Attendi che la schermata sia caricata poi apri il dettaglio
+        setTimeout(() => {
+            if (state.c) {
+                const concetto = concettiData.find(c => c.id === state.c);
+                if (concetto) showConcettoDetail(state.c);
+            } else if (state.p) {
+                const filosofo = filosofiData.find(f => f.id === state.p);
+                if (filosofo) showFilosofoDetail(state.p);
+            } else if (state.w) {
+                const opera = opereData.find(o => o.id === state.w);
+                if (opera) showOperaDetail(state.w);
+            }
+            
+            // Ripristina filtri
+            if (state.f && typeof setFilter === 'function') {
+                setFilter(state.f);
+            }
+            
+            if (state.fo && typeof setFilterOpere === 'function') {
+                setFilterOpere(state.fo);
+            }
+            
+            // Ripristina modalità visive
+            if (state.q && typeof window.enableQuantumMode === 'function') {
+                setTimeout(() => window.enableQuantumMode(), 500);
+            }
+            
+            if (state.d && typeof window.enterDreamMode === 'function') {
+                setTimeout(() => window.enterDreamMode(), 500);
+            }
+        }, 300);
+        
+        console.log('✅ Stato caricato da URL:', state);
+        return true;
+        
+    } catch (error) {
+        console.error('Errore nel caricamento dello stato:', error);
+        return false;
+    }
+}
+
+/**
+ * Condividi il link della ricerca corrente
+ */
+async function shareResearchLink() {
+    const url = saveCurrentStateToURL();
+    
+    const shareData = {
+        title: 'Aeterna Lexicon - Ricerca Filosofica',
+        text: 'Esplora questa analisi su Aeterna Lexicon in Motu',
+        url: url
+    };
+    
+    // Usa Web Share API se disponibile (mobile/tablet)
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+            if (typeof showToast === 'function') {
+                showToast('✅ Link condiviso!', 'success');
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                console.error('Errore condivisione:', error);
+                fallbackCopyLink(url);
+            }
+        }
+    } else {
+        fallbackCopyLink(url);
+    }
+}
+
+/**
+ * Fallback: copia il link negli appunti
+ */
+function fallbackCopyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        if (typeof showToast === 'function') {
+            showToast('🔗 Link copiato! Condividilo con i colleghi.', 'success');
+        } else {
+            alert('Link copiato: ' + url);
+        }
+    }).catch(() => {
+        prompt('Copia manualmente questo link:', url);
+    });
+}
+
+/**
+ * Genera un QR code per il link della ricerca corrente
+ */
+function generateResearchQRCode() {
+    const url = saveCurrentStateToURL();
+    
+    // Crea o riutilizza il modale QR esistente
+    let modal = document.getElementById('qr-modal');
+    const container = document.getElementById('qrcode-container');
+    
+    if (modal && container) {
+        container.innerHTML = '';
+        new QRCode(container, {
+            text: url,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        modal.style.display = 'flex';
+    }
 }
