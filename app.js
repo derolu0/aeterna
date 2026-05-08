@@ -1995,9 +1995,11 @@ function exportToTEI(data, type = 'concept') {
 function generateConceptTEI(concept, timestamp, dateForXML) {
     // Gestione autori di riferimento
     let authorsXML = '';
+    let authorNames = [];  // ← DICHIARATO QUI (fuori dall'if)
+    
     if (concept.autore_riferimento) {
         const authorIds = concept.autore_riferimento.split(',');
-        const authorNames = authorIds.map(id => {
+        authorNames = authorIds.map(id => {
             const philosopher = filosofiData.find(f => f.id === id.trim());
             return philosopher ? philosopher.nome : id.trim();
         }).filter(n => n);
@@ -2006,10 +2008,13 @@ function generateConceptTEI(concept, timestamp, dateForXML) {
             authorsXML = `
           <respStmt>
             <resp>Autore di riferimento</resp>
-            <name>${authorNames.join(', ')}</name>
+            <name>${escapeXml(authorNames.join(', '))}</name>
           </respStmt>`;
         }
     }
+    
+    // Costruisci la stringa per gli autori
+    const authorsString = authorNames.length > 0 ? authorNames.join(', ') : 'vari autori';
     
     return `<?xml version="1.0" encoding="UTF-8"?>
 <?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
@@ -2029,7 +2034,7 @@ function generateConceptTEI(concept, timestamp, dateForXML) {
         </availability>
       </publicationStmt>
       <sourceDesc>
-        <p>Dataset filosofico stratificato. Dati estratti da opere di ${authorNames?.join(', ') || 'vari autori'}.</p>
+        <p>Dataset filosofico stratificato. Dati estratti da opere di ${escapeXml(authorsString)}.</p>
         <biblStruct>
           <monogr>
             <title>Dataset Aeterna Lexicon</title>
