@@ -31,7 +31,20 @@ let deferredPrompt = null;
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('📚 Aeterna Lexicon - Avvio con dataset modulare...');
     
-    // 1. SPLASH SCREEN
+    // 1. CARICA DATI IMMEDIATAMENTE
+    await loadPhilosophicalData();
+    
+    // 2. SETUP LISTENER
+    if (typeof setupConnectionListeners === 'function') setupConnectionListeners();
+    if (typeof setupImportListeners === 'function') setupImportListeners();
+    
+    // 3. CONTROLLA SE C'È STATO DA RIPRISTINARE
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasSharedState = urlParams.has('aeterna');
+    
+    console.log('🔍 Presenza stato condiviso:', hasSharedState);
+    
+    // 4. GESTISCI SPLASH E NAVIGAZIONE
     setTimeout(() => {
         const splash = document.getElementById('splash-screen');
         if (splash) {
@@ -42,28 +55,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         checkMaintenanceMode();
-        showScreen('home-screen');
-        handleUrlParameters();
         
-        console.log('✅ Interfaccia Sbloccata');
-    }, 2000);
-    
-    // 2. CARICA DATI
-    await loadPhilosophicalData();
-    
-    // 3. SETUP LISTENER
-    if (typeof setupConnectionListeners === 'function') setupConnectionListeners();
-    if (typeof setupImportListeners === 'function') setupImportListeners();
-    
-    // 4. PUNTO 4: CARICA STATO DA URL (NON PRIMA!)
-    setTimeout(() => {
-        console.log('🔄 [INIT] Tentativo caricamento stato da URL...');
-        if (typeof loadStateFromURL === 'function') {
+        // ===== LOGICA CORRETTA =====
+        if (hasSharedState && typeof loadStateFromURL === 'function') {
+            // Se c'è uno stato condiviso, carica QUELLO (non la home)
+            console.log('🔄 Ripristino stato condiviso...');
             loadStateFromURL();
         } else {
-            console.error('❌ loadStateFromURL non definita!');
+            // Solo se non c'è stato condiviso, vai alla home
+            showScreen('home-screen');
         }
-    }, 1000); // Attendi 1 secondo per sicurezza
+        // ===========================
+        
+        handleUrlParameters();
+        console.log('✅ Interfaccia Sbloccata');
+    }, 2000);
     
     console.log('✅ Inizializzazione completata.');
 });
@@ -2452,6 +2458,7 @@ function loadStateFromURL() {
     const encodedState = urlParams.get('aeterna');
     
     console.log('🔍 [loadStateFromURL] Stato trovato?', encodedState ? 'SI' : 'NO');
+    console.log('🔍 [loadStateFromURL] URL corrente:', window.location.href);
     
     if (!encodedState) return false;
     
@@ -2465,39 +2472,64 @@ function loadStateFromURL() {
             return false;
         }
         
-        // Attendi che l'app sia completamente pronta
-        const restoreState = () => {
-            console.log('🔄 [loadStateFromURL] Inizio ripristino...');
+        // FUNZIONE DI RIPRISTINO FORZATO (ignora la home)
+        const forceRestore = () => {
+            console.log('🔄 [loadStateFromURL] Inizio ripristino FORZATO...');
             
-            // Vai alla schermata corretta
-            if (state.screen && typeof showScreen === 'function') {
-                showScreen(state.screen);
-                console.log('  ✓ Schermata: ' + state.screen);
+            // 1. FORZA la schermata corretta (senza passare per showScreen che potrebbe avere logiche)
+            if (state.screen) {
+                // Nascondi TUTTE le schermate
+                document.querySelectorAll('.screen').forEach(s => {
+                    s.classList.remove('active');
+                    s.style.display = 'none';
+                });
+                
+                // Mostra SOLO la schermata desiderata
+                const target = document.getElementById(state.screen);
+                if (target) {
+                    target.classList.add('active');
+                    target.style.display = 'flex';
+                    currentScreen = state.screen;
+                    updateTabBar(state.screen);
+                    if (typeof loadScreenData === 'function') loadScreenData(state.screen);
+                    console.log('  ✓ Schermata FORZATA: ' + state.screen);
+                } else {
+                    console.error('  ✗ Schermata non trovata:', state.screen);
+                }
             }
             
-            // Attendi che la schermata sia renderizzata poi apri il dettaglio
+            // 2. APRI il dettaglio dell'entità
             setTimeout(() => {
-                if (state.c && typeof showConcettoDetail === 'function') {
+                if (state.w && typeof showOperaDetail === 'function') {
+                    const opera = opereData?.find(o => o.id === state.w);
+                    if (opera) {
+                        console.log('  ✓ Ripristino opera: ' + opera.titolo);
+                        window.currentOperaId = state.w;
+                        showOperaDetail(state.w);
+                    } else {
+                        console.warn('  ✗ Opera non trovata:', state.w);
+                    }
+                } else if (state.c && typeof showConcettoDetail === 'function') {
                     const concetto = concettiData?.find(c => c.id === state.c);
                     if (concetto) {
                         console.log('  ✓ Ripristino concetto: ' + concetto.parola);
+                        window.currentConcettoId = state.c;
                         showConcettoDetail(state.c);
+                    } else {
+                        console.warn('  ✗ Concetto non trovato:', state.c);
                     }
                 } else if (state.p && typeof showFilosofoDetail === 'function') {
                     const filosofo = filosofiData?.find(f => f.id === state.p);
                     if (filosofo) {
                         console.log('  ✓ Ripristino filosofo: ' + filosofo.nome);
+                        window.currentFilosofoId = state.p;
                         showFilosofoDetail(state.p);
-                    }
-                } else if (state.w && typeof showOperaDetail === 'function') {
-                    const opera = opereData?.find(o => o.id === state.w);
-                    if (opera) {
-                        console.log('  ✓ Ripristino opera: ' + opera.titolo);
-                        showOperaDetail(state.w);
+                    } else {
+                        console.warn('  ✗ Filosofo non trovato:', state.p);
                     }
                 }
                 
-                // Ripristina filtri
+                // 3. Ripristina filtri
                 if (state.f && typeof setFilter === 'function') {
                     setFilter(state.f);
                     console.log('  ✓ Filtro: ' + state.f);
@@ -2511,22 +2543,25 @@ function loadStateFromURL() {
         };
         
         // Se i dati non sono ancora pronti, attendi
-        if (typeof concettiData !== 'undefined' && concettiData.length > 0) {
-            restoreState();
+        if (typeof concettiData !== 'undefined' && concettiData.length > 0 && 
+            typeof filosofiData !== 'undefined' && filosofiData.length > 0 &&
+            typeof opereData !== 'undefined' && opereData.length > 0) {
+            forceRestore();
         } else {
             console.log('⏳ [loadStateFromURL] Attesa caricamento dati...');
             const waitInterval = setInterval(() => {
-                if (typeof concettiData !== 'undefined' && concettiData.length > 0) {
+                if (typeof concettiData !== 'undefined' && concettiData.length > 0 && 
+                    typeof filosofiData !== 'undefined' && filosofiData.length > 0 &&
+                    typeof opereData !== 'undefined' && opereData.length > 0) {
                     clearInterval(waitInterval);
-                    restoreState();
+                    forceRestore();
                 }
             }, 100);
             // Timeout di sicurezza dopo 5 secondi
             setTimeout(() => {
                 clearInterval(waitInterval);
-                if (typeof concettiData === 'undefined' || concettiData.length === 0) {
-                    console.warn('⚠️ Timeout attesa dati');
-                }
+                console.warn('⚠️ Timeout attesa dati, tentativo comunque...');
+                forceRestore();
             }, 5000);
         }
         
