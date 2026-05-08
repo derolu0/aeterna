@@ -48,20 +48,22 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('✅ Interfaccia Sbloccata');
     }, 2000);
     
-    // 2. CARICA DATI DAL DATASET MODULARE (File JSON Esterni)
+    // 2. CARICA DATI
     await loadPhilosophicalData();
     
-    // 3. SETUP LISTENER DI BASE
+    // 3. SETUP LISTENER
     if (typeof setupConnectionListeners === 'function') setupConnectionListeners();
     if (typeof setupImportListeners === 'function') setupImportListeners();
     
-    // ===== PUNTO 4: CARICA STATO DA URL (DOPO TUTTO) =====
+    // 4. PUNTO 4: CARICA STATO DA URL (NON PRIMA!)
     setTimeout(() => {
+        console.log('🔄 [INIT] Tentativo caricamento stato da URL...');
         if (typeof loadStateFromURL === 'function') {
             loadStateFromURL();
+        } else {
+            console.error('❌ loadStateFromURL non definita!');
         }
-    }, 500);
-    // ====================================================
+    }, 1000); // Attendi 1 secondo per sicurezza
     
     console.log('✅ Inizializzazione completata.');
 });
@@ -142,11 +144,9 @@ function showScreen(screenId) {
         window.scrollTo(0,0);
     }
     
-    // ===== PUNTO 3: AGGIORNA JSON-LD =====
-    if (typeof updateJSONLD === 'function') {
-        updateJSONLD();
-    }
-    // =====================================
+    // ===== AGGIUNGI QUESTA RIGA =====
+    if (typeof updateJSONLD === 'function') updateJSONLD();
+    // ================================
 }
 
 
