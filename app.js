@@ -1423,6 +1423,9 @@ function openComparativeAnalysis(termine) {
         return;
     }
     
+    // Salva l'ID del concetto per le funzioni TEI e Citation
+    window.currentComparativeConcettoId = concetto.id;
+    
     // Aggiorna la timeline
     updateEvolutionTimeline(concetto);
     
@@ -1877,6 +1880,7 @@ window.searchConcetti = searchConcetti;
 window.shareAppLink = shareAppLink;
 window.exportToTEI = exportToTEI;
 window.exportCurrentToTEI = exportCurrentToTEI;
+window.citeComparativeAnalysis = citeComparativeAnalysis;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -2225,4 +2229,45 @@ function exportCurrentToTEI() {
     
     if (data) exportToTEI(data, type);
     else if (typeof showToast === 'function') showToast('Nessun elemento trovato', 'error');
+}
+
+// ==================== ESTENSIONE ANALISI COMPARATIVA (PUNTO 1 & 2) ====================
+
+/**
+ * Esporta l'analisi comparativa in TEI/XML
+ */
+function exportComparativeToTEI() {
+    const termine = document.getElementById('comparative-term-title').textContent;
+    const concetto = concettiData.find(c => c.parola.toUpperCase() === termine || c.parola === termine);
+    
+    if (concetto) {
+        exportToTEI(concetto, 'concept');
+    } else {
+        if (typeof showToast === 'function') {
+            showToast('Errore: concetto non trovato per TEI export', 'error');
+        } else {
+            console.error('Concetto non trovato:', termine);
+        }
+    }
+}
+
+/**
+ * Cita l'analisi comparativa
+ */
+function citeComparativeAnalysis() {
+    const termine = document.getElementById('comparative-term-title').textContent;
+    const concetto = concettiData.find(c => c.parola.toUpperCase() === termine || c.parola === termine);
+    
+    if (concetto) {
+        // Salva il concetto corrente per la citazione
+        window.currentConcettoId = concetto.id;
+        // Richiama il modale delle citazioni
+        showCitationModal();
+    } else {
+        if (typeof showToast === 'function') {
+            showToast('Errore: concetto non trovato per la citazione', 'error');
+        } else {
+            console.error('Concetto non trovato:', termine);
+        }
+    }
 }
