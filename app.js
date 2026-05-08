@@ -426,7 +426,7 @@ function showFilosofoDetail(id) {
             <button class="btn-tei" onclick="exportCurrentToTEI()">
                 <i class="fas fa-file-code"></i> Esporta TEI/XML
             </button>
-            <button class="btn-citation" onclick="showCitationModal()">
+            <button class="btn-cite" onclick="showCitationModal()">
                 <i class="fas fa-quote-right"></i> Cita
             </button>
         </div>
