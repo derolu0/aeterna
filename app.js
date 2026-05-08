@@ -370,7 +370,7 @@ function createConcettoCardString(concetto) {
 
 // ==================== DETTAGLI ====================
 function showFilosofoDetail(id) {
-    window.currentFilosofoId = id;  // ← NUOVA RIGA
+    window.currentFilosofoId = id;
     const filosofo = filosofiData.find(f => f.id === id);
     if (!filosofo) return;
     
@@ -417,26 +417,19 @@ function showFilosofoDetail(id) {
             </div>
         </div>` : ''}
         
-        ${filosofo.coordinate && typeof filosofo.coordinate.lat !== 'undefined' ? `
         <div class="action-buttons-container">
+            ${filosofo.coordinate && typeof filosofo.coordinate.lat !== 'undefined' ? `
             <button class="btn-analisi" onclick="goToMapLocation(${filosofo.coordinate.lat}, ${filosofo.coordinate.lng}, '${filosofo.nome.replace(/'/g, "\\'")}')">
                 <i class="fas fa-map-marker-alt"></i> Vedi sulla Mappa
             </button>
+            ` : ''}
             <button class="btn-tei" onclick="exportCurrentToTEI()">
                 <i class="fas fa-file-code"></i> Esporta TEI/XML
             </button>
-        </div>
-        ` : `
-        <div class="action-buttons-container">
-            <button class="btn-tei" onclick="exportCurrentToTEI()">
-                <i class="fas fa-file-code"></i> Esporta TEI/XML
-            </button>
-
-            <button class="btn-cite" onclick="showCitationModal()">
-                <i class="fas fa-quote-left"></i> Cita
+            <button class="btn-citation" onclick="showCitationModal()">
+                <i class="fas fa-quote-right"></i> Cita
             </button>
         </div>
-        `}
     `;
     
     showScreen('filosofo-detail-screen');
@@ -1992,7 +1985,7 @@ function exportToTEI(data, type = 'concept') {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Aeterna_${type}_${data.parola || data.nome || data.titolo}_TEI.xml`;
+    a.download = `Aeterna_${type}_${(data.parola || data.nome || data.titolo || 'export').replace(/[^a-z0-9]/gi, '_')}_TEI.xml`;
     document.body.appendChild(a);
     a.click();
     URL.revokeObjectURL(url);
@@ -2003,37 +1996,21 @@ function exportToTEI(data, type = 'concept') {
 
 /**
  * PUNTO 2: CITATION ENGINE
- * Genera la stringa di citazione in diversi formati
+ * Mostra il modale con le citazioni in APA, MLA, Chicago
  */
-function generateCitation(data, format) {
-    const now = new Date();
-    const year = now.getFullYear();
-    const accessDate = now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
-    const title = data.parola || data.nome || data.titolo;
-    const author = "De Rosa, S."; 
-    const siteName = "Aeterna Lexicon in Motu";
-    const url = window.location.href;
-
-    switch (format) {
-        case 'apa':
-            return `${author} (${year}). ${title}. ${siteName}. Recuperato il ${accessDate}, da ${url}`;
-        case 'mla':
-            return `"${title}." ${siteName}, ${year}, ${url}. Accesso il ${accessDate}.`;
-        case 'chicago':
-            return `${author}. "${title}." ${siteName}. ${year}. ${url} (accesso il ${accessDate}).`;
-        default:
-            return "";
-    }
-}
-
 function showCitationModal() {
     let data;
+    let type;
+    
     if (currentScreen === 'concetto-detail-screen') {
         data = concettiData.find(c => c.id === window.currentConcettoId);
+        type = 'concept';
     } else if (currentScreen === 'filosofo-detail-screen') {
         data = filosofiData.find(f => f.id === window.currentFilosofoId);
+        type = 'philosopher';
     } else if (currentScreen === 'opera-detail-screen') {
         data = opereData.find(o => o.id === window.currentOperaId);
+        type = 'work';
     }
 
     if (!data) {
@@ -2042,31 +2019,112 @@ function showCitationModal() {
     }
 
     const formats = ['apa', 'mla', 'chicago'];
+    const formatNames = { apa: 'APA (7th ed.)', mla: 'MLA (9th ed.)', chicago: 'Chicago (17th ed.)' };
+    
     let html = `<div style="text-align:left; font-family: sans-serif;">
-                    <p style="margin-bottom:15px; font-size:0.9rem; color:#555;">Copia il formato desiderato:</p>`;
+                    <p style="margin-bottom:15px; font-size:0.9rem; color:#555;">📖 Seleziona il formato e copia la citazione:</p>`;
 
-    formats.forEach(f => {
+    for (const f of formats) {
         const text = generateCitation(data, f);
-        html += `<div style="background:#f4f4f4; padding:10px; border-radius:5px; margin-bottom:10px; border-left:4px solid #2c3e50;">
-                    <small style="font-weight:bold; color:#2c3e50; display:block; text-transform:uppercase;">${f}</small>
-                    <div id="cit-${f}" style="font-size:0.85rem; word-break:break-all;">${text}</div>
-                    <button onclick="copyCitation('cit-${f}')" style="margin-top:8px; background:#2c3e50; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:0.7rem;">Copia</button>
+        const uniqueId = `cit-${f}-${Date.now()}`;
+        html += `<div style="background:#f4f4f4; padding:12px; border-radius:8px; margin-bottom:12px; border-left:4px solid #2c3e50;">
+                    <small style="font-weight:bold; color:#2c3e50; display:block; text-transform:uppercase; margin-bottom:5px;">${formatNames[f]}</small>
+                    <div id="${uniqueId}" style="font-size:0.85rem; word-break:break-all; font-family:monospace; background:white; padding:8px; border-radius:4px;">${escapeHtml(text)}</div>
+                    <button onclick="copyCitationById('${uniqueId}')" style="margin-top:8px; background:#2c3e50; color:white; border:none; padding:6px 12px; border-radius:5px; cursor:pointer; font-size:0.75rem;">
+                        📋 Copia
+                    </button>
                  </div>`;
-    });
-    html += `</div>`;
+    }
+    
+    html += `<button onclick="closeCitationModal()" style="margin-top:10px; background:#ef4444; color:white; border:none; padding:8px 16px; border-radius:5px; cursor:pointer; width:100%;">
+                ✖ Chiudi
+             </button></div>`;
+    
+    // Crea o riutilizza il modale
+    let modal = document.getElementById('citation-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'citation-modal';
+        modal.className = 'modal-overlay';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 550px; max-height: 80vh; overflow-y: auto;">
+                <h3 class="modal-title" style="margin-bottom: 15px;">📚 Citazione Scientifica</h3>
+                <div id="citation-content"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Chiudi cliccando fuori
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeCitationModal();
+        });
+    }
+    
+    const contentDiv = document.getElementById('citation-content');
+    if (contentDiv) contentDiv.innerHTML = html;
+    modal.style.display = 'flex';
+}
 
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({ title: 'Citazione Scientifica', html: html, showConfirmButton: false });
-    } else {
-        alert("Citazione generata. Si consiglia SweetAlert2 per la visualizzazione.");
+function closeCitationModal() {
+    const modal = document.getElementById('citation-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function copyCitationById(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const text = element.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        if (typeof showToast === 'function') {
+            showToast("✅ Citazione copiata negli appunti!", "success");
+        } else {
+            alert("Citazione copiata!");
+        }
+    }).catch(() => {
+        alert("Errore durante la copia");
+    });
+}
+
+/**
+ * Genera la stringa di citazione in diversi formati
+ */
+function generateCitation(data, format) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const accessDate = now.toLocaleDateString('it-IT');
+    const title = data.parola || data.nome || data.titolo;
+    const author = "De Rosa, S.";
+    const siteName = "Aeterna Lexicon in Motu";
+    const url = window.location.href;
+    
+    // Per opere, usa l'autore reale
+    let authorForCite = author;
+    if (data.autore && data.autore !== 'Sconosciuto') {
+        authorForCite = data.autore;
+    }
+
+    switch (format) {
+        case 'apa':
+            return `${authorForCite} (${year}). ${title}. ${siteName}. Recuperato da ${url}`;
+        case 'mla':
+            return `"${title}." ${siteName}, ${year}, ${url}.`;
+        case 'chicago':
+            return `${authorForCite}. "${title}." ${siteName}. ${year}. ${url}.`;
+        default:
+            return "";
     }
 }
 
-function copyCitation(id) {
-    const text = document.getElementById(id).innerText;
-    navigator.clipboard.writeText(text).then(() => {
-        if (typeof showToast === 'function') showToast("Copiato!", "success");
-    });
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // ==================== GENERATORI TEI SPECIFICI ====================
@@ -2078,7 +2136,7 @@ function generateConceptTEI(concept, timestamp, dateForXML) {
     if (concept.autore_riferimento) {
         const authorIds = concept.autore_riferimento.split(',');
         authorNames = authorIds.map(id => {
-            const philosopher = filosofiData.find(f => f.id === id.trim());
+            const philosopher = typeof filosofiData !== 'undefined' ? filosofiData.find(f => f.id === id.trim()) : null;
             return philosopher ? philosopher.nome : id.trim();
         }).filter(n => n);
         
@@ -2154,9 +2212,17 @@ function escapeXml(str) {
 
 function exportCurrentToTEI() {
     let data, type;
-    if (currentScreen === 'concetto-detail-screen') { data = concettiData.find(c => c.id === window.currentConcettoId); type = 'concept'; }
-    else if (currentScreen === 'filosofo-detail-screen') { data = filosofiData.find(f => f.id === window.currentFilosofoId); type = 'philosopher'; }
-    else if (currentScreen === 'opera-detail-screen') { data = opereData.find(o => o.id === window.currentOperaId); type = 'work'; }
+    if (currentScreen === 'concetto-detail-screen') { 
+        data = typeof concettiData !== 'undefined' ? concettiData.find(c => c.id === window.currentConcettoId) : null; 
+        type = 'concept'; 
+    } else if (currentScreen === 'filosofo-detail-screen') { 
+        data = typeof filosofiData !== 'undefined' ? filosofiData.find(f => f.id === window.currentFilosofoId) : null; 
+        type = 'philosopher'; 
+    } else if (currentScreen === 'opera-detail-screen') { 
+        data = typeof opereData !== 'undefined' ? opereData.find(o => o.id === window.currentOperaId) : null; 
+        type = 'work'; 
+    }
     
     if (data) exportToTEI(data, type);
+    else if (typeof showToast === 'function') showToast('Nessun elemento trovato', 'error');
 }
