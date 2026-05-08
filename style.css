@@ -2030,3 +2030,31 @@ html, body {
 #home-screen .home-buttons {
     margin-top: 30px !important;
 }
+/* ==================== PUNTO 1: BOTTONE TEI EXPORT ==================== */
+.btn-tei {
+    background: linear-gradient(135deg, #2c3e50, #1a252f);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-tei:hover {
+    background: linear-gradient(135deg, #1a252f, #0d151c);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.btn-tei:active {
+    transform: translateY(0);
+}
+
+.btn-tei i {
+    font-size: 1rem;
+}
