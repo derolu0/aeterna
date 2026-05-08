@@ -431,6 +431,10 @@ function showFilosofoDetail(id) {
             <button class="btn-tei" onclick="exportCurrentToTEI()">
                 <i class="fas fa-file-code"></i> Esporta TEI/XML
             </button>
+
+            <button class="btn-cite" onclick="showCitationModal()">
+                <i class="fas fa-quote-left"></i> Cita
+            </button>
         </div>
         `}
     `;
@@ -468,6 +472,10 @@ function showOperaDetail(id) {
         <div class="action-buttons-container">
             <button class="btn-tei" onclick="exportCurrentToTEI()">
                 <i class="fas fa-file-code"></i> Esporta TEI/XML
+            </button>
+
+            <button class="btn-cite" onclick="showCitationModal()">
+                <i class="fas fa-quote-left"></i> Cita
             </button>
         </div>
     `;
@@ -521,6 +529,10 @@ function showConcettoDetail(id) {
             <button class="btn-analisi" onclick="openComparativeAnalysis('${concetto.parola}')">Analisi Comparativa</button>
             <button class="btn-tei" onclick="exportCurrentToTEI()">
                 <i class="fas fa-file-code"></i> Esporta TEI/XML
+            </button>
+
+            <button class="btn-cite" onclick="showCitationModal()">
+                <i class="fas fa-quote-left"></i> Cita
             </button>
         </div>
     `;
@@ -1947,13 +1959,13 @@ function shareAppLink() {
     }
 }
 
-// ==================== PUNTO 1: TEI/XML EXPORT ENGINE ====================
-// Aggiungere alla fine di app.js, prima delle funzioni globali
+// ============================================================
+// MODULI SCIENTIFICI AETERNA v5.0 (PUNTO 1 & 2)
+// ============================================================
 
 /**
+ * PUNTO 1: TEI/XML EXPORT ENGINE
  * Esporta un'entità in formato TEI/XML (Text Encoding Initiative)
- * @param {Object} data - Dati dell'entità (concetto/filosofo/opera)
- * @param {string} type - Tipo di entità: 'concept', 'philosopher', 'work'
  */
 function exportToTEI(data, type = 'concept') {
     const timestamp = new Date().toISOString();
@@ -1976,7 +1988,6 @@ function exportToTEI(data, type = 'concept') {
             return;
     }
     
-    // Creazione e download del file
     const blob = new Blob([teiTemplate], { type: 'application/xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1987,15 +1998,82 @@ function exportToTEI(data, type = 'concept') {
     URL.revokeObjectURL(url);
     document.body.removeChild(a);
     
-    showToast(`✅ Esportazione TEI completata per: ${data.parola || data.nome || data.titolo}`, 'success');
-    console.log(`📄 TEI export: ${type} - ${data.parola || data.nome || data.titolo}`);
+    if (typeof showToast === 'function') showToast(`✅ Esportazione TEI completata`, 'success');
 }
 
-// Genera TEI per un CONCETTO
+/**
+ * PUNTO 2: CITATION ENGINE
+ * Genera la stringa di citazione in diversi formati
+ */
+function generateCitation(data, format) {
+    const now = new Date();
+    const year = now.getFullYear();
+    const accessDate = now.toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+    const title = data.parola || data.nome || data.titolo;
+    const author = "De Rosa, S."; 
+    const siteName = "Aeterna Lexicon in Motu";
+    const url = window.location.href;
+
+    switch (format) {
+        case 'apa':
+            return `${author} (${year}). ${title}. ${siteName}. Recuperato il ${accessDate}, da ${url}`;
+        case 'mla':
+            return `"${title}." ${siteName}, ${year}, ${url}. Accesso il ${accessDate}.`;
+        case 'chicago':
+            return `${author}. "${title}." ${siteName}. ${year}. ${url} (accesso il ${accessDate}).`;
+        default:
+            return "";
+    }
+}
+
+function showCitationModal() {
+    let data;
+    if (currentScreen === 'concetto-detail-screen') {
+        data = concettiData.find(c => c.id === window.currentConcettoId);
+    } else if (currentScreen === 'filosofo-detail-screen') {
+        data = filosofiData.find(f => f.id === window.currentFilosofoId);
+    } else if (currentScreen === 'opera-detail-screen') {
+        data = opereData.find(o => o.id === window.currentOperaId);
+    }
+
+    if (!data) {
+        if (typeof showToast === 'function') showToast("Dati non trovati", "error");
+        return;
+    }
+
+    const formats = ['apa', 'mla', 'chicago'];
+    let html = `<div style="text-align:left; font-family: sans-serif;">
+                    <p style="margin-bottom:15px; font-size:0.9rem; color:#555;">Copia il formato desiderato:</p>`;
+
+    formats.forEach(f => {
+        const text = generateCitation(data, f);
+        html += `<div style="background:#f4f4f4; padding:10px; border-radius:5px; margin-bottom:10px; border-left:4px solid #2c3e50;">
+                    <small style="font-weight:bold; color:#2c3e50; display:block; text-transform:uppercase;">${f}</small>
+                    <div id="cit-${f}" style="font-size:0.85rem; word-break:break-all;">${text}</div>
+                    <button onclick="copyCitation('cit-${f}')" style="margin-top:8px; background:#2c3e50; color:white; border:none; padding:4px 8px; border-radius:3px; cursor:pointer; font-size:0.7rem;">Copia</button>
+                 </div>`;
+    });
+    html += `</div>`;
+
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({ title: 'Citazione Scientifica', html: html, showConfirmButton: false });
+    } else {
+        alert("Citazione generata. Si consiglia SweetAlert2 per la visualizzazione.");
+    }
+}
+
+function copyCitation(id) {
+    const text = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        if (typeof showToast === 'function') showToast("Copiato!", "success");
+    });
+}
+
+// ==================== GENERATORI TEI SPECIFICI ====================
+
 function generateConceptTEI(concept, timestamp, dateForXML) {
-    // Gestione autori di riferimento
     let authorsXML = '';
-    let authorNames = [];  // ← DICHIARATO QUI (fuori dall'if)
+    let authorNames = [];
     
     if (concept.autore_riferimento) {
         const authorIds = concept.autore_riferimento.split(',');
@@ -2005,210 +2083,80 @@ function generateConceptTEI(concept, timestamp, dateForXML) {
         }).filter(n => n);
         
         if (authorNames.length > 0) {
-            authorsXML = `
-          <respStmt>
-            <resp>Autore di riferimento</resp>
-            <name>${escapeXml(authorNames.join(', '))}</name>
-          </respStmt>`;
+            authorsXML = `<respStmt><resp>Autore di riferimento</resp><name>${escapeXml(authorNames.join(', '))}</name></respStmt>`;
         }
     }
     
-    // Costruisci la stringa per gli autori
     const authorsString = authorNames.length > 0 ? authorNames.join(', ') : 'vari autori';
     
     return `<?xml version="1.0" encoding="UTF-8"?>
-<?xml-model href="http://www.tei-c.org/release/xml/tei/custom/schema/relaxng/tei_all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
 <TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="it">
   <teiHeader>
     <fileDesc>
       <titleStmt>
-        <title>Aeterna Lexicon - Analisi del concetto: ${escapeXml(concept.parola)}</title>
-        <author>Generato da Aeterna Lexicon in Motu v5.0</author>
+        <title>Aeterna - Concetto: ${escapeXml(concept.parola)}</title>
+        <author>Aeterna Lexicon v5.0</author>
         ${authorsXML}
       </titleStmt>
       <publicationStmt>
-        <publisher>Progetto Aeterna - Digital Humanities Research Tool</publisher>
+        <publisher>Progetto Aeterna</publisher>
         <date when="${dateForXML}">${dateForXML}</date>
-        <availability status="free">
-          <p>Distribuito sotto licenza MIT per scopi accademici e di ricerca</p>
-        </availability>
       </publicationStmt>
-      <sourceDesc>
-        <p>Dataset filosofico stratificato. Dati estratti da opere di ${escapeXml(authorsString)}.</p>
-        <biblStruct>
-          <monogr>
-            <title>Dataset Aeterna Lexicon</title>
-            <author>Dott. Salvatore De Rosa</author>
-            <imprint>
-              <date>${dateForXML}</date>
-            </imprint>
-          </monogr>
-        </biblStruct>
-      </sourceDesc>
+      <sourceDesc><p>Dataset di ${escapeXml(authorsString)}.</p></sourceDesc>
     </fileDesc>
-    <encodingDesc>
-      <projectDesc>
-        <p>Analisi computazionale delle trasformazioni del lessico filosofico tra classico e contemporaneo.</p>
-      </projectDesc>
-      <tagsDecl>
-        <tagUsage gi="entry" occurrence="1">Entry per il concetto filosofico</tagUsage>
-        <tagUsage gi="sense" occurrence="1">Accezione del concetto</tagUsage>
-        <tagUsage gi="def" occurrence="1">Definizione principale</tagUsage>
-      </tagsDecl>
-    </encodingDesc>
-    <profileDesc>
-      <creation>
-        <date when="${dateForXML}">${dateForXML}</date>
-      </creation>
-      <langUsage>
-        <language ident="it">Italiano</language>
-      </langUsage>
-    </profileDesc>
   </teiHeader>
   <text>
     <body>
-      <div type="lexicon_entry" xml:id="${concept.id || 'c1'}">
-        <head>${escapeXml(concept.parola)}</head>
-        <entry xml:id="${concept.id || 'c1'}">
-          <form>
-            <orth>${escapeXml(concept.parola)}</orth>
-            ${concept.dominio ? `<usg type="domain">${escapeXml(concept.dominio)}</usg>` : ''}
-          </form>
-          <sense>
-            <def>${escapeXml(concept.definizione || '')}</def>
-            <note type="periodo">${concept.periodo === 'classico' ? 'Classico/Antico' : (concept.periodo === 'contemporaneo' ? 'Contemporaneo' : 'Transperiodale')}</note>
-            ${concept.dominio ? `<note type="domain">${escapeXml(concept.dominio)}</note>` : ''}
-            ${concept.evoluzione ? `
-            <cit type="evolution">
-              <quote>${escapeXml(concept.evoluzione)}</quote>
-            </cit>` : ''}
-            ${concept.esempio ? `
-            <cit type="example">
-              <quote>${escapeXml(concept.esempio)}</quote>
-            </cit>` : ''}
-          </sense>
-        </entry>
-      </div>
+      <entry xml:id="${concept.id || 'c1'}">
+        <form><orth>${escapeXml(concept.parola)}</orth></form>
+        <sense>
+          <def>${escapeXml(concept.definizione || '')}</def>
+          <note type="periodo">${concept.periodo}</note>
+        </sense>
+      </entry>
     </body>
   </text>
 </TEI>`;
 }
 
-// Genera TEI per un FILOSOFO
 function generatePhilosopherTEI(philosopher, timestamp, dateForXML) {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="it">
   <teiHeader>
     <fileDesc>
-      <titleStmt>
-        <title>Aeterna Lexicon - Filosofo: ${escapeXml(philosopher.nome)}</title>
-        <author>Generato da Aeterna Lexicon in Motu v5.0</author>
-      </titleStmt>
-      <publicationStmt>
-        <publisher>Progetto Aeterna</publisher>
-        <date when="${dateForXML}">${dateForXML}</date>
-      </publicationStmt>
-      <sourceDesc>
-        <p>Dataset filosofico - Autore analizzato: ${escapeXml(philosopher.nome)}</p>
-      </sourceDesc>
+      <titleStmt><title>Aeterna - Filosofo: ${escapeXml(philosopher.nome)}</title></titleStmt>
+      <publicationStmt><publisher>Progetto Aeterna</publisher></publicationStmt>
+      <sourceDesc><p>Autore: ${escapeXml(philosopher.nome)}</p></sourceDesc>
     </fileDesc>
   </teiHeader>
-  <text>
-    <body>
-      <div type="philosopher_entry" xml:id="${philosopher.id}">
-        <head>${escapeXml(philosopher.nome)}</head>
-        <listPerson>
-          <person xml:id="${philosopher.id}">
-            <persName>${escapeXml(philosopher.nome)}</persName>
-            <birth when="${philosopher.anni?.split('-')[0]?.trim() || ''}">
-              <placeName>${escapeXml(philosopher.citta_nascita || '')}, ${escapeXml(philosopher.paese_nascita || '')}</placeName>
-            </birth>
-            <death when="${philosopher.anni?.split('-')[1]?.trim() || ''}"/>
-            <residence>
-              <placeName>${escapeXml(philosopher.scuola || '')}</placeName>
-            </residence>
-            <note type="period">${philosopher.periodo === 'classico' ? 'Classico/Antico' : 'Contemporaneo'}</note>
-            <note type="bio">${escapeXml(philosopher.biografia?.substring(0, 500) || '')}</note>
-          </person>
-        </listPerson>
-        ${philosopher.concetti_principali ? `
-        <list type="concepts">
-          <head>Concetti principali</head>
-          ${philosopher.concetti_principali.map(c => `<item>${escapeXml(c)}</item>`).join('\n          ')}
-        </list>` : ''}
-      </div>
-    </body>
-  </text>
+  <text><body><p>${escapeXml(philosopher.biografia || '')}</p></body></text>
 </TEI>`;
 }
 
-// Genera TEI per un'OPERA
 function generateWorkTEI(work, timestamp, dateForXML) {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <TEI xmlns="http://www.tei-c.org/ns/1.0" xml:lang="it">
   <teiHeader>
     <fileDesc>
-      <titleStmt>
-        <title>Aeterna Lexicon - Opera: ${escapeXml(work.titolo)}</title>
-        <author>${escapeXml(work.autore || '')}</author>
-      </titleStmt>
-      <publicationStmt>
-        <publisher>Progetto Aeterna</publisher>
-        <date when="${dateForXML}">${dateForXML}</date>
-      </publicationStmt>
-      <sourceDesc>
-        <p>Opera filosofica analizzata da Aeterna Lexicon</p>
-      </sourceDesc>
+      <titleStmt><title>Aeterna - Opera: ${escapeXml(work.titolo)}</title></titleStmt>
+      <publicationStmt><publisher>Progetto Aeterna</publisher></publicationStmt>
+      <sourceDesc><p>Opera di ${escapeXml(work.autore || '')}</p></sourceDesc>
     </fileDesc>
   </teiHeader>
-  <text>
-    <body>
-      <div type="work_entry" xml:id="${work.id}">
-        <head>${escapeXml(work.titolo)}</head>
-        <biblStruct>
-          <monogr>
-            <title>${escapeXml(work.titolo)}</title>
-            <author>${escapeXml(work.autore || '')}</author>
-            <imprint>
-              <date when="${work.anno}">${work.anno}</date>
-            </imprint>
-          </monogr>
-        </biblStruct>
-        <note type="synopsis">${escapeXml(work.sintesi || '')}</note>
-        ${work.concetti ? `
-        <list type="concepts">
-          <head>Concetti trattati</head>
-          ${work.concetti.map(c => `<item>${escapeXml(c)}</item>`).join('\n          ')}
-        </list>` : ''}
-      </div>
-    </body>
-  </text>
+  <text><body><p>${escapeXml(work.sintesi || '')}</p></body></text>
 </TEI>`;
 }
 
-// Utility: escape caratteri XML
 function escapeXml(str) {
     if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 
-// Funzione globale per esportazione dal dettaglio corrente
 function exportCurrentToTEI() {
-    if (currentScreen === 'concetto-detail-screen') {
-        const concetto = concettiData.find(c => c.id === window.currentConcettoId);
-        if (concetto) exportToTEI(concetto, 'concept');
-    } else if (currentScreen === 'filosofo-detail-screen') {
-        const filosofo = filosofiData.find(f => f.id === window.currentFilosofoId);
-        if (filosofo) exportToTEI(filosofo, 'philosopher');
-    } else if (currentScreen === 'opera-detail-screen') {
-        const opera = opereData.find(o => o.id === window.currentOperaId);
-        if (opera) exportToTEI(opera, 'work');
-    } else {
-        showToast('Nessun elemento selezionato per l\'esportazione', 'warning');
-    }
+    let data, type;
+    if (currentScreen === 'concetto-detail-screen') { data = concettiData.find(c => c.id === window.currentConcettoId); type = 'concept'; }
+    else if (currentScreen === 'filosofo-detail-screen') { data = filosofiData.find(f => f.id === window.currentFilosofoId); type = 'philosopher'; }
+    else if (currentScreen === 'opera-detail-screen') { data = opereData.find(o => o.id === window.currentOperaId); type = 'work'; }
+    
+    if (data) exportToTEI(data, type);
 }
