@@ -51,13 +51,17 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 2. CARICA DATI DAL DATASET MODULARE (File JSON Esterni)
     await loadPhilosophicalData();
     
-    // ===== PUNTO 4: CARICA STATO DA URL =====
-    loadStateFromURL();
-    // ========================================
-    
     // 3. SETUP LISTENER DI BASE
     if (typeof setupConnectionListeners === 'function') setupConnectionListeners();
     if (typeof setupImportListeners === 'function') setupImportListeners();
+    
+    // ===== PUNTO 4: CARICA STATO DA URL (DOPO TUTTO) =====
+    setTimeout(() => {
+        if (typeof loadStateFromURL === 'function') {
+            loadStateFromURL();
+        }
+    }, 500);
+    // ====================================================
     
     console.log('✅ Inizializzazione completata.');
 });
@@ -2393,17 +2397,17 @@ function updateJSONLD() {
 function saveCurrentStateToURL() {
     const state = {
         screen: currentScreen,
-        v: '5.0.0', // versione per compatibilità futura
-        t: Date.now() // timestamp per evitare cache
+        v: '5.0.0',
+        t: Date.now()
     };
     
     // Aggiungi ID dell'entità se siamo in un dettaglio
     if (currentScreen === 'concetto-detail-screen' && window.currentConcettoId) {
-        state.c = window.currentConcettoId; // c = concept
+        state.c = window.currentConcettoId;
     } else if (currentScreen === 'filosofo-detail-screen' && window.currentFilosofoId) {
-        state.p = window.currentFilosofoId; // p = philosopher
+        state.p = window.currentFilosofoId;
     } else if (currentScreen === 'opera-detail-screen' && window.currentOperaId) {
-        state.w = window.currentOperaId; // w = work
+        state.w = window.currentOperaId;
     }
     
     // Salva i filtri attivi
@@ -2434,6 +2438,9 @@ function saveCurrentStateToURL() {
     // Aggiorna l'URL nella barra (senza ricaricare)
     window.history.pushState(state, '', url);
     
+    console.log('💾 [saveCurrentStateToURL] Stato salvato:', state);
+    console.log('🔗 [saveCurrentStateToURL] URL generato:', url.toString());
+    
     return url.toString();
 }
 
@@ -2444,10 +2451,13 @@ function loadStateFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
     const encodedState = urlParams.get('aeterna');
     
+    console.log('🔍 [loadStateFromURL] Stato trovato?', encodedState ? 'SI' : 'NO');
+    
     if (!encodedState) return false;
     
     try {
         const state = JSON.parse(atob(encodedState));
+        console.log('📦 [loadStateFromURL] Stato decodificato:', state);
         
         // Verifica compatibilità versione
         if (state.v !== '5.0.0') {
@@ -2455,48 +2465,75 @@ function loadStateFromURL() {
             return false;
         }
         
-        // Reindirizza alla schermata corretta
-        if (state.screen) {
-            showScreen(state.screen);
+        // Attendi che l'app sia completamente pronta
+        const restoreState = () => {
+            console.log('🔄 [loadStateFromURL] Inizio ripristino...');
+            
+            // Vai alla schermata corretta
+            if (state.screen && typeof showScreen === 'function') {
+                showScreen(state.screen);
+                console.log('  ✓ Schermata: ' + state.screen);
+            }
+            
+            // Attendi che la schermata sia renderizzata poi apri il dettaglio
+            setTimeout(() => {
+                if (state.c && typeof showConcettoDetail === 'function') {
+                    const concetto = concettiData?.find(c => c.id === state.c);
+                    if (concetto) {
+                        console.log('  ✓ Ripristino concetto: ' + concetto.parola);
+                        showConcettoDetail(state.c);
+                    }
+                } else if (state.p && typeof showFilosofoDetail === 'function') {
+                    const filosofo = filosofiData?.find(f => f.id === state.p);
+                    if (filosofo) {
+                        console.log('  ✓ Ripristino filosofo: ' + filosofo.nome);
+                        showFilosofoDetail(state.p);
+                    }
+                } else if (state.w && typeof showOperaDetail === 'function') {
+                    const opera = opereData?.find(o => o.id === state.w);
+                    if (opera) {
+                        console.log('  ✓ Ripristino opera: ' + opera.titolo);
+                        showOperaDetail(state.w);
+                    }
+                }
+                
+                // Ripristina filtri
+                if (state.f && typeof setFilter === 'function') {
+                    setFilter(state.f);
+                    console.log('  ✓ Filtro: ' + state.f);
+                }
+                
+                if (state.fo && typeof setFilterOpere === 'function') {
+                    setFilterOpere(state.fo);
+                    console.log('  ✓ Filtro opere: ' + state.fo);
+                }
+            }, 200);
+        };
+        
+        // Se i dati non sono ancora pronti, attendi
+        if (typeof concettiData !== 'undefined' && concettiData.length > 0) {
+            restoreState();
+        } else {
+            console.log('⏳ [loadStateFromURL] Attesa caricamento dati...');
+            const waitInterval = setInterval(() => {
+                if (typeof concettiData !== 'undefined' && concettiData.length > 0) {
+                    clearInterval(waitInterval);
+                    restoreState();
+                }
+            }, 100);
+            // Timeout di sicurezza dopo 5 secondi
+            setTimeout(() => {
+                clearInterval(waitInterval);
+                if (typeof concettiData === 'undefined' || concettiData.length === 0) {
+                    console.warn('⚠️ Timeout attesa dati');
+                }
+            }, 5000);
         }
         
-        // Attendi che la schermata sia caricata poi apri il dettaglio
-        setTimeout(() => {
-            if (state.c) {
-                const concetto = concettiData.find(c => c.id === state.c);
-                if (concetto) showConcettoDetail(state.c);
-            } else if (state.p) {
-                const filosofo = filosofiData.find(f => f.id === state.p);
-                if (filosofo) showFilosofoDetail(state.p);
-            } else if (state.w) {
-                const opera = opereData.find(o => o.id === state.w);
-                if (opera) showOperaDetail(state.w);
-            }
-            
-            // Ripristina filtri
-            if (state.f && typeof setFilter === 'function') {
-                setFilter(state.f);
-            }
-            
-            if (state.fo && typeof setFilterOpere === 'function') {
-                setFilterOpere(state.fo);
-            }
-            
-            // Ripristina modalità visive
-            if (state.q && typeof window.enableQuantumMode === 'function') {
-                setTimeout(() => window.enableQuantumMode(), 500);
-            }
-            
-            if (state.d && typeof window.enterDreamMode === 'function') {
-                setTimeout(() => window.enterDreamMode(), 500);
-            }
-        }, 300);
-        
-        console.log('✅ Stato caricato da URL:', state);
         return true;
         
     } catch (error) {
-        console.error('Errore nel caricamento dello stato:', error);
+        console.error('❌ [loadStateFromURL] Errore:', error);
         return false;
     }
 }
