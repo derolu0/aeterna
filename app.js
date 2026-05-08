@@ -133,7 +133,14 @@ function showScreen(screenId) {
         }
         window.scrollTo(0,0);
     }
+    
+    // ===== PUNTO 3: AGGIORNA JSON-LD =====
+    if (typeof updateJSONLD === 'function') {
+        updateJSONLD();
+    }
+    // =====================================
 }
+
 
 function goBack() {
     if (currentScreen === 'home-screen') return;
@@ -1880,7 +1887,9 @@ window.searchConcetti = searchConcetti;
 window.shareAppLink = shareAppLink;
 window.exportToTEI = exportToTEI;
 window.exportCurrentToTEI = exportCurrentToTEI;
+window.exportComparativeToTEI = exportComparativeToTEI;
 window.citeComparativeAnalysis = citeComparativeAnalysis;
+window.updateJSONLD = updateJSONLD;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -2259,9 +2268,7 @@ function citeComparativeAnalysis() {
     const concetto = concettiData.find(c => c.parola.toUpperCase() === termine || c.parola === termine);
     
     if (concetto) {
-        // Salva il concetto corrente per la citazione
         window.currentConcettoId = concetto.id;
-        // Richiama il modale delle citazioni
         showCitationModal();
     } else {
         if (typeof showToast === 'function') {
@@ -2270,4 +2277,102 @@ function citeComparativeAnalysis() {
             console.error('Concetto non trovato:', termine);
         }
     }
+}
+
+// ==================== PUNTO 3: JSON-LD METADATA ====================
+
+/**
+ * Genera e inietta i metadati JSON-LD nel head della pagina
+ */
+function generateJSONLD() {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const currentYear = new Date().getFullYear();
+    
+    const datasetSchema = {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        "name": "Aeterna Lexicon in Motu",
+        "description": "Dataset per l'analisi delle trasformazioni del linguaggio filosofico tra Classico e Contemporaneo.",
+        "version": "5.0.0",
+        "url": baseUrl,
+        "creator": {
+            "@type": "Person",
+            "name": "Salvatore De Rosa",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "Università Telematica Pegaso"
+            }
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "dateModified": new Date().toISOString().split('T')[0],
+        "keywords": ["Filosofia", "Digital Humanities", "Ontologia", "Epistemologia", "Etica"],
+        "inLanguage": ["it", "en"]
+    };
+    
+    let currentEntitySchema = null;
+    
+    if (currentScreen === 'concetto-detail-screen' && window.currentConcettoId) {
+        const concetto = concettiData.find(c => c.id === window.currentConcettoId);
+        if (concetto) {
+            currentEntitySchema = {
+                "@context": "https://schema.org",
+                "@type": "DefinedTerm",
+                "name": concetto.parola,
+                "description": concetto.definizione,
+                "termCode": concetto.id
+            };
+        }
+    } else if (currentScreen === 'filosofo-detail-screen' && window.currentFilosofoId) {
+        const filosofo = filosofiData.find(f => f.id === window.currentFilosofoId);
+        if (filosofo) {
+            currentEntitySchema = {
+                "@context": "https://schema.org",
+                "@type": "Person",
+                "name": filosofo.nome,
+                "description": filosofo.biografia,
+                "affiliation": {
+                    "@type": "Organization",
+                    "name": filosofo.scuola || 'Filosofo indipendente'
+                }
+            };
+        }
+    } else if (currentScreen === 'opera-detail-screen' && window.currentOperaId) {
+        const opera = opereData.find(o => o.id === window.currentOperaId);
+        if (opera) {
+            currentEntitySchema = {
+                "@context": "https://schema.org",
+                "@type": "Book",
+                "name": opera.titolo,
+                "description": opera.sintesi,
+                "author": {
+                    "@type": "Person",
+                    "name": opera.autore
+                },
+                "datePublished": opera.anno
+            };
+        }
+    }
+    
+    const existingScripts = document.querySelectorAll('script[type="application/ld+json"]');
+    existingScripts.forEach(script => script.remove());
+    
+    const script1 = document.createElement('script');
+    script1.type = 'application/ld+json';
+    script1.textContent = JSON.stringify(datasetSchema, null, 2);
+    document.head.appendChild(script1);
+    
+    if (currentEntitySchema) {
+        const script2 = document.createElement('script');
+        script2.type = 'application/ld+json';
+        script2.textContent = JSON.stringify(currentEntitySchema, null, 2);
+        document.head.appendChild(script2);
+    }
+    
+    console.log('✅ JSON-LD Metadata generati');
+}
+
+function updateJSONLD() {
+    setTimeout(() => {
+        generateJSONLD();
+    }, 100);
 }
