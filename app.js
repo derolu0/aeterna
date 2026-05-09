@@ -2881,13 +2881,50 @@ function semanticScan(text) {
     const foundConcepts = [];
     const textLower = text.toLowerCase();
     
+    // Lista di sinonimi e variazioni per migliorare il matching
+    const conceptVariations = {
+        'Essere': ['essere', 'ente', 'esistenza', 'esserci', 'dasein'],
+        'Sostanza': ['sostanza', 'ousia', 'substrato', 'essenza'],
+        'Verità': ['verità', 'veritas', 'alethes', 'adeguazione'],
+        'Conoscenza': ['conoscenza', 'episteme', 'sapere', 'scienza'],
+        'Ragione': ['ragione', 'ratio', 'logos', 'razionalità'],
+        'Bene': ['bene', 'agathon', 'bonum', 'valore'],
+        'Libertà': ['libertà', 'libertas', 'freiheit', 'autonomia'],
+        'Potere': ['potere', 'potestas', 'macht', 'potenza', 'dominio', 'forza'],
+        'Soggetto': ['soggetto', 'subjectum', 'cogito', 'io', 'coscienza'],
+        'Desiderio': ['desiderio', 'eros', 'conatus', 'pulsion', 'bramare','volontà']
+    };
+    
     for (const concept of concettiData) {
-        const regex = new RegExp(`\\b${concept.parola.toLowerCase()}\\b`, 'gi');
-        const matches = textLower.match(regex);
-        if (matches && matches.length > 0) {
+        let totalCount = 0;
+        
+        // Cerca il termine esatto
+        const exactRegex = new RegExp(`\\b${concept.parola.toLowerCase()}\\b`, 'gi');
+        const exactMatches = textLower.match(exactRegex);
+        if (exactMatches) totalCount += exactMatches.length;
+        
+        // Cerca variazioni/sinonimi
+        const variations = conceptVariations[concept.parola] || [];
+        for (const variant of variations) {
+            const variantRegex = new RegExp(`\\b${variant}\\b`, 'gi');
+            const variantMatches = textLower.match(variantRegex);
+            if (variantMatches) totalCount += variantMatches.length;
+        }
+        
+        // Cerca il concetto come parte di frase (es. "potere" può essere anche verbo)
+        // Per parole comuni come "potere", controlliamo il contesto
+        if (concept.parola === 'Potere') {
+            const contextRegex = /\b(potere|potenza|dominio|forza)\b/gi;
+            const contextMatches = textLower.match(contextRegex);
+            if (contextMatches && contextMatches.length > totalCount) {
+                totalCount = contextMatches.length;
+            }
+        }
+        
+        if (totalCount > 0) {
             foundConcepts.push({
                 concept: concept.parola,
-                count: matches.length,
+                count: totalCount,
                 definition: concept.definizione?.substring(0, 150) + '...',
                 period: concept.periodo,
                 domain: concept.dominio || 'Filosofia'
@@ -2901,20 +2938,30 @@ function semanticScan(text) {
 function comparePeriods(text) {
     const textLower = text.toLowerCase();
     
-    const classicalConcepts = concettiData.filter(c => c.periodo === 'classico');
-    const contemporaryConcepts = concettiData.filter(c => c.periodo === 'contemporaneo');
+    // Mappa periodo per ogni insieme di parole chiave
+    const classicalKeywords = [
+        'platone', 'aristotele', 'socrate', 'agostino', 'tommaso', 'cartesio', 'kant', 'hegel',
+        'idea', 'sostanza', 'ousia', 'essenza', 'anima', 'logos', 'eidos', 'telos',
+        'bene', 'virtù', 'giustizia', 'felicità', 'eudaimonia', 'dio', 'creazione'
+    ];
+    
+    const contemporaryKeywords = [
+        'nietzsche', 'heidegger', 'foucault', 'derrida', 'deleuze', 'sartre', 'wittgenstein',
+        'potere', 'soggetto', 'decostruzione', 'essere', 'evento', 'différance', 'traccia',
+        'volontà', 'nichilismo', 'oltreuomo', 'genealogia', 'biopotere', 'dispositivo'
+    ];
     
     let classicalScore = 0;
     let contemporaryScore = 0;
     
-    for (const concept of classicalConcepts) {
-        const regex = new RegExp(`\\b${concept.parola.toLowerCase()}\\b`, 'gi');
+    for (const keyword of classicalKeywords) {
+        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
         const matches = textLower.match(regex);
         if (matches) classicalScore += matches.length;
     }
     
-    for (const concept of contemporaryConcepts) {
-        const regex = new RegExp(`\\b${concept.parola.toLowerCase()}\\b`, 'gi');
+    for (const keyword of contemporaryKeywords) {
+        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
         const matches = textLower.match(regex);
         if (matches) contemporaryScore += matches.length;
     }
