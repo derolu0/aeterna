@@ -2116,3 +2116,21 @@ html, body {
     color: white !important;
     font-size: 1rem;
 }
+/* ==================== PUNTO 5: UPLOAD & COMPARE ==================== */
+.btn-upload {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: white !important;
+}
+
+.btn-upload i {
+    color: white !important;
+}
+
+#upload-zone {
+    transition: all 0.3s ease;
+}
+
+#upload-zone.drag-over {
+    border-color: #3b82f6 !important;
+    background: #eff6ff !important;
+}

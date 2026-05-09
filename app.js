@@ -1908,6 +1908,13 @@ window.saveCurrentStateToURL = saveCurrentStateToURL;
 window.loadStateFromURL = loadStateFromURL;
 window.shareResearchLink = shareResearchLink;
 window.generateResearchQRCode = generateResearchQRCode;
+window.openUploadModal = openUploadModal;
+window.closeUploadModal = closeUploadModal;
+window.analyzeUploadedText = analyzeUploadedText;
+window.clearUpload = clearUpload;
+window.downloadAnalysisReport = downloadAnalysisReport;
+window.clearUploadAndAnalyzeAgain = clearUploadAndAnalyzeAgain;
+window.searchAndOpenConcept = searchAndOpenConcept;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -2640,4 +2647,444 @@ function generateResearchQRCode() {
         });
         modal.style.display = 'flex';
     }
+}
+// ==================== PUNTO 5: UPLOAD & COMPARE ====================
+
+/**
+ * Apre il modale di upload per l'analisi testuale
+ */
+function openUploadModal() {
+    // Crea o riutilizza il modale
+    let modal = document.getElementById('upload-modal');
+    
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'upload-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 600px;">
+                <h3 class="modal-title" style="margin-bottom: 15px;">
+                    <i class="fas fa-file-upload"></i> Upload & Compare
+                </h3>
+                <p style="font-size: 0.9rem; color: #6b7280; margin-bottom: 20px; text-align: center;">
+                    Carica un file PDF o TXT per analizzarlo con il motore semantico Aeterna
+                </p>
+                
+                <div id="upload-zone" style="border: 2px dashed #cbd5e1; border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                    <i class="fas fa-cloud-upload-alt" style="font-size: 48px; color: #3b82f6; margin-bottom: 15px;"></i>
+                    <p style="margin-bottom: 5px; font-weight: 500;">Trascina qui un file</p>
+                    <p style="font-size: 0.8rem; color: #6b7280;">oppure <strong style="color: #3b82f6;">clicca per selezionare</strong></p>
+                    <input type="file" id="upload-file-input" accept=".txt,.pdf,.csv" style="display: none;">
+                </div>
+                
+                <div id="upload-preview" style="display: none; margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <i class="fas fa-file-alt" style="color: #3b82f6;"></i>
+                            <strong id="upload-filename"></strong>
+                            <span id="upload-filesize" style="font-size: 0.75rem; color: #6b7280; margin-left: 10px;"></span>
+                        </div>
+                        <button onclick="clearUpload()" style="background: none; border: none; color: #ef4444; cursor: pointer;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="upload-progress" style="display: none; margin-top: 10px;">
+                        <div style="height: 4px; background: #e2e8f0; border-radius: 2px; overflow: hidden;">
+                            <div id="upload-progress-bar" style="width: 0%; height: 100%; background: #3b82f6; transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="upload-analysis-options" style="display: none; margin-top: 20px;">
+                    <h4 style="margin-bottom: 10px;">Opzioni di analisi:</h4>
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <input type="checkbox" id="option-semantic-scan" checked> Scansione semantica (trova concetti Aeterna)
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <input type="checkbox" id="option-period-comparison" checked> Confronto classico/contemporaneo
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="option-originality-score"> Calcola originalità (beta)
+                    </label>
+                </div>
+                
+                <div id="upload-results" style="display: none; margin-top: 20px; max-height: 400px; overflow-y: auto;">
+                    <!-- Risultati dell'analisi -->
+                </div>
+                
+                <div class="modal-buttons" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn-secondary" onclick="closeUploadModal()">Annulla</button>
+                    <button id="upload-analyze-btn" class="btn-analisi" onclick="analyzeUploadedText()" style="display: none;">
+                        <i class="fas fa-microscope"></i> Analizza Testo
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Setup event listener per drag & drop
+        const dropZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('upload-file-input');
+        
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#3b82f6';
+            dropZone.style.background = '#eff6ff';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#cbd5e1';
+            dropZone.style.background = 'transparent';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#cbd5e1';
+            dropZone.style.background = 'transparent';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFileSelect(files[0]);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFileSelect(e.target.files[0]);
+        });
+    }
+    
+    modal.style.display = 'flex';
+}
+
+function closeUploadModal() {
+    const modal = document.getElementById('upload-modal');
+    if (modal) modal.style.display = 'none';
+    clearUpload();
+}
+
+function clearUpload() {
+    const preview = document.getElementById('upload-preview');
+    const options = document.getElementById('upload-analysis-options');
+    const results = document.getElementById('upload-results');
+    const analyzeBtn = document.getElementById('upload-analyze-btn');
+    const fileInput = document.getElementById('upload-file-input');
+    const dropZone = document.getElementById('upload-zone');
+    
+    if (preview) preview.style.display = 'none';
+    if (options) options.style.display = 'none';
+    if (results) {
+        results.style.display = 'none';
+        results.innerHTML = '';
+    }
+    if (analyzeBtn) analyzeBtn.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+    if (dropZone) {
+        dropZone.style.display = 'block';
+    }
+    
+    window.uploadedText = null;
+    window.uploadedFileName = null;
+}
+
+let uploadedText = null;
+let uploadedFileName = null;
+
+function handleFileSelect(file) {
+    const validTypes = ['text/plain', 'application/pdf', 'text/csv'];
+    const fileExt = file.name.split('.').pop().toLowerCase();
+    
+    if (!validTypes.includes(file.type) && !['txt', 'pdf', 'csv'].includes(fileExt)) {
+        showToast('Formato non supportato. Usa TXT, PDF o CSV', 'error');
+        return;
+    }
+    
+    uploadedFileName = file.name;
+    
+    // Aggiorna anteprima
+    const preview = document.getElementById('upload-preview');
+    const filenameSpan = document.getElementById('upload-filename');
+    const filesizeSpan = document.getElementById('upload-filesize');
+    const dropZone = document.getElementById('upload-zone');
+    const options = document.getElementById('upload-analysis-options');
+    const analyzeBtn = document.getElementById('upload-analyze-btn');
+    
+    if (filenameSpan) filenameSpan.textContent = file.name;
+    if (filesizeSpan) filesizeSpan.textContent = formatFileSize(file.size);
+    if (preview) preview.style.display = 'block';
+    if (dropZone) dropZone.style.display = 'none';
+    if (options) options.style.display = 'block';
+    if (analyzeBtn) analyzeBtn.style.display = 'inline-flex';
+    
+    // Leggi il file
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        if (file.type === 'application/pdf') {
+            // Per PDF, mostriamo un messaggio che l'estrazione testo richiede librerie aggiuntive
+            uploadedText = "[Testo estratto da PDF - per analisi completa si consiglia formato TXT]";
+            showToast('PDF rilevato. Per migliore analisi, usa file TXT.', 'info');
+        } else {
+            uploadedText = e.target.result;
+        }
+        console.log('📄 File caricato:', file.name, 'Lunghezza:', uploadedText?.length);
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function analyzeUploadedText() {
+    if (!uploadedText) {
+        showToast('Nessun testo da analizzare', 'error');
+        return;
+    }
+    
+    const options = {
+        semanticScan: document.getElementById('option-semantic-scan')?.checked || false,
+        periodComparison: document.getElementById('option-period-comparison')?.checked || false,
+        originalityScore: document.getElementById('option-originality-score')?.checked || false
+    };
+    
+    showToast('🔍 Analisi in corso...', 'info');
+    
+    // Esegui analisi
+    const results = performTextAnalysis(uploadedText, options);
+    displayUploadResults(results);
+}
+
+function performTextAnalysis(text, options) {
+    const results = {
+        fileName: uploadedFileName,
+        textLength: text.length,
+        wordCount: text.split(/\s+/).length,
+        timestamp: new Date().toISOString(),
+        semanticScan: null,
+        periodComparison: null,
+        originalityScore: null
+    };
+    
+    if (options.semanticScan) {
+        results.semanticScan = semanticScan(text);
+    }
+    
+    if (options.periodComparison) {
+        results.periodComparison = comparePeriods(text);
+    }
+    
+    if (options.originalityScore) {
+        results.originalityScore = calculateOriginalityScore(text);
+    }
+    
+    return results;
+}
+
+function semanticScan(text) {
+    const foundConcepts = [];
+    const textLower = text.toLowerCase();
+    
+    for (const concept of concettiData) {
+        const regex = new RegExp(`\\b${concept.parola.toLowerCase()}\\b`, 'gi');
+        const matches = textLower.match(regex);
+        if (matches && matches.length > 0) {
+            foundConcepts.push({
+                concept: concept.parola,
+                count: matches.length,
+                definition: concept.definizione?.substring(0, 150) + '...',
+                period: concept.periodo,
+                domain: concept.dominio || 'Filosofia'
+            });
+        }
+    }
+    
+    return foundConcepts.sort((a, b) => b.count - a.count);
+}
+
+function comparePeriods(text) {
+    const textLower = text.toLowerCase();
+    
+    const classicalConcepts = concettiData.filter(c => c.periodo === 'classico');
+    const contemporaryConcepts = concettiData.filter(c => c.periodo === 'contemporaneo');
+    
+    let classicalScore = 0;
+    let contemporaryScore = 0;
+    
+    for (const concept of classicalConcepts) {
+        const regex = new RegExp(`\\b${concept.parola.toLowerCase()}\\b`, 'gi');
+        const matches = textLower.match(regex);
+        if (matches) classicalScore += matches.length;
+    }
+    
+    for (const concept of contemporaryConcepts) {
+        const regex = new RegExp(`\\b${concept.parola.toLowerCase()}\\b`, 'gi');
+        const matches = textLower.match(regex);
+        if (matches) contemporaryScore += matches.length;
+    }
+    
+    const total = classicalScore + contemporaryScore;
+    
+    return {
+        classicalScore: classicalScore,
+        contemporaryScore: contemporaryScore,
+        classicalPercent: total > 0 ? (classicalScore / total * 100).toFixed(1) : 0,
+        contemporaryPercent: total > 0 ? (contemporaryScore / total * 100).toFixed(1) : 0,
+        dominantParadigm: classicalScore > contemporaryScore ? 'classico' : (contemporaryScore > classicalScore ? 'contemporaneo' : 'equilibrato'),
+        totalMatches: total
+    };
+}
+
+function calculateOriginalityScore(text) {
+    // Baseline semplificata: frequenza media dei concetti nel dataset
+    const textLower = text.toLowerCase();
+    let foundConceptCount = 0;
+    let totalPossible = 0;
+    
+    for (const concept of concettiData) {
+        totalPossible++;
+        const regex = new RegExp(`\\b${concept.parola.toLowerCase()}\\b`, 'gi');
+        const matches = textLower.match(regex);
+        if (matches && matches.length > 0) foundConceptCount++;
+    }
+    
+    const coverage = foundConceptCount / totalPossible;
+    // Più è bassa la copertura, più il testo è "originale" (non usa concetti standard)
+    const originality = Math.min(100, Math.max(0, (1 - coverage) * 100));
+    
+    return {
+        score: originality.toFixed(1),
+        interpretation: originality > 70 ? 'Testo molto originale, lontano dal lessico filosofico standard' :
+                        originality > 40 ? 'Testo moderatamente originale' :
+                        'Testo convenzionale, aderente al lessico filosofico standard',
+        conceptsFound: foundConceptCount,
+        totalConcepts: totalPossible
+    };
+}
+
+function displayUploadResults(results) {
+    const resultsDiv = document.getElementById('upload-results');
+    if (!resultsDiv) return;
+    
+    let html = `
+        <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <h4 style="margin-bottom: 8px; color: #166534;">📊 Report Analisi</h4>
+            <p style="font-size: 0.85rem; color: #4b5563;"><strong>File:</strong> ${escapeHtml(results.fileName)}</p>
+            <p style="font-size: 0.85rem; color: #4b5563;"><strong>Parole:</strong> ${results.wordCount}</p>
+            <p style="font-size: 0.85rem; color: #4b5563;"><strong>Data:</strong> ${new Date(results.timestamp).toLocaleString()}</p>
+        </div>
+    `;
+    
+    if (results.semanticScan && results.semanticScan.length > 0) {
+        html += `
+            <div style="margin-bottom: 15px;">
+                <h4 style="margin-bottom: 10px; color: #3b82f6;">🔬 Concetti Aeterna trovati</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    ${results.semanticScan.map(c => `
+                        <span style="background: #dbeafe; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer;" onclick="searchAndOpenConcept('${c.concept}')">
+                            ${escapeHtml(c.concept)} (${c.count})
+                        </span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (results.periodComparison) {
+        const pc = results.periodComparison;
+        html += `
+            <div style="margin-bottom: 15px;">
+                <h4 style="margin-bottom: 10px; color: #3b82f6;">📖 Confronto Classico/Contemporaneo</h4>
+                <div style="background: #f8fafc; padding: 12px; border-radius: 8px;">
+                    <div style="margin-bottom: 8px;">
+                        <span style="display: inline-block; width: 100px; font-size: 0.85rem;">Classico:</span>
+                        <div style="display: inline-block; width: 60%; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${pc.classicalPercent}%; height: 20px; background: #10b981;"></div>
+                        </div>
+                        <span style="margin-left: 8px; font-size: 0.85rem;">${pc.classicalPercent}%</span>
+                    </div>
+                    <div>
+                        <span style="display: inline-block; width: 100px; font-size: 0.85rem;">Contemporaneo:</span>
+                        <div style="display: inline-block; width: 60%; background: #e2e8f0; border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${pc.contemporaryPercent}%; height: 20px; background: #f59e0b;"></div>
+                        </div>
+                        <span style="margin-left: 8px; font-size: 0.85rem;">${pc.contemporaryPercent}%</span>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.85rem;"><strong>Paradigma dominante:</strong> ${pc.dominantParadigm === 'classico' ? 'Classico/Antico' : (pc.dominantParadigm === 'contemporaneo' ? 'Contemporaneo' : 'Equilibrato')}</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (results.originalityScore) {
+        const os = results.originalityScore;
+        html += `
+            <div style="margin-bottom: 15px;">
+                <h4 style="margin-bottom: 10px; color: #3b82f6;">💡 Originalità Filosofica</h4>
+                <div style="background: #f8fafc; padding: 12px; border-radius: 8px;">
+                    <p style="font-size: 1.2rem; font-weight: bold;">${os.score}/100</p>
+                    <p style="font-size: 0.85rem;">${os.interpretation}</p>
+                    <p style="font-size: 0.75rem; color: #6b7280;">${os.conceptsFound}/${os.totalConcepts} concetti Aeterna rilevati</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += `
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn-secondary" onclick="downloadAnalysisReport()" style="flex: 1;">
+                <i class="fas fa-download"></i> Scarica Report (JSON)
+            </button>
+            <button class="btn-secondary" onclick="clearUploadAndAnalyzeAgain()" style="flex: 1;">
+                <i class="fas fa-upload"></i> Nuovo file
+            </button>
+        </div>
+    `;
+    
+    resultsDiv.innerHTML = html;
+    resultsDiv.style.display = 'block';
+    
+    // Salva i risultati per eventuale export
+    window.lastAnalysisResults = results;
+}
+
+function searchAndOpenConcept(conceptName) {
+    const concept = concettiData.find(c => c.parola === conceptName);
+    if (concept) {
+        closeUploadModal();
+        showConcettoDetail(concept.id);
+    }
+}
+
+function downloadAnalysisReport() {
+    if (!window.lastAnalysisResults) {
+        showToast('Nessun report disponibile', 'error');
+        return;
+    }
+    
+    const jsonStr = JSON.stringify(window.lastAnalysisResults, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aeterna_analysis_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Report scaricato!', 'success');
+}
+
+function clearUploadAndAnalyzeAgain() {
+    clearUpload();
+    const dropZone = document.getElementById('upload-zone');
+    if (dropZone) dropZone.style.display = 'block';
+    const fileInput = document.getElementById('upload-file-input');
+    if (fileInput) fileInput.value = '';
+    uploadedText = null;
+    uploadedFileName = null;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
