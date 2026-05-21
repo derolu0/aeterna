@@ -1586,6 +1586,7 @@ window.closeLayerDetailModal = closeLayerDetailModal;
 window.resetContextualFilter = resetContextualFilter;
 window.showFilterIndicator = showFilterIndicator;
 window.logAnalyticalChoice = logAnalyticalChoice;
+window.viewFilterOnMap = viewFilterOnMap;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -3015,6 +3016,17 @@ function createSemanticBubble(layer, index, concept) {
 function selectSemanticLayer(layer, concept, event) {
     console.log(`🔍 [ContextualFilter] Selezione: "${layer.title}" per ${concept.parola}`);
     
+    // Salviamo gli oggetti completi nel filtro globale
+    window.activeFilter = {
+        conceptId: concept.id,
+        conceptName: concept.parola,
+        layerId: layer.id,
+        layerTitle: layer.title,
+        concept: concept, // Oggetto intero aggiunto
+        layer: layer,     // Oggetto intero aggiunto
+        timestamp: Date.now()
+    };
+    
     showLayerDetail(layer, concept);
     
     document.querySelectorAll('.semantic-bubble').forEach(bubble => {
@@ -3030,8 +3042,11 @@ function selectSemanticLayer(layer, concept, event) {
         }
     }
     
+    // Se la mappa è già in memoria la aggiorna subito, altrimenti accende solo l'indicatore
     if (networkInstance) {
         highlightRelatedNodes(concept, layer);
+    } else {
+        showFilterIndicator(concept.parola, layer.title);
     }
     
     logAnalyticalChoice(concept.id, layer.id, layer.title);
@@ -3039,7 +3054,7 @@ function selectSemanticLayer(layer, concept, event) {
 }
 
 /**
- * Mostra il dettaglio del layer selezionato
+ * Mostra il dettaglio del layer selezionato con pulsante di navigazione alla mappa
  */
 function showLayerDetail(layer, concept) {
     let modal = document.getElementById('layer-detail-modal');
@@ -3047,27 +3062,25 @@ function showLayerDetail(layer, concept) {
         modal = document.createElement('div');
         modal.id = 'layer-detail-modal';
         modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-content" style="max-width: 500px;">
-                <h3 class="modal-title" id="layer-modal-title"></h3>
-                <div id="layer-modal-content" style="margin: 20px 0; line-height: 1.6;"></div>
-                <div class="modal-buttons">
-                    <button class="modal-btn secondary" onclick="closeLayerDetailModal()">Chiudi</button>
-                </div>
-            </div>
-        `;
         document.body.appendChild(modal);
     }
     
-    const titleEl = document.getElementById('layer-modal-title');
-    const contentEl = document.getElementById('layer-modal-content');
-    
-    titleEl.innerHTML = `<i class="fas fa-layer-group"></i> ${concept.parola} - ${layer.title}`;
-    contentEl.innerHTML = `
-        <div style="background: #f8fafc; padding: 15px; border-radius: 8px;">
-            <p style="margin-bottom: 10px;"><strong>Fonte:</strong> ${layer.source}</p>
-            <p style="margin-bottom: 10px;"><strong>Contenuto:</strong></p>
-            <p style="font-style: italic; color: #4b5563;">${escapeHtml(layer.fullText || layer.summary)}</p>
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px;">
+            <h3 class="modal-title" id="layer-modal-title"><i class="fas fa-layer-group"></i> ${concept.parola} - ${layer.title}</h3>
+            <div id="layer-modal-content" style="margin: 20px 0; line-height: 1.6;">
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px;">
+                    <p style="margin-bottom: 10px;"><strong>Fonte:</strong> ${layer.source}</p>
+                    <p style="margin-bottom: 10px;"><strong>Contenuto:</strong></p>
+                    <p style="font-style: italic; color: #4b5563;">${escapeHtml(layer.fullText || layer.summary)}</p>
+                </div>
+            </div>
+            <div class="modal-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="modal-btn secondary" onclick="closeLayerDetailModal()">Chiudi</button>
+                <button class="modal-btn primary" onclick="viewFilterOnMap()" style="background: #8b5cf6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-project-diagram"></i> Vedi sulla Mappa
+                </button>
+            </div>
         </div>
     `;
     
@@ -3077,6 +3090,31 @@ function showLayerDetail(layer, concept) {
 function closeLayerDetailModal() {
     const modal = document.getElementById('layer-detail-modal');
     if (modal) modal.style.display = 'none';
+}
+
+/**
+ * Chiude il dettaglio layer e trasporta l'utente sulla mappa concettuale per vedere il filtro applicato
+ */
+function viewFilterOnMap() {
+    closeLayerDetailModal();
+    
+    // Naviga automaticamente verso la mappa
+    showScreen('mappa-concettuale-screen');
+    
+    // Attendi l'inizializzazione del motore grafico e poi innesca il filtro visivo
+    setTimeout(() => {
+        if (!networkInstance) {
+            initConceptMap();
+        }
+        
+        // Attendi che la gravità della mappa si stabilizzi prima di isolare i nodi
+        setTimeout(() => {
+            if (window.activeFilter && networkInstance) {
+                highlightRelatedNodes(window.activeFilter.concept, window.activeFilter.layer);
+            }
+        }, 800);
+        
+    }, 300);
 }
 
 /**
