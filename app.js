@@ -3150,12 +3150,12 @@ function highlightRelatedNodes(concept, layer) {
     relatedNodeIds.add(conceptNodeId);
     
     // Normalizzazione della stringa in minuscolo per evitare conflitti di battitura
-    const keyword = concept.parola.toLowerCase().trim();
+    const keyword = String(concept.parola).toLowerCase().trim();
     
     if (layer.type === 'authors' || layer.type === 'example') {
         if (concept.autore_riferimento) {
             concept.autore_riferimento.split(',').forEach(authorRef => {
-                const authorNode = filosofiData.find(f => f.id === authorRef.trim() || f.nome === authorRef.trim());
+                const authorNode = filosofiData.find(f => String(f.id) === authorRef.trim() || String(f.nome) === authorRef.trim());
                 if (authorNode) relatedNodeIds.add(authorNode.id);
             });
         }
@@ -3163,7 +3163,7 @@ function highlightRelatedNodes(concept, layer) {
         // Filtro dinamico per filosofi classici (Case-Insensitive)
         filosofiData.forEach(f => {
             if (f.periodo === 'classico' && f.concetti_principali) {
-                const hasConcept = f.concetti_principali.some(c => c.toLowerCase().trim() === keyword);
+                const hasConcept = f.concetti_principali.some(c => String(c).toLowerCase().trim() === keyword);
                 if (hasConcept) relatedNodeIds.add(f.id);
             }
         });
@@ -3171,29 +3171,44 @@ function highlightRelatedNodes(concept, layer) {
         // Filtro dinamico per filosofi contemporanei (Case-Insensitive)
         filosofiData.forEach(f => {
             if (f.periodo === 'contemporaneo' && f.concetti_principali) {
-                const hasConcept = f.concetti_principali.some(c => c.toLowerCase().trim() === keyword);
+                const hasConcept = f.concetti_principali.some(c => String(c).toLowerCase().trim() === keyword);
                 if (hasConcept) relatedNodeIds.add(f.id);
             }
         });
     }
     
-    // 2. Aggiornamento grafico della mappa tramite array di comandi
+    // 2. Aggiornamento grafico della mappa tramite array di comandi (Colori Espliciti)
     const nodesToUpdate = [];
     allNodes.forEach(node => {
         const isTarget = relatedNodeIds.has(node.id);
         const isCurrentConcept = (node.id === conceptNodeId);
         
-        nodesToUpdate.push({
-            id: node.id,
-            color: {
-                opacity: isTarget ? 1.0 : 0.15,
-                border: isCurrentConcept ? '#ef4444' : undefined
-            },
-            font: {
-                color: isTarget ? '#ffffff' : 'rgba(255,255,255,0.2)',
-                size: isCurrentConcept ? 14 : 11
+        if (isTarget) {
+            let bgColor, borderColor;
+            if (String(node.id).startsWith('C_')) {
+                const isBoth = concept.periodo === 'entrambi';
+                bgColor = isBoth ? '#8b5cf6' : (concept.periodo === 'classico' ? '#10b981' : '#f59e0b');
+                borderColor = isBoth ? '#7c3aed' : (concept.periodo === 'classico' ? '#047857' : '#d97706');
+            } else {
+                const f = filosofiData.find(fil => String(fil.id) === String(node.id));
+                const isClassico = f && f.periodo === 'classico';
+                bgColor = isClassico ? '#10b981' : '#f59e0b';
+                borderColor = isClassico ? '#047857' : '#d97706';
             }
-        });
+            
+            nodesToUpdate.push({
+                id: node.id,
+                color: { background: bgColor, border: isCurrentConcept ? '#ef4444' : borderColor },
+                font: { color: '#ffffff', size: isCurrentConcept ? 14 : 12 }
+            });
+        } else {
+            // Nodi non pertinenti: grigio chiaro
+            nodesToUpdate.push({
+                id: node.id,
+                color: { background: '#e5e7eb', border: '#d1d5db' },
+                font: { color: '#9ca3af', size: 10 }
+            });
+        }
     });
     nodes.update(nodesToUpdate);
     
@@ -3213,7 +3228,7 @@ function highlightRelatedNodes(concept, layer) {
             edgesToUpdate.push({
                 id: edge.id,
                 hidden: false,
-                color: { opacity: 0.4 },
+                color: { color: '#e5e7eb', opacity: 0.5 },
                 width: 1.5
             });
         } else {
@@ -3299,22 +3314,49 @@ function resetContextualFilter() {
     const nodes = networkInstance.body.data.nodes;
     const edges = networkInstance.body.data.edges;
     
+    // Ripristino Colori Nodi (Conversione ID in Stringa)
     const nodesToUpdate = [];
     nodes.get().forEach(node => {
+        let bgColor, borderColor;
+        
+        if (String(node.id).startsWith('C_')) {
+            const conceptIdStr = String(node.id).substring(2);
+            const c = concettiData.find(x => String(x.id) === conceptIdStr);
+            if (c) {
+                const isBoth = c.periodo === 'entrambi';
+                bgColor = isBoth ? '#8b5cf6' : (c.periodo === 'classico' ? '#10b981' : '#f59e0b');
+                borderColor = isBoth ? '#7c3aed' : (c.periodo === 'classico' ? '#047857' : '#d97706');
+            }
+        } else {
+            const f = filosofiData.find(x => String(x.id) === String(node.id));
+            if (f) {
+                const isClassico = f.periodo === 'classico';
+                bgColor = isClassico ? '#10b981' : '#f59e0b';
+                borderColor = isClassico ? '#047857' : '#d97706';
+            }
+        }
+
         nodesToUpdate.push({
             id: node.id,
-            color: { opacity: 1 },
-            font: { color: '#ffffff', size: node.id.startsWith('C_') ? 11 : 12 }
+            color: { background: bgColor || '#8b5cf6', border: borderColor || '#7c3aed' },
+            font: { color: '#ffffff', size: String(node.id).startsWith('C_') ? 11 : 12 }
         });
     });
     nodes.update(nodesToUpdate);
     
+    // Ripristino Archi
     const edgesToUpdate = [];
     edges.get().forEach(edge => {
+        let edgeColor = '#8b5cf6'; // Default viola
+        if (!String(edge.from).startsWith('C_')) {
+             const f = filosofiData.find(x => String(x.id) === String(edge.from));
+             edgeColor = (f && f.periodo === 'contemporaneo') ? '#f59e0b' : '#10b981';
+        }
+
         edgesToUpdate.push({
             id: edge.id,
             hidden: false,
-            color: { opacity: 0.6 },
+            color: { color: edgeColor, opacity: 0.85 },
             width: 1.5
         });
     });
