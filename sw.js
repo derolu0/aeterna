@@ -5,7 +5,7 @@
  * @author Dott. Salvatore De Rosa
  * @description Gestione cache e persistenza dati per navigazione senza rete
  */
-const APP_VERSION = '1.0.1.1'; // Versione aggiornata per forzare il download dei nuovi JSON
+const APP_VERSION = '1.0.1.2'; // Versione aggiornata per forzare il download dei nuovi JSON
 const CACHE_NAME = `aeterna-lexicon-${APP_VERSION}`;
 
 // Lista asset essenziali

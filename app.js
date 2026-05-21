@@ -504,9 +504,10 @@ function showConcettoDetail(id) {
 
     window.currentConcettoId = id;  
     const concetto = concettiData.find(c => c.id === id);
-    if (!concetto) return; // ← CORRETTO: prima c'era scritto '!concept' e bloccava tutto!
+    if (!concetto) return; // ← CORRETTO: Prima c'era '!concept' che bloccava l'esecuzione
     
     const content = document.getElementById('concetto-detail-content');
+    if (!content) return;
     
     // Trova autori di riferimento
     let autoriRiferimento = '';
@@ -544,7 +545,7 @@ function showConcettoDetail(id) {
             <h3>Evoluzione Storica</h3>
             <p>${concetto.evoluzione}</p>
         </div>` : ''}
-        <div class="action-buttons-container">
+        <div class="action-buttons-container" style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
             <button class="btn-analisi" onclick="openComparativeAnalysis('${concetto.parola}')">Analisi Comparativa</button>
             <button class="btn-tei" onclick="exportCurrentToTEI()">
                 <i class="fas fa-file-code"></i> Esporta TEI/XML
