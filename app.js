@@ -2944,16 +2944,22 @@ function extractSemanticLayers(concept) {
     }
     
     if (concept.autore_riferimento) {
-        const authors = concept.autore_riferimento.split(',').map(a => a.trim());
-        if (authors.length > 0) {
+        // TRADUCE GLI ID IN NOMI REALI PER L'INTERFACCIA
+        const authorIds = concept.autore_riferimento.split(',');
+        const authorNames = authorIds.map(id => {
+            const philosopher = filosofiData.find(f => f.id === id.trim() || f.nome === id.trim());
+            return philosopher ? philosopher.nome : id.trim();
+        });
+        
+        if (authorNames.length > 0) {
             layers.push({
                 id: 'authors',
-                title: `Autori di riferimento (${authors.length})`,
-                summary: authors.join(', '),
+                title: `Autori di riferimento (${authorNames.length})`,
+                summary: authorNames.join(', '),
                 source: 'Dataset Aeterna',
-                fullText: authors.join(', '),
+                fullText: authorNames.join(', '),
                 type: 'authors',
-                authors: authors
+                authors: authorIds // Mantiene gli ID originali (F2, F11) per far funzionare la mappa
             });
         }
     }
@@ -3138,32 +3144,38 @@ function highlightRelatedNodes(concept, layer) {
     
     showFilterIndicator(concept.parola, layer.title);
     
-    // 1. Identificazione dinamica dei nodi correlati
+    // 1. Identificazione dinamica dei nodi correlati (Filtro Indistruttibile)
     const conceptNodeId = 'C_' + concept.id;
     const relatedNodeIds = new Set();
     relatedNodeIds.add(conceptNodeId);
     
-    if (layer.type === 'authors' && layer.authors) {
-        layer.authors.forEach(authorRef => {
-            const authorNode = filosofiData.find(f => f.id === authorRef.trim() || f.nome === authorRef.trim());
-            if (authorNode) relatedNodeIds.add(authorNode.id);
-        });
+    // Normalizziamo la parola in minuscolo per evitare errori (es. "Essere" vs "essere")
+    const keyword = concept.parola.toLowerCase();
+    
+    if (layer.type === 'authors' || layer.type === 'example') {
+        // Autori e Esempio usano i creatori/riferimenti diretti
+        if (concept.autore_riferimento) {
+            concept.autore_riferimento.split(',').forEach(authorRef => {
+                const authorNode = filosofiData.find(f => f.id === authorRef.trim() || f.nome === authorRef.trim());
+                if (authorNode) relatedNodeIds.add(authorNode.id);
+            });
+        }
     } else if (layer.type === 'definition') {
+        // Cerca filosofi classici che hanno quel concetto
         filosofiData.forEach(f => {
-            if (f.periodo === 'classico' && f.concetti_principali && f.concetti_principali.includes(concept.parola)) {
-                relatedNodeIds.add(f.id);
+            if (f.periodo === 'classico' && f.concetti_principali) {
+                const hasConcept = f.concetti_principali.some(c => c.toLowerCase() === keyword);
+                if (hasConcept) relatedNodeIds.add(f.id);
             }
         });
     } else if (layer.type === 'evolution') {
+        // Cerca filosofi contemporanei che hanno quel concetto
         filosofiData.forEach(f => {
-            if (f.periodo === 'contemporaneo' && f.concetti_principali && f.concetti_principali.includes(concept.parola)) {
-                relatedNodeIds.add(f.id);
+            if (f.periodo === 'contemporaneo' && f.concetti_principali) {
+                const hasConcept = f.concetti_principali.some(c => c.toLowerCase() === keyword);
+                if (hasConcept) relatedNodeIds.add(f.id);
             }
         });
-    } else if (layer.type === 'example') {
-        if (concept.autore_riferimento) {
-            concept.autore_riferimento.split(',').forEach(id => relatedNodeIds.add(id.trim()));
-        }
     }
     
     // 2. Aggiornamento Visivo tramite Array (Universale e performante)
@@ -3184,7 +3196,7 @@ function highlightRelatedNodes(concept, layer) {
             }
         });
     });
-    nodes.update(nodesToUpdate); // Aggiorna tutti i nodi in un colpo solo
+    nodes.update(nodesToUpdate);
     
     const edgesToUpdate = [];
     allEdges.forEach(edge => {
@@ -3212,7 +3224,7 @@ function highlightRelatedNodes(concept, layer) {
             });
         }
     });
-    edges.update(edgesToUpdate); // Aggiorna tutti gli archi in un colpo solo
+    edges.update(edgesToUpdate);
     
     networkInstance.focus(conceptNodeId, {
         scale: 1.4,
