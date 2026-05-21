@@ -3138,7 +3138,7 @@ function highlightRelatedNodes(concept, layer) {
     
     showFilterIndicator(concept.parola, layer.title);
     
-    // 1. Identificazione dinamica dei nodi correlati (Filtro Filologico)
+    // 1. Identificazione dinamica dei nodi correlati
     const conceptNodeId = 'C_' + concept.id;
     const relatedNodeIds = new Set();
     relatedNodeIds.add(conceptNodeId);
@@ -3166,13 +3166,13 @@ function highlightRelatedNodes(concept, layer) {
         }
     }
     
-    // 2. Aggiornamento Visivo Atomico di Nodi ed Edges
-    nodes.beginUpdate();
+    // 2. Aggiornamento Visivo tramite Array (Universale e performante)
+    const nodesToUpdate = [];
     allNodes.forEach(node => {
         const isTarget = relatedNodeIds.has(node.id);
         const isCurrentConcept = (node.id === conceptNodeId);
         
-        nodes.update({
+        nodesToUpdate.push({
             id: node.id,
             color: {
                 opacity: isTarget ? 1.0 : 0.15,
@@ -3184,35 +3184,35 @@ function highlightRelatedNodes(concept, layer) {
             }
         });
     });
-    nodes.endUpdate();
+    nodes.update(nodesToUpdate); // Aggiorna tutti i nodi in un colpo solo
     
-    edges.beginUpdate();
+    const edgesToUpdate = [];
     allEdges.forEach(edge => {
         const hasFrom = relatedNodeIds.has(edge.from);
         const hasTo = relatedNodeIds.has(edge.to);
         
         if (hasFrom && hasTo) {
-            edges.update({
+            edgesToUpdate.push({
                 id: edge.id,
                 hidden: false,
                 color: { color: '#ef4444', opacity: 1 },
                 width: 3
             });
         } else if (hasFrom || hasTo) {
-            edges.update({
+            edgesToUpdate.push({
                 id: edge.id,
                 hidden: false,
                 color: { opacity: 0.4 },
                 width: 1.5
             });
         } else {
-            edges.update({
+            edgesToUpdate.push({
                 id: edge.id,
                 hidden: true
             });
         }
     });
-    edges.endUpdate();
+    edges.update(edgesToUpdate); // Aggiorna tutti gli archi in un colpo solo
     
     networkInstance.focus(conceptNodeId, {
         scale: 1.4,
@@ -3288,26 +3288,26 @@ function resetContextualFilter() {
     const nodes = networkInstance.body.data.nodes;
     const edges = networkInstance.body.data.edges;
     
-    nodes.beginUpdate();
+    const nodesToUpdate = [];
     nodes.get().forEach(node => {
-        nodes.update({
+        nodesToUpdate.push({
             id: node.id,
             color: { opacity: 1 },
             font: { color: '#ffffff', size: node.id.startsWith('C_') ? 11 : 12 }
         });
     });
-    nodes.endUpdate();
+    nodes.update(nodesToUpdate);
     
-    edges.beginUpdate();
+    const edgesToUpdate = [];
     edges.get().forEach(edge => {
-        edges.update({
+        edgesToUpdate.push({
             id: edge.id,
             hidden: false,
             color: { opacity: 0.6 },
             width: 1.5
         });
     });
-    edges.endUpdate();
+    edges.update(edgesToUpdate);
     
     const indicator = document.getElementById('filter-indicator');
     if (indicator) indicator.remove();
