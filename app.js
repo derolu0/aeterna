@@ -3022,19 +3022,20 @@ function createSemanticBubble(layer, index, concept) {
 function selectSemanticLayer(layer, concept, event) {
     console.log(`🔍 [ContextualFilter] Selezione: "${layer.title}" per ${concept.parola}`);
     
-    // Salviamo gli oggetti completi nel filtro globale
+    // Salvataggio globale completo
     window.activeFilter = {
         conceptId: concept.id,
         conceptName: concept.parola,
         layerId: layer.id,
         layerTitle: layer.title,
-        concept: concept, // Oggetto intero aggiunto
-        layer: layer,     // Oggetto intero aggiunto
+        concept: concept, // FONDAMENTALE: Oggetto intero
+        layer: layer,     // FONDAMENTALE: Oggetto intero
         timestamp: Date.now()
     };
     
     showLayerDetail(layer, concept);
     
+    // Gestione grafica dei bottoni
     document.querySelectorAll('.semantic-bubble').forEach(bubble => {
         bubble.style.opacity = '0.5';
         bubble.style.transform = 'scale(0.95)';
@@ -3048,8 +3049,9 @@ function selectSemanticLayer(layer, concept, event) {
         }
     }
     
-    // Se la mappa è già in memoria la aggiorna subito, altrimenti accende solo l'indicatore
-    if (networkInstance) {
+    // LA SOLUZIONE AL BUG: Esegue l'aggiornamento diretto SOLO se stiamo già guardando la mappa.
+    // Altrimenti si limita a mostrare il badge e aspetta il "teletrasporto".
+    if (networkInstance && currentScreen === 'mappa-concettuale-screen') {
         highlightRelatedNodes(concept, layer);
     } else {
         showFilterIndicator(concept.parola, layer.title);
@@ -3124,7 +3126,7 @@ function viewFilterOnMap() {
 }
 
 /**
- * Evidenzia i nodi correlati al layer selezionato e applica un filtro topologico reale (Case-Insensitive)
+ * Evidenzia i nodi correlati al layer selezionato e applica un filtro topologico reale
  */
 function highlightRelatedNodes(concept, layer) {
     if (!networkInstance) return;
@@ -3134,50 +3136,74 @@ function highlightRelatedNodes(concept, layer) {
     const allNodes = nodes.get();
     const allEdges = edges.get();
     
+    // LA SOLUZIONE AL BUG 2: Conserviamo i dati intatti durante il refresh visivo
     window.activeFilter = {
         conceptId: concept.id,
         conceptName: concept.parola,
         layerId: layer.id,
         layerTitle: layer.title,
+        concept: concept,
+        layer: layer,
         timestamp: Date.now()
     };
     
     showFilterIndicator(concept.parola, layer.title);
     
-    // 1. Identificazione dinamica dei nodi correlati
     const conceptNodeId = 'C_' + concept.id;
     const relatedNodeIds = new Set();
     relatedNodeIds.add(conceptNodeId);
     
-    // Normalizzazione della stringa in minuscolo per evitare conflitti di battitura
     const keyword = String(concept.parola).toLowerCase().trim();
     
+    // Motore di ricerca elastico
+    const matchesConcept = (filosofo) => {
+        if (!filosofo.concetti_principali) return false;
+        if (Array.isArray(filosofo.concetti_principali)) {
+            return filosofo.concetti_principali.some(c => {
+                const cNorm = String(c).toLowerCase().trim();
+                return cNorm === keyword || cNorm.includes(keyword) || keyword.includes(cNorm);
+            });
+        } else if (typeof filosofo.concetti_principali === 'string') {
+            return String(filosofo.concetti_principali).toLowerCase().includes(keyword);
+        }
+        return false;
+    };
+
+    // Identificazione Nodi
     if (layer.type === 'authors' || layer.type === 'example') {
         if (concept.autore_riferimento) {
             concept.autore_riferimento.split(',').forEach(authorRef => {
-                const authorNode = filosofiData.find(f => String(f.id) === authorRef.trim() || String(f.nome) === authorRef.trim());
+                const refStr = authorRef.trim().toLowerCase();
+                const authorNode = filosofiData.find(f => 
+                    String(f.id).toLowerCase() === refStr || 
+                    String(f.nome).toLowerCase() === refStr
+                );
                 if (authorNode) relatedNodeIds.add(authorNode.id);
             });
         }
     } else if (layer.type === 'definition') {
-        // Filtro dinamico per filosofi classici (Case-Insensitive)
         filosofiData.forEach(f => {
-            if (f.periodo === 'classico' && f.concetti_principali) {
-                const hasConcept = f.concetti_principali.some(c => String(c).toLowerCase().trim() === keyword);
-                if (hasConcept) relatedNodeIds.add(f.id);
-            }
+            if (f.periodo === 'classico' && matchesConcept(f)) relatedNodeIds.add(f.id);
         });
     } else if (layer.type === 'evolution') {
-        // Filtro dinamico per filosofi contemporanei (Case-Insensitive)
         filosofiData.forEach(f => {
-            if (f.periodo === 'contemporaneo' && f.concetti_principali) {
-                const hasConcept = f.concetti_principali.some(c => String(c).toLowerCase().trim() === keyword);
-                if (hasConcept) relatedNodeIds.add(f.id);
-            }
+            if (f.periodo === 'contemporaneo' && matchesConcept(f)) relatedNodeIds.add(f.id);
         });
     }
     
-    // 2. Aggiornamento grafico della mappa tramite array di comandi (Colori Espliciti)
+    // Fallback di emergenza
+    if (relatedNodeIds.size === 1 && concept.autore_riferimento) {
+        concept.autore_riferimento.split(',').forEach(authorRef => {
+            const refStr = authorRef.trim().toLowerCase();
+            const authorNode = filosofiData.find(f => 
+                String(f.id).toLowerCase() === refStr || 
+                String(f.nome).toLowerCase() === refStr
+            );
+            if (authorNode) relatedNodeIds.add(authorNode.id);
+        });
+    }
+    
+    // Aggiornamento Visivo NODI (Opacità Forzata)
     const nodesToUpdate = [];
     allNodes.forEach(node => {
         const isTarget = relatedNodeIds.has(node.id);
@@ -3202,40 +3228,27 @@ function highlightRelatedNodes(concept, layer) {
                 font: { color: '#ffffff', size: isCurrentConcept ? 14 : 12 }
             });
         } else {
-            // Nodi non pertinenti: grigio chiaro
             nodesToUpdate.push({
                 id: node.id,
-                color: { background: '#e5e7eb', border: '#d1d5db' },
-                font: { color: '#9ca3af', size: 10 }
+                color: { background: 'rgba(200,200,200,0.2)', border: 'rgba(150,150,150,0.2)' },
+                font: { color: 'rgba(150,150,150,0.5)', size: 10 }
             });
         }
     });
     nodes.update(nodesToUpdate);
     
+    // Aggiornamento Visivo ARCHI
     const edgesToUpdate = [];
     allEdges.forEach(edge => {
         const hasFrom = relatedNodeIds.has(edge.from);
         const hasTo = relatedNodeIds.has(edge.to);
         
         if (hasFrom && hasTo) {
-            edgesToUpdate.push({
-                id: edge.id,
-                hidden: false,
-                color: { color: '#ef4444', opacity: 1 },
-                width: 3
-            });
+            edgesToUpdate.push({ id: edge.id, hidden: false, color: { color: '#ef4444', opacity: 1 }, width: 3 });
         } else if (hasFrom || hasTo) {
-            edgesToUpdate.push({
-                id: edge.id,
-                hidden: false,
-                color: { color: '#e5e7eb', opacity: 0.5 },
-                width: 1.5
-            });
+            edgesToUpdate.push({ id: edge.id, hidden: false, color: { color: '#cccccc', opacity: 0.3 }, width: 1 });
         } else {
-            edgesToUpdate.push({
-                id: edge.id,
-                hidden: true
-            });
+            edgesToUpdate.push({ id: edge.id, hidden: true });
         }
     });
     edges.update(edgesToUpdate);
@@ -3244,8 +3257,6 @@ function highlightRelatedNodes(concept, layer) {
         scale: 1.4,
         animation: { duration: 600, easingFunction: 'easeInOutQuad' }
     });
-    
-    console.log(`🎯 [ContextualFilter] Cluster isolato visivamente per: ${concept.parola}`);
 }
 
 /**
