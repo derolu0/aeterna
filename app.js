@@ -502,9 +502,9 @@ function showConcettoDetail(id) {
         disableSuperimposedVisualization();
     }
 
-    window.currentConcettoId = id;  // ← NUOVA RIGA (aggiunta)
+    window.currentConcettoId = id;  
     const concetto = concettiData.find(c => c.id === id);
-    if (!concept) return;
+    if (!concetto) return; // ← CORRETTO: prima c'era scritto '!concept' e bloccava tutto!
     
     const content = document.getElementById('concetto-detail-content');
     
