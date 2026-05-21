@@ -2134,3 +2134,54 @@ html, body {
     border-color: #3b82f6 !important;
     background: #eff6ff !important;
 }
+/* ==================== PUNTO 9: SUPERIMPOSED VISUALIZATION ==================== */
+
+.btn-superimposed {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-superimposed:hover {
+    background: linear-gradient(135deg, #6d28d9, #5b21b6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+@keyframes floatBubble {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-5px) rotate(1deg);
+    }
+    75% {
+        transform: translateY(5px) rotate(-1deg);
+    }
+}
+
+.semantic-bubble {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Responsive per mobile */
+@media (max-width: 768px) {
+    .semantic-bubble {
+        width: calc(50% - 15px);
+        min-width: 150px;
+    }
+    
+    #semantic-bubbles {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}

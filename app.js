@@ -497,9 +497,14 @@ function showOperaDetail(id) {
 }
 
 function showConcettoDetail(id) {
+    // Se c'è una visualizzazione sovrapposta attiva sul concetto precedente, ripulisci il container
+    if (typeof disableSuperimposedVisualization === 'function') {
+        disableSuperimposedVisualization();
+    }
+
     window.currentConcettoId = id;  // ← NUOVA RIGA (aggiunta)
     const concetto = concettiData.find(c => c.id === id);
-    if (!concetto) return;
+    if (!concept) return;
     
     const content = document.getElementById('concetto-detail-content');
     
@@ -547,6 +552,13 @@ function showConcettoDetail(id) {
 
             <button class="btn-cite" onclick="showCitationModal()">
                 <i class="fas fa-quote-left"></i> Cita
+            </button>
+
+            <button class="btn-superimposed" onclick="enableSuperimposedVisualization('${concetto.id}')">
+                <i class="fas fa-layer-group"></i> Visualizzazione Sovrapposta
+            </button>
+            <button class="btn-superimposed" onclick="disableSuperimposedVisualization()" style="display: none;" id="btn-disable-superimposed">
+                <i class="fas fa-times"></i> Chiudi Visualizzazione
             </button>
         </div>
     `;
@@ -1581,6 +1593,9 @@ window.clearUpload = clearUpload;
 window.downloadAnalysisReport = downloadAnalysisReport;
 window.clearUploadAndAnalyzeAgain = clearUploadAndAnalyzeAgain;
 window.searchAndOpenConcept = searchAndOpenConcept;
+window.enableSuperimposedVisualization = enableSuperimposedVisualization;
+window.disableSuperimposedVisualization = disableSuperimposedVisualization;
+window.closeLayerDetailModal = closeLayerDetailModal;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -2800,4 +2815,335 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+// ==================== PUNTO 9: SUPERIMPOSED VISUALIZATION ====================
+// Riferimento: Drucker, J. (2011). "Humanities Approaches to Graphical Display"
+// Metodologia: Visualizzazione della polisemia semantica attraverso layer sovrapposti
+
+let superimposedActive = false;
+let currentSemanticLayers = [];
+
+/**
+ * Attiva la visualizzazione sovrapposta per un concetto
+ */
+function enableSuperimposedVisualization(conceptId) {
+    const concept = concettiData.find(c => c.id === conceptId);
+    if (!concept) {
+        showToast('Concetto non trovato', 'error');
+        return;
+    }
+    
+    if (superimposedActive) disableSuperimposedVisualization();
+    
+    const layers = extractSemanticLayers(concept);
+    currentSemanticLayers = layers;
+    
+    if (layers.length === 0) {
+        showToast('Nessun layer semantico disponibile per questo concetto', 'info');
+        return;
+    }
+    
+    superimposedActive = true;
+    
+    const detailContainer = document.getElementById('concetto-detail-content');
+    if (!detailContainer) return;
+    
+    let layersContainer = document.getElementById('semantic-layers-container');
+    if (!layersContainer) {
+        layersContainer = document.createElement('div');
+        layersContainer.id = 'semantic-layers-container';
+        layersContainer.style.cssText = `
+            position: relative;
+            min-height: 300px;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+            border-radius: 16px;
+            border: 1px dashed #8b5cf6;
+        `;
+        detailContainer.appendChild(layersContainer);
+    }
+    
+    layersContainer.innerHTML = `<h4 style="margin-bottom: 15px; color: #8b5cf6;">
+        <i class="fas fa-layer-group"></i> Strati Semantici (polisemia documentata)
+        <small style="font-size: 0.7rem; margin-left: 10px;">Basato su: Drucker (2011)</small>
+    </h4>`;
+    
+    const bubblesContainer = document.createElement('div');
+    bubblesContainer.id = 'semantic-bubbles';
+    bubblesContainer.style.cssText = `
+        position: relative;
+        min-height: 220px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    `;
+    layersContainer.appendChild(bubblesContainer);
+    
+    layers.forEach((layer, index) => {
+        const bubble = createSemanticBubble(layer, index, concept);
+        bubblesContainer.appendChild(bubble);
+    });
+    
+    // Gestione bottoni UI
+    const disableBtn = document.getElementById('btn-disable-superimposed');
+    if (disableBtn) disableBtn.style.display = 'inline-flex';
+    
+    showToast(`✨ Visualizzazione sovrapposta attivata per "${concept.parola}"`, 'success');
+    console.log(`📚 [SuperimposedVis] Attivata per ${concept.parola} - ${layers.length} layer`);
+}
+
+/**
+ * Disattiva la visualizzazione sovrapposta
+ */
+function disableSuperimposedVisualization() {
+    const container = document.getElementById('semantic-layers-container');
+    if (container) container.remove();
+    
+    superimposedActive = false;
+    currentSemanticLayers = [];
+    
+    // Ripristina la mappa
+    if (networkInstance) {
+        const nodes = networkInstance.body.data.nodes;
+        const allNodes = nodes.get();
+        allNodes.forEach(node => {
+            nodes.update({ id: node.id, color: { opacity: 1 }, borderWidth: 2 });
+        });
+        networkInstance.fit({ animation: { duration: 800 } });
+    }
+    
+    // Gestione bottoni UI
+    const disableBtn = document.getElementById('btn-disable-superimposed');
+    if (disableBtn) disableBtn.style.display = 'none';
+    
+    console.log('📚 [SuperimposedVis] Disattivata');
+}
+
+/**
+ * Estrae i layer semantici dai dati del concetto
+ */
+function extractSemanticLayers(concept) {
+    const layers = [];
+    
+    if (concept.definizione) {
+        layers.push({
+            id: 'classical',
+            title: `Accezione Classica (${concept.periodo === 'classico' ? 'Canone' : 'Origine'})`,
+            summary: concept.definizione.length > 150 ? concept.definizione.substring(0, 150) + '...' : concept.definizione,
+            source: 'Definizione canonica',
+            fullText: concept.definizione,
+            type: 'definition'
+        });
+    }
+    
+    if (concept.evoluzione) {
+        layers.push({
+            id: 'evolution',
+            title: 'Trasformazione storica',
+            summary: concept.evoluzione.length > 150 ? concept.evoluzione.substring(0, 150) + '...' : concept.evoluzione,
+            source: 'Analisi diacronica',
+            fullText: concept.evoluzione,
+            type: 'evolution'
+        });
+    }
+    
+    if (concept.esempio) {
+        layers.push({
+            id: 'example',
+            title: 'Esempio contestuale',
+            summary: concept.esempio.length > 150 ? concept.esempio.substring(0, 150) + '...' : concept.esempio,
+            source: 'Testo d\'autore',
+            fullText: concept.esempio,
+            type: 'example'
+        });
+    }
+    
+    if (concept.autore_riferimento) {
+        const authors = concept.autore_riferimento.split(',').map(a => a.trim());
+        if (authors.length > 0) {
+            layers.push({
+                id: 'authors',
+                title: `Autori di riferimento (${authors.length})`,
+                summary: authors.join(', '),
+                source: 'Dataset Aeterna',
+                fullText: authors.join(', '),
+                type: 'authors',
+                authors: authors
+            });
+        }
+    }
+    
+    return layers;
+}
+
+/**
+ * Crea un bubble semantico fluttuante
+ */
+function createSemanticBubble(layer, index, concept) {
+    const bubble = document.createElement('div');
+    bubble.className = 'semantic-bubble';
+    bubble.setAttribute('data-layer-id', layer.id);
+    bubble.setAttribute('data-layer-type', layer.type);
+    
+    const colors = {
+        definition: { border: '#10b981', bg: 'rgba(16, 185, 129, 0.1)' },
+        evolution: { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },
+        example: { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },
+        authors: { border: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' }
+    };
+    
+    const color = colors[layer.type] || colors.definition;
+    
+    bubble.style.cssText = `
+        width: 220px;
+        padding: 15px;
+        background: ${color.bg};
+        border-left: 4px solid ${color.border};
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        animation: floatBubble ${2 + index * 0.5}s ease-in-out infinite;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    `;
+    
+    bubble.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <strong style="color: ${color.border};">${layer.title}</strong>
+            <small style="color: #6b7280; font-size: 0.65rem;">${layer.source}</small>
+        </div>
+        <p style="font-size: 0.8rem; color: #374151; line-height: 1.4; margin: 0;">${escapeHtml(layer.summary)}</p>
+        <div style="margin-top: 10px; font-size: 0.7rem; color: ${color.border}; text-align: right;">
+            <i class="fas fa-arrow-right"></i> Seleziona
+        </div>
+    `;
+    
+    // BUG FIXATO QUI: Passaggio esplicito dell'evento 'e'
+    bubble.onclick = (e) => {
+        e.stopPropagation();
+        selectSemanticLayer(layer, concept, e); 
+    };
+    
+    return bubble;
+}
+
+/**
+ * Seleziona un layer semantico (Contextual Filtering)
+ */
+function selectSemanticLayer(layer, concept, event) { // BUG FIXATO QUI: Ricezione parametro 'event'
+    console.log(`🔍 [ContextualFilter] Selezione: "${layer.title}" per ${concept.parola}`);
+    
+    showLayerDetail(layer, concept);
+    
+    document.querySelectorAll('.semantic-bubble').forEach(bubble => {
+        bubble.style.opacity = '0.5';
+        bubble.style.transform = 'scale(0.95)';
+    });
+    
+    // Utilizzo corretto dell'event
+    event.target.closest('.semantic-bubble').style.opacity = '1';
+    event.target.closest('.semantic-bubble').style.transform = 'scale(1.05)';
+    
+    if (networkInstance) {
+        highlightRelatedNodes(concept, layer);
+    }
+    
+    logAnalyticalChoice(concept.id, layer.id, layer.title);
+    showToast(`📌 Filtro contestuale: "${layer.title}" selezionato`, 'success');
+}
+
+/**
+ * Mostra il dettaglio del layer selezionato
+ */
+function showLayerDetail(layer, concept) {
+    let modal = document.getElementById('layer-detail-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'layer-detail-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <h3 class="modal-title" id="layer-modal-title"></h3>
+                <div id="layer-modal-content" style="margin: 20px 0; line-height: 1.6;"></div>
+                <div class="modal-buttons">
+                    <button class="modal-btn secondary" onclick="closeLayerDetailModal()">Chiudi</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    const titleEl = document.getElementById('layer-modal-title');
+    const contentEl = document.getElementById('layer-modal-content');
+    
+    titleEl.innerHTML = `<i class="fas fa-layer-group"></i> ${concept.parola} - ${layer.title}`;
+    contentEl.innerHTML = `
+        <div style="background: #f8fafc; padding: 15px; border-radius: 8px;">
+            <p style="margin-bottom: 10px;"><strong>Fonte:</strong> ${layer.source}</p>
+            <p style="margin-bottom: 10px;"><strong>Contenuto:</strong></p>
+            <p style="font-style: italic; color: #4b5563;">${escapeHtml(layer.fullText || layer.summary)}</p>
+        </div>
+    `;
+    
+    modal.style.display = 'flex';
+}
+
+function closeLayerDetailModal() {
+    const modal = document.getElementById('layer-detail-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+/**
+ * Evidenzia i nodi correlati al layer selezionato
+ */
+function highlightRelatedNodes(concept, layer) {
+    if (!networkInstance) return;
+    
+    const nodes = networkInstance.body.data.nodes;
+    const allNodes = nodes.get();
+    
+    allNodes.forEach(node => {
+        nodes.update({ id: node.id, color: { opacity: 0.2 } });
+    });
+    
+    const conceptNodeId = 'C_' + concept.id;
+    nodes.update({ id: conceptNodeId, color: { opacity: 1, border: '#ef4444', borderWidth: 4 } });
+    
+    if (layer.type === 'authors' && layer.authors) {
+        layer.authors.forEach(authorName => {
+            const authorNode = filosofiData.find(f => f.nome === authorName);
+            if (authorNode) {
+                nodes.update({ id: authorNode.id, color: { opacity: 1, border: '#f59e0b', borderWidth: 3 } });
+            }
+        });
+    }
+    
+    networkInstance.focus(conceptNodeId, {
+        scale: 1.5,
+        animation: { duration: 500, easingFunction: 'easeInOutQuad' }
+    });
+}
+
+/**
+ * Traccia la scelta analitica dell'utente
+ */
+function logAnalyticalChoice(conceptId, layerId, layerTitle) {
+    const choice = {
+        timestamp: new Date().toISOString(),
+        conceptId: conceptId,
+        layerId: layerId,
+        layerTitle: layerTitle,
+        userAgent: navigator.userAgent
+    };
+    
+    const choices = JSON.parse(localStorage.getItem('aeterna_analytical_choices') || '[]');
+    choices.push(choice);
+    if (choices.length > 100) choices.shift();
+    localStorage.setItem('aeterna_analytical_choices', JSON.stringify(choices));
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
