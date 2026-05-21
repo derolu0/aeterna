@@ -2905,7 +2905,7 @@ function disableSuperimposedVisualization() {
 }
 
 /**
- * Estrae i layer semantici dai dati del concetto
+ * Estrae i layer semantici dai dati del concetto e traduce gli ID in nomi reali
  */
 function extractSemanticLayers(concept) {
     const layers = [];
@@ -2944,8 +2944,8 @@ function extractSemanticLayers(concept) {
     }
     
     if (concept.autore_riferimento) {
-        // TRADUCE GLI ID IN NOMI REALI PER L'INTERFACCIA
         const authorIds = concept.autore_riferimento.split(',');
+        // Converte gli ID (F2, F11) nei nomi propri dei filosofi per l'interfaccia
         const authorNames = authorIds.map(id => {
             const philosopher = filosofiData.find(f => f.id === id.trim() || f.nome === id.trim());
             return philosopher ? philosopher.nome : id.trim();
@@ -2959,7 +2959,7 @@ function extractSemanticLayers(concept) {
                 source: 'Dataset Aeterna',
                 fullText: authorNames.join(', '),
                 type: 'authors',
-                authors: authorIds // Mantiene gli ID originali (F2, F11) per far funzionare la mappa
+                authors: authorIds // Mantiene gli ID originari intatti per far funzionare i filtri della mappa
             });
         }
     }
@@ -3124,7 +3124,7 @@ function viewFilterOnMap() {
 }
 
 /**
- * Evidenzia i nodi correlati al layer selezionato e applica un filtro topologico reale
+ * Evidenzia i nodi correlati al layer selezionato e applica un filtro topologico reale (Case-Insensitive)
  */
 function highlightRelatedNodes(concept, layer) {
     if (!networkInstance) return;
@@ -3144,16 +3144,15 @@ function highlightRelatedNodes(concept, layer) {
     
     showFilterIndicator(concept.parola, layer.title);
     
-    // 1. Identificazione dinamica dei nodi correlati (Filtro Indistruttibile)
+    // 1. Identificazione dinamica dei nodi correlati
     const conceptNodeId = 'C_' + concept.id;
     const relatedNodeIds = new Set();
     relatedNodeIds.add(conceptNodeId);
     
-    // Normalizziamo la parola in minuscolo per evitare errori (es. "Essere" vs "essere")
-    const keyword = concept.parola.toLowerCase();
+    // Normalizzazione della stringa in minuscolo per evitare conflitti di battitura
+    const keyword = concept.parola.toLowerCase().trim();
     
     if (layer.type === 'authors' || layer.type === 'example') {
-        // Autori e Esempio usano i creatori/riferimenti diretti
         if (concept.autore_riferimento) {
             concept.autore_riferimento.split(',').forEach(authorRef => {
                 const authorNode = filosofiData.find(f => f.id === authorRef.trim() || f.nome === authorRef.trim());
@@ -3161,24 +3160,24 @@ function highlightRelatedNodes(concept, layer) {
             });
         }
     } else if (layer.type === 'definition') {
-        // Cerca filosofi classici che hanno quel concetto
+        // Filtro dinamico per filosofi classici (Case-Insensitive)
         filosofiData.forEach(f => {
             if (f.periodo === 'classico' && f.concetti_principali) {
-                const hasConcept = f.concetti_principali.some(c => c.toLowerCase() === keyword);
+                const hasConcept = f.concetti_principali.some(c => c.toLowerCase().trim() === keyword);
                 if (hasConcept) relatedNodeIds.add(f.id);
             }
         });
     } else if (layer.type === 'evolution') {
-        // Cerca filosofi contemporanei che hanno quel concetto
+        // Filtro dinamico per filosofi contemporanei (Case-Insensitive)
         filosofiData.forEach(f => {
             if (f.periodo === 'contemporaneo' && f.concetti_principali) {
-                const hasConcept = f.concetti_principali.some(c => c.toLowerCase() === keyword);
+                const hasConcept = f.concetti_principali.some(c => c.toLowerCase().trim() === keyword);
                 if (hasConcept) relatedNodeIds.add(f.id);
             }
         });
     }
     
-    // 2. Aggiornamento Visivo tramite Array (Universale e performante)
+    // 2. Aggiornamento grafico della mappa tramite array di comandi
     const nodesToUpdate = [];
     allNodes.forEach(node => {
         const isTarget = relatedNodeIds.has(node.id);
