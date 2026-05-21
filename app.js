@@ -2876,7 +2876,6 @@ function enableSuperimposedVisualization(conceptId) {
         bubblesContainer.appendChild(bubble);
     });
     
-    // Gestione bottoni UI
     const disableBtn = document.getElementById('btn-disable-superimposed');
     if (disableBtn) disableBtn.style.display = 'inline-flex';
     
@@ -2894,17 +2893,10 @@ function disableSuperimposedVisualization() {
     superimposedActive = false;
     currentSemanticLayers = [];
     
-    // Ripristina la mappa
     if (networkInstance) {
-        const nodes = networkInstance.body.data.nodes;
-        const allNodes = nodes.get();
-        allNodes.forEach(node => {
-            nodes.update({ id: node.id, color: { opacity: 1 }, borderWidth: 2 });
-        });
-        networkInstance.fit({ animation: { duration: 800 } });
+        resetContextualFilter();
     }
     
-    // Gestione bottoni UI
     const disableBtn = document.getElementById('btn-disable-superimposed');
     if (disableBtn) disableBtn.style.display = 'none';
     
@@ -3009,7 +3001,6 @@ function createSemanticBubble(layer, index, concept) {
         </div>
     `;
     
-    // BUG FIXATO QUI: Passaggio esplicito dell'evento 'e'
     bubble.onclick = (e) => {
         e.stopPropagation();
         selectSemanticLayer(layer, concept, e); 
@@ -3021,7 +3012,7 @@ function createSemanticBubble(layer, index, concept) {
 /**
  * Seleziona un layer semantico (Contextual Filtering)
  */
-function selectSemanticLayer(layer, concept, event) { // BUG FIXATO QUI: Ricezione parametro 'event'
+function selectSemanticLayer(layer, concept, event) {
     console.log(`🔍 [ContextualFilter] Selezione: "${layer.title}" per ${concept.parola}`);
     
     showLayerDetail(layer, concept);
@@ -3031,9 +3022,13 @@ function selectSemanticLayer(layer, concept, event) { // BUG FIXATO QUI: Ricezio
         bubble.style.transform = 'scale(0.95)';
     });
     
-    // Utilizzo corretto dell'event
-    event.target.closest('.semantic-bubble').style.opacity = '1';
-    event.target.closest('.semantic-bubble').style.transform = 'scale(1.05)';
+    if (event && event.target) {
+        const targetBubble = event.target.closest('.semantic-bubble');
+        if (targetBubble) {
+            targetBubble.style.opacity = '1';
+            targetBubble.style.transform = 'scale(1.05)';
+        }
+    }
     
     if (networkInstance) {
         highlightRelatedNodes(concept, layer);
@@ -3095,7 +3090,6 @@ function highlightRelatedNodes(concept, layer) {
     const allNodes = nodes.get();
     const allEdges = edges.get();
     
-    // Salva lo stato del filtro attivo
     window.activeFilter = {
         conceptId: concept.id,
         conceptName: concept.parola,
@@ -3104,7 +3098,6 @@ function highlightRelatedNodes(concept, layer) {
         timestamp: Date.now()
     };
     
-    // Mostra indicatore di filtro attivo
     showFilterIndicator(concept.parola, layer.title);
     
     // 1. Identificazione dinamica dei nodi correlati (Filtro Filologico)
@@ -3135,7 +3128,8 @@ function highlightRelatedNodes(concept, layer) {
         }
     }
     
-    // 2. Aggiornamento Visivo di Nodi ed Edges combinato (Chiamata atomica per performance)
+    // 2. Aggiornamento Visivo Atomico di Nodi ed Edges
+    nodes.beginUpdate();
     allNodes.forEach(node => {
         const isTarget = relatedNodeIds.has(node.id);
         const isCurrentConcept = (node.id === conceptNodeId);
@@ -3152,7 +3146,9 @@ function highlightRelatedNodes(concept, layer) {
             }
         });
     });
+    nodes.endUpdate();
     
+    edges.beginUpdate();
     allEdges.forEach(edge => {
         const hasFrom = relatedNodeIds.has(edge.from);
         const hasTo = relatedNodeIds.has(edge.to);
@@ -3178,8 +3174,8 @@ function highlightRelatedNodes(concept, layer) {
             });
         }
     });
+    edges.endUpdate();
     
-    // 3. Focus sul concetto
     networkInstance.focus(conceptNodeId, {
         scale: 1.4,
         animation: { duration: 600, easingFunction: 'easeInOutQuad' }
@@ -3231,6 +3227,7 @@ function showFilterIndicator(conceptName, layerTitle) {
             font-size: 0.75rem;
             font-weight: bold;
             transition: background 0.2s;
+            margin-left: 10px;
         ">Reset</button>
     `;
     
@@ -3253,6 +3250,7 @@ function resetContextualFilter() {
     const nodes = networkInstance.body.data.nodes;
     const edges = networkInstance.body.data.edges;
     
+    nodes.beginUpdate();
     nodes.get().forEach(node => {
         nodes.update({
             id: node.id,
@@ -3260,7 +3258,9 @@ function resetContextualFilter() {
             font: { color: '#ffffff', size: node.id.startsWith('C_') ? 11 : 12 }
         });
     });
+    nodes.endUpdate();
     
+    edges.beginUpdate();
     edges.get().forEach(edge => {
         edges.update({
             id: edge.id,
@@ -3269,6 +3269,7 @@ function resetContextualFilter() {
             width: 1.5
         });
     });
+    edges.endUpdate();
     
     const indicator = document.getElementById('filter-indicator');
     if (indicator) indicator.remove();
@@ -3306,24 +3307,6 @@ function logAnalyticalChoice(conceptId, layerId, layerTitle) {
     localStorage.setItem('aeterna_analytical_history', JSON.stringify(history));
     
     console.log('📝 [AnalyticalChoice] Tracciata:', choice);
-}
-
-/**
- * Traccia la scelta analitica dell'utente
- */
-function logAnalyticalChoice(conceptId, layerId, layerTitle) {
-    const choice = {
-        timestamp: new Date().toISOString(),
-        conceptId: conceptId,
-        layerId: layerId,
-        layerTitle: layerTitle,
-        userAgent: navigator.userAgent
-    };
-    
-    const choices = JSON.parse(localStorage.getItem('aeterna_analytical_choices') || '[]');
-    choices.push(choice);
-    if (choices.length > 100) choices.shift();
-    localStorage.setItem('aeterna_analytical_choices', JSON.stringify(choices));
 }
 
 function escapeHtml(str) {
