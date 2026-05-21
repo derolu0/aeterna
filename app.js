@@ -1597,6 +1597,9 @@ window.searchAndOpenConcept = searchAndOpenConcept;
 window.enableSuperimposedVisualization = enableSuperimposedVisualization;
 window.disableSuperimposedVisualization = disableSuperimposedVisualization;
 window.closeLayerDetailModal = closeLayerDetailModal;
+window.resetContextualFilter = resetContextualFilter;
+window.showFilterIndicator = showFilterIndicator;
+window.logAnalyticalChoice = logAnalyticalChoice;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -3096,34 +3099,242 @@ function closeLayerDetailModal() {
 }
 
 /**
- * Evidenzia i nodi correlati al layer selezionato
+ * Evidenzia i nodi correlati al layer selezionato e applica un filtro topologico reale
+ * Riferimento DH: Cambia lo stato visivo in base al focus ermeneutico
  */
 function highlightRelatedNodes(concept, layer) {
     if (!networkInstance) return;
     
     const nodes = networkInstance.body.data.nodes;
+    const edges = networkInstance.body.data.edges;
     const allNodes = nodes.get();
+    const allEdges = edges.get();
     
+    // Salva lo stato del filtro attivo
+    window.activeFilter = {
+        conceptId: concept.id,
+        conceptName: concept.parola,
+        layerId: layer.id,
+        layerTitle: layer.title,
+        timestamp: Date.now()
+    };
+    
+    // Mostra indicatore di filtro attivo
+    showFilterIndicator(concept.parola, layer.title);
+    
+    // 1. Reset completo: tutti i nodi opacizzati, tutte le linee nascoste
     allNodes.forEach(node => {
-        nodes.update({ id: node.id, color: { opacity: 0.2 } });
+        nodes.update({
+            id: node.id,
+            color: { opacity: 0.15 },
+            font: { color: 'rgba(255,255,255,0.2)' }
+        });
     });
     
+    allEdges.forEach(edge => {
+        edges.update({
+            id: edge.id,
+            hidden: true
+        });
+    });
+    
+    // 2. Identificazione dinamica dei nodi correlati (Filtro Filologico)
     const conceptNodeId = 'C_' + concept.id;
-    nodes.update({ id: conceptNodeId, color: { opacity: 1, border: '#ef4444', borderWidth: 4 } });
+    const relatedNodeIds = new Set();
+    relatedNodeIds.add(conceptNodeId);
     
     if (layer.type === 'authors' && layer.authors) {
-        layer.authors.forEach(authorName => {
-            const authorNode = filosofiData.find(f => f.nome === authorName);
-            if (authorNode) {
-                nodes.update({ id: authorNode.id, color: { opacity: 1, border: '#f59e0b', borderWidth: 3 } });
+        // Mappatura accurata basata sugli ID (F1, F2...) o sui Nomi
+        layer.authors.forEach(authorRef => {
+            const authorNode = filosofiData.find(f => f.id === authorRef.trim() || f.nome === authorRef.trim());
+            if (authorNode) relatedNodeIds.add(authorNode.id);
+        });
+    } else if (layer.type === 'definition') {
+        // CORREZIONE DINAMICA: Evidenzia SOLO i filosofi classici che trattano quel concetto specifico
+        filosofiData.forEach(f => {
+            if (f.periodo === 'classico' && f.concetti_principali && f.concetti_principali.includes(concept.parola)) {
+                relatedNodeIds.add(f.id);
             }
         });
+    } else if (layer.type === 'evolution') {
+        // CORREZIONE DINAMICA: Evidenzia SOLO i filosofi contemporanei che trattano quel concetto specifico
+        filosofiData.forEach(f => {
+            if (f.periodo === 'contemporaneo' && f.concetti_principali && f.concetti_principali.includes(concept.parola)) {
+                relatedNodeIds.add(f.id);
+            }
+        });
+    } else if (layer.type === 'example') {
+        // Se si guarda l'esempio, evidenziamo gli autori citati nel reference del concetto
+        if (concept.autore_riferimento) {
+            concept.autore_riferimento.split(',').forEach(id => relatedNodeIds.add(id.trim()));
+        }
     }
     
-    networkInstance.focus(conceptNodeId, {
-        scale: 1.5,
-        animation: { duration: 500, easingFunction: 'easeInOutQuad' }
+    // 3. Accendi i nodi del cluster filtrato
+    relatedNodeIds.forEach(id => {
+        const isCurrentConcept = (id === conceptNodeId);
+        nodes.update({
+            id: id,
+            color: { 
+                opacity: 1,
+                border: isCurrentConcept ? '#ef4444' : undefined 
+            },
+            font: { 
+                color: '#ffffff',
+                size: isCurrentConcept ? 14 : 12
+            }
+        });
     });
+    
+    // 4. Mostra e colora solo le linee che collegano il cluster attivo
+    allEdges.forEach(edge => {
+        const hasFrom = relatedNodeIds.has(edge.from);
+        const hasTo = relatedNodeIds.has(edge.to);
+        
+        if (hasFrom && hasTo) {
+            edges.update({
+                id: edge.id,
+                hidden: false,
+                color: { color: '#ef4444', opacity: 1 },
+                width: 3
+            });
+        } else if (hasFrom || hasTo) {
+            edges.update({
+                id: edge.id,
+                hidden: false,
+                color: { opacity: 0.4 },
+                width: 1.5
+            });
+        }
+    });
+    
+    // 5. Focus sul concetto
+    networkInstance.focus(conceptNodeId, {
+        scale: 1.4,
+        animation: { duration: 600, easingFunction: 'easeInOutQuad' }
+    });
+    
+    console.log(`🎯 [ContextualFilter] Cluster isolato con successo per: ${concept.parola}`);
+}
+
+/**
+ * Mostra l'indicatore visivo del filtro nell'angolo dello schermo
+ */
+function showFilterIndicator(conceptName, layerTitle) {
+    const existingIndicator = document.getElementById('filter-indicator');
+    if (existingIndicator) existingIndicator.remove();
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'filter-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        background: rgba(31, 41, 55, 0.95);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        backdrop-filter: blur(10px);
+        border-left: 4px solid #ef4444;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    indicator.innerHTML = `
+        <span>
+            <i class="fas fa-filter" style="color: #ef4444;"></i>
+            <strong>DH Filtro:</strong> ${conceptName} &rarr; <span style="color: #a78bfa;">${layerTitle}</span>
+        </span>
+        <button onclick="resetContextualFilter()" style="
+            background: #ef4444;
+            border: none;
+            color: white;
+            border-radius: 20px;
+            padding: 4px 12px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        ">Reset</button>
+    `;
+    
+    document.body.appendChild(indicator);
+    
+    if (!document.querySelector('#filter-indicator-style')) {
+        const style = document.createElement('style');
+        style.id = 'filter-indicator-style';
+        style.textContent = `@keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }`;
+        document.head.appendChild(style);
+    }
+}
+
+/**
+ * Resetta il filtro contestuale e ripristina la visualizzazione normale della mappa
+ */
+function resetContextualFilter() {
+    if (!networkInstance) return;
+    
+    const nodes = networkInstance.body.data.nodes;
+    const edges = networkInstance.body.data.edges;
+    
+    nodes.get().forEach(node => {
+        nodes.update({
+            id: node.id,
+            color: { opacity: 1 },
+            font: { color: '#ffffff', size: node.id.startsWith('C_') ? 11 : 12 }
+        });
+    });
+    
+    edges.get().forEach(edge => {
+        edges.update({
+            id: edge.id,
+            hidden: false,
+            color: { opacity: 0.6 },
+            width: 1.5
+        });
+    });
+    
+    const indicator = document.getElementById('filter-indicator');
+    if (indicator) indicator.remove();
+    
+    window.activeFilter = null;
+    
+    networkInstance.fit({
+        animation: { duration: 600, easingFunction: 'easeInOutQuad' }
+    });
+    
+    document.querySelectorAll('.semantic-bubble').forEach(bubble => {
+        bubble.style.opacity = '1';
+        bubble.style.transform = 'scale(1)';
+    });
+    
+    showToast('✅ Filtro resettato', 'success');
+}
+
+/**
+ * Traccia la scelta analitica dell'utente per riproducibilità scientifica
+ */
+function logAnalyticalChoice(conceptId, layerId, layerTitle) {
+    const choice = {
+        timestamp: new Date().toISOString(),
+        conceptId: conceptId,
+        layerId: layerId,
+        layerTitle: layerTitle,
+        userAgent: navigator.userAgent,
+        url: window.location.href
+    };
+    
+    let history = JSON.parse(localStorage.getItem('aeterna_analytical_history') || '[]');
+    history.push(choice);
+    if (history.length > 50) history.shift();
+    localStorage.setItem('aeterna_analytical_history', JSON.stringify(history));
+    
+    console.log('📝 [AnalyticalChoice] Tracciata:', choice);
 }
 
 /**
