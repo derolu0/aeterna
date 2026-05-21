@@ -888,7 +888,6 @@ function initConceptMap() {
         });
         
         // ============ 4. CREAZIONE COLLEGAMENTI (Rafforzati) ============
-        // Calcola rilevanza dei concetti
         const conceptRelevance = new Map();
         for (const concetto of concettiData) {
             let relevance = 1;
@@ -905,7 +904,7 @@ function initConceptMap() {
                     const concetto = concettiData.find(c => c.parola === concettoNome);
                     if (concetto) {
                         const relevance = conceptRelevance.get(concetto.id) || 1;
-                        const width = 1.5 + (relevance / 4); // Aumentato spessore base
+                        const width = 1.5 + (relevance / 4);
                         
                         edges.add({
                             from: filosofo.id,
@@ -913,8 +912,8 @@ function initConceptMap() {
                             arrows: { to: { enabled: true, scaleFactor: 0.8 } },
                             color: {
                                 color: filosofo.periodo === 'contemporaneo' ? '#f59e0b' : '#10b981',
-                                opacity: 0.85, // CHECKLIST: Opacità alzata per massima visibilità
-                                highlight: '#ef4444', // Rosso acceso al click
+                                opacity: 0.85,
+                                highlight: '#ef4444',
                                 hover: '#ef4444'
                             },
                             width: width,
@@ -942,8 +941,8 @@ function initConceptMap() {
                             arrows: { to: { enabled: true, scaleFactor: 0.8 } },
                             color: { 
                                 color: '#8b5cf6', 
-                                opacity: 0.85, // CHECKLIST: Visibilità netta
-                                highlight: '#f59e0b', // Arancione acceso al click
+                                opacity: 0.85,
+                                highlight: '#f59e0b',
                                 hover: '#f59e0b' 
                             },
                             width: width,
@@ -967,19 +966,18 @@ function initConceptMap() {
                     max: 40,
                     label: { enabled: true, min: 10, max: 14 }
                 },
-                // CHECKLIST: Ombre spente di base. Uccidono i 60fps su mobile durante il drag
                 shadow: { enabled: false } 
             },
             edges: {
-                smooth: { type: 'dynamic' }, // CHECKLIST: 'dynamic' è computazionalmente più leggero di 'continuous'
-                hoverWidth: 3, // CHECKLIST: Rafforzamento visivo al passaggio
-                selectionWidth: 4, // CHECKLIST: Rafforzamento visivo al click
+                smooth: { type: 'dynamic' },
+                hoverWidth: 3,
+                selectionWidth: 4,
                 color: { inherit: false }, 
                 arrows: { to: { enabled: true, scaleFactor: 0.8, type: 'arrow' } },
                 font: { align: 'middle', size: 10, color: '#343434' }
             },
             physics: {
-                enabled: true, // Acceso SOLO all'inizio
+                enabled: true,
                 stabilization: { iterations: 150, updateInterval: 25, fit: true },
                 solver: 'barnesHut',
                 barnesHut: {
@@ -988,7 +986,7 @@ function initConceptMap() {
                     springLength: 180,
                     springConstant: 0.04,
                     damping: 0.09,
-                    avoidOverlap: 1 // CHECKLIST: Alzato a 1. Impedisce categoricamente la sovrapposizione fisica dei nodi
+                    avoidOverlap: 1
                 },
                 timestep: 0.5,
                 adaptiveTimestep: true
@@ -1000,9 +998,9 @@ function initConceptMap() {
                 selectConnectedEdges: true,
                 zoomView: true,
                 dragView: true,
-                hideEdgesOnDrag: true, // CHECKLIST: Trucco fondamentale per i 60fps su mobile. Nasconde temporaneamente le linee mentre sposti la mappa.
+                hideEdgesOnDrag: true,
                 tooltipDelay: 150,
-                navigationButtons: true // <-- CORRETTO QUI: Accetta solo un booleano semplice per evitare errori bloccanti
+                navigationButtons: true // Risolve l'errore di tipo bloccante in console
             },
             layout: { improvedLayout: true, hierarchical: { enabled: false } },
             configure: { enabled: false }
@@ -1016,7 +1014,7 @@ function initConceptMap() {
         const data = { nodes: nodes, edges: edges };
         networkInstance = new vis.Network(container, data, options);
 
-        // ============ 6. EVENTI MIGLIORATI ============
+        // ============ 6. EVENTI ============
         networkInstance.on("click", function(params) {
             const currentTime = new Date().getTime();
             const timeDiff = currentTime - lastClickTime;
@@ -1024,7 +1022,6 @@ function initConceptMap() {
             if (params.nodes.length > 0) {
                 const nodeId = params.nodes[0];
 
-                // Doppio click
                 if (timeDiff < 400 && lastClickNode === nodeId) {
                     clearTimeout(clickTimer);
                     clickTimer = null;
@@ -1039,9 +1036,7 @@ function initConceptMap() {
                     return;
                 }
 
-                // Click singolo
                 lastClickNode = nodeId;
-
                 if (clickTimer) clearTimeout(clickTimer);
 
                 clickTimer = setTimeout(function() {
@@ -1081,13 +1076,9 @@ function initConceptMap() {
             }
         });
 
-        // ============ 7. STABILIZZAZIONE (IL FREEZE) ============
+        // ============ 7. STABILIZZAZIONE CONGELATA CORRETTA ============
         networkInstance.on("stabilizationIterationsDone", function() {
-            // CHECKLIST: IL SEGRETO DELLA STABILITÀ. 
-            // Appena i nodi si sono posizionati, spegniamo il motore fisico. 
-            // Nessuna vibrazione, nessun ricalcolo in background.
             networkInstance.setOptions({ physics: { enabled: false } });
-            
             networkInstance.fit({
                 animation: { duration: 800, easingFunction: 'easeInOutCubic' }
             });
