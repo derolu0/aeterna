@@ -1002,12 +1002,7 @@ function initConceptMap() {
                 dragView: true,
                 hideEdgesOnDrag: true, // CHECKLIST: Trucco fondamentale per i 60fps su mobile. Nasconde temporaneamente le linee mentre sposti la mappa.
                 tooltipDelay: 150,
-                navigationButtons: {
-                    enabled: true,
-                    zoomIn: { cssClass: 'custom-zoom-in', title: 'Zoom In' },
-                    zoomOut: { cssClass: 'custom-zoom-out', title: 'Zoom Out' },
-                    reset: { cssClass: 'custom-reset', title: 'Reset View' }
-                }
+                navigationButtons: true // <-- CORRETTO QUI: Accetta solo un booleano semplice per evitare errori bloccanti
             },
             layout: { improvedLayout: true, hierarchical: { enabled: false } },
             configure: { enabled: false }
@@ -3100,7 +3095,6 @@ function closeLayerDetailModal() {
 
 /**
  * Evidenzia i nodi correlati al layer selezionato e applica un filtro topologico reale
- * Riferimento DH: Cambia lo stato visivo in base al focus ermeneutico
  */
 function highlightRelatedNodes(concept, layer) {
     if (!networkInstance) return;
@@ -3122,71 +3116,52 @@ function highlightRelatedNodes(concept, layer) {
     // Mostra indicatore di filtro attivo
     showFilterIndicator(concept.parola, layer.title);
     
-    // 1. Reset completo: tutti i nodi opacizzati, tutte le linee nascoste
-    allNodes.forEach(node => {
-        nodes.update({
-            id: node.id,
-            color: { opacity: 0.15 },
-            font: { color: 'rgba(255,255,255,0.2)' }
-        });
-    });
-    
-    allEdges.forEach(edge => {
-        edges.update({
-            id: edge.id,
-            hidden: true
-        });
-    });
-    
-    // 2. Identificazione dinamica dei nodi correlati (Filtro Filologico)
+    // 1. Identificazione dinamica dei nodi correlati (Filtro Filologico)
     const conceptNodeId = 'C_' + concept.id;
     const relatedNodeIds = new Set();
     relatedNodeIds.add(conceptNodeId);
     
     if (layer.type === 'authors' && layer.authors) {
-        // Mappatura accurata basata sugli ID (F1, F2...) o sui Nomi
         layer.authors.forEach(authorRef => {
             const authorNode = filosofiData.find(f => f.id === authorRef.trim() || f.nome === authorRef.trim());
             if (authorNode) relatedNodeIds.add(authorNode.id);
         });
     } else if (layer.type === 'definition') {
-        // CORREZIONE DINAMICA: Evidenzia SOLO i filosofi classici che trattano quel concetto specifico
         filosofiData.forEach(f => {
             if (f.periodo === 'classico' && f.concetti_principali && f.concetti_principali.includes(concept.parola)) {
                 relatedNodeIds.add(f.id);
             }
         });
     } else if (layer.type === 'evolution') {
-        // CORREZIONE DINAMICA: Evidenzia SOLO i filosofi contemporanei che trattano quel concetto specifico
         filosofiData.forEach(f => {
             if (f.periodo === 'contemporaneo' && f.concetti_principali && f.concetti_principali.includes(concept.parola)) {
                 relatedNodeIds.add(f.id);
             }
         });
     } else if (layer.type === 'example') {
-        // Se si guarda l'esempio, evidenziamo gli autori citati nel reference del concetto
         if (concept.autore_riferimento) {
             concept.autore_riferimento.split(',').forEach(id => relatedNodeIds.add(id.trim()));
         }
     }
     
-    // 3. Accendi i nodi del cluster filtrato
-    relatedNodeIds.forEach(id => {
-        const isCurrentConcept = (id === conceptNodeId);
+    // 2. Aggiornamento Visivo di Nodi ed Edges combinato (Chiamata atomica per performance)
+    allNodes.forEach(node => {
+        const isTarget = relatedNodeIds.has(node.id);
+        const isCurrentConcept = (node.id === conceptNodeId);
+        
         nodes.update({
-            id: id,
-            color: { 
-                opacity: 1,
-                border: isCurrentConcept ? '#ef4444' : undefined 
+            id: node.id,
+            color: {
+                opacity: isTarget ? 1.0 : 0.15,
+                border: isCurrentConcept ? '#ef4444' : undefined
             },
-            font: { 
-                color: '#ffffff',
-                size: isCurrentConcept ? 14 : 12
+            font: {
+                color: isTarget ? '#ffffff' : 'rgba(255,255,255,0.2)',
+                size: isCurrentConcept ? 14 : 11
             }
         });
     });
     
-    // 4. Mostra e colora solo le linee che collegano il cluster attivo
     allEdges.forEach(edge => {
         const hasFrom = relatedNodeIds.has(edge.from);
         const hasTo = relatedNodeIds.has(edge.to);
@@ -3205,16 +3180,21 @@ function highlightRelatedNodes(concept, layer) {
                 color: { opacity: 0.4 },
                 width: 1.5
             });
+        } else {
+            edges.update({
+                id: edge.id,
+                hidden: true
+            });
         }
     });
     
-    // 5. Focus sul concetto
+    // 3. Focus sul concetto
     networkInstance.focus(conceptNodeId, {
         scale: 1.4,
         animation: { duration: 600, easingFunction: 'easeInOutQuad' }
     });
     
-    console.log(`🎯 [ContextualFilter] Cluster isolato con successo per: ${concept.parola}`);
+    console.log(`🎯 [ContextualFilter] Cluster isolato visivamente per: ${concept.parola}`);
 }
 
 /**
