@@ -1587,6 +1587,10 @@ window.resetContextualFilter = resetContextualFilter;
 window.showFilterIndicator = showFilterIndicator;
 window.logAnalyticalChoice = logAnalyticalChoice;
 window.viewFilterOnMap = viewFilterOnMap;
+window.handleTemporalSlider = handleTemporalSlider;
+window.applyTemporalFilter = applyTemporalFilter;
+window.resetTemporalFilter = resetTemporalFilter;
+window.updateLayerPriorityByEpoch = updateLayerPriorityByEpoch;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -3414,4 +3418,160 @@ function logAnalyticalChoice(conceptId, layerId, layerTitle) {
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+// ==================== PUNTO 11: TEMPORAL NAVIGATION SLIDER ====================
+// Riferimento: Jockers, M. (2013). "Macroanalysis: Digital Methods and Literary History"
+
+function handleTemporalSlider(value) {
+    if (!networkInstance) return;
+    
+    const val = parseInt(value);
+    const labelEl = document.getElementById('temporal-current-label');
+    
+    const epochs = {
+        0: { name: "Tutto il Lessico", filter: "all", color: "#6b7280" },
+        1: { name: "Canone Classico", filter: "classico", color: "#10b981" },
+        2: { name: "Transizione", filter: "entrambi", color: "#8b5cf6" },
+        3: { name: "Contemporaneo", filter: "contemporaneo", color: "#f59e0b" }
+    };
+    
+    const currentEpoch = epochs[val] || epochs[0];
+    if (labelEl) {
+        labelEl.textContent = currentEpoch.name;
+        labelEl.style.background = currentEpoch.color;
+    }
+    
+    applyTemporalFilter(currentEpoch.filter, val);
+    console.log(`📅 [TemporalSlider] Epoca selezionata: ${currentEpoch.name}`);
+}
+
+function applyTemporalFilter(epochFilter, sliderValue) {
+    if (!networkInstance) return;
+
+    const nodes = networkInstance.body.data.nodes;
+    const edges = networkInstance.body.data.edges;
+    const allNodes = nodes.get();
+    const allEdges = edges.get();
+    
+    const visibleNodeIds = new Set();
+    const nodesToUpdate = [];
+
+    // 1. FILTRAGGIO NODI (Uso colori diretti per stabilità Vis.js)
+    allNodes.forEach(node => {
+        let isVisible = false;
+        let isConcetto = String(node.id).startsWith('C_');
+        let itemPeriodo = "all";
+
+        if (isConcetto) {
+            const cId = String(node.id).substring(2);
+            const concetto = concettiData.find(c => String(c.id) === cId);
+            if (concetto) itemPeriodo = concetto.periodo;
+        } else {
+            const filosofo = filosofiData.find(f => String(f.id) === String(node.id));
+            if (filosofo) itemPeriodo = filosofo.periodo;
+        }
+
+        if (epochFilter === 'all') isVisible = true;
+        else if (epochFilter === 'classico') isVisible = (itemPeriodo === 'classico');
+        else if (epochFilter === 'entrambi') isVisible = (itemPeriodo === 'entrambi' || itemPeriodo === 'classico');
+        else if (epochFilter === 'contemporaneo') isVisible = (itemPeriodo === 'contemporaneo' || itemPeriodo === 'entrambi');
+
+        if (isVisible) {
+            visibleNodeIds.add(node.id);
+            // Colori standard accesi
+            let bg, border;
+            if (isConcetto) {
+                bg = itemPeriodo === 'entrambi' ? '#8b5cf6' : (itemPeriodo === 'classico' ? '#10b981' : '#f59e0b');
+                border = itemPeriodo === 'entrambi' ? '#7c3aed' : (itemPeriodo === 'classico' ? '#047857' : '#d97706');
+            } else {
+                bg = itemPeriodo === 'classico' ? '#10b981' : '#f59e0b';
+                border = itemPeriodo === 'classico' ? '#047857' : '#d97706';
+            }
+
+            nodesToUpdate.push({
+                id: node.id,
+                color: { background: bg, border: border },
+                font: { color: '#ffffff', size: isConcetto ? 11 : 12 }
+            });
+        } else {
+            // Nodi in background (Grigio sbiadito)
+            nodesToUpdate.push({
+                id: node.id,
+                color: { background: 'rgba(200,200,200,0.2)', border: 'rgba(150,150,150,0.2)' },
+                font: { color: 'rgba(150,150,150,0.5)', size: 9 }
+            });
+        }
+    });
+    nodes.update(nodesToUpdate);
+
+    // 2. FILTRAGGIO ARCHI
+    const edgesToUpdate = [];
+    const isTransition = (epochFilter === 'entrambi');
+
+    allEdges.forEach(edge => {
+        const fromVisible = visibleNodeIds.has(edge.from);
+        const toVisible = visibleNodeIds.has(edge.to);
+
+        if (fromVisible && toVisible) {
+            edgesToUpdate.push({
+                id: edge.id,
+                hidden: false,
+                color: { color: isTransition ? '#ef4444' : '#8b5cf6', opacity: isTransition ? 0.9 : 0.85 },
+                width: isTransition ? 2.5 : 1.5
+            });
+        } else if (fromVisible || toVisible) {
+            edgesToUpdate.push({
+                id: edge.id,
+                hidden: false,
+                color: { color: '#cccccc', opacity: 0.2 },
+                width: 0.8
+            });
+        } else {
+            edgesToUpdate.push({ id: edge.id, hidden: true });
+        }
+    });
+    edges.update(edgesToUpdate);
+
+    // Integrazione Punti 9 e 10
+    if (typeof superimposedActive !== 'undefined' && superimposedActive && currentSemanticLayers && currentSemanticLayers.length > 0) {
+        let epochForLayers = 'contemporary';
+        if (epochFilter === 'classico') epochForLayers = 'classical';
+        else if (epochFilter === 'entrambi') epochForLayers = 'transition';
+        
+        updateLayerPriorityByEpoch(epochForLayers);
+    }
+}
+
+function updateLayerPriorityByEpoch(epoch) {
+    const bubbles = document.querySelectorAll('.semantic-bubble');
+    if (!bubbles.length) return;
+    
+    bubbles.forEach(bubble => {
+        const layerType = bubble.getAttribute('data-layer-type');
+        if (epoch === 'classical' && (layerType === 'definition' || layerType === 'authors')) {
+            bubble.style.opacity = '1';
+            bubble.style.transform = 'scale(1)';
+            bubble.style.borderLeftWidth = '4px';
+        } else if (epoch === 'contemporary' && layerType === 'evolution') {
+            bubble.style.opacity = '1';
+            bubble.style.transform = 'scale(1)';
+            bubble.style.borderLeftWidth = '4px';
+        } else if (epoch === 'transition') {
+            bubble.style.opacity = '1';
+            bubble.style.borderLeftWidth = '4px';
+        } else {
+            bubble.style.opacity = '0.5';
+            bubble.style.transform = 'scale(0.95)';
+            bubble.style.borderLeftWidth = '2px';
+        }
+    });
+}
+
+function resetTemporalFilter() {
+    const slider = document.getElementById('temporal-navigation-range');
+    if (slider) {
+        slider.value = 0;
+        handleTemporalSlider(0);
+    }
+    showToast('Filtro temporale resettato', 'success');
 }

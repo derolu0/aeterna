@@ -450,7 +450,48 @@
                         <p>Costruzione mappa concettuale...</p>
                     </div>
                 </div>
-            </div>
+
+                <div id="temporal-slider-container" style="
+                    margin: 20px auto; 
+                    max-width: 700px; 
+                    background: rgba(31, 41, 55, 0.6); 
+                    padding: 15px 25px; 
+                    border-radius: 16px; 
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.2); 
+                    backdrop-filter: blur(10px); 
+                    border: 1px solid rgba(139, 92, 246, 0.2);
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <span style="color: #a78bfa; font-size: 0.85rem; font-weight: bold; letter-spacing: 0.05em;">
+                            <i class="fas fa-clock"></i> NAVIGAZIONE DIACRONICA TEMPORALE
+                            <small style="font-size: 0.65rem; margin-left: 8px; color: #6b7280;">Jockers (2013)</small>
+                        </span>
+                        <span id="temporal-current-label" style="
+                            background: #6b7280; 
+                            color: white; 
+                            padding: 2px 10px; 
+                            border-radius: 12px; 
+                            font-size: 0.75rem; 
+                            font-weight: bold;
+                            text-transform: uppercase;
+                        ">Tutto il Lessico</span>
+                    </div>
+                    
+                    <input type="range" id="temporal-navigation-range" min="0" max="3" value="0" step="1" style="
+                        width: 100%; 
+                        accent-color: #8b5cf6; 
+                        cursor: pointer;
+                        margin: 10px 0;
+                    " oninput="handleTemporalSlider(this.value)">
+                    
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #9ca3af; font-weight: 500;">
+                        <span style="cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('temporal-navigation-range').value=0; handleTemporalSlider(0);">🌐 Tutti</span>
+                        <span style="cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('temporal-navigation-range').value=1; handleTemporalSlider(1);">🏛️ Classico</span>
+                        <span style="cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('temporal-navigation-range').value=2; handleTemporalSlider(2);">🔄 Transizione</span>
+                        <span style="cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('temporal-navigation-range').value=3; handleTemporalSlider(3);">⚡ Contemporaneo</span>
+                    </div>
+                </div>
+                </div>
         </div>                 
          
         <!-- ============ CREDITS ============ -->
