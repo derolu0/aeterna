@@ -3445,6 +3445,9 @@ function handleTemporalSlider(value) {
     console.log(`📅 [TemporalSlider] Epoca selezionata: ${currentEpoch.name}`);
 }
 
+/**
+ * Applica il filtro temporale diacronico sui nodi e sugli archi (Versione Filologica Corretta)
+ */
 function applyTemporalFilter(epochFilter, sliderValue) {
     if (!networkInstance) return;
 
@@ -3456,12 +3459,13 @@ function applyTemporalFilter(epochFilter, sliderValue) {
     const visibleNodeIds = new Set();
     const nodesToUpdate = [];
 
-    // 1. FILTRAGGIO NODI (Uso colori diretti per stabilità Vis.js)
+    // 1. NUOVA LOGICA DI FILTRAGGIO (Rispetta i concetti transperiodali)
     allNodes.forEach(node => {
         let isVisible = false;
         let isConcetto = String(node.id).startsWith('C_');
         let itemPeriodo = "all";
 
+        // Estrazione accurata del periodo
         if (isConcetto) {
             const cId = String(node.id).substring(2);
             const concetto = concettiData.find(c => String(c.id) === cId);
@@ -3471,14 +3475,21 @@ function applyTemporalFilter(epochFilter, sliderValue) {
             if (filosofo) itemPeriodo = filosofo.periodo;
         }
 
-        if (epochFilter === 'all') isVisible = true;
-        else if (epochFilter === 'classico') isVisible = (itemPeriodo === 'classico');
-        else if (epochFilter === 'entrambi') isVisible = (itemPeriodo === 'entrambi' || itemPeriodo === 'classico');
-        else if (epochFilter === 'contemporaneo') isVisible = (itemPeriodo === 'contemporaneo' || itemPeriodo === 'entrambi');
+        // REGOLE DI MACROANALISI TEMPORALE:
+        if (epochFilter === 'all' || epochFilter === 'entrambi') {
+            // "Tutti" e "Transizione" mostrano l'intero ecosistema
+            isVisible = true;
+        } else if (epochFilter === 'classico') {
+            // Nel mondo antico i concetti 'entrambi' (es. Essere) DEVONO rimanere accesi
+            isVisible = (itemPeriodo === 'classico' || itemPeriodo === 'entrambi');
+        } else if (epochFilter === 'contemporaneo') {
+            // Nel mondo moderno i concetti 'entrambi' DEVONO rimanere accesi
+            isVisible = (itemPeriodo === 'contemporaneo' || itemPeriodo === 'entrambi');
+        }
 
         if (isVisible) {
             visibleNodeIds.add(node.id);
-            // Colori standard accesi
+            // Colori accesi nativi
             let bg, border;
             if (isConcetto) {
                 bg = itemPeriodo === 'entrambi' ? '#8b5cf6' : (itemPeriodo === 'classico' ? '#10b981' : '#f59e0b');
@@ -3490,21 +3501,21 @@ function applyTemporalFilter(epochFilter, sliderValue) {
 
             nodesToUpdate.push({
                 id: node.id,
-                color: { background: bg, border: border },
+                color: { background: bg, border: border, opacity: 1 },
                 font: { color: '#ffffff', size: isConcetto ? 11 : 12 }
             });
         } else {
-            // Nodi in background (Grigio sbiadito)
+            // Spegnimento severo per i nodi fuori dal tempo
             nodesToUpdate.push({
                 id: node.id,
-                color: { background: 'rgba(200,200,200,0.2)', border: 'rgba(150,150,150,0.2)' },
-                font: { color: 'rgba(150,150,150,0.5)', size: 9 }
+                color: { background: 'rgba(230,230,230,0.1)', border: 'rgba(200,200,200,0.1)' },
+                font: { color: 'rgba(150,150,150,0.1)', size: 8 }
             });
         }
     });
     nodes.update(nodesToUpdate);
 
-    // 2. FILTRAGGIO ARCHI
+    // 2. GESTIONE DEGLI ARCHI (Il ponte del tempo)
     const edgesToUpdate = [];
     const isTransition = (epochFilter === 'entrambi');
 
@@ -3513,18 +3524,22 @@ function applyTemporalFilter(epochFilter, sliderValue) {
         const toVisible = visibleNodeIds.has(edge.to);
 
         if (fromVisible && toVisible) {
+            // Se lo slider è su "Transizione", gli archi diventano rosso vivo per mostrare il passaggio storico
             edgesToUpdate.push({
                 id: edge.id,
                 hidden: false,
-                color: { color: isTransition ? '#ef4444' : '#8b5cf6', opacity: isTransition ? 0.9 : 0.85 },
-                width: isTransition ? 2.5 : 1.5
+                color: { 
+                    color: isTransition ? '#ef4444' : '#8b5cf6', 
+                    opacity: isTransition ? 1.0 : 0.85 
+                },
+                width: isTransition ? 3 : 1.5
             });
         } else if (fromVisible || toVisible) {
             edgesToUpdate.push({
                 id: edge.id,
                 hidden: false,
-                color: { color: '#cccccc', opacity: 0.2 },
-                width: 0.8
+                color: { color: '#cccccc', opacity: 0.1 },
+                width: 0.5
             });
         } else {
             edgesToUpdate.push({ id: edge.id, hidden: true });
@@ -3532,7 +3547,7 @@ function applyTemporalFilter(epochFilter, sliderValue) {
     });
     edges.update(edgesToUpdate);
 
-    // Integrazione Punti 9 e 10
+    // Integrazione priorità layer Punti 9 e 10
     if (typeof superimposedActive !== 'undefined' && superimposedActive && currentSemanticLayers && currentSemanticLayers.length > 0) {
         let epochForLayers = 'contemporary';
         if (epochFilter === 'classico') epochForLayers = 'classical';
