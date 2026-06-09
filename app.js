@@ -3861,7 +3861,7 @@ function copyExplanationToClipboard() {
 }
 
 // ==================== FINE PUNTO 13 ====================
-// ==================== PUNTO 14: EXPLORATORY MODE (VERSIONE GLOBALE) ====================
+// ==================== PUNTO 14: EXPLORATORY MODE (VERSIONE GLOBALE CORRETTA) ====================
 // Metodologia: Navigazione associativa - esplorazione libera su tutta l'app
 
 let exploratoryModeActive = false;
@@ -3870,6 +3870,11 @@ let exploratoryModeActive = false;
  * Attiva la modalità esplorativa su TUTTA l'app
  */
 function enableExploratoryMode() {
+    // Controllo se esiste già
+    if (typeof exploratoryModeActive === 'undefined') {
+        window.exploratoryModeActive = false;
+    }
+    
     if (exploratoryModeActive) {
         disableExploratoryMode();
         return;
@@ -3885,14 +3890,20 @@ function enableExploratoryMode() {
         card.style.animation = `floatExplore ${2 + (index % 5) * 0.2}s ease-in-out infinite`;
         card.style.cursor = 'grab';
         
-        // Effetto parallasse al mouse
-        card.addEventListener('mousemove', (e) => {
+        // Rimuovi eventuali listener precedenti per evitare duplicati
+        card.removeEventListener('mousemove', card._exploratoryHandler);
+        
+        // Crea e salva il handler
+        const handler = (e) => {
             if (!exploratoryModeActive) return;
             const rect = card.getBoundingClientRect();
             const x = (e.clientX - rect.left) / rect.width - 0.5;
             const y = (e.clientY - rect.top) / rect.height - 0.5;
             card.style.transform = `rotateX(${y * 3}deg) rotateY(${x * 3}deg)`;
-        });
+        };
+        
+        card._exploratoryHandler = handler;
+        card.addEventListener('mousemove', handler);
         
         card.addEventListener('mouseleave', () => {
             card.style.transform = '';
@@ -3923,7 +3934,9 @@ function enableExploratoryMode() {
     exploratoryModeActive = true;
     showExploratoryIndicator();
     
-    showToast('🌊 Modalità Esplorativa attivata su tutta l\'app', 'success');
+    if (typeof showToast === 'function') {
+        showToast('🌊 Modalità Esplorativa attivata su tutta l\'app', 'success');
+    }
     console.log('🌊 [ExploratoryMode] Attivata globalmente');
 }
 
@@ -3940,6 +3953,10 @@ function disableExploratoryMode() {
         card.style.transform = '';
         card.style.cursor = '';
         card.style.transition = '';
+        if (card._exploratoryHandler) {
+            card.removeEventListener('mousemove', card._exploratoryHandler);
+            card._exploratoryHandler = null;
+        }
     });
     
     // Reset pulsanti
@@ -3961,6 +3978,84 @@ function disableExploratoryMode() {
     
     exploratoryModeActive = false;
     
-    showToast('Modalità Esplorativa disattivata', 'info');
+    if (typeof showToast === 'function') {
+        showToast('Modalità Esplorativa disattivata', 'info');
+    }
     console.log('🌊 [ExploratoryMode] Disattivata');
 }
+
+/**
+ * Mostra indicatore modalità esplorativa
+ */
+function showExploratoryIndicator() {
+    const existingIndicator = document.getElementById('exploratory-indicator');
+    if (existingIndicator) existingIndicator.remove();
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'exploratory-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(139, 92, 246, 0.95);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideDown 0.3s ease-out;
+    `;
+    
+    indicator.innerHTML = `
+        <i class="fas fa-globe-americas"></i>
+        <span>Modalità Esplorativa attiva</span>
+        <button onclick="disableExploratoryMode()" style="
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        ">✕</button>
+    `;
+    
+    document.body.appendChild(indicator);
+}
+
+/**
+ * Attiva una visualizzazione casuale dei concetti (suggerimento esplorativo)
+ */
+function randomExploration() {
+    if (typeof concettiData === 'undefined' || !concettiData || concettiData.length === 0) {
+        if (typeof showToast === 'function') {
+            showToast('Nessun concetto disponibile', 'warning');
+        }
+        return;
+    }
+    
+    const randomIndex = Math.floor(Math.random() * concettiData.length);
+    const randomConcept = concettiData[randomIndex];
+    
+    if (typeof showToast === 'function') {
+        showToast(`🔍 Suggerimento: esplora "${randomConcept.parola}"`, 'info', 3000);
+    }
+    
+    // Effetto visivo sulla card corrispondente
+    const cards = document.querySelectorAll('.concetto-card');
+    cards.forEach(card => {
+        const title = card.querySelector('.concetto-parola')?.textContent;
+        if (title === randomConcept.parola) {
+            card.style.animation = 'pulseExplore 0.5s ease-in-out 3';
+            setTimeout(() => {
+                card.style.animation = '';
+            }, 1500);
+        }
+    });
+}
+
+// ==================== FINE PUNTO 14 ====================
