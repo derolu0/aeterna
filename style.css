@@ -2289,3 +2289,36 @@ html, body {
 .btn-random i {
     font-size: 1rem;
 }
+/* ==================== PUNTO 15: BOTTONE SONIFICAZIONE ==================== */
+.btn-sonification {
+    background: linear-gradient(135deg, #ec4898, #be185d);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-sonification:hover {
+    background: linear-gradient(135deg, #be185d, #9d174d);
+    transform: translateY(-2px);
+}
+
+.btn-sonification:active {
+    transform: translateY(0);
+}
+
+.btn-sonification i {
+    font-size: 1rem;
+}
+
+.btn-sonification.active {
+    background: linear-gradient(135deg, #be185d, #9d174d);
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.5);
+}

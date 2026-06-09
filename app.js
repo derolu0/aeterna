@@ -1600,6 +1600,9 @@ window.enableExploratoryMode = enableExploratoryMode;
 window.disableExploratoryMode = disableExploratoryMode;
 window.randomExploration = randomExploration;
 window.randomExploration = randomExploration;
+window.toggleSonification = toggleSonification;
+window.enableSonification = enableSonification;
+window.disableSonification = disableSonification;
 
 
 // Funzioni admin placeholder (per compatibilità)
@@ -4153,3 +4156,203 @@ function randomExploration() {
 }
 
 // ==================== FINE ESPLORAZIONE CASUALE ====================
+// ==================== PUNTO 15: CONCEPT SONIFICATION ====================
+// Riferimento: Hermann, T. (2008). "Taxonomy and Definitions for Sonification"
+// Metodologia: Mappatura di proprietà concettuali in parametri sonori
+
+let sonificationActive = false;
+let audioContext = null;
+let currentOscillator = null;
+
+/**
+ * Inizializza l'AudioContext (deve essere avviato da un gesto utente)
+ */
+function initAudioContext() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    return audioContext;
+}
+
+/**
+ * Attiva/disattiva la sonificazione dei concetti
+ */
+function toggleSonification() {
+    const btn = document.querySelector('.btn-sonification');
+    
+    if (sonificationActive) {
+        disableSonification();
+        if (btn) btn.classList.remove('active');
+    } else {
+        enableSonification();
+        if (btn) btn.classList.add('active');
+    }
+}
+
+/**
+ * Attiva la sonificazione: aggiunge listener ai concetti
+ */
+function enableSonification() {
+    if (sonificationActive) return;
+    
+    // Inizializza audio context al primo click
+    initAudioContext();
+    
+    // Aggiunge listener per i concetti
+    const conceptCards = document.querySelectorAll('.concetto-card');
+    conceptCards.forEach(card => {
+        card.addEventListener('mouseenter', playConceptSound);
+        card.style.cursor = 'pointer';
+    });
+    
+    sonificationActive = true;
+    showSonificationIndicator(true);
+    
+    if (typeof showToast === 'function') {
+        showToast('🎵 Sonificazione attivata - passa il mouse su un concetto', 'success');
+    }
+    console.log('🎵 [Sonification] Attivata');
+}
+
+/**
+ * Disattiva la sonificazione
+ */
+function disableSonification() {
+    if (!sonificationActive) return;
+    
+    const conceptCards = document.querySelectorAll('.concetto-card');
+    conceptCards.forEach(card => {
+        card.removeEventListener('mouseenter', playConceptSound);
+        card.style.cursor = '';
+    });
+    
+    if (currentOscillator) {
+        try {
+            currentOscillator.stop();
+        } catch(e) {}
+        currentOscillator = null;
+    }
+    
+    sonificationActive = false;
+    showSonificationIndicator(false);
+    
+    if (typeof showToast === 'function') {
+        showToast('Sonificazione disattivata', 'info');
+    }
+    console.log('🎵 [Sonification] Disattivata');
+}
+
+/**
+ * Riproduce un suono in base al concetto
+ */
+function playConceptSound(event) {
+    if (!sonificationActive) return;
+    
+    const card = event.currentTarget;
+    const conceptName = card.querySelector('.concetto-parola')?.textContent || '';
+    const period = getConceptPeriod(conceptName);
+    
+    // Calcola frequenza in base al nome del concetto
+    let frequency = conceptName.length * 50 + 200;
+    frequency = Math.min(frequency, 800);
+    frequency = Math.max(frequency, 220);
+    
+    // Aggiunge variazione in base al periodo
+    if (period === 'classico') frequency *= 0.8;
+    if (period === 'contemporaneo') frequency *= 1.2;
+    
+    // Durata del suono
+    const duration = 0.6;
+    
+    try {
+        const ctx = initAudioContext();
+        
+        // Crea oscillatore
+        const oscillator = ctx.createOscillator();
+        const gainNode = ctx.createGain();
+        
+        oscillator.type = period === 'classico' ? 'sine' : 'sawtooth';
+        oscillator.frequency.value = frequency;
+        
+        gainNode.gain.value = 0.15;
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(ctx.destination);
+        
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + duration);
+        
+        // Ferma il precedente se ancora in esecuzione
+        if (currentOscillator) {
+            try {
+                currentOscillator.stop();
+            } catch(e) {}
+        }
+        currentOscillator = oscillator;
+        
+    } catch(e) {
+        console.warn('Audio non supportato:', e);
+    }
+}
+
+/**
+ * Ottiene il periodo di un concetto
+ */
+function getConceptPeriod(conceptName) {
+    if (typeof concettiData === 'undefined') return 'classico';
+    const concept = concettiData.find(c => c.parola === conceptName);
+    return concept ? concept.periodo : 'classico';
+}
+
+/**
+ * Mostra indicatore sonificazione
+ */
+function showSonificationIndicator(isActive) {
+    let indicator = document.getElementById('sonification-indicator');
+    
+    if (!isActive) {
+        if (indicator) indicator.remove();
+        return;
+    }
+    
+    if (indicator) indicator.remove();
+    
+    indicator = document.createElement('div');
+    indicator.id = 'sonification-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        background: rgba(236, 72, 153, 0.95);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    indicator.innerHTML = `
+        <i class="fas fa-music"></i>
+        <span>Sonificazione attiva</span>
+        <button onclick="disableSonification()" style="
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        ">✕</button>
+    `;
+    
+    document.body.appendChild(indicator);
+}
+
+// ==================== FINE PUNTO 15 ====================
