@@ -441,6 +441,9 @@
                         <button class="filter-btn non-funzionante" onclick="filterConceptMap('contemporaneo')">
                             <i class="fas fa-bolt"></i> Contemporanei
                         </button>
+                        <button id="traceability-btn" class="filter-btn traceability-btn" onclick="enableInterpretiveTraceability()">
+                            <i class="fas fa-brain"></i> Traceability
+                        </button>
                     </div>
                 </div>
 
@@ -686,11 +689,6 @@
                 <button class="modal-btn btn-report" onclick="openReportScreen()">
                     <i class="fas fa-bullhorn"></i>
                     <span>Segnala Errore</span>
-                </button>
-
-                <button class="modal-btn btn-trace" onclick="enableInterpretiveTraceability()">
-                    <i class="fas fa-brain"></i>
-                    <span>Traceability</span>
                 </button>
 
                 <button class="modal-btn" onclick="closeMenuModal()">

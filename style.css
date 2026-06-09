@@ -2185,17 +2185,21 @@ html, body {
         flex-wrap: wrap;
     }
 }
-/* ==================== PUNTO 13: INTERPRETIVE TRACEABILITY ==================== */
-
-.btn-trace {
-    background: linear-gradient(135deg, #10b981, #059669) !important;
-    color: white !important;
+/* ==================== PUNTO 13: BOTTONE TRACEABILITY (nei filtri) ==================== */
+.filter-btn.traceability-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
 }
 
-.btn-trace i {
-    color: white !important;
+.filter-btn.traceability-btn i {
+    color: white;
 }
 
-.btn-trace:hover {
-    background: linear-gradient(135deg, #059669, #047857) !important;
+.filter-btn.traceability-btn.active {
+    background: linear-gradient(135deg, #059669, #047857);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+}
+
+.filter-btn.traceability-btn:hover {
+    transform: translateY(-2px);
 }

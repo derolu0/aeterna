@@ -3614,11 +3614,18 @@ function enableInterpretiveTraceability() {
         return;
     }
     
-    // Attiviamo una flag globale che intercetteremo nel listener principale
+    // Attiviamo una flag globale
     window.interpretiveListenerActive = true;
     
-    // Usiamo l'evento 'selectEdge' specifico per archi (non sovrascrive click sui nodi)
+    // Aggiungiamo il listener per gli archi
     networkInstance.on("selectEdge", handleEdgeClickForTraceability);
+    
+    // Cambia stile del bottone per mostrare che è attivo
+    const btn = document.getElementById('traceability-btn');
+    if (btn) {
+        btn.classList.add('active');
+        btn.innerHTML = '<i class="fas fa-brain"></i> Traceability ON';
+    }
     
     showToast('🔍 Traceability attiva - clicca su un collegamento per la spiegazione', 'success');
     console.log('📖 [InterpretiveTraceability] Attivata');
@@ -3632,6 +3639,14 @@ function disableInterpretiveTraceability() {
         // Rimuoviamo SOLO il nostro listener specifico per gli archi
         networkInstance.off("selectEdge", handleEdgeClickForTraceability);
         window.interpretiveListenerActive = false;
+        
+        // Ripristina stile del bottone
+        const btn = document.getElementById('traceability-btn');
+        if (btn) {
+            btn.classList.remove('active');
+            btn.innerHTML = '<i class="fas fa-brain"></i> Traceability';
+        }
+        
         showToast('Traceability disattivata', 'info');
         console.log('📖 [InterpretiveTraceability] Disattivata');
     }
