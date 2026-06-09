@@ -2400,10 +2400,19 @@ html, body {
     background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
     color: white !important;
 }
-/* ==================== PUNTO 18: SPATIAL VISUALIZATION ==================== */
+/* ==================== PUNTO 18: TOGGLE BACKGROUND (DARK MODE) ==================== */
 .btn-spatial {
     background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
     color: white !important;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
 }
 
 .btn-spatial i {
@@ -2415,12 +2424,15 @@ html, body {
     transform: translateY(-2px);
 }
 
-#concept-network {
-    transition: transform 0.1s ease-out;
-    will-change: transform;
-}
-/* Stile per il bottone 3D quando attivo */
-.filter-btn.btn-spatial.active {
-    background: linear-gradient(135deg, #1d4ed8, #1e3a8a) !important;
+.btn-spatial.active {
+    background: linear-gradient(135deg, #1e3a8a, #172554) !important;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Stile per il container della mappa in dark mode (opzionale, gestito da JS) */
+#concept-network.dark-mode {
+    background-color: #0a0a2a;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    border-radius: 12px;
+    padding: 10px;
 }

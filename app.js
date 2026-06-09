@@ -4851,204 +4851,60 @@ function closeParadigmTranslator() {
 }
 
 // ==================== FINE PUNTO 17 ====================
-// ==================== PUNTO 18: SPATIAL VISUALIZATION 3D ====================
-// ==================== PUNTO 18: SPATIAL VISUALIZATION 3D (VERSIONE MINIMALE) ====================
+// ==================== PUNTO 18: TOGGLE BACKGROUND COLOR ====================
+// Versione semplice e stabile - cambia il colore dello sfondo della mappa
 
-let spatial3DActive = false;
-let threeScene = null;
-let threeCamera = null;
-let threeRenderer = null;
-let threeAnimationId = null;
+let darkModeActive = false;
 
 /**
- * Attiva la visualizzazione 3D
+ * Cambia il colore dello sfondo della mappa concettuale
  */
 function enableSpatialVisualization() {
     const container = document.getElementById('concept-network');
+    const mappaScreen = document.getElementById('mappa-concettuale-screen');
+    
     if (!container) {
         showToast('Vai prima alla Mappa Concettuale', 'warning');
         return;
     }
     
-    if (spatial3DActive) {
-        disableSpatialVisualization();
-        return;
-    }
-    
     // Cambia stile bottone
     const btn = document.querySelector('.btn-spatial');
-    if (btn) btn.classList.add('active');
     
-    try {
-        // Nascondi il contenuto originale
-        const originalCanvas = container.querySelector('canvas');
-        if (originalCanvas) originalCanvas.style.display = 'none';
-        
-        // Imposta dimensioni
-        const width = container.clientWidth;
-        const height = 500;
-        container.style.height = height + 'px';
+    if (darkModeActive) {
+        // Disattiva: torna allo sfondo originale
+        container.style.backgroundColor = '';
+        container.style.boxShadow = '';
+        if (mappaScreen) mappaScreen.style.backgroundColor = '';
+        if (btn) btn.classList.remove('active');
+        darkModeActive = false;
+        showToast('🌞 Modalità chiara attivata', 'info');
+    } else {
+        // Attiva: sfondo scuro per la mappa
         container.style.backgroundColor = '#0a0a2a';
-        
-        // 1. SCENA
-        threeScene = new THREE.Scene();
-        threeScene.background = new THREE.Color(0x0a0a2a);
-        
-        // 2. CAMERA
-        threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-        threeCamera.position.set(0, 2, 10);
-        threeCamera.lookAt(0, 0, 0);
-        
-        // 3. RENDERER
-        threeRenderer = new THREE.WebGLRenderer({ antialias: true });
-        threeRenderer.setSize(width, height);
-        threeRenderer.setClearColor(0x0a0a2a, 1);
-        
-        // Rimuovi vecchio canvas se esiste
-        const oldCanvas = container.querySelector('.three-canvas');
-        if (oldCanvas) oldCanvas.remove();
-        
-        threeRenderer.domElement.className = 'three-canvas';
-        container.appendChild(threeRenderer.domElement);
-        
-        // 4. LUCE
-        const ambientLight = new THREE.AmbientLight(0x404060);
-        threeScene.add(ambientLight);
-        
-        const mainLight = new THREE.DirectionalLight(0xffffff, 1);
-        mainLight.position.set(1, 2, 1);
-        threeScene.add(mainLight);
-        
-        const backLight = new THREE.PointLight(0x8b5cf6, 0.5);
-        backLight.position.set(0, 1, -3);
-        threeScene.add(backLight);
-        
-        // 5. CREA 12 SFERE COLORATE
-        threeNodes = [];
-        const colors = [0x10b981, 0xf59e0b, 0x8b5cf6, 0x3b82f6, 0xef4444, 0xec4898];
-        const radius = 4;
-        
-        for (let i = 0; i < 12; i++) {
-            const angle = (i / 12) * Math.PI * 2;
-            const x = Math.cos(angle) * radius;
-            const z = Math.sin(angle) * radius;
-            const y = Math.sin(angle * 2) * 1.2;
-            
-            const geometry = new THREE.SphereGeometry(0.5, 32, 32);
-            const material = new THREE.MeshStandardMaterial({
-                color: colors[i % colors.length],
-                emissive: 0x222222,
-                metalness: 0.5,
-                roughness: 0.4
-            });
-            const sphere = new THREE.Mesh(geometry, material);
-            sphere.position.set(x, y, z);
-            threeScene.add(sphere);
-            threeNodes.push(sphere);
-        }
-        
-        // Sfera centrale
-        const centerGeo = new THREE.SphereGeometry(0.7, 32, 32);
-        const centerMat = new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0x4c1d95 });
-        const centerSphere = new THREE.Mesh(centerGeo, centerMat);
-        centerSphere.position.set(0, 0, 0);
-        threeScene.add(centerSphere);
-        
-        // 6. STELLE
-        const starCount = 600;
-        const starPositions = new Float32Array(starCount * 3);
-        for (let i = 0; i < starCount; i++) {
-            starPositions[i*3] = (Math.random() - 0.5) * 200;
-            starPositions[i*3+1] = (Math.random() - 0.5) * 100;
-            starPositions[i*3+2] = (Math.random() - 0.5) * 80 - 40;
-        }
-        const starGeo = new THREE.BufferGeometry();
-        starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-        const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 });
-        const stars = new THREE.Points(starGeo, starMat);
-        threeScene.add(stars);
-        
-        // 7. ANIMAZIONE
-        let time = 0;
-        
-        function animate() {
-            if (!spatial3DActive) return;
-            threeAnimationId = requestAnimationFrame(animate);
-            
-            time += 0.01;
-            
-            // Camera orbitante
-            threeCamera.position.x = Math.sin(time * 0.2) * 1.5;
-            threeCamera.position.y = 2 + Math.sin(time * 0.3) * 0.5;
-            threeCamera.lookAt(0, 0, 0);
-            
-            // Rotazione sfere
-            threeNodes.forEach((node, idx) => {
-                node.rotation.y += 0.02;
-                node.rotation.x += 0.01;
-            });
-            
-            threeRenderer.render(threeScene, threeCamera);
-        }
-        
-        spatial3DActive = true;
-        animate();
-        
-        showToast('🔮 Visualizzazione 3D attivata', 'success');
-        console.log('3D Attivato - Nodi:', threeNodes.length);
-        
-    } catch (error) {
-        console.error('Errore 3D:', error);
-        showToast('Errore: ' + error.message, 'error');
-        disableSpatialVisualization();
+        container.style.boxShadow = '0 0 20px rgba(139, 92, 246, 0.3)';
+        container.style.borderRadius = '12px';
+        container.style.padding = '10px';
+        if (btn) btn.classList.add('active');
+        darkModeActive = true;
+        showToast('🌙 Modalità scura attivata', 'success');
     }
+    
+    // Forza il refresh della mappa Vis.js se esiste
+    if (typeof networkInstance !== 'undefined' && networkInstance) {
+        networkInstance.fit();
+    }
+    
+    console.log('🎨 [BackgroundToggle] Stato:', darkModeActive ? 'scuro' : 'chiaro');
 }
 
 /**
- * Disattiva 3D
+ * Disattiva (alias di enable per coerenza)
  */
 function disableSpatialVisualization() {
-    const container = document.getElementById('concept-network');
-    if (!container) return;
-    
-    // Cambia stile bottone
-    const btn = document.querySelector('.btn-spatial');
-    if (btn) btn.classList.remove('active');
-    
-    // Ferma animazione
-    if (threeAnimationId) {
-        cancelAnimationFrame(threeAnimationId);
-        threeAnimationId = null;
+    if (darkModeActive) {
+        enableSpatialVisualization();
     }
-    
-    // Rimuovi canvas Three.js
-    if (threeRenderer && threeRenderer.domElement) {
-        threeRenderer.domElement.remove();
-    }
-    
-    // Resetta variabili
-    threeScene = null;
-    threeCamera = null;
-    threeRenderer = null;
-    threeNodes = [];
-    
-    // Ripristina contenuto originale
-    container.style.height = '600px';
-    container.style.backgroundColor = '';
-    
-    // Mostra di nuovo la mappa Vis.js
-    const originalCanvas = container.querySelector('canvas');
-    if (originalCanvas) originalCanvas.style.display = '';
-    
-    // Se la mappa non c'è, la ricarica
-    if (!originalCanvas && typeof initConceptMap === 'function') {
-        container.innerHTML = '';
-        initConceptMap();
-    }
-    
-    spatial3DActive = false;
-    showToast('Visualizzazione 3D disattivata', 'info');
-    console.log('3D Disattivato');
 }
 
 // ==================== FINE PUNTO 18 ====================
