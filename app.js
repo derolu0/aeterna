@@ -1591,6 +1591,11 @@ window.handleTemporalSlider = handleTemporalSlider;
 window.applyTemporalFilter = applyTemporalFilter;
 window.resetTemporalFilter = resetTemporalFilter;
 window.updateLayerPriorityByEpoch = updateLayerPriorityByEpoch;
+window.enableInterpretiveTraceability = enableInterpretiveTraceability;
+window.disableInterpretiveTraceability = disableInterpretiveTraceability;
+window.showConnectionExplanation = showConnectionExplanation;
+window.closeExplanationModal = closeExplanationModal;
+window.copyExplanationToClipboard = copyExplanationToClipboard;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -3590,3 +3595,251 @@ function resetTemporalFilter() {
     }
     showToast('Filtro temporale resettato', 'success');
 }
+// ==================== PUNTO 13: INTERPRETIVE TRACEABILITY (VERSIONE CORRETTA) ====================
+// Riferimento: Piper, A. (2018). "Enumerations: Data and Literary Study"
+// Metodologia: Trasparenza delle connessioni - mostra il termine comune che genera il link
+
+/**
+ * Attiva la modalità Traceability sulla mappa
+ * Usa l'evento 'selectEdge' specifico di Vis.js per non interferire con i click sui nodi
+ */
+function enableInterpretiveTraceability() {
+    if (!networkInstance) {
+        showToast('Attiva prima la mappa concettuale', 'warning');
+        return;
+    }
+    
+    if (window.interpretiveListenerActive) {
+        disableInterpretiveTraceability();
+        return;
+    }
+    
+    // Attiviamo una flag globale che intercetteremo nel listener principale
+    window.interpretiveListenerActive = true;
+    
+    // Usiamo l'evento 'selectEdge' specifico per archi (non sovrascrive click sui nodi)
+    networkInstance.on("selectEdge", handleEdgeClickForTraceability);
+    
+    showToast('🔍 Traceability attiva - clicca su un collegamento per la spiegazione', 'success');
+    console.log('📖 [InterpretiveTraceability] Attivata');
+}
+
+/**
+ * Disattiva la traceability
+ */
+function disableInterpretiveTraceability() {
+    if (networkInstance && window.interpretiveListenerActive) {
+        // Rimuoviamo SOLO il nostro listener specifico per gli archi
+        networkInstance.off("selectEdge", handleEdgeClickForTraceability);
+        window.interpretiveListenerActive = false;
+        showToast('Traceability disattivata', 'info');
+        console.log('📖 [InterpretiveTraceability] Disattivata');
+    }
+}
+
+/**
+ * Callback dedicata per il click sulle connessioni (edge)
+ * Verifica che sia un edge e non un nodo
+ */
+function handleEdgeClickForTraceability(params) {
+    // Se la Traceability non è attiva, non fare nulla
+    if (!window.interpretiveListenerActive) return;
+    
+    // Se ho cliccato su un arco e NON su un nodo
+    if (params.edges && params.edges.length > 0 && (!params.nodes || params.nodes.length === 0)) {
+        const edgeId = params.edges[0];
+        const edge = networkInstance.body.data.edges.get(edgeId);
+        
+        if (edge) {
+            showConnectionExplanation(edge.from, edge.to);
+        }
+    }
+}
+
+/**
+ * Mostra la spiegazione di una connessione tra due entità
+ * @param {string} sourceId - ID dell'entità sorgente (filosofo o concetto)
+ * @param {string} targetId - ID dell'entità target (filosofo o concetto)
+ */
+function showConnectionExplanation(sourceId, targetId) {
+    const sourceIsConcept = sourceId.startsWith('C_');
+    const targetIsConcept = targetId.startsWith('C_');
+    
+    let explanation = null;
+    
+    // Caso 1: Filosofo → Concetto
+    if (!sourceIsConcept && targetIsConcept) {
+        const philosopher = filosofiData.find(f => f.id === sourceId);
+        const conceptId = targetId.substring(2);
+        const concept = concettiData.find(c => c.id === conceptId);
+        
+        if (philosopher && concept) {
+            explanation = {
+                type: 'philosopher_to_concept',
+                title: `${philosopher.nome} → ${concept.parola}`,
+                reason: `${philosopher.nome} ha sviluppato il concetto di "${concept.parola}" come parte della sua filosofia.`,
+                evidence: philosopher.concetti_principali?.includes(concept.parola) 
+                    ? `Il concetto "${concept.parola}" è elencato tra i concetti principali di ${philosopher.nome}.`
+                    : `Il concetto "${concept.parola}" è associato a ${philosopher.nome} nel dataset filosofico.`,
+                source: 'Dataset Aeterna - concetti_principali'
+            };
+        }
+    }
+    
+    // Caso 2: Concetto → Filosofo
+    else if (sourceIsConcept && !targetIsConcept) {
+        const conceptId = sourceId.substring(2);
+        const concept = concettiData.find(c => c.id === conceptId);
+        const philosopher = filosofiData.find(f => f.id === targetId);
+        
+        if (concept && philosopher) {
+            explanation = {
+                type: 'concept_to_philosopher',
+                title: `${concept.parola} → ${philosopher.nome}`,
+                reason: `Il concetto "${concept.parola}" è centrale nella filosofia di ${philosopher.nome}.`,
+                evidence: concept.autore_riferimento?.includes(philosopher.id)
+                    ? `${philosopher.nome} è indicato come autore di riferimento per il concetto "${concept.parola}".`
+                    : `${philosopher.nome} tratta il concetto "${concept.parola}" nelle sue opere.`,
+                source: 'Dataset Aeterna - autore_riferimento'
+            };
+        }
+    }
+    
+    // Caso 3: Filosofo → Filosofo
+    else if (!sourceIsConcept && !targetIsConcept) {
+        const philosopher1 = filosofiData.find(f => f.id === sourceId);
+        const philosopher2 = filosofiData.find(f => f.id === targetId);
+        
+        if (philosopher1 && philosopher2) {
+            const commonConcepts = philosopher1.concetti_principali?.filter(c => 
+                philosopher2.concetti_principali?.includes(c)
+            ) || [];
+            
+            if (commonConcepts.length > 0) {
+                explanation = {
+                    type: 'philosopher_to_philosopher',
+                    title: `${philosopher1.nome} ⇄ ${philosopher2.nome}`,
+                    reason: `Condivisione di concetti fondamentali.`,
+                    evidence: `Concetti comuni: ${commonConcepts.join(', ')}`,
+                    source: `Analisi di co-occorrenza (Moretti, 2005)`
+                };
+            } else {
+                explanation = {
+                    type: 'philosopher_to_philosopher',
+                    title: `${philosopher1.nome} ⇄ ${philosopher2.nome}`,
+                    reason: `Influenza filosofica indiretta o appartenenza a tradizioni simili.`,
+                    evidence: `${philosopher1.nome} (${philosopher1.periodo}) e ${philosopher2.nome} (${philosopher2.periodo}) condividono tematiche affini.`,
+                    source: `Analisi contestuale`
+                };
+            }
+        }
+    }
+    
+    // Caso 4: Concetto → Concetto
+    else if (sourceIsConcept && targetIsConcept) {
+        const conceptId1 = sourceId.substring(2);
+        const conceptId2 = targetId.substring(2);
+        const concept1 = concettiData.find(c => c.id === conceptId1);
+        const concept2 = concettiData.find(c => c.id === conceptId2);
+        
+        if (concept1 && concept2) {
+            const authors1 = concept1.autore_riferimento?.split(',').map(a => a.trim()) || [];
+            const authors2 = concept2.autore_riferimento?.split(',').map(a => a.trim()) || [];
+            const commonAuthors = authors1.filter(a => authors2.includes(a));
+            
+            if (commonAuthors.length > 0) {
+                const authorNames = commonAuthors.map(a => {
+                    const f = filosofiData.find(f => f.id === a);
+                    return f ? f.nome : a;
+                }).join(', ');
+                
+                explanation = {
+                    type: 'concept_to_concept',
+                    title: `${concept1.parola} ⇄ ${concept2.parola}`,
+                    reason: `Condivisione di autori di riferimento.`,
+                    evidence: `Entrambi i concetti sono associati a: ${authorNames}`,
+                    source: `Dataset Aeterna - autore_riferimento`
+                };
+            } else {
+                explanation = {
+                    type: 'concept_to_concept',
+                    title: `${concept1.parola} ⇄ ${concept2.parola}`,
+                    reason: `Affinità tematica nel dominio ${concept1.dominio || 'filosofico'}.`,
+                    evidence: `${concept1.parola} e ${concept2.parola} appartengono a sfere concettuali vicine.`,
+                    source: `Analisi semantica`
+                };
+            }
+        }
+    }
+    
+    if (explanation) {
+        showExplanationModal(explanation);
+    } else {
+        showToast('Spiegazione non disponibile per questa connessione', 'info');
+    }
+}
+
+/**
+ * Mostra il modale con la spiegazione della connessione
+ */
+function showExplanationModal(explanation) {
+    let modal = document.getElementById('explanation-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'explanation-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 450px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 class="modal-title" style="margin-bottom: 0;" id="explanation-title"></h3>
+                    <button onclick="closeExplanationModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">&times;</button>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 15px;">
+                        <p style="margin-bottom: 10px;"><strong>📌 Ragione della connessione:</strong></p>
+                        <p id="explanation-reason" style="margin-bottom: 15px; line-height: 1.5;"></p>
+                        
+                        <p style="margin-bottom: 8px;"><strong>📖 Evidenza:</strong></p>
+                        <p id="explanation-evidence" style="margin-bottom: 15px; font-style: italic; color: #4b5563;"></p>
+                        
+                        <p style="margin-bottom: 8px;"><strong>🔗 Fonte:</strong></p>
+                        <p id="explanation-source" style="font-size: 0.8rem; color: #8b5cf6;"></p>
+                    </div>
+                </div>
+                <div class="modal-buttons" style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="modal-btn secondary" onclick="closeExplanationModal()">Chiudi</button>
+                    <button class="modal-btn primary" onclick="copyExplanationToClipboard()">📋 Copia</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    document.getElementById('explanation-title').innerHTML = `<i class="fas fa-link"></i> ${explanation.title}`;
+    document.getElementById('explanation-reason').innerHTML = explanation.reason;
+    document.getElementById('explanation-evidence').innerHTML = explanation.evidence;
+    document.getElementById('explanation-source').innerHTML = `<i class="fas fa-database"></i> ${explanation.source}`;
+    
+    window.currentExplanation = explanation;
+    
+    modal.style.display = 'flex';
+}
+
+function closeExplanationModal() {
+    const modal = document.getElementById('explanation-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+function copyExplanationToClipboard() {
+    if (!window.currentExplanation) return;
+    
+    const text = `Connessione: ${window.currentExplanation.title}\n\nRagione: ${window.currentExplanation.reason}\n\nEvidenza: ${window.currentExplanation.evidence}\n\nFonte: ${window.currentExplanation.source}`;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Spiegazione copiata negli appunti!', 'success');
+    }).catch(() => {
+        showToast('Errore durante la copia', 'error');
+    });
+}
+
+// ==================== FINE PUNTO 13 ====================

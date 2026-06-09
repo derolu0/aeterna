@@ -2185,3 +2185,17 @@ html, body {
         flex-wrap: wrap;
     }
 }
+/* ==================== PUNTO 13: INTERPRETIVE TRACEABILITY ==================== */
+
+.btn-trace {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: white !important;
+}
+
+.btn-trace i {
+    color: white !important;
+}
+
+.btn-trace:hover {
+    background: linear-gradient(135deg, #059669, #047857) !important;
+}
