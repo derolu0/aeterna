@@ -1599,6 +1599,8 @@ window.copyExplanationToClipboard = copyExplanationToClipboard;
 window.enableExploratoryMode = enableExploratoryMode;
 window.disableExploratoryMode = disableExploratoryMode;
 window.randomExploration = randomExploration;
+window.randomExploration = randomExploration;
+
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -4059,3 +4061,95 @@ function randomExploration() {
 }
 
 // ==================== FINE PUNTO 14 ====================
+// ==================== ESPLORAZIONE CASUALE PER CONCETTI/FILOSOFI/OPERE ====================
+
+/**
+ * Esplorazione casuale in base alla pagina corrente
+ * Scrolla automaticamente all'elemento selezionato e lo anima
+ */
+function randomExploration() {
+    const screen = currentScreen;
+    let randomItem = null;
+    
+    // Concetti
+    if (screen === 'concetti-screen') {
+        if (!concettiData || concettiData.length === 0) {
+            showToast('Nessun concetto disponibile', 'warning');
+            return;
+        }
+        randomItem = concettiData[Math.floor(Math.random() * concettiData.length)];
+        showToast(`🎲 Concetto casuale: "${randomItem.parola}"`, 'info', 2000);
+        
+        setTimeout(() => {
+            const cards = document.querySelectorAll('#concetti-list .concetto-card');
+            for (let card of cards) {
+                const titleElem = card.querySelector('.concetto-parola');
+                if (titleElem && titleElem.textContent === randomItem.parola) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    card.style.animation = 'pulseExplore 0.5s ease-in-out 3';
+                    setTimeout(() => {
+                        card.style.animation = '';
+                    }, 1500);
+                    break;
+                }
+            }
+        }, 100);
+    }
+    
+    // Filosofi
+    else if (screen === 'filosofi-screen') {
+        if (!filosofiData || filosofiData.length === 0) {
+            showToast('Nessun filosofo disponibile', 'warning');
+            return;
+        }
+        randomItem = filosofiData[Math.floor(Math.random() * filosofiData.length)];
+        showToast(`🎲 Filosofo casuale: "${randomItem.nome}"`, 'info', 2000);
+        
+        setTimeout(() => {
+            const items = document.querySelectorAll('#filosofi-list .grid-item');
+            for (let item of items) {
+                const titleElem = item.querySelector('.item-name');
+                if (titleElem && titleElem.textContent === randomItem.nome) {
+                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    item.style.animation = 'pulseExplore 0.5s ease-in-out 3';
+                    setTimeout(() => {
+                        item.style.animation = '';
+                    }, 1500);
+                    break;
+                }
+            }
+        }, 100);
+    }
+    
+    // Opere
+    else if (screen === 'opere-screen') {
+        if (!opereData || opereData.length === 0) {
+            showToast('Nessuna opera disponibile', 'warning');
+            return;
+        }
+        randomItem = opereData[Math.floor(Math.random() * opereData.length)];
+        showToast(`🎲 Opera casuale: "${randomItem.titolo}"`, 'info', 2000);
+        
+        setTimeout(() => {
+            const items = document.querySelectorAll('#opere-list .compact-item');
+            for (let item of items) {
+                const titleElem = item.querySelector('.compact-item-name');
+                if (titleElem && titleElem.textContent === randomItem.titolo) {
+                    item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    item.style.animation = 'pulseExplore 0.5s ease-in-out 3';
+                    setTimeout(() => {
+                        item.style.animation = '';
+                    }, 1500);
+                    break;
+                }
+            }
+        }, 100);
+    }
+    
+    // Altre schermate (opzionale: naviga alla lista corrispondente)
+    else {
+        showToast('Vai prima alla pagina Concetti, Filosofi o Opere', 'info');
+    }
+}
+
+// ==================== FINE ESPLORAZIONE CASUALE ====================

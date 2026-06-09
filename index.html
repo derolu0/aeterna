@@ -264,9 +264,12 @@
                 <p class="screen-subtitle">Esplora i filosofi della storia</p>
             </header>
     
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="🔍 Cerca filosofi..." 
-                       onkeyup="searchFilosofi(this.value)">
+            <div class="search-container" style="display: flex; gap: 10px;">
+                <input type="text" class="search-input" placeholder="🔍 Cerca concetto o definizione..." 
+                       onkeyup="searchConcetti(this.value)" style="flex: 1;">
+            <button class="btn-random" onclick="randomExploration()" title="Esplorazione casuale">
+                <i class="fas fa-random"></i> Casuale
+            </button>
             </div>
     
             <div class="content-area">
@@ -299,9 +302,12 @@
                 <p class="screen-subtitle">Scopri le opere filosofiche</p>
             </header>
     
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="🔍 Cerca opere..." 
-                       onkeyup="searchOpere(this.value)">
+            <div class="search-container" style="display: flex; gap: 10px;">
+                <input type="text" class="search-input" placeholder="🔍 Cerca filosofi..." 
+                       onkeyup="searchFilosofi(this.value)" style="flex: 1;">
+                <button class="btn-random" onclick="randomExploration()" title="Esplorazione casuale">
+                    <i class="fas fa-random"></i> Casuale
+                </button>
             </div>
     
             <div class="content-area">
@@ -334,9 +340,12 @@
                 <p class="screen-subtitle">Analizza le parole chiave della filosofia</p>
             </header>
 
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="🔍 Cerca concetto o definizione..." 
-                       onkeyup="searchConcetti(this.value)">
+            <div class="search-container" style="display: flex; gap: 10px;">
+                <input type="text" class="search-input" placeholder="🔍 Cerca opere..." 
+                       onkeyup="searchOpere(this.value)" style="flex: 1;">
+                <button class="btn-random" onclick="randomExploration()" title="Esplorazione casuale">
+                    <i class="fas fa-random"></i> Casuale
+                </button>
             </div>
             
             <div class="content-area">
@@ -689,11 +698,6 @@
                 <button class="modal-btn btn-report" onclick="openReportScreen()">
                     <i class="fas fa-bullhorn"></i>
                     <span>Segnala Errore</span>
-                </button>
-
-                <button class="modal-btn btn-exploratory" onclick="enableExploratoryMode()">
-                    <i class="fas fa-globe-americas"></i>
-                    <span>Modalità Esplorativa</span>
                 </button>
 
                 <button class="modal-btn btn-exploratory" onclick="randomExploration()">
