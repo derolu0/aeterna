@@ -4872,6 +4872,10 @@ function enableSpatialVisualization() {
         return;
     }
     
+    // Cambia stile bottone
+    const btn = document.querySelector('.btn-spatial');
+    if (btn) btn.classList.add('active');
+    
     // Salva stile originale
     originalContainerStyle = {
         transform: container.style.transform,
@@ -4893,7 +4897,9 @@ function enableSpatialVisualization() {
     // Mostra indicatore
     showSpatialIndicator(true);
     
-    showToast('🔮 Visualizzazione spaziale 3D attivata', 'success');
+    if (typeof showToast === 'function') {
+        showToast('🔮 Visualizzazione spaziale 3D attivata', 'success');
+    }
     console.log('🔮 [SpatialViz] Attivata');
 }
 
@@ -4904,7 +4910,11 @@ function disableSpatialVisualization() {
     const container = document.getElementById('concept-network');
     if (!container) return;
     
-    // Ripristina stile
+    // Ripristina stile bottone
+    const btn = document.querySelector('.btn-spatial');
+    if (btn) btn.classList.remove('active');
+    
+    // Ripristina stile container
     container.style.transform = originalContainerStyle?.transform || '';
     container.style.transition = originalContainerStyle?.transition || '';
     container.style.perspective = originalContainerStyle?.perspective || '';
@@ -4918,7 +4928,9 @@ function disableSpatialVisualization() {
     // Rimuovi indicatore
     showSpatialIndicator(false);
     
-    showToast('Visualizzazione 3D disattivata', 'info');
+    if (typeof showToast === 'function') {
+        showToast('Visualizzazione 3D disattivata', 'info');
+    }
     console.log('🔮 [SpatialViz] Disattivata');
 }
 
@@ -4977,7 +4989,7 @@ function showSpatialIndicator(isActive) {
         display: flex;
         align-items: center;
         gap: 10px;
-        animation: slideInRight 0.3s ease-out;
+        animation: slideInRightSpatial 0.3s ease-out;
     `;
     
     indicator.innerHTML = `
@@ -4993,6 +5005,19 @@ function showSpatialIndicator(isActive) {
     `;
     
     document.body.appendChild(indicator);
+    
+    // Aggiungi animazione se non esiste
+    if (!document.querySelector('#spatial-indicator-style')) {
+        const style = document.createElement('style');
+        style.id = 'spatial-indicator-style';
+        style.textContent = `
+            @keyframes slideInRightSpatial {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
 }
 
 // ==================== FINE PUNTO 18 ====================

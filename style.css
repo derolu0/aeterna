@@ -2419,3 +2419,8 @@ html, body {
     transition: transform 0.1s ease-out;
     will-change: transform;
 }
+/* Stile per il bottone 3D quando attivo */
+.filter-btn.btn-spatial.active {
+    background: linear-gradient(135deg, #1d4ed8, #1e3a8a) !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
