@@ -702,6 +702,11 @@
                     <i class="fas fa-bullhorn"></i>
                     <span>Segnala Errore</span>
                 </button>
+
+                <button class="modal-btn btn-assessment" onclick="startConceptualAssessment()">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Conceptual Assessment</span>
+                </button>
                
                 <button class="modal-btn" onclick="closeMenuModal()">
                     <i class="fas fa-times"></i>
@@ -858,6 +863,32 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODALE CONCEPTUAL ASSESSMENT ==================== -->
+    <div class="modal-overlay" id="assessment-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 class="modal-title" style="margin-bottom: 0;">
+                    <i class="fas fa-graduation-cap"></i> Conceptual Depth Assessment
+                </h3>
+                <button onclick="closeAssessmentModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+        
+            <div id="assessment-content">
+                <!-- Il contenuto dinamico viene generato qui -->
+            </div>
+        
+            <div id="assessment-result" style="display: none; margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                <!-- Risultati finali -->
+            </div>
+        
+            <div class="modal-buttons" style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="modal-btn secondary" onclick="closeAssessmentModal()">Chiudi</button>
+                <button id="assessment-next-btn" class="modal-btn primary" onclick="nextAssessmentQuestion()" style="display: none;">Avanti</button>
+                <button id="assessment-restart-btn" class="modal-btn primary" onclick="startConceptualAssessment()" style="display: none;">Nuovo Assessment</button>
             </div>
         </div>
     </div>

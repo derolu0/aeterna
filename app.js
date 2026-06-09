@@ -1603,6 +1603,10 @@ window.randomExploration = randomExploration;
 window.toggleSonification = toggleSonification;
 window.enableSonification = enableSonification;
 window.disableSonification = disableSonification;
+window.startConceptualAssessment = startConceptualAssessment;
+window.nextAssessmentQuestion = nextAssessmentQuestion;
+window.closeAssessmentModal = closeAssessmentModal;
+window.exportAssessmentResults = exportAssessmentResults;
 
 
 // Funzioni admin placeholder (per compatibilità)
@@ -4356,3 +4360,275 @@ function showSonificationIndicator(isActive) {
 }
 
 // ==================== FINE PUNTO 15 ====================
+// ==================== PUNTO 16: CONCEPTUAL DEPTH ASSESSMENT ====================
+// Strumento di autovalutazione accademica per studenti e ricercatori
+
+let assessmentQuestions = [];
+let currentQuestionIndex = 0;
+let assessmentAnswers = [];
+let assessmentActive = false;
+
+/**
+ * Avvia il Conceptual Assessment
+ */
+function startConceptualAssessment() {
+    // Genera 5 domande casuali dai concetti
+    assessmentQuestions = generateAssessmentQuestions(5);
+    currentQuestionIndex = 0;
+    assessmentAnswers = [];
+    assessmentActive = true;
+    
+    // Mostra il modale
+    const modal = document.getElementById('assessment-modal');
+    if (modal) modal.style.display = 'flex';
+    
+    // Mostra la prima domanda
+    renderAssessmentQuestion();
+    
+    // Gestisci bottoni
+    const nextBtn = document.getElementById('assessment-next-btn');
+    const restartBtn = document.getElementById('assessment-restart-btn');
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (restartBtn) restartBtn.style.display = 'none';
+    
+    console.log('📚 [Assessment] Avviato con', assessmentQuestions.length, 'domande');
+}
+
+/**
+ * Genera domande casuali dal dataset
+ */
+function generateAssessmentQuestions(count) {
+    if (!concettiData || concettiData.length === 0) return [];
+    
+    // Seleziona concetti casuali
+    const shuffled = [...concettiData].sort(() => 0.5 - Math.random());
+    const selected = shuffled.slice(0, count);
+    
+    return selected.map(concept => {
+        // Trova definizioni di altri concetti come distrattori
+        const otherConcepts = concettiData.filter(c => c.id !== concept.id);
+        const distractors = otherConcepts
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 2)
+            .map(c => c.definizione.substring(0, 200));
+        
+        // Opzioni: 1 corretta + 2 distrattori
+        const options = [
+            { text: concept.definizione.substring(0, 200), correct: true },
+            { text: distractors[0] || 'Definizione non disponibile', correct: false },
+            { text: distractors[1] || 'Definizione non disponibile', correct: false }
+        ];
+        
+        // Mescola le opzioni
+        const shuffledOptions = [...options].sort(() => 0.5 - Math.random());
+        
+        return {
+            conceptId: concept.id,
+            conceptName: concept.parola,
+            options: shuffledOptions,
+            domain: concept.dominio || 'Filosofia'
+        };
+    });
+}
+
+/**
+ * Mostra la domanda corrente
+ */
+function renderAssessmentQuestion() {
+    const container = document.getElementById('assessment-content');
+    const resultDiv = document.getElementById('assessment-result');
+    const nextBtn = document.getElementById('assessment-next-btn');
+    const restartBtn = document.getElementById('assessment-restart-btn');
+    
+    if (!container) return;
+    
+    if (resultDiv) resultDiv.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (restartBtn) restartBtn.style.display = 'none';
+    
+    if (currentQuestionIndex >= assessmentQuestions.length) {
+        showAssessmentResults();
+        return;
+    }
+    
+    const question = assessmentQuestions[currentQuestionIndex];
+    const progress = ((currentQuestionIndex) / assessmentQuestions.length) * 100;
+    
+    container.innerHTML = `
+        <div class="assessment-progress">
+            <div class="assessment-progress-bar" style="width: ${progress}%;"></div>
+        </div>
+        <div class="assessment-question">
+            <p style="font-size: 0.8rem; color: #8b5cf6; margin-bottom: 8px;">
+                <i class="fas fa-tag"></i> ${question.domain}
+            </p>
+            <p style="font-size: 1.1rem; font-weight: 600; margin-bottom: 15px;">
+                Quale delle seguenti definizioni corrisponde al concetto <span style="color: #8b5cf6;">"${question.conceptName}"</span>?
+            </p>
+            <div id="assessment-options">
+                ${question.options.map((opt, idx) => `
+                    <div class="assessment-option" data-opt-index="${idx}" data-correct="${opt.correct}">
+                        <span style="font-weight: 600; margin-right: 10px;">${String.fromCharCode(65 + idx)}.</span>
+                        ${escapeHtml(opt.text)}
+                    </div>
+                `).join('')}
+            </div>
+            <div id="assessment-feedback" style="display: none;"></div>
+        </div>
+        <p style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin-top: 10px;">
+            Domanda ${currentQuestionIndex + 1} di ${assessmentQuestions.length}
+        </p>
+    `;
+    
+    // Aggiungi listener alle opzioni
+    document.querySelectorAll('.assessment-option').forEach(opt => {
+        opt.addEventListener('click', () => handleAssessmentAnswer(opt));
+    });
+}
+
+/**
+ * Gestisce la risposta dell'utente
+ */
+function handleAssessmentAnswer(selectedOption) {
+    if (!assessmentActive) return;
+    if (selectedOption.classList.contains('correct') || selectedOption.classList.contains('incorrect')) return;
+    
+    const isCorrect = selectedOption.dataset.correct === 'true';
+    const question = assessmentQuestions[currentQuestionIndex];
+    const feedbackDiv = document.getElementById('assessment-feedback');
+    
+    // Registra la risposta
+    assessmentAnswers.push({
+        conceptName: question.conceptName,
+        isCorrect: isCorrect,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Evidenzia la risposta corretta
+    document.querySelectorAll('.assessment-option').forEach(opt => {
+        if (opt.dataset.correct === 'true') {
+            opt.classList.add('correct');
+        }
+        if (opt === selectedOption && !isCorrect) {
+            opt.classList.add('incorrect');
+        }
+    });
+    
+    // Mostra feedback
+    if (feedbackDiv) {
+        feedbackDiv.style.display = 'block';
+        if (isCorrect) {
+            feedbackDiv.className = 'assessment-feedback correct';
+            feedbackDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i> Corretto! 
+                "${question.conceptName}" è definito correttamente.
+            `;
+        } else {
+            const correctOption = question.options.find(opt => opt.correct);
+            feedbackDiv.className = 'assessment-feedback incorrect';
+            feedbackDiv.innerHTML = `
+                <i class="fas fa-times-circle"></i> Non corretto.<br>
+                <strong>Definizione corretta di "${question.conceptName}":</strong><br>
+                ${escapeHtml(correctOption.text)}
+            `;
+        }
+    }
+    
+    // Mostra pulsante Avanti
+    const nextBtn = document.getElementById('assessment-next-btn');
+    if (nextBtn) nextBtn.style.display = 'inline-flex';
+}
+
+/**
+ * Passa alla domanda successiva
+ */
+function nextAssessmentQuestion() {
+    currentQuestionIndex++;
+    renderAssessmentQuestion();
+}
+
+/**
+ * Mostra i risultati finali
+ */
+function showAssessmentResults() {
+    const container = document.getElementById('assessment-content');
+    const resultDiv = document.getElementById('assessment-result');
+    const nextBtn = document.getElementById('assessment-next-btn');
+    const restartBtn = document.getElementById('assessment-restart-btn');
+    
+    const correctCount = assessmentAnswers.filter(a => a.isCorrect).length;
+    const percentage = (correctCount / assessmentAnswers.length) * 100;
+    
+    if (container) container.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    if (restartBtn) restartBtn.style.display = 'inline-flex';
+    
+    if (resultDiv) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <h4 style="margin-bottom: 10px; color: #1f2937;">Risultati Assessment</h4>
+            <p style="font-size: 1.5rem; font-weight: 700; color: #3b82f6;">${correctCount}/${assessmentAnswers.length} corrette</p>
+            <p style="font-size: 0.9rem; color: #6b7280;">Accuratezza: ${percentage.toFixed(0)}%</p>
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                <p style="font-size: 0.8rem; color: #8b5cf6; margin-bottom: 10px;">
+                    <i class="fas fa-info-circle"></i> Metodologia
+                </p>
+                <p style="font-size: 0.75rem; color: #6b7280;">
+                    Assessment basato sul dataset Aeterna v5.0.
+                    Le definizioni sono estratte direttamente dai dati certificati.
+                </p>
+                <button onclick="exportAssessmentResults()" style="
+                    margin-top: 10px;
+                    background: #f3f4f6;
+                    border: none;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-size: 0.7rem;
+                ">
+                    <i class="fas fa-download"></i> Esporta risultati (JSON)
+                </button>
+            </div>
+        `;
+    }
+    
+    assessmentActive = false;
+}
+
+/**
+ * Esporta i risultati dell'assessment
+ */
+function exportAssessmentResults() {
+    const report = {
+        timestamp: new Date().toISOString(),
+        totalQuestions: assessmentAnswers.length,
+        correctCount: assessmentAnswers.filter(a => a.isCorrect).length,
+        percentage: (assessmentAnswers.filter(a => a.isCorrect).length / assessmentAnswers.length) * 100,
+        answers: assessmentAnswers,
+        tool: "Aeterna Lexicon - Conceptual Depth Assessment v5.0"
+    };
+    
+    const jsonStr = JSON.stringify(report, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `aeterna_assessment_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    if (typeof showToast === 'function') {
+        showToast('Risultati esportati!', 'success');
+    }
+}
+
+/**
+ * Chiude il modale dell'assessment
+ */
+function closeAssessmentModal() {
+    const modal = document.getElementById('assessment-modal');
+    if (modal) modal.style.display = 'none';
+    assessmentActive = false;
+}
+
+// ==================== FINE PUNTO 16 ====================

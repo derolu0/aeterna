@@ -2322,3 +2322,77 @@ html, body {
     background: linear-gradient(135deg, #be185d, #9d174d);
     box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.5);
 }
+/* ==================== PUNTO 16: CONCEPTUAL ASSESSMENT ==================== */
+.btn-assessment {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+    color: white !important;
+}
+
+.btn-assessment i {
+    color: white !important;
+}
+
+.assessment-question {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.assessment-option {
+    background: white;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.assessment-option:hover {
+    border-color: #3b82f6;
+    background: #eff6ff;
+}
+
+.assessment-option.correct {
+    border-color: #10b981;
+    background: #f0fdf4;
+}
+
+.assessment-option.incorrect {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.assessment-feedback {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.assessment-feedback.correct {
+    background: #f0fdf4;
+    color: #065f46;
+    border-left: 3px solid #10b981;
+}
+
+.assessment-feedback.incorrect {
+    background: #fef2f2;
+    color: #991b1b;
+    border-left: 3px solid #ef4444;
+}
+
+.assessment-progress {
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.assessment-progress-bar {
+    height: 100%;
+    background: #3b82f6;
+    transition: width 0.3s ease;
+}
