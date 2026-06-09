@@ -4851,14 +4851,17 @@ function closeParadigmTranslator() {
 }
 
 // ==================== FINE PUNTO 17 ====================
-// ==================== PUNTO 18: SPATIAL VISUALIZATION (3D EFFECT) ====================
-// Metodologia: Effetto prospettico 3D per la mappa concettuale
+// ==================== PUNTO 18: SPATIAL VISUALIZATION 3D (VERSIONE AVANZATA) ====================
+// Metodologia: Vera visualizzazione 3D con Three.js
 
 let spatial3DActive = false;
-let originalContainerStyle = null;
+let threeScene = null;
+let threeCamera = null;
+let threeRenderer = null;
+let threeNodes = [];
 
 /**
- * Attiva la visualizzazione spaziale 3D sulla mappa concettuale
+ * Attiva la visualizzazione 3D avanzata
  */
 function enableSpatialVisualization() {
     const container = document.getElementById('concept-network');
@@ -4876,101 +4879,286 @@ function enableSpatialVisualization() {
     const btn = document.querySelector('.btn-spatial');
     if (btn) btn.classList.add('active');
     
-    // Salva stile originale
-    originalContainerStyle = {
-        transform: container.style.transform,
-        transition: container.style.transition,
-        perspective: container.style.perspective
-    };
+    // Salva il contenuto originale della mappa Vis.js
+    const originalContent = container.innerHTML;
+    container.innerHTML = '';
     
-    // Applica effetto 3D
-    container.style.transition = 'all 0.5s ease';
-    container.style.transform = 'perspective(1000px) rotateX(5deg) rotateY(-5deg)';
-    container.style.perspective = '1000px';
-    
-    // Aggiunge effetto hover per interazione
-    container.addEventListener('mousemove', handle3DMouseMove);
-    container.addEventListener('mouseleave', handle3DMouseLeave);
+    // Inizializza scena 3D
+    initThreeScene(container);
     
     spatial3DActive = true;
-    
-    // Mostra indicatore
     showSpatialIndicator(true);
     
-    if (typeof showToast === 'function') {
-        showToast('🔮 Visualizzazione spaziale 3D attivata', 'success');
-    }
-    console.log('🔮 [SpatialViz] Attivata');
+    showToast('🔮 Visualizzazione 3D avanzata attivata', 'success');
+    console.log('🔮 [SpatialViz-3D] Attivata');
 }
 
 /**
- * Disattiva la visualizzazione spaziale 3D
+ * Inizializza la scena Three.js
+ */
+function initThreeScene(container) {
+    // Crea renderer
+    threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    threeRenderer.setSize(container.clientWidth, container.clientHeight);
+    threeRenderer.setClearColor(0x0a0a2a, 0.8);
+    container.appendChild(threeRenderer.domElement);
+    
+    // Crea camera
+    threeCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    threeCamera.position.set(0, 5, 15);
+    threeCamera.lookAt(0, 0, 0);
+    
+    // Crea scena
+    threeScene = new THREE.Scene();
+    threeScene.background = new THREE.Color(0x0a0a2a);
+    threeScene.fog = new THREE.FogExp2(0x0a0a2a, 0.02);
+    
+    // Aggiunge luci
+    const ambientLight = new THREE.AmbientLight(0x404060);
+    threeScene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(1, 2, 1);
+    threeScene.add(directionalLight);
+    
+    const backLight = new THREE.PointLight(0x8b5cf6, 0.5);
+    backLight.position.set(0, 0, -5);
+    threeScene.add(backLight);
+    
+    // Crea nodi per filosofi e concetti
+    create3DNodes();
+    
+    // Aggiunge stelle sullo sfondo
+    createStarfield();
+    
+    // Avvia animazione
+    animate3DScene();
+    
+    // Aggiunge controllo con mouse
+    setup3DControls(container);
+}
+
+/**
+ * Crea nodi 3D per filosofi e concetti
+ */
+function create3DNodes() {
+    if (!filosofiData) return;
+    
+    const colors = {
+        classico: 0x10b981,
+        contemporaneo: 0xf59e0b,
+        concetto: 0x8b5cf6
+    };
+    
+    // Posiziona i nodi in cerchio 3D
+    const totalNodes = filosofiData.length + concettiData.length;
+    const radius = 6;
+    
+    let index = 0;
+    
+    // Filosofi classici
+    const classici = filosofiData.filter(f => f.periodo === 'classico');
+    classici.forEach((f, i) => {
+        const angle = (i / classici.length) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const y = Math.sin(angle * 2) * 1.5;
+        
+        createSphereNode(f.nome, colors.classico, x, y, z, 'filosofo', f.id);
+    });
+    
+    // Filosofi contemporanei
+    const contemporanei = filosofiData.filter(f => f.periodo === 'contemporaneo');
+    contemporanei.forEach((f, i) => {
+        const angle = (i / contemporanei.length) * Math.PI * 2 + Math.PI;
+        const x = Math.cos(angle) * radius;
+        const z = Math.sin(angle) * radius;
+        const y = Math.sin(angle * 2) * 1.5;
+        
+        createSphereNode(f.nome, colors.contemporaneo, x, y, z, 'filosofo', f.id);
+    });
+    
+    // Concetti (posizionati al centro)
+    concettiData.forEach((c, i) => {
+        const angle = (i / concettiData.length) * Math.PI * 2;
+        const x = Math.cos(angle) * 3;
+        const z = Math.sin(angle) * 3;
+        const y = Math.sin(angle * 3) * 1;
+        
+        createSphereNode(c.parola, colors.concetto, x, y, z, 'concetto', c.id, true);
+    });
+}
+
+/**
+ * Crea una sfera 3D (nodo)
+ */
+function createSphereNode(name, color, x, y, z, type, id, isDiamond = false) {
+    let geometry;
+    
+    if (isDiamond) {
+        geometry = new THREE.OctahedronGeometry(0.35);
+    } else {
+        geometry = new THREE.SphereGeometry(0.4, 32, 32);
+    }
+    
+    const material = new THREE.MeshStandardMaterial({
+        color: color,
+        emissive: color,
+        emissiveIntensity: 0.3,
+        metalness: 0.7,
+        roughness: 0.3
+    });
+    
+    const sphere = new THREE.Mesh(geometry, material);
+    sphere.position.set(x, y, z);
+    sphere.userData = { name, type, id };
+    
+    // Aggiunge testo
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 128;
+    context.fillStyle = 'white';
+    context.font = 'Bold 16px Inter';
+    context.fillText(name, 10, 30);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const textMaterial = new THREE.SpriteMaterial({ map: texture });
+    const textSprite = new THREE.Sprite(textMaterial);
+    textSprite.scale.set(1.5, 0.75, 1);
+    textSprite.position.set(0, 0.6, 0);
+    sphere.add(textSprite);
+    
+    threeScene.add(sphere);
+    threeNodes.push(sphere);
+    
+    // Aggiunge linea di connessione al centro
+    const center = new THREE.Vector3(0, 0, 0);
+    const points = [sphere.position.clone(), center];
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x8b5cf6, opacity: 0.3, transparent: true });
+    const line = new THREE.Line(lineGeometry, lineMaterial);
+    threeScene.add(line);
+}
+
+/**
+ * Crea uno sfondo stellato
+ */
+function createStarfield() {
+    const vertices = [];
+    for (let i = 0; i < 1000; i++) {
+        const x = (Math.random() - 0.5) * 200;
+        const y = (Math.random() - 0.5) * 100;
+        const z = (Math.random() - 0.5) * 100 - 50;
+        vertices.push(x, y, z);
+    }
+    
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+    
+    const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2 });
+    const stars = new THREE.Points(geometry, material);
+    threeScene.add(stars);
+}
+
+/**
+ * Anima la scena 3D
+ */
+function animate3DScene() {
+    if (!spatial3DActive) return;
+    
+    requestAnimationFrame(animate3DScene);
+    
+    // Ruota leggermente i nodi
+    threeNodes.forEach((node, i) => {
+        node.rotation.y += 0.005;
+        node.rotation.x += 0.003;
+    });
+    
+    // Muove la camera dolcemente
+    const time = Date.now() * 0.001;
+    threeCamera.position.x = Math.sin(time * 0.1) * 1;
+    threeCamera.position.y = 5 + Math.sin(time * 0.2) * 0.5;
+    threeCamera.lookAt(0, 0, 0);
+    
+    threeRenderer.render(threeScene, threeCamera);
+}
+
+/**
+ * Gestisce i controlli mouse per interazione 3D
+ */
+function setup3DControls(container) {
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    
+    container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+    });
+    
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging || !spatial3DActive) return;
+        
+        const deltaX = e.clientX - lastX;
+        const deltaY = e.clientY - lastY;
+        
+        threeCamera.position.x += deltaX * 0.01;
+        threeCamera.position.y -= deltaY * 0.01;
+        threeCamera.lookAt(0, 0, 0);
+        
+        lastX = e.clientX;
+        lastY = e.clientY;
+    });
+    
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+}
+
+/**
+ * Disattiva visualizzazione 3D
  */
 function disableSpatialVisualization() {
-    const container = document.getElementById('concept-network');
-    if (!container) return;
+    if (!spatial3DActive) return;
     
     // Ripristina stile bottone
     const btn = document.querySelector('.btn-spatial');
     if (btn) btn.classList.remove('active');
     
-    // Ripristina stile container
-    container.style.transform = originalContainerStyle?.transform || '';
-    container.style.transition = originalContainerStyle?.transition || '';
-    container.style.perspective = originalContainerStyle?.perspective || '';
+    // Pulisci scena Three.js
+    if (threeRenderer) {
+        threeRenderer.dispose();
+        threeRenderer.domElement.remove();
+    }
     
-    // Rimuovi listener
-    container.removeEventListener('mousemove', handle3DMouseMove);
-    container.removeEventListener('mouseleave', handle3DMouseLeave);
+    threeScene = null;
+    threeCamera = null;
+    threeRenderer = null;
+    threeNodes = [];
+    
+    // Ricarica la mappa Vis.js originale
+    if (typeof initConceptMap === 'function') {
+        initConceptMap();
+    }
     
     spatial3DActive = false;
-    
-    // Rimuovi indicatore
     showSpatialIndicator(false);
     
-    if (typeof showToast === 'function') {
-        showToast('Visualizzazione 3D disattivata', 'info');
-    }
-    console.log('🔮 [SpatialViz] Disattivata');
+    showToast('Visualizzazione 3D disattivata', 'info');
+    console.log('🔮 [SpatialViz-3D] Disattivata');
 }
 
 /**
- * Gestisce il movimento del mouse per effetto parallasse 3D
- */
-function handle3DMouseMove(event) {
-    if (!spatial3DActive) return;
-    
-    const container = event.currentTarget;
-    const rect = container.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / rect.width - 0.5;
-    const y = (event.clientY - rect.top) / rect.height - 0.5;
-    
-    const rotateX = y * 8;
-    const rotateY = x * 8;
-    
-    container.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-}
-
-/**
- * Gestisce l'uscita del mouse
- */
-function handle3DMouseLeave(event) {
-    if (!spatial3DActive) return;
-    const container = event.currentTarget;
-    container.style.transform = 'perspective(1000px) rotateX(3deg) rotateY(-3deg)';
-}
-
-/**
- * Mostra indicatore visualizzazione spaziale
+ * Mostra indicatore
  */
 function showSpatialIndicator(isActive) {
     let indicator = document.getElementById('spatial-indicator');
-    
     if (!isActive) {
         if (indicator) indicator.remove();
         return;
     }
-    
     if (indicator) indicator.remove();
     
     indicator = document.createElement('div');
@@ -4989,35 +5177,11 @@ function showSpatialIndicator(isActive) {
         display: flex;
         align-items: center;
         gap: 10px;
-        animation: slideInRightSpatial 0.3s ease-out;
     `;
-    
     indicator.innerHTML = `
         <i class="fas fa-cube"></i>
-        <span>Visualizzazione 3D attiva</span>
-        <button onclick="disableSpatialVisualization()" style="
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 1rem;
-        ">✕</button>
+        <span>3D Mode - Trascina per ruotare</span>
+        <button onclick="disableSpatialVisualization()" style="background:none;border:none;color:white;cursor:pointer;">✕</button>
     `;
-    
     document.body.appendChild(indicator);
-    
-    // Aggiungi animazione se non esiste
-    if (!document.querySelector('#spatial-indicator-style')) {
-        const style = document.createElement('style');
-        style.id = 'spatial-indicator-style';
-        style.textContent = `
-            @keyframes slideInRightSpatial {
-                from { transform: translateX(100%); opacity: 0; }
-                to { transform: translateX(0); opacity: 1; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
 }
-
-// ==================== FINE PUNTO 18 ====================
