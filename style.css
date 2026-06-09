@@ -2396,3 +2396,7 @@ html, body {
     background: #3b82f6;
     transition: width 0.3s ease;
 }
+.btn-paradigm {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+    color: white !important;
+}

@@ -1607,6 +1607,9 @@ window.startConceptualAssessment = startConceptualAssessment;
 window.nextAssessmentQuestion = nextAssessmentQuestion;
 window.closeAssessmentModal = closeAssessmentModal;
 window.exportAssessmentResults = exportAssessmentResults;
+window.openParadigmTranslator = openParadigmTranslator;
+window.closeParadigmTranslator = closeParadigmTranslator;
+window.performParadigmTranslation = performParadigmTranslation;
 
 
 // Funzioni admin placeholder (per compatibilità)
@@ -4632,3 +4635,172 @@ function closeAssessmentModal() {
 }
 
 // ==================== FINE PUNTO 16 ====================
+// ==================== PUNTO 17: PARADIGM TRANSLATOR ====================
+// Metodologia: Traduzione ermeneutica di concetti tra paradigmi storici
+
+let translatorActive = false;
+
+/**
+ * Apre il modale del traduttore paradigmatico
+ */
+function openParadigmTranslator() {
+    const conceptName = getCurrentConceptName();
+    
+    let modal = document.getElementById('paradigm-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'paradigm-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 550px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 class="modal-title" style="margin-bottom: 0;">
+                        <i class="fas fa-exchange-alt"></i> Paradigm Translator
+                    </h3>
+                    <button onclick="closeParadigmTranslator()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Concetto da tradurre:</label>
+                    <input type="text" id="paradigm-concept-input" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;" 
+                           placeholder="Es. Essere, Verità, Potere..." value="${conceptName || ''}">
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">Da paradigma:</label>
+                        <select id="paradigm-from" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <option value="classico">Classico (Aristotele, Platone)</option>
+                            <option value="moderno">Moderno (Cartesio, Kant)</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600;">A paradigma:</label>
+                        <select id="paradigm-to" style="width: 100%; padding: 10px; border: 2px solid #e5e7eb; border-radius: 8px;">
+                            <option value="contemporaneo">Contemporaneo (Heidegger, Foucault)</option>
+                            <option value="moderno">Moderno (Cartesio, Kant)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button onclick="performParadigmTranslation()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-language"></i> Traduci
+                </button>
+                
+                <div id="translation-result" style="display: none; margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+                    <!-- Risultato traduzione -->
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+    
+    modal.style.display = 'flex';
+}
+
+/**
+ * Ottiene il nome del concetto corrente
+ */
+function getCurrentConceptName() {
+    if (currentScreen === 'concetto-detail-screen' && window.currentConcettoId) {
+        const concetto = concettiData.find(c => c.id === window.currentConcettoId);
+        return concetto ? concetto.parola : '';
+    }
+    return '';
+}
+
+/**
+ * Esegue la traduzione paradigmatica
+ */
+function performParadigmTranslation() {
+    const conceptName = document.getElementById('paradigm-concept-input')?.value.trim();
+    const fromParadigm = document.getElementById('paradigm-from')?.value;
+    const toParadigm = document.getElementById('paradigm-to')?.value;
+    
+    if (!conceptName) {
+        showToast('Inserisci un concetto da tradurre', 'warning');
+        return;
+    }
+    
+    // Trova il concetto nel dataset
+    const concept = concettiData.find(c => c.parola === conceptName);
+    
+    // Genera traduzione
+    let translation = generateParadigmTranslation(conceptName, concept, fromParadigm, toParadigm);
+    
+    const resultDiv = document.getElementById('translation-result');
+    if (resultDiv) {
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = `
+            <h4 style="margin-bottom: 10px; color: #8b5cf6;">
+                <i class="fas fa-exchange-alt"></i> Traduzione Paradigmatica
+            </h4>
+            <div style="background: white; border-radius: 8px; padding: 12px; margin-bottom: 10px;">
+                <p style="font-size: 0.8rem; color: #6b7280;">Da <strong>${fromParadigm === 'classico' ? 'Paradigma Classico' : 'Paradigma Moderno'}</strong></p>
+                <p style="font-size: 1rem;"><strong>${conceptName}</strong> → <span style="color: #8b5cf6;">${translation.targetTerm}</span></p>
+                <p style="font-size: 0.85rem; margin-top: 10px;">${translation.explanation}</p>
+            </div>
+            ${concept ? `
+            <div style="background: #f0fdf4; border-radius: 8px; padding: 12px;">
+                <p style="font-size: 0.75rem; color: #065f46;">
+                    <i class="fas fa-database"></i> Dalla definizione originale: "${concept.definizione?.substring(0, 150)}..."
+                </p>
+            </div>
+            ` : ''}
+        `;
+    }
+    
+    console.log(`🔄 [ParadigmTranslator] ${conceptName}: ${fromParadigm} → ${toParadigm}`);
+}
+
+/**
+ * Genera la traduzione paradigmatica
+ */
+function generateParadigmTranslation(conceptName, concept, fromParadigm, toParadigm) {
+    // Traduzioni predefinite per concetti noti
+    const translations = {
+        'Essere': {
+            classico_to_contemporaneo: {
+                targetTerm: 'Evento / Esserci (Dasein)',
+                explanation: 'Nella metafisica classica l\'essere è inteso come sostanza statica ed eterna. Nel pensiero contemporaneo, Heidegger lo trasforma in "Evento" (Ereignis) e "Esserci" (Dasein), sottolineando la dimensione temporale e processuale.'
+            }
+        },
+        'Verità': {
+            classico_to_contemporaneo: {
+                targetTerm: 'Aletheia / Disvelamento',
+                explanation: 'La verità come corrispondenza (adaequatio) nella tradizione classica diventa, con Heidegger, "disvelamento" (aletheia), un evento che si sottrae a ogni rappresentazione definitiva.'
+            }
+        },
+        'Potere': {
+            classico_to_contemporaneo: {
+                targetTerm: 'Biopotere / Dispositivo',
+                explanation: 'Il potere sovrano e verticale della tradizione classica (Hobbes) si trasforma, con Foucault, in potere diffuso, capillare, produttivo di saperi e soggettività.'
+            }
+        },
+        'Soggetto': {
+            moderno_to_contemporaneo: {
+                targetTerm: 'Effetto discorsivo / Soggettivazione',
+                explanation: 'Il soggetto cartesiano come fondamento certo (cogito) viene decentrato: diventa effetto del linguaggio, del potere, delle pratiche discorsive.'
+            }
+        }
+    };
+    
+    const key = `${fromParadigm}_to_${toParadigm}`;
+    
+    if (translations[conceptName] && translations[conceptName][key]) {
+        return translations[conceptName][key];
+    }
+    
+    // Traduzione generica
+    return {
+        targetTerm: `${conceptName} (ricontestualizzato)`,
+        explanation: `Il concetto "${conceptName}" subisce una trasformazione significativa nel passaggio dal paradigma ${fromParadigm} al paradigma ${toParadigm}. La terminologia e le implicazioni filosofiche si adattano al nuovo contesto ermeneutico.`
+    };
+}
+
+function closeParadigmTranslator() {
+    const modal = document.getElementById('paradigm-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+// ==================== FINE PUNTO 17 ====================
