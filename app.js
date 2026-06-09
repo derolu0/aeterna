@@ -1610,6 +1610,8 @@ window.exportAssessmentResults = exportAssessmentResults;
 window.openParadigmTranslator = openParadigmTranslator;
 window.closeParadigmTranslator = closeParadigmTranslator;
 window.performParadigmTranslation = performParadigmTranslation;
+window.enableSpatialVisualization = enableSpatialVisualization;
+window.disableSpatialVisualization = disableSpatialVisualization;
 
 
 // Funzioni admin placeholder (per compatibilità)
@@ -4849,3 +4851,148 @@ function closeParadigmTranslator() {
 }
 
 // ==================== FINE PUNTO 17 ====================
+// ==================== PUNTO 18: SPATIAL VISUALIZATION (3D EFFECT) ====================
+// Metodologia: Effetto prospettico 3D per la mappa concettuale
+
+let spatial3DActive = false;
+let originalContainerStyle = null;
+
+/**
+ * Attiva la visualizzazione spaziale 3D sulla mappa concettuale
+ */
+function enableSpatialVisualization() {
+    const container = document.getElementById('concept-network');
+    if (!container) {
+        showToast('Vai prima alla Mappa Concettuale', 'warning');
+        return;
+    }
+    
+    if (spatial3DActive) {
+        disableSpatialVisualization();
+        return;
+    }
+    
+    // Salva stile originale
+    originalContainerStyle = {
+        transform: container.style.transform,
+        transition: container.style.transition,
+        perspective: container.style.perspective
+    };
+    
+    // Applica effetto 3D
+    container.style.transition = 'all 0.5s ease';
+    container.style.transform = 'perspective(1000px) rotateX(5deg) rotateY(-5deg)';
+    container.style.perspective = '1000px';
+    
+    // Aggiunge effetto hover per interazione
+    container.addEventListener('mousemove', handle3DMouseMove);
+    container.addEventListener('mouseleave', handle3DMouseLeave);
+    
+    spatial3DActive = true;
+    
+    // Mostra indicatore
+    showSpatialIndicator(true);
+    
+    showToast('🔮 Visualizzazione spaziale 3D attivata', 'success');
+    console.log('🔮 [SpatialViz] Attivata');
+}
+
+/**
+ * Disattiva la visualizzazione spaziale 3D
+ */
+function disableSpatialVisualization() {
+    const container = document.getElementById('concept-network');
+    if (!container) return;
+    
+    // Ripristina stile
+    container.style.transform = originalContainerStyle?.transform || '';
+    container.style.transition = originalContainerStyle?.transition || '';
+    container.style.perspective = originalContainerStyle?.perspective || '';
+    
+    // Rimuovi listener
+    container.removeEventListener('mousemove', handle3DMouseMove);
+    container.removeEventListener('mouseleave', handle3DMouseLeave);
+    
+    spatial3DActive = false;
+    
+    // Rimuovi indicatore
+    showSpatialIndicator(false);
+    
+    showToast('Visualizzazione 3D disattivata', 'info');
+    console.log('🔮 [SpatialViz] Disattivata');
+}
+
+/**
+ * Gestisce il movimento del mouse per effetto parallasse 3D
+ */
+function handle3DMouseMove(event) {
+    if (!spatial3DActive) return;
+    
+    const container = event.currentTarget;
+    const rect = container.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width - 0.5;
+    const y = (event.clientY - rect.top) / rect.height - 0.5;
+    
+    const rotateX = y * 8;
+    const rotateY = x * 8;
+    
+    container.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+}
+
+/**
+ * Gestisce l'uscita del mouse
+ */
+function handle3DMouseLeave(event) {
+    if (!spatial3DActive) return;
+    const container = event.currentTarget;
+    container.style.transform = 'perspective(1000px) rotateX(3deg) rotateY(-3deg)';
+}
+
+/**
+ * Mostra indicatore visualizzazione spaziale
+ */
+function showSpatialIndicator(isActive) {
+    let indicator = document.getElementById('spatial-indicator');
+    
+    if (!isActive) {
+        if (indicator) indicator.remove();
+        return;
+    }
+    
+    if (indicator) indicator.remove();
+    
+    indicator = document.createElement('div');
+    indicator.id = 'spatial-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        background: rgba(59, 130, 246, 0.95);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideInRight 0.3s ease-out;
+    `;
+    
+    indicator.innerHTML = `
+        <i class="fas fa-cube"></i>
+        <span>Visualizzazione 3D attiva</span>
+        <button onclick="disableSpatialVisualization()" style="
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        ">✕</button>
+    `;
+    
+    document.body.appendChild(indicator);
+}
+
+// ==================== FINE PUNTO 18 ====================
