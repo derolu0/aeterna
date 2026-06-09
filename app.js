@@ -4754,11 +4754,11 @@ function performParadigmTranslation() {
 }
 
 /**
- * Genera la traduzione paradigmatica
+ * Genera la traduzione paradigmatica (dinamica - funziona per tutti i concetti)
  */
 function generateParadigmTranslation(conceptName, concept, fromParadigm, toParadigm) {
-    // Traduzioni predefinite per concetti noti
-    const translations = {
+    // 1. TRAduzioni predefinite per concetti noti (esempi curati)
+    const curatedTranslations = {
         'Essere': {
             classico_to_contemporaneo: {
                 targetTerm: 'Evento / Esserci (Dasein)',
@@ -4787,14 +4787,59 @@ function generateParadigmTranslation(conceptName, concept, fromParadigm, toParad
     
     const key = `${fromParadigm}_to_${toParadigm}`;
     
-    if (translations[conceptName] && translations[conceptName][key]) {
-        return translations[conceptName][key];
+    // Se esiste una traduzione curata, usala
+    if (curatedTranslations[conceptName] && curatedTranslations[conceptName][key]) {
+        return curatedTranslations[conceptName][key];
     }
     
-    // Traduzione generica
-    return {
-        targetTerm: `${conceptName} (ricontestualizzato)`,
-        explanation: `Il concetto "${conceptName}" subisce una trasformazione significativa nel passaggio dal paradigma ${fromParadigm} al paradigma ${toParadigm}. La terminologia e le implicazioni filosofiche si adattano al nuovo contesto ermeneutico.`
+    // 2. TRADUZIONE DINAMICA GENERICA (basata sui dati del concetto)
+    const period = concept?.periodo || 'classico';
+    const domain = concept?.dominio || 'Filosofia';
+    
+    // Mappa dei termini target per dominio
+    const domainMapping = {
+        'Ontologia': {
+            classico_to_contemporaneo: { target: 'Processo / Evento', explanation: 'Il concetto ontologico si trasforma da sostanza statica a processo dinamico e relazionale.' },
+            moderno_to_contemporaneo: { target: 'Costruzione / Interpretazione', explanation: 'L\'oggettività moderna diventa costruzione storico-ermeneutica.' }
+        },
+        'Epistemologia': {
+            classico_to_contemporaneo: { target: 'Interpretazione / Costruzione', explanation: 'La conoscenza come corrispondenza diventa interpretazione situata e contestuale.' },
+            moderno_to_contemporaneo: { target: 'Pratica situata / Potere', explanation: 'La conoscenza universale si trasforma in sapere localizzato e legato al potere.' }
+        },
+        'Etica': {
+            classico_to_contemporaneo: { target: 'Relazione / Responsabilità', explanation: 'Il bene oggettivo diventa etica della cura e della responsabilità verso l\'Altro.' },
+            moderno_to_contemporaneo: { target: 'Scelta / Progetto', explanation: 'Il dovere universale diventa scelta esistenziale situata.' }
+        },
+        'Politica': {
+            classico_to_contemporaneo: { target: 'Biopotere / Dispositivo', explanation: 'Il potere sovrano si trasforma in potere diffuso e produttivo di soggettività.' },
+            moderno_to_contemporaneo: { target: 'Governamentalità / Sicurezza', explanation: 'Lo stato moderno diventa dispositivo di governo delle popolazioni.' }
+        }
+    };
+    
+    // Traduzione generica basata sul dominio
+    if (domainMapping[domain] && domainMapping[domain][key]) {
+        const mapping = domainMapping[domain][key];
+        return {
+            targetTerm: mapping.target,
+            explanation: `${mapping.explanation} Il concetto "${conceptName}" appartiene al dominio ${domain}.`
+        };
+    }
+    
+    // 3. TRADUZIONE GENERICA DI DEFAULT
+    const defaultTranslations = {
+        classico_to_contemporaneo: {
+            targetTerm: `${conceptName} (ricontestualizzato)`,
+            explanation: `Nel passaggio dal paradigma classico a quello contemporaneo, il concetto "${conceptName}" perde la sua dimensione sostanzialistica e acquista una valenza processuale, storica e relazionale. La verità non è più corrispondenza, ma evento; l'essere non è sostanza, ma divenire.`
+        },
+        moderno_to_contemporaneo: {
+            targetTerm: `${conceptName} (decentrato)`,
+            explanation: `Nel passaggio dal paradigma moderno a quello contemporaneo, il concetto "${conceptName}" viene decostruito nelle sue pretese di universalità e fondazione. Il soggetto non è più centro, ma effetto; la ragione non è più assoluta, ma situata.`
+        }
+    };
+    
+    return defaultTranslations[key] || {
+        targetTerm: `${conceptName} (trasformato)`,
+        explanation: `Il concetto "${conceptName}" subisce una trasformazione significativa nel passaggio dal paradigma ${fromParadigm} al paradigma ${toParadigm}. La sua interpretazione si arricchisce di nuove sfumature contestuali.`
     };
 }
 
