@@ -2203,3 +2203,61 @@ html, body {
 .filter-btn.traceability-btn:hover {
     transform: translateY(-2px);
 }
+/* ==================== PUNTO 14: EXPLORATORY MODE ==================== */
+
+@keyframes floatExplore {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-5px) rotate(1deg);
+    }
+    75% {
+        transform: translateY(5px) rotate(-1deg);
+    }
+}
+
+@keyframes pulseExplore {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 8px 30px rgba(139, 92, 246, 0.6);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateX(-50%) translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+.exploratory-mode {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+}
+
+.exploratory-mode .concetto-card {
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.exploratory-mode .concetto-card:hover {
+    transform: scale(1.02) translateY(-5px);
+    box-shadow: 0 12px 30px rgba(139, 92, 246, 0.3);
+}
+
+.btn-exploratory {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+    color: white !important;
+}
+
+.btn-exploratory i {
+    color: white !important;
+}

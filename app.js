@@ -1596,6 +1596,9 @@ window.disableInterpretiveTraceability = disableInterpretiveTraceability;
 window.showConnectionExplanation = showConnectionExplanation;
 window.closeExplanationModal = closeExplanationModal;
 window.copyExplanationToClipboard = copyExplanationToClipboard;
+window.enableExploratoryMode = enableExploratoryMode;
+window.disableExploratoryMode = disableExploratoryMode;
+window.randomExploration = randomExploration;
 
 // Funzioni admin placeholder (per compatibilità)
 window.loadAdminFilosofi = window.loadAdminFilosofi || function(){ 
@@ -3858,3 +3861,154 @@ function copyExplanationToClipboard() {
 }
 
 // ==================== FINE PUNTO 13 ====================
+// ==================== PUNTO 14: EXPLORATORY MODE ====================
+// Metodologia: Navigazione associativa - esplorazione libera senza vincoli gerarchici
+
+let exploratoryModeActive = false;
+
+/**
+ * Attiva la modalità esplorativa (UI fluttuante)
+ */
+function enableExploratoryMode() {
+    if (exploratoryModeActive) {
+        disableExploratoryMode();
+        return;
+    }
+    
+    // Aggiungi classe CSS al body
+    document.body.classList.add('exploratory-mode');
+    
+    // Trasforma le card dei concetti in elementi fluttuanti
+    const conceptCards = document.querySelectorAll('.concetto-card');
+    conceptCards.forEach((card, index) => {
+        card.style.transition = 'all 0.3s ease';
+        card.style.animation = `floatExplore ${2 + index * 0.2}s ease-in-out infinite`;
+        card.style.cursor = 'grab';
+        
+        // Aggiungi effetto parallasse al mouse
+        card.addEventListener('mousemove', (e) => {
+            if (!exploratoryModeActive) return;
+            const rect = card.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width - 0.5;
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            card.style.transform = `rotateX(${y * 5}deg) rotateY(${x * 5}deg)`;
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = '';
+        });
+    });
+    
+    // Trasforma la mappa concettuale
+    if (networkInstance) {
+        const container = document.getElementById('concept-network');
+        if (container) {
+            container.style.transition = 'all 0.5s ease';
+            container.style.boxShadow = '0 0 30px rgba(139, 92, 246, 0.3)';
+        }
+    }
+    
+    exploratoryModeActive = true;
+    
+    // Mostra indicatore
+    showExploratoryIndicator();
+    
+    showToast('🌊 Modalità Esplorativa attivata - UI fluttuante', 'success');
+    console.log('🌊 [ExploratoryMode] Attivata');
+}
+
+/**
+ * Disattiva la modalità esplorativa
+ */
+function disableExploratoryMode() {
+    document.body.classList.remove('exploratory-mode');
+    
+    const conceptCards = document.querySelectorAll('.concetto-card');
+    conceptCards.forEach((card) => {
+        card.style.animation = '';
+        card.style.transform = '';
+        card.style.cursor = '';
+    });
+    
+    if (networkInstance) {
+        const container = document.getElementById('concept-network');
+        if (container) {
+            container.style.boxShadow = '';
+        }
+    }
+    
+    const indicator = document.getElementById('exploratory-indicator');
+    if (indicator) indicator.remove();
+    
+    exploratoryModeActive = false;
+    
+    showToast('Modalità Esplorativa disattivata', 'info');
+    console.log('🌊 [ExploratoryMode] Disattivata');
+}
+
+/**
+ * Mostra indicatore modalità esplorativa
+ */
+function showExploratoryIndicator() {
+    const existingIndicator = document.getElementById('exploratory-indicator');
+    if (existingIndicator) existingIndicator.remove();
+    
+    const indicator = document.createElement('div');
+    indicator.id = 'exploratory-indicator';
+    indicator.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(139, 92, 246, 0.95);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideDown 0.3s ease-out;
+    `;
+    
+    indicator.innerHTML = `
+        <i class="fas fa-globe-americas"></i>
+        <span>Modalità Esplorativa attiva</span>
+        <button onclick="disableExploratoryMode()" style="
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+        ">✕</button>
+    `;
+    
+    document.body.appendChild(indicator);
+}
+
+/**
+ * Attiva una visualizzazione casuale dei concetti (suggerimento esplorativo)
+ */
+function randomExploration() {
+    if (!concettiData || concettiData.length === 0) return;
+    
+    const randomIndex = Math.floor(Math.random() * concettiData.length);
+    const randomConcept = concettiData[randomIndex];
+    
+    showToast(`🔍 Suggerimento: esplora "${randomConcept.parola}"`, 'info', 3000);
+    
+    // Effetto visivo sulla card corrispondente
+    const cards = document.querySelectorAll('.concetto-card');
+    cards.forEach(card => {
+        const title = card.querySelector('.concetto-parola')?.textContent;
+        if (title === randomConcept.parola) {
+            card.style.animation = 'pulseExplore 0.5s ease-in-out 3';
+            setTimeout(() => {
+                card.style.animation = '';
+            }, 1500);
+        }
+    });
+}
