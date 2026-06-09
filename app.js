@@ -4851,17 +4851,19 @@ function closeParadigmTranslator() {
 }
 
 // ==================== FINE PUNTO 17 ====================
-// ==================== PUNTO 18: SPATIAL VISUALIZATION 3D (VERSIONE AVANZATA) ====================
-// Metodologia: Vera visualizzazione 3D con Three.js
+// ==================== PUNTO 18: SPATIAL VISUALIZATION 3D ====================
+// Metodologia: Visualizzazione 3D con Three.js - versione stabile
 
 let spatial3DActive = false;
 let threeScene = null;
 let threeCamera = null;
 let threeRenderer = null;
 let threeNodes = [];
+let threeStars = null;
+let threeAnimationId = null;
 
 /**
- * Attiva la visualizzazione 3D avanzata
+ * Attiva la visualizzazione 3D
  */
 function enableSpatialVisualization() {
     const container = document.getElementById('concept-network');
@@ -4879,309 +4881,227 @@ function enableSpatialVisualization() {
     const btn = document.querySelector('.btn-spatial');
     if (btn) btn.classList.add('active');
     
-    // Salva il contenuto originale della mappa Vis.js
-    const originalContent = container.innerHTML;
-    container.innerHTML = '';
-    
-    // Inizializza scena 3D
-    initThreeScene(container);
-    
-    spatial3DActive = true;
-    showSpatialIndicator(true);
-    
-    showToast('🔮 Visualizzazione 3D avanzata attivata', 'success');
-    console.log('🔮 [SpatialViz-3D] Attivata');
-}
-
-/**
- * Inizializza la scena Three.js
- */
-function initThreeScene(container) {
-    // Crea renderer
-    threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    threeRenderer.setSize(container.clientWidth, container.clientHeight);
-    threeRenderer.setClearColor(0x0a0a2a, 0.8);
-    container.appendChild(threeRenderer.domElement);
-    
-    // Crea camera
-    threeCamera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-    threeCamera.position.set(0, 5, 15);
-    threeCamera.lookAt(0, 0, 0);
-    
-    // Crea scena
-    threeScene = new THREE.Scene();
-    threeScene.background = new THREE.Color(0x0a0a2a);
-    threeScene.fog = new THREE.FogExp2(0x0a0a2a, 0.02);
-    
-    // Aggiunge luci
-    const ambientLight = new THREE.AmbientLight(0x404060);
-    threeScene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(1, 2, 1);
-    threeScene.add(directionalLight);
-    
-    const backLight = new THREE.PointLight(0x8b5cf6, 0.5);
-    backLight.position.set(0, 0, -5);
-    threeScene.add(backLight);
-    
-    // Crea nodi per filosofi e concetti
-    create3DNodes();
-    
-    // Aggiunge stelle sullo sfondo
-    createStarfield();
-    
-    // Avvia animazione
-    animate3DScene();
-    
-    // Aggiunge controllo con mouse
-    setup3DControls(container);
-}
-
-/**
- * Crea nodi 3D per filosofi e concetti
- */
-function create3DNodes() {
-    if (!filosofiData) return;
-    
-    const colors = {
-        classico: 0x10b981,
-        contemporaneo: 0xf59e0b,
-        concetto: 0x8b5cf6
-    };
-    
-    // Posiziona i nodi in cerchio 3D
-    const totalNodes = filosofiData.length + concettiData.length;
-    const radius = 6;
-    
-    let index = 0;
-    
-    // Filosofi classici
-    const classici = filosofiData.filter(f => f.periodo === 'classico');
-    classici.forEach((f, i) => {
-        const angle = (i / classici.length) * Math.PI * 2;
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        const y = Math.sin(angle * 2) * 1.5;
+    try {
+        // Salva il contenuto originale
+        const originalContent = container.innerHTML;
+        container.setAttribute('data-original-content', originalContent);
         
-        createSphereNode(f.nome, colors.classico, x, y, z, 'filosofo', f.id);
-    });
-    
-    // Filosofi contemporanei
-    const contemporanei = filosofiData.filter(f => f.periodo === 'contemporaneo');
-    contemporanei.forEach((f, i) => {
-        const angle = (i / contemporanei.length) * Math.PI * 2 + Math.PI;
-        const x = Math.cos(angle) * radius;
-        const z = Math.sin(angle) * radius;
-        const y = Math.sin(angle * 2) * 1.5;
+        // Imposta dimensioni fisse
+        const width = container.clientWidth;
+        const height = 600;
+        container.style.height = height + 'px';
+        container.style.background = '#0a0a2a';
         
-        createSphereNode(f.nome, colors.contemporaneo, x, y, z, 'filosofo', f.id);
-    });
-    
-    // Concetti (posizionati al centro)
-    concettiData.forEach((c, i) => {
-        const angle = (i / concettiData.length) * Math.PI * 2;
-        const x = Math.cos(angle) * 3;
-        const z = Math.sin(angle) * 3;
-        const y = Math.sin(angle * 3) * 1;
+        // 1. SCENA
+        threeScene = new THREE.Scene();
+        threeScene.background = new THREE.Color(0x0a0a2a);
+        threeScene.fog = new THREE.FogExp2(0x0a0a2a, 0.008);
         
-        createSphereNode(c.parola, colors.concetto, x, y, z, 'concetto', c.id, true);
-    });
-}
-
-/**
- * Crea una sfera 3D (nodo)
- */
-function createSphereNode(name, color, x, y, z, type, id, isDiamond = false) {
-    let geometry;
-    
-    if (isDiamond) {
-        geometry = new THREE.OctahedronGeometry(0.35);
-    } else {
-        geometry = new THREE.SphereGeometry(0.4, 32, 32);
-    }
-    
-    const material = new THREE.MeshStandardMaterial({
-        color: color,
-        emissive: color,
-        emissiveIntensity: 0.3,
-        metalness: 0.7,
-        roughness: 0.3
-    });
-    
-    const sphere = new THREE.Mesh(geometry, material);
-    sphere.position.set(x, y, z);
-    sphere.userData = { name, type, id };
-    
-    // Aggiunge testo
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    canvas.width = 256;
-    canvas.height = 128;
-    context.fillStyle = 'white';
-    context.font = 'Bold 16px Inter';
-    context.fillText(name, 10, 30);
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    const textMaterial = new THREE.SpriteMaterial({ map: texture });
-    const textSprite = new THREE.Sprite(textMaterial);
-    textSprite.scale.set(1.5, 0.75, 1);
-    textSprite.position.set(0, 0.6, 0);
-    sphere.add(textSprite);
-    
-    threeScene.add(sphere);
-    threeNodes.push(sphere);
-    
-    // Aggiunge linea di connessione al centro
-    const center = new THREE.Vector3(0, 0, 0);
-    const points = [sphere.position.clone(), center];
-    const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
-    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x8b5cf6, opacity: 0.3, transparent: true });
-    const line = new THREE.Line(lineGeometry, lineMaterial);
-    threeScene.add(line);
-}
-
-/**
- * Crea uno sfondo stellato
- */
-function createStarfield() {
-    const vertices = [];
-    for (let i = 0; i < 1000; i++) {
-        const x = (Math.random() - 0.5) * 200;
-        const y = (Math.random() - 0.5) * 100;
-        const z = (Math.random() - 0.5) * 100 - 50;
-        vertices.push(x, y, z);
-    }
-    
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
-    
-    const material = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2 });
-    const stars = new THREE.Points(geometry, material);
-    threeScene.add(stars);
-}
-
-/**
- * Anima la scena 3D
- */
-function animate3DScene() {
-    if (!spatial3DActive) return;
-    
-    requestAnimationFrame(animate3DScene);
-    
-    // Ruota leggermente i nodi
-    threeNodes.forEach((node, i) => {
-        node.rotation.y += 0.005;
-        node.rotation.x += 0.003;
-    });
-    
-    // Muove la camera dolcemente
-    const time = Date.now() * 0.001;
-    threeCamera.position.x = Math.sin(time * 0.1) * 1;
-    threeCamera.position.y = 5 + Math.sin(time * 0.2) * 0.5;
-    threeCamera.lookAt(0, 0, 0);
-    
-    threeRenderer.render(threeScene, threeCamera);
-}
-
-/**
- * Gestisce i controlli mouse per interazione 3D
- */
-function setup3DControls(container) {
-    let isDragging = false;
-    let lastX = 0;
-    let lastY = 0;
-    
-    container.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        lastX = e.clientX;
-        lastY = e.clientY;
-    });
-    
-    window.addEventListener('mousemove', (e) => {
-        if (!isDragging || !spatial3DActive) return;
-        
-        const deltaX = e.clientX - lastX;
-        const deltaY = e.clientY - lastY;
-        
-        threeCamera.position.x += deltaX * 0.01;
-        threeCamera.position.y -= deltaY * 0.01;
+        // 2. CAMERA
+        threeCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        threeCamera.position.set(0, 3, 14);
         threeCamera.lookAt(0, 0, 0);
         
-        lastX = e.clientX;
-        lastY = e.clientY;
-    });
-    
-    window.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
+        // 3. RENDERER
+        threeRenderer = new THREE.WebGLRenderer({ antialias: true });
+        threeRenderer.setSize(width, height);
+        threeRenderer.setClearColor(0x0a0a2a, 1);
+        container.appendChild(threeRenderer.domElement);
+        
+        // 4. LUCI
+        // Luce ambientale
+        const ambientLight = new THREE.AmbientLight(0x404060);
+        threeScene.add(ambientLight);
+        
+        // Luce direzionale principale
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+        mainLight.position.set(2, 5, 3);
+        threeScene.add(mainLight);
+        
+        // Luce di riempimento viola
+        const fillLight = new THREE.PointLight(0x8b5cf6, 0.5);
+        fillLight.position.set(0, 2, 4);
+        threeScene.add(fillLight);
+        
+        // Luce posteriore
+        const backLight = new THREE.PointLight(0x3b82f6, 0.3);
+        backLight.position.set(0, 1, -5);
+        threeScene.add(backLight);
+        
+        // 5. CREA NODI (sfere colorate)
+        threeNodes = [];
+        
+        // Colori per i nodi
+        const nodeColors = [
+            0x10b981,  // verde classico
+            0xf59e0b,  // arancione contemporaneo
+            0x8b5cf6,  // viola concetto
+            0x3b82f6,  // blu
+            0xef4444,  // rosso
+            0xec4898   // rosa
+        ];
+        
+        const radius = 5;
+        const nodeCount = 24;
+        
+        for (let i = 0; i < nodeCount; i++) {
+            // Posizione su cerchio 3D
+            const angle = (i / nodeCount) * Math.PI * 2;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const y = Math.sin(angle * 2) * 1.5;
+            
+            // Sfera
+            const geometry = new THREE.SphereGeometry(0.45, 32, 32);
+            const material = new THREE.MeshStandardMaterial({
+                color: nodeColors[i % nodeColors.length],
+                emissive: 0x222222,
+                emissiveIntensity: 0.3,
+                metalness: 0.6,
+                roughness: 0.3
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(x, y, z);
+            sphere.userData = { index: i, name: `Nodo ${i+1}` };
+            threeScene.add(sphere);
+            threeNodes.push(sphere);
+            
+            // Aggiunge un anello intorno ad alcune sfere
+            if (i % 3 === 0) {
+                const ringGeometry = new THREE.TorusGeometry(0.55, 0.05, 16, 32);
+                const ringMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x333333 });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                sphere.add(ring);
+            }
+        }
+        
+        // Aggiunge un cerchio centrale
+        const centerGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+        const centerMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5cf6, emissive: 0x4c1d95, emissiveIntensity: 0.5 });
+        const centerSphere = new THREE.Mesh(centerGeometry, centerMaterial);
+        centerSphere.position.set(0, 0, 0);
+        threeScene.add(centerSphere);
+        threeNodes.push(centerSphere);
+        
+        // 6. AGGIUNGE CONNESSIONI (linee tra i nodi)
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0x8b5cf6, opacity: 0.3, transparent: true });
+        
+        for (let i = 0; i < threeNodes.length - 1; i++) {
+            for (let j = i + 1; j < threeNodes.length; j++) {
+                if (Math.random() > 0.85) { // solo alcune connessioni per non sovraccaricare
+                    const points = [
+                        threeNodes[i].position.clone(),
+                        threeNodes[j].position.clone()
+                    ];
+                    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                    const line = new THREE.Line(geometry, lineMaterial);
+                    threeScene.add(line);
+                }
+            }
+        }
+        
+        // 7. AGGIUNGE STELLE SFONDO
+        const starCount = 800;
+        const starPositions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+            starPositions[i*3] = (Math.random() - 0.5) * 200;
+            starPositions[i*3+1] = (Math.random() - 0.5) * 100;
+            starPositions[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+        }
+        const starGeometry = new THREE.BufferGeometry();
+        starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+        const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15, transparent: true, opacity: 0.7 });
+        threeStars = new THREE.Points(starGeometry, starMaterial);
+        threeScene.add(threeStars);
+        
+        // 8. ANIMAZIONE
+        let time = 0;
+        
+        function animate() {
+            if (!spatial3DActive) return;
+            threeAnimationId = requestAnimationFrame(animate);
+            
+            time += 0.008;
+            
+            // Movimento dolce della camera
+            threeCamera.position.x = Math.sin(time * 0.15) * 1.2;
+            threeCamera.position.y = 3 + Math.sin(time * 0.2) * 0.8;
+            threeCamera.lookAt(0, 0, 0);
+            
+            // Rotazione delle stelle
+            if (threeStars) {
+                threeStars.rotation.y += 0.0005;
+                threeStars.rotation.x += 0.0003;
+            }
+            
+            // Piccola rotazione dei nodi
+            threeNodes.forEach((node, idx) => {
+                node.rotation.y += 0.01;
+                node.rotation.x += 0.005;
+            });
+            
+            threeRenderer.render(threeScene, threeCamera);
+        }
+        
+        spatial3DActive = true;
+        animate();
+        
+        showToast('🔮 Visualizzazione 3D attivata - 24 nodi fluttuanti', 'success');
+        console.log('✅ [SpatialViz] Attivata con successo');
+        
+    } catch (error) {
+        console.error('❌ [SpatialViz] Errore:', error);
+        showToast('Errore attivazione 3D: ' + error.message, 'error');
+        disableSpatialVisualization();
+    }
 }
 
 /**
- * Disattiva visualizzazione 3D
+ * Disattiva la visualizzazione 3D e ripristina la mappa originale
  */
 function disableSpatialVisualization() {
-    if (!spatial3DActive) return;
+    const container = document.getElementById('concept-network');
+    if (!container) return;
     
     // Ripristina stile bottone
     const btn = document.querySelector('.btn-spatial');
     if (btn) btn.classList.remove('active');
     
-    // Pulisci scena Three.js
-    if (threeRenderer) {
-        threeRenderer.dispose();
-        threeRenderer.domElement.remove();
+    // Ferma animazione
+    if (threeAnimationId) {
+        cancelAnimationFrame(threeAnimationId);
+        threeAnimationId = null;
     }
     
+    // Pulisci Three.js
+    if (threeRenderer) {
+        threeRenderer.dispose();
+        if (threeRenderer.domElement && threeRenderer.domElement.remove) {
+            threeRenderer.domElement.remove();
+        }
+    }
+    
+    // Reset variabili
     threeScene = null;
     threeCamera = null;
     threeRenderer = null;
     threeNodes = [];
+    threeStars = null;
     
     // Ricarica la mappa Vis.js originale
+    container.innerHTML = '';
+    container.style.height = '600px';
+    container.style.background = '';
+    
     if (typeof initConceptMap === 'function') {
-        initConceptMap();
+        setTimeout(() => {
+            initConceptMap();
+        }, 100);
     }
     
     spatial3DActive = false;
-    showSpatialIndicator(false);
-    
     showToast('Visualizzazione 3D disattivata', 'info');
-    console.log('🔮 [SpatialViz-3D] Disattivata');
+    console.log('✅ [SpatialViz] Disattivata');
 }
 
-/**
- * Mostra indicatore
- */
-function showSpatialIndicator(isActive) {
-    let indicator = document.getElementById('spatial-indicator');
-    if (!isActive) {
-        if (indicator) indicator.remove();
-        return;
-    }
-    if (indicator) indicator.remove();
-    
-    indicator = document.createElement('div');
-    indicator.id = 'spatial-indicator';
-    indicator.style.cssText = `
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        background: rgba(59, 130, 246, 0.95);
-        backdrop-filter: blur(10px);
-        color: white;
-        padding: 8px 16px;
-        border-radius: 30px;
-        font-size: 0.8rem;
-        z-index: 1000;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    `;
-    indicator.innerHTML = `
-        <i class="fas fa-cube"></i>
-        <span>3D Mode - Trascina per ruotare</span>
-        <button onclick="disableSpatialVisualization()" style="background:none;border:none;color:white;cursor:pointer;">✕</button>
-    `;
-    document.body.appendChild(indicator);
-}
+// ==================== FINE PUNTO 18 ====================
